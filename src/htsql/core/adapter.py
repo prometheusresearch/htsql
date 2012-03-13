@@ -82,7 +82,7 @@ class Component(object):
                 if issubclass(subclass, Realization):
                     continue
                 # Check if the component belongs to the current application.
-                if subclass.__active__():
+                if subclass.__enabled__():
                     components.append(subclass)
             idx += 1
         # Cache and return the components.
@@ -208,7 +208,7 @@ class Component(object):
         return realization
 
     @classmethod
-    def __active__(component):
+    def __enabled__(component):
         """
         Tests if the component is a part of the current application.
         """

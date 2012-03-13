@@ -449,9 +449,9 @@ class BindGlobal(BindByName):
     body = None
 
     @classmethod
-    def __active__(component):
+    def __enabled__(component):
         if component.__app__ is None:
-            return super(BindGlobal, component).__active__()
+            return super(BindGlobal, component).__enabled__()
         return (component.__app__() is context.app)
 
     def __call__(self):
