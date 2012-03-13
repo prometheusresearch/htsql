@@ -14,6 +14,7 @@ This module defines HTSQL domains.
 from .util import (maybe, oneof, listof, UTC, FixedTZ,
                    Printable, Clonable, Comparable)
 import re
+import math
 import decimal
 import datetime
 
@@ -298,9 +299,7 @@ class FloatDomain(NumberDomain):
             raise ValueError("invalid float literal: %s"
                              % data.encode('utf-8'))
         # Check if we got a finite number.
-        # FIXME: the check may break under Python 2.5; also, in Python 2.6
-        # could use `math.isinf()` and `math.isnan()`.
-        if str(value) in ['inf', '-inf', 'nan']:
+        if math.isinf(value) or math.isnan(value):
             raise ValueError("invalid float literal: %s" % value)
         return value
 

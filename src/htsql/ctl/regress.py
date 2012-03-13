@@ -11,7 +11,6 @@ This module implements the `regress` routine.
 """
 
 
-from __future__ import with_statement
 from .error import ScriptError
 from .routine import Argument, Routine
 from .option import (InputOption, TrainOption, PurgeOption,
@@ -1718,7 +1717,6 @@ class Fork(object):
         """
         # Terminate the process if it is still alive.
         if self.process.poll() is None:
-            # FIXME: Python 2.5 compatibility!
             self.process.terminate()
             time.sleep(1.0)
         # Read the standard output.

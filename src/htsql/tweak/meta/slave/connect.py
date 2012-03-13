@@ -2,7 +2,6 @@
 # Copyright (c) 2006-2012, Prometheus Research, LLC
 #
 
-from __future__ import with_statement
 from ....core.context import context
 from ....core.cache import once
 from ....core.connect import Connect

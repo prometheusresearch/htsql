@@ -11,7 +11,6 @@ This module declares HTSQL addons.
 """
 
 
-from __future__ import with_statement
 from .util import maybe, trim_doc
 from .validator import Validator
 import re

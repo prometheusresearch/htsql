@@ -13,6 +13,8 @@ This module provides various hard-to-categorize utilities.
 
 import re
 import sys
+import math
+import decimal
 import urllib
 import pkgutil
 import datetime, time
@@ -311,12 +313,6 @@ class maybe(object):
         isinstance(value, maybe(T))
     """
 
-    # For Python 2.5, we can't use `__instancecheck__`; in this case,
-    # we let ``isinstance(oneof(...)) == isinstance(object)``.
-    if sys.version_info < (2, 6):
-        def __new__(cls, *args, **kwds):
-            return object
-
     def __init__(self, value_type):
         self.value_type = value_type
 
@@ -332,12 +328,6 @@ class oneof(object):
 
         isinstance(value, oneof(T1, T2, ...))
     """
-
-    # For Python 2.5, we can't use `__instancecheck__`; in this case,
-    # we let ``isinstance(oneof(...)) == isinstance(object)``.
-    if sys.version_info < (2, 6):
-        def __new__(cls, *args, **kwds):
-            return object
 
     def __init__(self, *value_types):
         self.value_types = value_types
@@ -356,12 +346,6 @@ class listof(object):
         isinstance(value, listof(T))
     """
 
-    # For Python 2.5, we can't use `__instancecheck__`; in this case,
-    # we let ``isinstance(listof(...)) == isinstance(list)``.
-    if sys.version_info < (2, 6):
-        def __new__(cls, *args, **kwds):
-            return list
-
     def __init__(self, item_type):
         self.item_type = item_type
 
@@ -378,12 +362,6 @@ class setof(object):
     
         isinstance(value, setof(T))
     """
-
-    # For Python 2.5, we can't use `__instancecheck__`; in this case,
-    # we let ``isinstance(setof(...)) == isinstance(list)``.
-    if sys.version_info < (2, 6):
-        def __new__(cls, *args, **kwds):
-            return set
 
     def __init__(self, item_type):
         self.item_type = item_type
@@ -402,12 +380,6 @@ class tupleof(object):
 
         isinstance(value, tupleof(T1, T2, ..., TN))
     """
-
-    # For Python 2.5, we can't use `__instancecheck__`; in this case,
-    # we let ``isinstance(tupleof(...)) == isinstance(tuple)``.
-    if sys.version_info < (2, 6):
-        def __new__(cls, *args, **kwds):
-            return tuple
 
     def __init__(self, *item_types):
         self.item_types = item_types
@@ -429,12 +401,6 @@ class dictof(object):
         isinstance(value, dictof(T1, T2))
     """
 
-    # For Python 2.5, we can't use `__instancecheck__`; in this case,
-    # we let ``isinstance(dictof(...)) == isinstance(dict)``.
-    if sys.version_info < (2, 6):
-        def __new__(cls, *args, **kwds):
-            return dict
-
     def __init__(self, key_type, item_type):
         self.key_type = key_type
         self.item_type = item_type
@@ -455,12 +421,6 @@ class subclassof(object):
         isinstance(value, subclassof(T))
     """
 
-    # For Python 2.5, we can't use `__instancecheck__`; in this case,
-    # we let ``isinstance(subclassof(...)) == isinstance(type)``.
-    if sys.version_info < (2, 6):
-        def __new__(cls, *args, **kwds):
-            return type
-
     def __init__(self, class_type):
         self.class_type = class_type
 
@@ -476,12 +436,6 @@ class filelike(object):
     
         isinstance(value, filelike())
     """
-
-    # For Python 2.5, we can't use `__instancecheck__`; in this case,
-    # we let ``isinstance(filelike()) == isinstance(object)``.
-    if sys.version_info < (2, 6):
-        def __new__(cls, *args, **kwds):
-            return object
 
     def __instancecheck__(self, value):
         return (hasattr(value, 'read') or hasattr(value, 'write'))
@@ -503,6 +457,16 @@ def aresubclasses(subclasses, superclasses):
     return (len(subclasses) == len(superclasses) and
             all(issubclass(subclass, superclass)
                 for subclass, superclass in zip(subclasses, superclasses)))
+
+
+def isfinite(value):
+    """
+    Verifies that the given value is a finite number.
+    """
+    return (isinstance(value, (int, long)) or
+            (isinstance(value, float) and not math.isinf(value)
+                                      and not math.isnan(value)) or
+            (isinstance(value, decimal) and value.is_finite()))
 
 
 #

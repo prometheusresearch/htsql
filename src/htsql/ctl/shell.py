@@ -11,7 +11,6 @@ This module implements the `shell` routine.
 """
 
 
-from __future__ import with_statement
 from .error import ScriptError
 from .request import Request, DBRoutine
 from ..core.util import listof, trim_doc

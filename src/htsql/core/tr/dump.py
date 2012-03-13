@@ -30,6 +30,7 @@ from .signature import (Signature, isformula, IsEqualSig, IsTotallyEqualSig,
 from .plan import Plan, Statement
 import StringIO
 import re
+import math
 
 
 class Stream(StringIO.StringIO, object):
@@ -1515,8 +1516,7 @@ class DumpFloat(DumpByDomain):
         # provide an exact type specifier.
 
         # Last check that we didn't get a non-number.
-        # FIXME: Python 2.5/win32?
-        assert str(self.value) not in ['inf', '-inf', 'nan']
+        assert not math.isinf(self.value) and not math.isnan(self.value)
         # Write the standard representation of the number assuming that
         # the database could figure out its type from the context; use `(...)`
         # around a negative number.

@@ -19,6 +19,7 @@ from htsql.core.tr.fn.dump import (DumpTrunc, DumpTruncTo,
                                    DumpConcatenate, DumpLike,
                                    DumpMakeDate, DumpMakeDateTime,
                                    DumpCombineDateTime, DumpSum)
+import math
 
 
 class MySQLFormatName(FormatName):
@@ -39,7 +40,7 @@ class MySQLFormatLiteral(FormatLiteral):
 class MySQLDumpFloat(DumpFloat):
 
     def __call__(self):
-        assert str(self.value) not in ['inf', '-inf', 'nan']
+        assert not math.isinf(self.value) and not math.isnan(self.value)
         value = repr(self.value)
         if 'e' not in value and 'E' not in value:
             value = value+'e0'

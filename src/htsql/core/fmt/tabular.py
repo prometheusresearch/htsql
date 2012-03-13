@@ -20,6 +20,7 @@ from ..domain import (Domain, BooleanDomain, NumberDomain, FloatDomain,
                       VoidDomain, OpaqueDomain, Profile)
 import csv
 import cStringIO
+import math
 
 
 class EmitCSVHeaders(EmitHeaders):
@@ -207,7 +208,7 @@ class FloatToCSV(ToCSV):
     adapt(FloatDomain)
 
     def cells(self, value):
-        if value is None or str(value) in ['inf', '-inf', 'nan']:
+        if value is None or math.isinf(value) or math.isnan(value):
             yield [None]
         else:
             yield [unicode(value)]

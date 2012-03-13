@@ -11,7 +11,6 @@ This module implements an HTSQL application.
 """
 
 
-from __future__ import with_statement
 from .context import context
 from .addon import addon_registry
 from .adapter import ComponentRegistry

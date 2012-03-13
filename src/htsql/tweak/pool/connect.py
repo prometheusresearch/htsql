@@ -3,7 +3,6 @@
 #
 
 
-from __future__ import with_statement
 from ...core.adapter import rank
 from ...core.context import context
 from ...core.connect import Connect

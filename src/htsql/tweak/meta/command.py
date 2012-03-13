@@ -3,7 +3,6 @@
 #
 
 
-from __future__ import with_statement
 from ...core.context import context
 from ...core.cache import once
 from ...core.adapter import adapt, call

@@ -19,6 +19,7 @@ from ..domain import (Domain, BooleanDomain, NumberDomain, FloatDomain,
                       VoidDomain, OpaqueDomain, Profile)
 from .format import JSONFormat, ObjFormat, EmitHeaders, Emit
 import re
+import math
 import decimal
 
 
@@ -92,7 +93,7 @@ def dump_json(iterator):
         elif isinstance(token, (int, long)):
             line = unicode(token)
         elif isinstance(token, float):
-            if str(token) in ['inf', '-inf', 'nan']:
+            if math.isinf(token) or math.isnan(token):
                 line = u"null"
             else:
                 line = unicode(token)

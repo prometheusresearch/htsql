@@ -11,7 +11,6 @@ This module declares the database connection adapter.
 """
 
 
-from __future__ import with_statement
 from .util import Record
 from .adapter import Adapter, Utility, adapt
 from .domain import Domain

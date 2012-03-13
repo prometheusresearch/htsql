@@ -3,7 +3,6 @@
 #
 
 
-from __future__ import with_statement
 from .context import context
 import threading
 import functools

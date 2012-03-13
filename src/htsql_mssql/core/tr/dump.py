@@ -28,6 +28,7 @@ from htsql.core.tr.fn.dump import (DumpRound, DumpRoundTo, DumpTrunc,
                                    DumpDateTimeDecrement, DumpDateDifference)
 from htsql.core.tr.fn.signature import SortDirectionSig
 from .signature import RowNumberSig
+import math
 
 
 class MSSQLFormatName(FormatName):
@@ -144,7 +145,7 @@ class MSSQLDumpInteger(DumpInteger):
 class MSSQLDumpFloat(DumpFloat):
 
     def __call__(self):
-        assert str(self.value) not in ['inf', '-inf', 'nan']
+        assert not math.isinf(self.value) and not math.isnan(self.value)
         value = repr(self.value)
         if 'e' not in value and 'E' not in value:
             value = value+'e0'

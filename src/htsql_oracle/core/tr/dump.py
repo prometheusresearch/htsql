@@ -19,6 +19,7 @@ from htsql.core.tr.fn.dump import (DumpLength, DumpSubstring, DumpDateIncrement,
                                    DumpMakeDate, DumpCombineDateTime,
                                    DumpExtractSecond, DumpToday)
 from .signature import RowNumSig
+import math
 
 
 class OracleSerializeSegment(SerializeSegment):
@@ -158,7 +159,7 @@ class OracleDumpInteger(DumpInteger):
 class OracleDumpFloat(DumpFloat):
 
     def __call__(self):
-        assert str(self.value) not in ['inf', '-inf', 'nan']
+        assert not math.isinf(self.value) and not math.isnan(self.value)
         if self.value >= 0.0:
             self.write(u"%rD" % self.value)
         else:
