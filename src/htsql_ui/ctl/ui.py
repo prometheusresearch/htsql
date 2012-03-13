@@ -3,8 +3,8 @@
 #
 
 
-from .error import ScriptError
-from .request import DBRoutine, Request
+from htsql.ctl.error import ScriptError
+from htsql.ctl.request import DBRoutine, Request
 try:
     from PySide.QtCore import *
     from PySide.QtGui import *

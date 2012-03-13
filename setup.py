@@ -34,7 +34,7 @@ def get_routines():
         'server = htsql.ctl.server:ServerRoutine',
         'shell = htsql.ctl.shell:ShellRoutine',
         'regress = htsql.ctl.regress:RegressRoutine',
-        'ui = htsql.ctl.ui:UIRoutine',
+        'ui = htsql_ui.ctl.ui:UIRoutine',
     ]
 
 
