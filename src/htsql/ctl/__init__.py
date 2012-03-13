@@ -19,6 +19,7 @@ from .extension import ExtensionRoutine
 from .server import ServerRoutine
 from .shell import ShellRoutine
 from .regress import RegressRoutine
+from .ui import UIRoutine
 import sys
 
 
@@ -40,6 +41,7 @@ class HTSQL_CTL(Script):
             ServerRoutine,
             ShellRoutine,
             RegressRoutine,
+            UIRoutine,
     ]
     hint = """HTSQL command-line administrative application"""
     help = """
