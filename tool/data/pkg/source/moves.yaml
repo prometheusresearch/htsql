@@ -30,6 +30,7 @@ variables:
   packages:
   install-requires:
   console-scripts:
+  htsql-routines: # populated by the build script
   htsql-addons: # populated by the build script
   with-doc: false # not for substitution, used by the build script
 

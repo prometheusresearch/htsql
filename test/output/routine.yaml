@@ -25,12 +25,13 @@ tests:
       Run `htsql-ctl help <routine>` for help on a specific routine.
 
       Available routines:
-        help (h, ?)              : describe the usage of the application and its routines
-        version                  : display the version of the application
         extension (ext)          : list and describe HTSQL extensions
+        help (h, ?)              : describe the usage of the application and its routines
+        regress (test)           : run regression tests
         server (serve, s)        : start an HTTP server handling HTSQL requests
         shell (sh)               : start an HTSQL shell
-        regress (test)           : run regression tests
+        ui                       : start a visual HTSQL browser
+        version                  : display the version of the application
 
     exit: 0
   - ctl: [--version]
@@ -79,12 +80,13 @@ tests:
       Run `htsql-ctl help <routine>` for help on a specific routine.
 
       Available routines:
-        help (h, ?)              : describe the usage of the application and its routines
-        version                  : display the version of the application
         extension (ext)          : list and describe HTSQL extensions
+        help (h, ?)              : describe the usage of the application and its routines
+        regress (test)           : run regression tests
         server (serve, s)        : start an HTTP server handling HTSQL requests
         shell (sh)               : start an HTSQL shell
-        regress (test)           : run regression tests
+        ui                       : start a visual HTSQL browser
+        version                  : display the version of the application
 
     exit: 0
 - id: htsql-ctl-version

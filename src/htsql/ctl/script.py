@@ -17,6 +17,8 @@ from .option import Option
 from ..core.util import listof, trim_doc
 import os
 import sys
+import pkg_resources
+
 
 class Script(object):
     """
@@ -101,8 +103,8 @@ class Script(object):
     hint = None
     # Override to provide a long description of the application.
     help = None
-    # Override to provide a list of supported routines.
-    routines = []
+    # Override to provide the entry point containing routines.
+    routines_entry = None
 
     def __init__(self, stdin, stdout, stderr):
         # Standard input, output and error streams.
@@ -128,8 +130,9 @@ class Script(object):
         self.init_options()
 
     def init_routines(self):
-        # Populate `routine_by_name`; also do some sanity checks.
-        for routine_class in self.routines:
+        # Populate `routine_by_name` from the entry point.
+        for entry in pkg_resources.iter_entry_points(self.routines_entry):
+            routine_class = entry.load()
             # Sanity check on the routine parameters.
             assert issubclass(routine_class, Routine)
             assert isinstance(routine_class.name, str)
@@ -176,7 +179,8 @@ class Script(object):
 
     def init_options(self):
         # Populate `option_by_name`; check for duplicates.
-        for routine_class in self.routines:
+        for routine_name in sorted(self.routine_by_name):
+            routine_class = self.routine_by_name[routine_name]
             for option in routine_class.options:
                 for name in [option.short_name, option.long_name]:
                     if name is not None:

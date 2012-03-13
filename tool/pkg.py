@@ -110,6 +110,10 @@ def get_version():
     return yaml.load(pipe_python("-c 'import setup, yaml;"
                                  " print yaml.dump(setup.get_version())'"))
 
+def get_routines():
+    return yaml.load(pipe_python("-c 'import setup, yaml;"
+                                 " print yaml.dump(setup.get_routines())'"))
+
 def get_addons():
     return yaml.load(pipe_python("-c 'import setup, yaml;"
                                  " print yaml.dump(setup.get_addons())'"))
@@ -130,6 +134,7 @@ def pkg_src():
     if os.path.exists("./build/tmp"):
         rmtree("./build/tmp")
     version = get_version()
+    all_routines = get_routines()
     all_addons = get_addons()
     moves = load_moves(DATA_ROOT+"/pkg/source/moves.yaml")
     src_vm.start()
@@ -137,10 +142,14 @@ def pkg_src():
         for move in moves:
             with_doc = move.variables['with-doc']
             packages = move.variables['packages'].strip().splitlines()
+            routines = "".join(routine+"\n" for routine in all_routines
+                               if routine.split('=', 1)[1].strip().split('.')[0]
+                                                                in packages)
             addons = "".join(addon+"\n" for addon in all_addons
                              if addon.split('=', 1)[1].strip().split('.')[0]
                                                                 in packages)
             move.variables['version'] = version
+            move.variables['htsql-routines'] = routines
             move.variables['htsql-addons'] = addons
             mktree("./build/tmp")
             run("hg archive ./build/tmp/htsql")

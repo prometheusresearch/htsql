@@ -3,11 +3,19 @@
 #
 
 
+from .error import ScriptError
 from .request import DBRoutine, Request
-from PySide.QtCore import *
-from PySide.QtGui import *
-from PySide.QtWebKit import *
-from PySide.QtNetwork import *
+try:
+    from PySide.QtCore import *
+    from PySide.QtGui import *
+    from PySide.QtWebKit import *
+    from PySide.QtNetwork import *
+    has_pyside = True
+except ImportError:
+    has_pyside = False
+    QNetworkReply = object
+    QNetworkAccessManager = object
+    QDialog = object
 
 
 class HTSQLNetworkReply(QNetworkReply):
@@ -110,8 +118,11 @@ class HTSQLForm(QDialog):
 class UIRoutine(DBRoutine):
 
     name = 'ui'
+    hint = """start a visual HTSQL browser"""
 
     def start(self, app):
+        if not has_pyside:
+            raise ScriptError("PySide is not installed")
         qt = QApplication([self.executable])
         form = HTSQLForm(app)
         form.show()

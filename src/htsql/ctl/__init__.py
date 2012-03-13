@@ -12,14 +12,6 @@ This package implements the ``htsql-ctl`` script.
 
 from ..core.util import trim_doc
 from .script import Script
-from .default import DefaultRoutine
-from .help import HelpRoutine
-from .version import VersionRoutine
-from .extension import ExtensionRoutine
-from .server import ServerRoutine
-from .shell import ShellRoutine
-from .regress import RegressRoutine
-from .ui import UIRoutine
 import sys
 
 
@@ -33,16 +25,7 @@ class HTSQL_CTL(Script):
         exit_code = ctl.main(argv)
     """
 
-    routines = [
-            DefaultRoutine,
-            HelpRoutine,
-            VersionRoutine,
-            ExtensionRoutine,
-            ServerRoutine,
-            ShellRoutine,
-            RegressRoutine,
-            UIRoutine,
-    ]
+    routines_entry = 'htsql.routines'
     hint = """HTSQL command-line administrative application"""
     help = """
     Run `%(executable)s help` for general usage and list of routines.

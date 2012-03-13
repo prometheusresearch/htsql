@@ -128,10 +128,10 @@ HTSQL is a Python Library
    .. sourcecode:: python
 
       from htsql import HTSQL
-      conn = HTSQL("pgsql:///htsql_demo")
-      rows = conn.produce("/school")
+      demo = HTSQL("pgsql:///htsql_demo")
+      rows = demo.produce("/school")
       for row in rows: 
-         print row
+          print row
 
    .. sourcecode:: python
 

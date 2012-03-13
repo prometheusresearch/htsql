@@ -90,9 +90,10 @@ class HelpRoutine(Routine):
             self.ctl.out(help)
         self.ctl.out()
         self.ctl.out("Available routines:")
-        for routine_class in self.ctl.routines:
-            if not routine_class.name:
-                continue
+        routines = set(routine_class
+                       for routine_class in self.ctl.routine_by_name.values()
+                       if routine_class.name)
+        for routine_class in sorted(routines, key=(lambda c: c.name)):
             name = routine_class.name
             if routine_class.aliases:
                 name = "%s (%s)" % (name, ", ".join(routine_class.aliases))

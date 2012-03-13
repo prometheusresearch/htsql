@@ -23,6 +23,21 @@ def get_version():
     return version
 
 
+def get_routines():
+    # Get all provided routines.
+    # FIXME: move to an external file.
+    return [
+        'default = htsql.ctl.default:DefaultRoutine',
+        'help = htsql.ctl.help:HelpRoutine',
+        'version = htsql.ctl.version:VersionRoutine',
+        'extension = htsql.ctl.extension:ExtensionRoutine',
+        'server = htsql.ctl.server:ServerRoutine',
+        'shell = htsql.ctl.shell:ShellRoutine',
+        'regress = htsql.ctl.regress:RegressRoutine',
+        'ui = htsql.ctl.ui:UIRoutine',
+    ]
+
+
 def get_addons():
     # Get all exported addons.
     # FIXME: move to an external file or introspect from the source.
@@ -68,6 +83,7 @@ if __name__ == '__main__':
           zip_safe=False,
           entry_points={
               'console_scripts': ['htsql-ctl = htsql.ctl:main'],
+              'htsql.routines': get_routines(),
               'htsql.addons': get_addons()})
 
 

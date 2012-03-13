@@ -34,11 +34,15 @@ INSTALL_REQUIRES = """
 ${INSTALL_REQUIRES}""".strip().splitlines()
 CONSOLE_SCRIPTS = """
 ${CONSOLE_SCRIPTS}""".strip().splitlines() or None
+HTSQL_ROUTINES = """
+${HTSQL_ROUTINES}""".strip().splitlines() or None
 HTSQL_ADDONS = """
 ${HTSQL_ADDONS}""".strip().splitlines() or None
 ENTRY_POINTS = {}
 if CONSOLE_SCRIPTS:
     ENTRY_POINTS['console_scripts'] = CONSOLE_SCRIPTS
+if HTSQL_ROUTINES:
+    ENTRY_POINTS['htsql.routines'] = HTSQL_ROUTINES
 if HTSQL_ADDONS:
     ENTRY_POINTS['htsql.addons'] = HTSQL_ADDONS
 
