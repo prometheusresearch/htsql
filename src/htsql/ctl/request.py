@@ -313,7 +313,7 @@ class DBRoutine(Routine):
     ]
 
     # Path to the default configuration file.
-    rc_path = '~/.htsqlrc'
+    default_path = '~/.htsql/default.yaml'
 
     def run(self):
         # Determine HTSQL initialization parameters.
@@ -338,7 +338,7 @@ class DBRoutine(Routine):
                 parameters.append(config_extension)
 
         # Load the default configuration from the RC file.
-        path = os.path.abspath(os.path.expanduser(self.rc_path))
+        path = os.path.abspath(os.path.expanduser(self.default_path))
         if os.path.exists(path):
             stream = open(path, 'rb')
             loader = ConfigYAMLLoader(stream)

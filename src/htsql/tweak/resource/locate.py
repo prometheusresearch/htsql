@@ -99,7 +99,7 @@ class LocateRemote(Locate):
 
     def init_repository(self):
         userdir = os.path.expanduser('~')
-        staticdir = os.path.join(userdir, '.htsql.shared')
+        staticdir = os.path.join(userdir, '.htsql')
         resourcedir = os.path.join(staticdir, 'resource')
         cachedir = os.path.join(resourcedir, '%s.%s' % (self.cache, self.md5))
         if not os.path.exists(cachedir):

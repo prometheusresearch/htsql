@@ -903,7 +903,7 @@ class ShellRoutine(DBRoutine):
     """
 
     # Path to the file keeping the `readline` history.
-    history_path = '~/.htsql_shell_history'
+    history_path = '~/.htsql/shell.history'
 
     # Potential pagers, used when $PAGER is not set.
     default_pager_paths = ['/usr/bin/pager', '/usr/bin/more']
@@ -1055,6 +1055,12 @@ class ShellRoutine(DBRoutine):
         # Save the `readline` history; restore the original state of completion.
         if self.ctl.is_interactive and readline is not None:
             path = os.path.abspath(os.path.expanduser(self.history_path))
+            directory = os.path.dirname(path)
+            if not os.path.exists(directory):
+                try:
+                    os.mkdir(directory, 0700)
+                except OSError:
+                    return
             readline.write_history_file(path)
             readline.set_completer(self.state.completer)
             readline.set_completer_delims(self.state.completer_delims)
