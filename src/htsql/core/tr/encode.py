@@ -29,7 +29,7 @@ from .lookup import direct
 from .flow import (RootFlow, ScalarFlow, DirectTableFlow, FiberTableFlow,
                    QuotientFlow, ComplementFlow, MonikerFlow, ForkedFlow,
                    LinkedFlow, FilteredFlow, OrderedFlow,
-                   QueryExpr, SegmentExpr, LiteralCode, FormulaCode,
+                   QueryExpr, SegmentCode, LiteralCode, FormulaCode,
                    CastCode, RecordCode, AnnihilatorCode,
                    ColumnUnit, ScalarUnit, KernelUnit)
 from .signature import Signature, IsNullSig, NullIfSig
@@ -232,7 +232,7 @@ class EncodeSegment(Encode):
             filter = FormulaCode(IsNullSig(-1), coerce(BooleanDomain()),
                                  code.binding, op=code)
             flow = FilteredFlow(flow, filter, flow.binding)
-        return SegmentExpr(flow, code, self.binding)
+        return SegmentCode(flow, code, self.binding)
 
 
 class RelateRoot(Relate):

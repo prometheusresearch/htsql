@@ -17,7 +17,7 @@ from ..domain import BooleanDomain
 from .error import CompileError
 from .coerce import coerce
 from .signature import IsNullSig, AndSig
-from .flow import (Expression, QueryExpr, SegmentExpr, Code, LiteralCode,
+from .flow import (Expression, QueryExpr, SegmentCode, Code, LiteralCode,
                    FormulaCode, Flow, RootFlow, ScalarFlow, TableFlow,
                    QuotientFlow, ComplementFlow, MonikerFlow,
                    ForkedFlow, LinkedFlow, FilteredFlow, OrderedFlow,
@@ -561,7 +561,7 @@ class CompileQuery(Compile):
 
 class CompileSegment(Compile):
 
-    adapt(SegmentExpr)
+    adapt(SegmentCode)
 
     def __call__(self):
         # Get the ordering of the segment flow.

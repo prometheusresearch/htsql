@@ -15,7 +15,7 @@ from ..adapter import Utility, Adapter, adapt
 from ..domain import BooleanDomain
 from .error import EncodeError
 from .coerce import coerce
-from .flow import (Expression, QueryExpr, SegmentExpr, Flow, RootFlow,
+from .flow import (Expression, QueryExpr, SegmentCode, Flow, RootFlow,
                    QuotientFlow, ComplementFlow, MonikerFlow, ForkedFlow,
                    LinkedFlow, FilteredFlow, OrderedFlow,
                    Code, LiteralCode, CastCode, RecordCode,
@@ -602,7 +602,7 @@ class RewriteQuery(Rewrite):
 
 class RewriteSegment(Rewrite):
 
-    adapt(SegmentExpr)
+    adapt(SegmentCode)
 
     def __call__(self):
         # Rewrite the output flow and output record.
@@ -613,7 +613,7 @@ class RewriteSegment(Rewrite):
 
 class UnmaskSegment(Unmask):
 
-    adapt(SegmentExpr)
+    adapt(SegmentCode)
 
     def __call__(self):
         # Unmask the output record against the output flow.
@@ -627,7 +627,7 @@ class UnmaskSegment(Unmask):
 
 class CollectSegment(Collect):
 
-    adapt(SegmentExpr)
+    adapt(SegmentCode)
 
     def __call__(self):
         # Collect units in the output flow and output columns.
@@ -637,7 +637,7 @@ class CollectSegment(Collect):
 
 class ReplaceSegment(Replace):
 
-    adapt(SegmentExpr)
+    adapt(SegmentCode)
 
     def __call__(self):
         # Rewrite the output flow and output columns.

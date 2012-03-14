@@ -13,7 +13,7 @@ This module declares flow and code nodes.
 
 from ..util import (maybe, listof, tupleof, Clonable, Comparable, Printable)
 from ..entity import TableEntity, ColumnEntity, Join
-from ..domain import Domain, BooleanDomain
+from ..domain import Domain, BooleanDomain, ListDomain
 from .binding import Binding, QueryBinding, SegmentBinding
 from .signature import Signature, Bag, Formula
 
@@ -87,32 +87,15 @@ class QueryExpr(Expression):
     """
     Represents the whole HTSQL query.
 
-    `segment` (:class:`SegmentExpr` or ``None``)
+    `segment` (:class:`SegmentCode` or ``None``)
         The query segment.
     """
 
     def __init__(self, segment, binding):
-        assert isinstance(segment, maybe(SegmentExpr))
+        assert isinstance(segment, maybe(SegmentCode))
         assert isinstance(binding, QueryBinding)
         super(QueryExpr, self).__init__(binding)
         self.segment = segment
-
-
-class SegmentExpr(Expression):
-    """
-    Represents a segment of an HTSQL query.
-
-    `flow` (:class:`Flow`)
-        The output flow of the segment.
-    """
-
-    def __init__(self, flow, code, binding):
-        assert isinstance(flow, Flow)
-        assert isinstance(code, Code)
-        assert isinstance(binding, SegmentBinding)
-        super(SegmentExpr, self).__init__(binding)
-        self.flow = flow
-        self.code = code
 
 
 class Family(object):
@@ -1332,6 +1315,27 @@ class Code(Expression):
         # Do not assign when implemented as a property.
         if units is not None:
             self.units = units
+
+
+class SegmentCode(Code):
+    """
+    Represents a segment of an HTSQL query.
+
+    `flow` (:class:`Flow`)
+        The output flow of the segment.
+    """
+
+    def __init__(self, flow, code, binding):
+        assert isinstance(flow, Flow)
+        assert isinstance(code, Code)
+        assert isinstance(binding, SegmentBinding)
+        super(SegmentCode, self).__init__(
+                domain=ListDomain(code.domain),
+                units=[],
+                binding=binding,
+                equality_vector=(flow, code))
+        self.flow = flow
+        self.code = code
 
 
 class LiteralCode(Code):

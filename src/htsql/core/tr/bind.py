@@ -12,10 +12,10 @@ This module implements the binding process.
 
 
 from ..util import maybe, listof, tupleof, similar
-from ..adapter import Adapter, Protocol, adapt
-from ..domain import (BooleanDomain, IntegerDomain, DecimalDomain,
-                      FloatDomain, UntypedDomain, RecordDomain, ListDomain,
-                      VoidDomain)
+from ..adapter import Adapter, Protocol, adapt, adapt_many
+from ..domain import (Domain, BooleanDomain, IntegerDomain, DecimalDomain,
+                      FloatDomain, UntypedDomain, EntityDomain, RecordDomain,
+                      ListDomain, VoidDomain)
 from ..classify import normalize
 from .error import BindError
 from .syntax import (Syntax, QuerySyntax, SegmentSyntax, SelectorSyntax,
@@ -298,34 +298,63 @@ class BindSegment(Bind):
             seed = self.state.scope
         if lookup_command(seed) is not None:
             return seed
-        seed = self.normalize(seed)
+        seed = Select.__invoke__(seed, self.state)
         domain = ListDomain(seed.domain)
         return SegmentBinding(self.state.scope, seed, domain,
                               self.syntax)
 
-    def normalize(self, binding):
-        recipes = expand(binding, with_syntax=True, with_wild=True,
+
+class Select(Adapter):
+
+    adapt(Domain)
+
+    @classmethod
+    def __dispatch__(interface, binding, *args, **kwds):
+        assert isinstance(binding, Binding)
+        return (type(binding.domain),)
+
+    def __init__(self, binding, state):
+        self.binding = binding
+        self.state = state
+
+    def __call__(self):
+        domain = coerce(self.binding.domain)
+        if domain is None:
+            # FIXME: separate implementation for VoidDomain with a better error
+            # message.
+            raise BindError("output column must be scalar",
+                            self.binding.mark)
+        return ImplicitCastBinding(self.binding, domain, self.binding.syntax)
+
+
+class SelectRecord(Select):
+
+    adapt_many(EntityDomain,
+               RecordDomain)
+
+    def __call__(self):
+        recipes = expand(self.binding, with_syntax=True, with_wild=True,
                          with_class=True)
-        if recipes is not None:
-            elements = []
-            for syntax, recipe in recipes:
-                element = self.state.use(recipe, syntax, scope=binding)
-                element = self.normalize(element)
-                elements.append(element)
-            #if not elements:
-            #    raise BindError("output columns are not specified",
-            #                    binding.syntax.mark)
-            fields = [decorate(element) for element in elements]
-            domain = RecordDomain(fields)
-            binding = SelectionBinding(binding, elements, domain,
-                                       binding.syntax)
-        else:
-            domain = coerce(binding.domain)
-            if domain is None:
-                raise BindError("output column must be scalar",
-                                binding.mark)
-            binding = ImplicitCastBinding(binding, domain, binding.syntax)
+        if recipes is None:
+            return super(SelectRecord, self).__call__()
+        elements = []
+        for syntax, recipe in recipes:
+            element = self.state.use(recipe, syntax, scope=self.binding)
+            element = Select.__invoke__(element, self.state)
+            elements.append(element)
+        fields = [decorate(element) for element in elements]
+        domain = RecordDomain(fields)
+        binding = SelectionBinding(self.binding, elements, domain,
+                                   self.binding.syntax)
         return binding
+
+
+class SelectList(Select):
+
+    adapt(ListDomain)
+
+    def __call__(self):
+        return self.binding
 
 
 class BindSelector(Bind):
