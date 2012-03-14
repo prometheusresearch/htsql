@@ -1285,26 +1285,100 @@ selection operator.
 Formatters
 ==========
 
-+----------------------+---------------------------+
-| Function             | Description               |
-+======================+===========================+
-| `/:html`             | HTML tabular output       |
-+----------------------+---------------------------+
-| `/:txt`              | plain text tabular output |
-+----------------------+---------------------------+
-| `/:csv`              | CSV (comma-separated      |
-|                      | values) output            |
-+----------------------+---------------------------+
-| `/:tsv`              | TSV (tab-separated        |
-|                      | values) output            |
-+----------------------+---------------------------+
-| `/:json`             | JSON-serialized output    |
-+----------------------+---------------------------+
++---------------+---------------------------------------+
+| Function      | Description                           |
++===============+=======================================+
+| `/:html`      | HTML presentation output              |
++---------------+---------------------------------------+
+| `/:txt`       | plain text presentation output        |
++---------------+---------------------------------------+
+| `/:csv`       | CSV (comma-separated values) output   |
++---------------+---------------------------------------+
+| `/:tsv`       | TSV (tab-separated values) output     |
++---------------+---------------------------------------+
+| `/:json`      | JSON-serialized generic output        |
++---------------+---------------------------------------+
+| `/:obj`       | JSON-serialized object output         |
++---------------+---------------------------------------+
+| `/:xml`       | XML-serialized object output          |
++---------------+---------------------------------------+
+| `/:sql`       | prints corresponding SQL queries      |
++---------------+---------------------------------------+
 
-These functions specify the format of the output data.
+These functions specify the format of the output data. 
 
-.. htsql:: /school/:csv
+Presentation Output
+-------------------
+
+We support two presentation outputs, ``/:txt`` output format is
+supported for text clients like our command line shell, and the
+``/:html`` provides single-page static output.  The ``/:html``
+format has a customizable template that can be used to provide
+headers and footers.
+
+.. htsql:: /department{school,*}/:html
+   :plain:
+   :hide:
+
+.. htsql:: /department{school,*}/:txt
+   :plain:
+   :cut: 12
+
+Object Output
+-------------
+
+The ``/:xml`` and ``/:obj`` formatters produce a customary "object"
+structure which lack any header information.  These object formats are
+perfect for post-processing tools that already know about the query
+output structure, such as a Javascript program or XSLT stylesheet.
+
+.. htsql:: /department{school,*}.limit(3)/:obj
+   :plain:
+
+.. htsql:: /department{school,*}.limit(3)/:xml
+   :plain:
+
+
+Tabular Output
+--------------
+
+Tabular formatters (``/:csv``, ``/:tsv``) are intended for use in data
+processing tools.  These formats include only column headers and the
+output data on subsequent rows.
+
+.. htsql:: /department{school,*}/:csv
+   :plain:
    :cut: 3
+
+.. htsql:: /department{school,*}/:tsv
+   :plain:
+   :cut: 3
+
+Generic Output
+--------------
+
+Our primary default output, ``/:json``, is meant for generic tools that
+must handle arbitrary queries.  This format reflects our native product
+structure and has two corresponding sections:  ``meta`` details type
+information and ``data`` has the corresponding output data.  
+
+
+.. htsql:: /department{school,*}.limit(3)/:json
+   :plain:
+
+This format is used by our visual ``shell`` query tool and also for
+producing output via our Sphinx plugin.
+
+Query Debug
+-----------
+
+The special ``/:sql`` designator isn't actually a formatter at all,
+since it shortcuts the whole query execution part of the engine and
+produces the SQL queries used as an output.  It's useful for
+understanding what's going on under the hood.
+
+.. htsql:: /department{school,*}/:sql
+   :plain:
 
 
 .. vim: set spell spelllang=en textwidth=72:
