@@ -130,7 +130,7 @@ class QueryParser(Parser):
                             identifier call? | reference | literal
         index           ::= NUMBER | '(' NUMBER ')'
 
-        group           ::= '(' top ')'
+        group           ::= '(' segment | top ')'
         call            ::= '(' arguments? ')'
         selector        ::= '{' arguments? '}'
         arguments       ::= argument ( ',' argument )* ','?
@@ -648,9 +648,12 @@ class GroupParser(Parser):
     @classmethod
     def process(self, tokens):
         # Expect:
-        #   group       ::= '(' top ')'
+        #   group       ::= '(' segment | top ')'
         head_token = tokens.pop(SymbolToken, [u'('])
-        branch = TopParser << tokens
+        if tokens.peek(SymbolToken, [u'/']):
+            branch = SegmentParser << tokens
+        else:
+            branch = TopParser << tokens
         tail_token = tokens.pop(SymbolToken, [u')'], do_force=False)
         if tail_token is None:
             mark = Mark.union(head_token, branch)
