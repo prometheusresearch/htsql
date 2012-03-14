@@ -39,6 +39,12 @@ class Domain(Comparable, Clonable, Printable):
 
     family = 'unknown'
 
+    def __init__(self):
+        pass
+
+    def __basis__(self):
+        return ()
+
     def parse(self, data):
         """
         Converts an HTSQL literal to a native Python object.
@@ -90,9 +96,6 @@ class VoidDomain(Domain):
     """
     family = 'void'
 
-    def __init__(self):
-        super(VoidDomain, self).__init__(equality_vector=())
-
 
 class UntypedDomain(Domain):
     """
@@ -103,19 +106,18 @@ class UntypedDomain(Domain):
     """
     family = 'untyped'
 
-    def __init__(self):
-        super(UntypedDomain, self).__init__(equality_vector=())
-
 
 class Profile(Comparable, Clonable, Printable):
 
     def __init__(self, domain, **attributes):
         assert isinstance(domain, Domain)
-        super(Profile, self).__init__(equality_vector=(domain,))
         self.domain = domain
         for key in attributes:
             setattr(self, key, attributes[key])
         self.attributes = attributes
+
+    def __basis__(self):
+        return (self.domain,)
 
     def __str__(self):
         return str(self.domain)
@@ -125,9 +127,6 @@ class EntityDomain(Domain):
 
     family = 'entity'
 
-    def __init__(self):
-        super(EntityDomain, self).__init__(equality_vector=())
-
 
 class RecordDomain(Domain):
 
@@ -135,8 +134,10 @@ class RecordDomain(Domain):
 
     def __init__(self, fields):
         assert isinstance(fields, listof(Profile))
-        super(RecordDomain, self).__init__(equality_vector=(tuple(fields),))
         self.fields = fields
+
+    def __basis__(self):
+        return (tuple(self.fields),)
 
     def __str__(self):
         return "{%s}" % ", ".join(str(field) for field in self.fields)
@@ -148,8 +149,10 @@ class ListDomain(Domain):
 
     def __init__(self, item_domain):
         assert isinstance(item_domain, Domain)
-        super(ListDomain, self).__init__(equality_vector=(item_domain,))
         self.item_domain = item_domain
+
+    def __basis__(self):
+        return (self.item_domain,)
 
     def __str__(self):
         return "/%s" % self.item_domain
@@ -164,9 +167,6 @@ class BooleanDomain(Domain):
     Valid native values: `bool` objects.
     """
     family = 'boolean'
-
-    def __init__(self):
-        super(BooleanDomain, self).__init__(equality_vector=())
 
     def parse(self, data):
         # Sanity check on the argument.
@@ -236,7 +236,9 @@ class IntegerDomain(NumberDomain):
         # Sanity check on the arguments.
         assert isinstance(size, maybe(int))
         self.size = size
-        super(IntegerDomain, self).__init__(equality_vector=(size,))
+
+    def __basis__(self):
+        return (self.size,)
 
     def parse(self, data):
         # Sanity check on the arguments.
@@ -284,7 +286,9 @@ class FloatDomain(NumberDomain):
         # Sanity check on the arguments.
         assert isinstance(size, maybe(int))
         self.size = size
-        super(FloatDomain, self).__init__(equality_vector=(size,))
+
+    def __basis__(self):
+        return (self.size,)
 
     def parse(self, data):
         # Sanity check on the argument.
@@ -340,7 +344,9 @@ class DecimalDomain(NumberDomain):
         assert isinstance(scale, maybe(int))
         self.precision = precision
         self.scale = scale
-        super(DecimalDomain, self).__init__(equality_vector=(precision, scale))
+
+    def __basis__(self):
+        return (self.precision, self.scale)
 
     def parse(self, data):
         # Sanity check on the arguments.
@@ -399,8 +405,9 @@ class StringDomain(Domain):
         assert isinstance(is_varying, bool)
         self.length = length
         self.is_varying = is_varying
-        super(StringDomain, self).__init__(
-                equality_vector=(length, is_varying))
+
+    def __basis__(self):
+        return (self.length, self.is_varying)
 
     def parse(self, data):
         # Sanity check on the argument.
@@ -437,7 +444,9 @@ class EnumDomain(Domain):
     def __init__(self, labels):
         assert isinstance(labels, listof(unicode))
         self.labels = labels
-        super(EnumDomain, self).__init__(equality_vector=(tuple(labels),))
+
+    def __basis__(self):
+        return (tuple(self.labels),)
 
     def parse(self, data):
         # Sanity check on the argument.
@@ -485,9 +494,6 @@ class DateDomain(Domain):
         \s* $
     '''
     regexp = re.compile(pattern)
-
-    def __init__(self):
-        super(DateDomain, self).__init__(equality_vector=())
 
     def parse(self, data):
         # Sanity check on the argument.
@@ -541,9 +547,6 @@ class TimeDomain(Domain):
         \s* $
     '''
     regexp = re.compile(pattern)
-
-    def __init__(self):
-        super(TimeDomain, self).__init__(equality_vector=())
 
     def parse(self, data):
         # Sanity check on the argument.
@@ -627,9 +630,6 @@ class DateTimeDomain(Domain):
     '''
     regexp = re.compile(pattern)
 
-    def __init__(self):
-        super(DateTimeDomain, self).__init__(equality_vector=())
-
     def parse(self, data):
         # Sanity check on the argument.
         assert isinstance(data, maybe(unicode))
@@ -701,8 +701,5 @@ class OpaqueDomain(Domain):
     using :meth:`dump`.
     """
     family = 'opaque'
-
-    def __init__(self):
-        super(OpaqueDomain, self).__init__(equality_vector=())
 
 

@@ -32,9 +32,8 @@ class Syntax(Printable, Comparable, Clonable):
     escape_regexp = re.compile(escape_pattern, re.U)
     escape_replace = (lambda s, m: u"%%%02X" % ord(m.group()))
 
-    def __init__(self, mark, equality_vector):
+    def __init__(self, mark):
         assert isinstance(mark, Mark)
-        super(Syntax, self).__init__(equality_vector=equality_vector)
         self.mark = mark
 
     def __unicode__(self):
@@ -55,7 +54,10 @@ class Syntax(Printable, Comparable, Clonable):
 class VoidSyntax(Syntax):
 
     def __init__(self):
-        super(VoidSyntax, self).__init__(EmptyMark(), equality_vector=())
+        super(VoidSyntax, self).__init__(EmptyMark())
+
+    def __basis__(self):
+        return ()
 
     def __unicode__(self):
         return u''
@@ -71,9 +73,11 @@ class QuerySyntax(Syntax):
 
     def __init__(self, segment, mark):
         assert isinstance(segment, SegmentSyntax)
-
-        super(QuerySyntax, self).__init__(mark, equality_vector=(segment,))
+        super(QuerySyntax, self).__init__(mark)
         self.segment = segment
+
+    def __basis__(self):
+        return (self.segment,)
 
     def __unicode__(self):
         # Generate an HTSQL query:
@@ -91,9 +95,11 @@ class SegmentSyntax(Syntax):
 
     def __init__(self, branch, mark):
         assert isinstance(branch, maybe(Syntax))
-
-        super(SegmentSyntax, self).__init__(mark, equality_vector=(branch,))
+        super(SegmentSyntax, self).__init__(mark)
         self.branch = branch
+
+    def __basis__(self):
+        return (self.branch,)
 
     def __unicode__(self):
         # Display:
@@ -126,11 +132,12 @@ class SelectorSyntax(Syntax):
     def __init__(self, lbranch, rbranches, mark):
         assert isinstance(lbranch, maybe(Syntax))
         assert isinstance(rbranches, listof(Syntax))
-
-        super(SelectorSyntax, self).__init__(mark,
-                equality_vector=(lbranch, tuple(rbranches)))
+        super(SelectorSyntax, self).__init__(mark)
         self.lbranch = lbranch
         self.rbranches = rbranches
+
+    def __basis__(self):
+        return (self.lbranch, tuple(self.rbranches))
 
     def __unicode__(self):
         # Generate an HTSQL fragment:
@@ -162,10 +169,10 @@ class ApplicationSyntax(Syntax):
         The list of arguments.
     """
 
-    def __init__(self, name, arguments, mark, equality_vector):
+    def __init__(self, name, arguments, mark):
         assert isinstance(name, unicode)
         assert isinstance(arguments, listof(Syntax))
-        super(ApplicationSyntax, self).__init__(mark, equality_vector)
+        super(ApplicationSyntax, self).__init__(mark)
         self.name = name
         self.arguments = arguments
 
@@ -189,13 +196,14 @@ class FunctionSyntax(ApplicationSyntax):
     def __init__(self, identifier, branches, mark):
         assert isinstance(identifier, IdentifierSyntax)
         assert isinstance(branches, listof(Syntax))
-
         name = identifier.value
         arguments = branches
-        super(FunctionSyntax, self).__init__(name, arguments, mark,
-                equality_vector=(identifier, tuple(branches)))
+        super(FunctionSyntax, self).__init__(name, arguments, mark)
         self.identifier = identifier
         self.branches = branches
+
+    def __basis__(self):
+        return (self.identifier, tuple(self.branches))
 
     def __unicode__(self):
         # Generate a fragment:
@@ -235,14 +243,15 @@ class MappingSyntax(ApplicationSyntax):
         assert isinstance(identifier, IdentifierSyntax)
         assert isinstance(lbranch, Syntax)
         assert isinstance(rbranches, listof(Syntax))
-
         name = identifier.value
         arguments = [lbranch] + rbranches
-        super(MappingSyntax, self).__init__(name, arguments, mark,
-                equality_vector=(identifier, lbranch, tuple(rbranches)))
+        super(MappingSyntax, self).__init__(name, arguments, mark)
         self.identifier = identifier
         self.lbranch = lbranch
         self.rbranches = rbranches
+
+    def __basis__(self):
+        return (self.identifier, self.lbranch, tuple(self.rbranches))
 
     def __unicode__(self):
         # Generate an HTSQL fragment:
@@ -326,11 +335,13 @@ class OperatorSyntax(ApplicationSyntax):
             arguments.append(lbranch)
         if rbranch is not None:
             arguments.append(rbranch)
-        super(OperatorSyntax, self).__init__(name, arguments, mark,
-                equality_vector=(symbol, lbranch, rbranch))
+        super(OperatorSyntax, self).__init__(name, arguments, mark)
         self.symbol = symbol
         self.lbranch = lbranch
         self.rbranch = rbranch
+
+    def __basis__(self):
+        return (self.symbol, self.lbranch, self.rbranch)
 
     def __unicode__(self):
         # Generate a fragment:
@@ -434,9 +445,11 @@ class GroupSyntax(Syntax):
 
     def __init__(self, branch, mark):
         assert isinstance(branch, Syntax)
-
-        super(GroupSyntax, self).__init__(mark, equality_vector=(branch,))
+        super(GroupSyntax, self).__init__(mark)
         self.branch = branch
+
+    def __basis__(self):
+        return (self.branch,)
 
     def __unicode__(self):
         return u'(%s)' % self.branch
@@ -453,9 +466,11 @@ class IdentifierSyntax(Syntax):
     def __init__(self, value, mark):
         assert isinstance(value, unicode)
         # FIXME: check for a valid identifier.
-
-        super(IdentifierSyntax, self).__init__(mark, equality_vector=(value,))
+        super(IdentifierSyntax, self).__init__(mark)
         self.value = value
+
+    def __basis__(self):
+        return (self.value,)
 
     def __unicode__(self):
         return self.value
@@ -476,9 +491,11 @@ class WildcardSyntax(Syntax):
 
     def __init__(self, index, mark):
         assert isinstance(index, maybe(NumberSyntax))
-
-        super(WildcardSyntax, self).__init__(mark, equality_vector=(index,))
+        super(WildcardSyntax, self).__init__(mark)
         self.index = index
+
+    def __basis__(self):
+        return (self.index,)
 
     def __unicode__(self):
         # Generate a fragment:
@@ -499,7 +516,10 @@ class ComplementSyntax(Syntax):
     """
 
     def __init__(self, mark):
-        super(ComplementSyntax, self).__init__(mark, equality_vector=())
+        super(ComplementSyntax, self).__init__(mark)
+
+    def __basis__(self):
+        return ()
 
     def __unicode__(self):
         return u'^'
@@ -519,9 +539,11 @@ class ReferenceSyntax(Syntax):
 
     def __init__(self, identifier, mark):
         assert isinstance(identifier, IdentifierSyntax)
-        super(ReferenceSyntax, self).__init__(mark,
-                equality_vector=(identifier,))
+        super(ReferenceSyntax, self).__init__(mark)
         self.identifier = identifier
+
+    def __basis__(self):
+        return (self.identifier,)
 
     def __unicode__(self):
         return u'$%s' % self.identifier
@@ -540,8 +562,11 @@ class LiteralSyntax(Syntax):
 
     def __init__(self, value, mark):
         assert isinstance(value, unicode)
-        super(LiteralSyntax, self).__init__(mark, equality_vector=(value,))
+        super(LiteralSyntax, self).__init__(mark)
         self.value = value
+
+    def __basis__(self):
+        return (self.value,)
 
 
 class StringSyntax(LiteralSyntax):

@@ -595,6 +595,26 @@ def toposort(elements, order, is_total=False):
 
 
 #
+# Cached property decorator.
+#
+
+
+class cachedproperty(object):
+
+    def __init__(self, fget):
+        self.fget = fget
+
+    def __get__(self, obj, objtype=None):
+        if obj is None:
+            return self
+        value = self.fget(obj)
+        # It is a non-data descriptor (`__set__` is not defined),
+        # so `__dict__` takes the precedence.
+        obj.__dict__[self.fget.__name__] = value
+        return value
+
+
+#
 # Node types with special behavior.
 #
 
@@ -783,64 +803,70 @@ class Comparable(object):
     """
     Implements an object with by-value comparison semantics.
 
-    The constructor arguments:
+    A subclass of :class:`Comparable` should reimplement :meth:`__basis__`
+    to produce a tuple of all object attributes which uniquely identify
+    the object.
 
-    `equality_vector` (an immutable tuple or ``None``)
-        Encapsulates all essential attributes of an object.  Two instances
-        of :class:`Comparable` are considered equal if they are of the
-        same type and their equality vectors are equal.  If ``None``, the
-        object is to be compared by identity.
+    Two :class:`Comparable` instances are considered equal if they are of
+    the same type and their basis vectors are equal.
 
     Other attributes:
 
-    `hash` (an integer)
-        The hash of the equality vector; if two objects are equal, their
-        hashes are also equal.
+    `_hash` (an integer)
+        The cached value of the object hash; computed lazily from the
+        basis.
+
+    `_basis` (a tuple)
+        The cached value of the object basis.
     """
 
-    def __init__(self, equality_vector=None):
-        # We assume that `Comparable` is the last constructor in the
-        # inheritance tree and therefore do not call the super constructor.
-        # However when using together with `Clonable`, the latter should be
-        # behind `Comparable`.
-        assert isinstance(equality_vector, maybe(oneof(tuple, int, long)))
-        # When `equality_vector` is not set, equality by identity
-        # is assumed.  Note that `A is B` <=> `id(A) == id(B)`.
-        if equality_vector is None:
-            equality_vector = id(self)
-        # Flatten the vector.
-        if isinstance(equality_vector, tuple):
-            elements = []
-            for element in equality_vector:
-                if isinstance(element, Comparable):
-                    elements.append((element.__class__, element.hash,
-                                     element.equality_vector))
-                else:
-                    elements.append(element)
-            equality_vector = tuple(elements)
-        self.equality_vector = equality_vector
-        self.hash = hash(equality_vector)
 
     def __hash__(self):
-        return self.hash
+        return self._hash
+
+    def __basis__(self):
+        # By default, objects are compared by identity.  Reimplement
+        # for by-value comparison.
+        return id(self)
+
+    @cachedproperty
+    def _hash(self):
+        # Calculate and cache the object hash.
+        return hash(self._basis)
+
+    @cachedproperty
+    def _basis(self):
+        # Get the object basis vector.
+        _basis = self.__basis__()
+        # Flatten and return the vector.
+        if isinstance(_basis, tuple):
+            elements = []
+            for element in _basis:
+                if isinstance(element, Comparable):
+                    elements.append((element.__class__,
+                                     element._hash,
+                                     element._basis))
+                else:
+                    elements.append(element)
+            _basis = tuple(elements)
+        return _basis
 
     def __eq__(self, other):
-        # Two nodes are equal if they are of the same type and
-        # their equality vectors are equal.  To avoid costly
-        # comparison of equality vectors in the more common
-        # "not equal" case, we compare hashes first.
+        # We could just compare object basis vectors, but
+        # for performance, we start with faster checks.
         return ((self is other) or
                 (isinstance(other, Comparable) and
                  self.__class__ is other.__class__ and
-                 self.hash == other.hash and
-                 self.equality_vector == other.equality_vector))
+                 self._hash == other._hash and
+                 self._basis == other._basis))
 
     def __ne__(self, other):
         # Since we override `==`, we also need to override `!=`.
-        return (not isinstance(other, Comparable) or
-                self.__class__ is not other.__class__ or
-                self.hash != other.hash and
-                self.equality_vector != other.equality_vector)
+        return ((self is not other) and
+                (not isinstance(other, Comparable) or
+                 self.__class__ is not other.__class__ or
+                 self._hash != other._hash and
+                 self._basis != other._basis))
 
 
 #

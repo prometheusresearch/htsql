@@ -31,9 +31,11 @@ class Joint(Comparable, Clonable, Printable):
     def __init__(self, lop, rop):
         assert isinstance(lop, Code)
         assert isinstance(rop, Code)
-        super(Joint, self).__init__(equality_vector=(lop, rop))
         self.lop = lop
         self.rop = rop
+
+    def __basis__(self):
+        return (self.lop, self.rop)
 
     def __iter__(self):
         """

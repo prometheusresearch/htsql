@@ -500,7 +500,7 @@ class Join(Printable, Comparable):
     is_reverse = False
 
     def __init__(self, origin, target, origin_columns, target_columns,
-                 is_expanding, is_contracting, equality_vector):
+                 is_expanding, is_contracting):
         # Sanity check on the arguments.
         assert isinstance(origin, TableEntity)
         assert isinstance(target, TableEntity)
@@ -509,7 +509,6 @@ class Join(Printable, Comparable):
         assert isinstance(is_expanding, bool)
         assert isinstance(is_contracting, bool)
 
-        super(Join, self).__init__(equality_vector=equality_vector)
         self.origin = origin
         self.target = target
         self.origin_columns = origin_columns
@@ -564,9 +563,11 @@ class DirectJoin(Join):
 
         super(DirectJoin, self).__init__(origin, target,
                                          origin_columns, target_columns,
-                                         is_expanding, is_contracting,
-                                         equality_vector=(foreign_key,))
+                                         is_expanding, is_contracting)
         self.foreign_key = foreign_key
+
+    def __basis__(self):
+        return (self.foreign_key,)
 
     def reverse(self):
         return ReverseJoin(self.foreign_key)
@@ -606,9 +607,11 @@ class ReverseJoin(Join):
 
         super(ReverseJoin, self).__init__(origin, target,
                                           origin_columns, target_columns,
-                                          is_expanding, is_contracting,
-                                          equality_vector=(foreign_key,))
+                                          is_expanding, is_contracting)
         self.foreign_key = foreign_key
+
+    def __basis__(self):
+        return (self.foreign_key,)
 
     def reverse(self):
         return DirectJoin(self.foreign_key)

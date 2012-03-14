@@ -69,13 +69,14 @@ class Claim(Comparable, Printable):
         assert isinstance(unit, Unit)
         assert isinstance(broker, int)
         assert isinstance(target, int)
-        # Claim objects need by-value comparison to avoid assigning
-        # multiple claims for the same unit.
-        equality_vector = (unit, broker, target)
-        super(Claim, self).__init__(equality_vector)
         self.unit = unit
         self.broker = broker
         self.target = target
+
+    def __basis__(self):
+        # Claim objects need by-value comparison to avoid assigning
+        # multiple claims for the same unit.
+        return (self.unit, self.broker, self.target)
 
     def __str__(self):
         return "(%s)->%s->%s" % (self.unit, self.broker, self.target)

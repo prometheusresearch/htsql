@@ -38,8 +38,10 @@ class SortDirectionSig(Signature):
 
     def __init__(self, direction):
         assert direction in [+1, -1]
-        super(SortDirectionSig, self).__init__(equality_vector=(direction,))
         self.direction = direction
+
+    def __basis__(self):
+        return (self.direction,)
 
 
 class LimitSig(Signature):
@@ -304,9 +306,11 @@ class TrimSig(UnarySig):
         assert isinstance(is_left, bool)
         assert isinstance(is_right, bool)
         assert is_left or is_right
-        super(TrimSig, self).__init__(equality_vector=(is_left, is_right))
         self.is_left = is_left
         self.is_right = is_right
+
+    def __basis__(self):
+        return (self.is_left, self.is_right)
 
 
 class TodaySig(NullarySig):

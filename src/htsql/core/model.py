@@ -10,7 +10,9 @@ from .tr.syntax import Syntax
 
 
 class Model(Comparable, Clonable, Printable):
-    pass
+
+    def __init__(self):
+        pass
 
 
 class Node(Model):
@@ -19,14 +21,12 @@ class Node(Model):
 
 class Arc(Model):
 
-    def __init__(self, origin, target, arity, is_expanding, is_contracting,
-                 equality_vector):
+    def __init__(self, origin, target, arity, is_expanding, is_contracting):
         assert isinstance(origin, Node)
         assert isinstance(target, Node)
         assert isinstance(arity, maybe(int))
         assert isinstance(is_expanding, bool)
         assert isinstance(is_contracting, bool)
-        super(Arc, self).__init__(equality_vector)
         self.origin = origin
         self.target = target
         self.arity = arity
@@ -62,8 +62,8 @@ class Label(Clonable, Printable):
 
 class HomeNode(Node):
 
-    def __init__(self):
-        super(HomeNode, self).__init__(equality_vector=())
+    def __basis__(self):
+        return ()
 
     def __str__(self):
         return "()"
@@ -73,8 +73,10 @@ class TableNode(Node):
 
     def __init__(self, table):
         assert isinstance(table, TableEntity)
-        super(TableNode, self).__init__(equality_vector=(table,))
         self.table = table
+
+    def __basis__(self):
+        return (self.table,)
 
     def __str__(self):
         return str(self.table)
@@ -84,8 +86,10 @@ class DomainNode(Node):
 
     def __init__(self, domain):
         assert isinstance(domain, Domain)
-        super(DomainNode, self).__init__(equality_vector=(domain,))
         self.domain = domain
+
+    def __basis__(self):
+        return (self.domain,)
 
     def __str__(self):
         return str(self.domain)
@@ -93,8 +97,8 @@ class DomainNode(Node):
 
 class UnknownNode(Node):
 
-    def __init__(self):
-        super(UnknownNode, self).__init__(equality_vector=())
+    def __basis__(self):
+        return ()
 
     def __str__(self):
         return "?"
@@ -102,8 +106,8 @@ class UnknownNode(Node):
 
 class InvalidNode(Node):
 
-    def __init__(self):
-        super(InvalidNode, self).__init__(equality_vector=())
+    def __basis__(self):
+        return ()
 
     def __str__(self):
         return "!"
@@ -118,9 +122,11 @@ class TableArc(Arc):
                 target=TableNode(table),
                 arity=None,
                 is_expanding=False,
-                is_contracting=False,
-                equality_vector=(table,))
+                is_contracting=False)
         self.table = table
+
+    def __basis__(self):
+        return (self.table,)
 
     def __str__(self):
         return str(self.table)
@@ -137,12 +143,14 @@ class ChainArc(Arc):
                 target=TableNode(joins[-1].target),
                 arity=None,
                 is_expanding=all(join.is_expanding for join in joins),
-                is_contracting=all(join.is_contracting for join in joins),
-                equality_vector=(table, tuple(joins),))
+                is_contracting=all(join.is_contracting for join in joins))
         self.table = table
         self.joins = joins
         self.is_direct = all(join.is_direct for join in joins)
         self.is_reverse = all(join.is_reverse for join in joins)
+
+    def __basis__(self):
+        return (self.table, tuple(self.joins))
 
     def reverse(self):
         return ChainArc(self.target.table,
@@ -165,11 +173,13 @@ class ColumnArc(Arc):
                 target=DomainNode(column.domain),
                 arity=None,
                 is_expanding=(not column.is_nullable),
-                is_contracting=True,
-                equality_vector=(table, column))
+                is_contracting=True)
         self.table = table
         self.column = column
         self.link = link
+
+    def __basis__(self):
+        return (self.table, self.column)
 
     def __str__(self):
         return str(self.column)
@@ -185,12 +195,14 @@ class SyntaxArc(Arc):
                 target=UnknownNode(),
                 arity=(len(parameters) if parameters is not None else None),
                 is_expanding=False,
-                is_contracting=False,
-                equality_vector=(origin, tuple(parameters)
-                                         if parameters is not None else None,
-                                 syntax))
+                is_contracting=False)
         self.parameters = parameters
         self.syntax = syntax
+
+    def __basis__(self):
+        return (self.origin, tuple(self.parameters)
+                             if self.parameters is not None else None,
+                self.syntax)
 
     def __str__(self):
         return str(self.syntax)
@@ -198,15 +210,17 @@ class SyntaxArc(Arc):
 
 class InvalidArc(Arc):
 
-    def __init__(self, origin, arity, equality_vector):
+    def __init__(self, origin, arity):
         assert isinstance(origin, Node)
         super(InvalidArc, self).__init__(
                 origin=origin,
                 target=InvalidNode(),
                 arity=arity,
                 is_expanding=False,
-                is_contracting=False,
-                equality_vector=equality_vector)
+                is_contracting=False)
+
+    def __basis__(self):
+        return ()
 
     def __str__(self):
         return "!"
@@ -221,9 +235,11 @@ class AmbiguousArc(InvalidArc):
                    for alternative in alternatives)
         super(AmbiguousArc, self).__init__(
                 origin=origin,
-                arity=arity,
-                equality_vector=(origin, tuple(alternatives)))
+                arity=arity)
         self.alternatives = alternatives
+
+    def __basis__(self):
+        return (self.origin, tuple(self.alternatives))
 
     def __str__(self):
         return "?(%s)" % ", ".join(str(alternative)

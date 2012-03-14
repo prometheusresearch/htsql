@@ -53,21 +53,16 @@ class Signature(Comparable, Clonable, Printable):
 
     `slots` (a list of :class:`Slot`)
         The formula slots.
-
-    Constructor arguments:
-
-    `equality_vector` (an immutable tuple)
-        Encapsulates all essential attributes of a signature.
-
-        Two signatures are considered equal if they are of the same type
-        and their equality vectors coincide.
     """
 
     # Override in subclasses.
     slots = []
 
-    def __init__(self, equality_vector=()):
-        super(Signature, self).__init__(equality_vector=equality_vector)
+    def __init__(self):
+        pass
+
+    def __basis__(self):
+        return ()
 
     def __str__(self):
         return self.__class__.__name__
@@ -347,8 +342,10 @@ class PolarSig(Signature):
 
     def __init__(self, polarity):
         assert polarity in [+1, -1]
-        super(PolarSig, self).__init__(equality_vector=(polarity,))
         self.polarity = polarity
+
+    def __basis__(self):
+        return (self.polarity,)
 
     def reverse(self):
         """
@@ -409,8 +406,10 @@ class CompareSig(BinarySig):
 
     def __init__(self, relation):
         assert relation in ['<', '<=', '>', '>=']
-        super(CompareSig, self).__init__(equality_vector=(relation,))
         self.relation = relation
+
+    def __basis__(self):
+        return (self.relation,)
 
 
 class AndSig(ConnectiveSig):

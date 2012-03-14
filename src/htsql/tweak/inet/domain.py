@@ -12,9 +12,6 @@ class INetDomain(Domain):
 
     family = 'inet'
 
-    def __init__(self):
-        super(INetDomain, self).__init__(equality_vector=())
-
     def parse(self, data):
         assert isinstance(data, maybe(unicode))
         if data is None:

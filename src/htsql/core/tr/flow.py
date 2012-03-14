@@ -48,15 +48,6 @@ class Expression(Comparable, Clonable, Printable):
         The binding node that gave rise to the expression; should be used
         only for presentation or error reporting.
 
-    `equality_vector` (an immutable tuple or ``None``)
-        Encapsulates all essential attributes of a node.  Two expression
-        nodes are considered equal if they are of the same type and their
-        equality vectors are equal.  If ``None``, the node is compared by
-        identity.
-
-        Note that the `binding` attribute is not essential and should not
-        be a part of the equality vector.
-
     Other attributes:
 
     `syntax` (:class:`htsql.core.tr.syntax.Syntax`)
@@ -71,9 +62,8 @@ class Expression(Comparable, Clonable, Printable):
         must be equal too.
     """
 
-    def __init__(self, binding, equality_vector=None):
+    def __init__(self, binding):
         assert isinstance(binding, Binding)
-        super(Expression, self).__init__(equality_vector)
         self.binding = binding
         self.syntax = binding.syntax
         self.mark = binding.syntax.mark
@@ -434,14 +424,12 @@ class Flow(Expression):
     is_axis = False
     is_root = False
 
-    def __init__(self, base, family,
-                 is_contracting, is_expanding,
-                 binding, equality_vector=None):
+    def __init__(self, base, family, is_contracting, is_expanding, binding):
         assert isinstance(base, maybe(Flow))
         assert isinstance(family, Family)
         assert isinstance(is_contracting, bool)
         assert isinstance(is_expanding, bool)
-        super(Flow, self).__init__(binding, equality_vector)
+        super(Flow, self).__init__(binding)
         self.base = base
         self.family = family
         self.is_contracting = is_contracting
@@ -477,7 +465,7 @@ class Flow(Expression):
         # of the tuple is the flow base.  So we skip the base flow and
         # compare the remaining attributes.
         return (isinstance(other, self.__class__) and
-                self.equality_vector[1:] == other.equality_vector[1:])
+                self._basis[1:] == other._basis[1:])
 
     def inflate(self):
         """
@@ -734,8 +722,10 @@ class RootFlow(Flow):
                     family=ScalarFamily(),
                     is_contracting=False,
                     is_expanding=False,
-                    binding=binding,
-                    equality_vector=(base,))
+                    binding=binding)
+
+    def __basis__(self):
+        return (self.base,)
 
     def __str__(self):
         # Display a table expression in an algebraic form.
@@ -758,8 +748,10 @@ class ScalarFlow(Flow):
                     family=ScalarFamily(),
                     is_contracting=True,
                     is_expanding=True,
-                    binding=binding,
-                    equality_vector=(base,))
+                    binding=binding)
+
+    def __basis__(self):
+        return (self.base,)
 
     def __str__(self):
         # Display:
@@ -805,9 +797,11 @@ class DirectTableFlow(TableFlow):
                     family=TableFamily(table),
                     is_contracting=False,
                     is_expanding=False,
-                    binding=binding,
-                    equality_vector=(base, table))
+                    binding=binding)
         self.table = table
+
+    def __basis__(self):
+        return (self.base, self.table)
 
     def __str__(self):
         # Display:
@@ -843,9 +837,11 @@ class FiberTableFlow(TableFlow):
                     family=TableFamily(join.target),
                     is_contracting=join.is_contracting,
                     is_expanding=join.is_expanding,
-                    binding=binding,
-                    equality_vector=(base, join))
+                    binding=binding)
         self.join = join
+
+    def __basis__(self):
+        return (self.base, self.join)
 
     def __str__(self):
         # Display:
@@ -912,12 +908,14 @@ class QuotientFlow(Flow):
                     family=QuotientFamily(seed, ground, kernels),
                     is_contracting=is_contracting,
                     is_expanding=is_expanding,
-                    binding=binding,
-                    equality_vector=(base, seed, tuple(kernels)))
+                    binding=binding)
         self.seed = seed
         self.ground = ground
         self.kernels = kernels
         self.companions = companions
+
+    def __basis__(self):
+        return (self.base, self.seed, tuple(self.kernels))
 
     def __str__(self):
         # Display:
@@ -965,12 +963,14 @@ class ComplementFlow(Flow):
                     family=base.family.seed.family,
                     is_contracting=False,
                     is_expanding=True,
-                    binding=binding,
-                    equality_vector=(base,))
+                    binding=binding)
         self.seed = base.family.seed
         self.ground = base.family.ground
         self.kernels = base.family.kernels
         self.companions = companions
+
+    def __basis__(self):
+        return (self.base,)
 
     def __str__(self):
         # Display:
@@ -1025,11 +1025,13 @@ class MonikerFlow(Flow):
                     family=seed.family,
                     is_contracting=base.spans(seed),
                     is_expanding=seed.dominates(base),
-                    binding=binding,
-                    equality_vector=(base, seed))
+                    binding=binding)
         self.seed = seed
         self.ground = ground
         self.companions = companions
+
+    def __basis__(self):
+        return (self.base, self.seed)
 
     def __str__(self):
         # Display:
@@ -1090,12 +1092,14 @@ class ForkedFlow(Flow):
                     family=base.family,
                     is_contracting=is_contracting,
                     is_expanding=is_expanding,
-                    binding=binding,
-                    equality_vector=(base, seed, tuple(kernels)))
+                    binding=binding)
         self.seed = seed
         self.ground = ground
         self.kernels = kernels
         self.companions = companions
+
+    def __basis__(self):
+        return (self.base, self.seed, tuple(self.kernels))
 
     def __str__(self):
         # Display:
@@ -1154,12 +1158,14 @@ class LinkedFlow(Flow):
                     family=seed.family,
                     is_contracting=False,
                     is_expanding=False,
-                    binding=binding,
-                    equality_vector=(base, seed, tuple(images)))
+                    binding=binding)
         self.seed = seed
         self.ground = ground
         self.images = images
         self.companions = companions
+
+    def __basis__(self):
+        return (self.base, self.seed, tuple(self.images))
 
     def __str__(self):
         # Display:
@@ -1192,9 +1198,11 @@ class FilteredFlow(Flow):
                     family=base.family,
                     is_contracting=True,
                     is_expanding=False,
-                    binding=binding,
-                    equality_vector=(base, filter))
+                    binding=binding)
         self.filter = filter
+
+    def __basis__(self):
+        return (self.base, self.filter)
 
     def __str__(self):
         # Display:
@@ -1244,11 +1252,13 @@ class OrderedFlow(Flow):
                     family=base.family,
                     is_contracting=True,
                     is_expanding=(limit is None and offset is None),
-                    binding=binding,
-                    equality_vector=(base, tuple(order)))
+                    binding=binding)
         self.order = order
         self.limit = limit
         self.offset = offset
+
+    def __basis__(self):
+        return (self.base, tuple(self.order))
 
     def __str__(self):
         # Display:
@@ -1307,10 +1317,10 @@ class Code(Expression):
         The unit expressions of which the code is composed.
     """
 
-    def __init__(self, domain, units, binding, equality_vector=None):
+    def __init__(self, domain, units, binding):
         assert isinstance(domain, Domain)
         assert isinstance(units, maybe(listof(Unit)))
-        super(Code, self).__init__(binding, equality_vector)
+        super(Code, self).__init__(binding)
         self.domain = domain
         # Do not assign when implemented as a property.
         if units is not None:
@@ -1332,10 +1342,12 @@ class SegmentCode(Code):
         super(SegmentCode, self).__init__(
                 domain=ListDomain(code.domain),
                 units=[],
-                binding=binding,
-                equality_vector=(flow, code))
+                binding=binding)
         self.flow = flow
         self.code = code
+
+    def __basis__(self):
+        return (self.flow, self.code)
 
 
 class LiteralCode(Code):
@@ -1353,9 +1365,11 @@ class LiteralCode(Code):
         super(LiteralCode, self).__init__(
                     domain=domain,
                     units=[],
-                    binding=binding,
-                    equality_vector=(value, domain))
+                    binding=binding)
         self.value = value
+
+    def __basis__(self):
+        return (self.value, self.domain)
 
     def __str__(self):
         # The actual value is often more helpful than the expression
@@ -1378,9 +1392,11 @@ class CastCode(Code):
         super(CastCode, self).__init__(
                     domain=domain,
                     units=base.units,
-                    binding=binding,
-                    equality_vector=(base, domain))
+                    binding=binding)
         self.base = base
+
+    def __basis__(self):
+        return (self.base, self.domain)
 
 
 class RecordCode(Code):
@@ -1393,9 +1409,11 @@ class RecordCode(Code):
         super(RecordCode, self).__init__(
                 domain=domain,
                 units=units,
-                binding=binding,
-                equality_vector=(tuple(fields), domain))
+                binding=binding)
         self.fields = fields
+
+    def __basis__(self):
+        return (tuple(self.fields), self.domain)
 
 
 class AnnihilatorCode(Code):
@@ -1406,10 +1424,12 @@ class AnnihilatorCode(Code):
         super(AnnihilatorCode, self).__init__(
                 domain=code.domain,
                 units=[indicator]+code.units,
-                binding=binding,
-                equality_vector=(code, indicator))
+                binding=binding)
         self.code = code
         self.indicator = indicator
+
+    def __basis__(self):
+        return (self.code, self.indicator)
 
 
 class FormulaCode(Formula, Code):
@@ -1439,15 +1459,16 @@ class FormulaCode(Formula, Code):
         units = []
         for cell in arguments.cells():
             units.extend(cell.units)
-        equality_vector = (signature, domain, arguments.freeze())
         # The first two arguments are processed by the `Formula`
         # constructor, the rest of them go to the `Binding` constructor.
         super(FormulaCode, self).__init__(
                     signature, arguments,
                     domain=domain,
                     units=units,
-                    binding=binding,
-                    equality_vector=equality_vector)
+                    binding=binding)
+
+    def __basis__(self):
+        return (self.signature, self.domain, self.arguments.freeze())
 
 
 class Unit(Code):
@@ -1504,13 +1525,12 @@ class Unit(Code):
     is_primitive = False
     is_compound = False
 
-    def __init__(self, flow, domain, binding, equality_vector=None):
+    def __init__(self, flow, domain, binding):
         assert isinstance(flow, Flow)
         super(Unit, self).__init__(
                     domain=domain,
                     units=None,
-                    binding=binding,
-                    equality_vector=equality_vector)
+                    binding=binding)
         self.flow = flow
 
     @property
@@ -1553,13 +1573,12 @@ class CompoundUnit(Unit):
 
     is_compound = True
 
-    def __init__(self, code, flow, domain, binding, equality_vector=None):
+    def __init__(self, code, flow, domain, binding):
         assert isinstance(code, Code)
         super(CompoundUnit, self).__init__(
                     flow=flow,
                     domain=domain,
-                    binding=binding,
-                    equality_vector=equality_vector)
+                    binding=binding)
         self.code = code
 
 
@@ -1585,9 +1604,11 @@ class ColumnUnit(PrimitiveUnit):
         super(ColumnUnit, self).__init__(
                     flow=flow,
                     domain=column.domain,
-                    binding=binding,
-                    equality_vector=(column, flow))
+                    binding=binding)
         self.column = column
+
+    def __basis__(self):
+        return (self.column, self.flow)
 
 
 class ScalarUnit(CompoundUnit):
@@ -1633,9 +1654,11 @@ class ScalarUnit(CompoundUnit):
                     code=code,
                     flow=flow,
                     domain=code.domain,
-                    binding=binding,
-                    equality_vector=(code, flow))
+                    binding=binding)
         self.companions = companions
+
+    def __basis__(self):
+        return (self.code, self.flow)
 
 
 class AggregateUnitBase(CompoundUnit):
@@ -1678,9 +1701,11 @@ class AggregateUnitBase(CompoundUnit):
                     code=code,
                     flow=flow,
                     domain=code.domain,
-                    binding=binding,
-                    equality_vector=(code, plural_flow, flow))
+                    binding=binding)
         self.plural_flow = plural_flow
+
+    def __basis__(self):
+        return (self.code, self.plural_flow, self.flow)
 
 
 class AggregateUnit(AggregateUnitBase):
@@ -1732,8 +1757,10 @@ class KernelUnit(CompoundUnit):
                     code=code,
                     flow=flow,
                     domain=code.domain,
-                    binding=binding,
-                    equality_vector=(code, flow))
+                    binding=binding)
+
+    def __basis__(self):
+        return (self.code, self.flow)
 
 
 class CoveringUnit(CompoundUnit):
@@ -1760,7 +1787,9 @@ class CoveringUnit(CompoundUnit):
                     code=code,
                     flow=flow,
                     domain=code.domain,
-                    binding=binding,
-                    equality_vector=(code, flow))
+                    binding=binding)
+
+    def __basis__(self):
+        return (self.code, self.flow)
 
 

@@ -55,14 +55,6 @@ class Clause(Comparable, Clonable, Printable):
         The expression node that gave rise to the clause; for debugging
         and error reporting only.
 
-    `equality_vector` (an immutable tuple or ``None``)
-        Encapsulates all essential attributes of a node.  Two clauses are
-        equal if and only if they are of the same type and their equality
-        vectors are equal.  If ``None``, the clause is compared by identity.
-
-        Note that the `expression` attribute is not essential and should
-        not be a part of the equality vector.
-
     Other attributes:
 
     `binding` (:class:`htsql.core.tr.binding.Binding`)
@@ -81,9 +73,8 @@ class Clause(Comparable, Clonable, Printable):
         must be equal too.
     """
 
-    def __init__(self, expression, equality_vector=None):
+    def __init__(self, expression):
         assert isinstance(expression, Expression)
-        super(Clause, self).__init__(equality_vector)
         self.expression = expression
         self.binding = expression.binding
         self.syntax = expression.syntax
@@ -408,10 +399,10 @@ class Phrase(Clause):
         Indicates if the expression may evaluate to ``NULL``.
     """
 
-    def __init__(self, domain, is_nullable, expression, equality_vector):
+    def __init__(self, domain, is_nullable, expression):
         assert isinstance(domain, Domain)
         assert isinstance(is_nullable, bool)
-        super(Phrase, self).__init__(expression, equality_vector)
+        super(Phrase, self).__init__(expression)
         self.domain = domain
         self.is_nullable = is_nullable
 
@@ -430,10 +421,11 @@ class LiteralPhrase(Phrase):
     def __init__(self, value, domain, expression):
         # Note: `NULL` values are represented as `None`.
         is_nullable = (value is None)
-        equality_vector = (value, domain)
-        super(LiteralPhrase, self).__init__(domain, is_nullable, expression,
-                                            equality_vector)
+        super(LiteralPhrase, self).__init__(domain, is_nullable, expression)
         self.value = value
+
+    def __basis__(self):
+        return (self.value, self.domain)
 
 
 class NullPhrase(LiteralPhrase):
@@ -493,10 +485,11 @@ class CastPhrase(Phrase):
 
     def __init__(self, base, domain, is_nullable, expression):
         assert isinstance(base, Phrase)
-        equality_vector = (base, domain, is_nullable)
-        super(CastPhrase, self).__init__(domain, is_nullable, expression,
-                                         equality_vector)
+        super(CastPhrase, self).__init__(domain, is_nullable, expression)
         self.base = base
+
+    def __basis__(self):
+        return (self.base, self.domain, self.is_nullable)
 
 
 class FormulaPhrase(Formula, Phrase):
@@ -523,12 +516,13 @@ class FormulaPhrase(Formula, Phrase):
         # Check that the arguments match the formula signature.
         arguments = Bag(**arguments)
         assert arguments.admits(Phrase, signature)
-        equality_vector = (signature, domain, arguments.freeze())
-        # The first tow arguments are processed by the `Formula`
+        # The first two arguments are processed by the `Formula`
         # constructor; the rest of them go to the `Phrase` constructor.
         super(FormulaPhrase, self).__init__(signature, arguments,
-                                            domain, is_nullable, expression,
-                                            equality_vector)
+                                            domain, is_nullable, expression)
+
+    def __basis__(self):
+        return (self.signature, self.domain, self.arguments.freeze())
 
 
 class ExportPhrase(Phrase):
@@ -543,10 +537,9 @@ class ExportPhrase(Phrase):
         The tag of the frame that exports the value.
     """
 
-    def __init__(self, tag, domain, is_nullable, expression, equality_vector):
+    def __init__(self, tag, domain, is_nullable, expression):
         assert isinstance(tag, int)
-        super(ExportPhrase, self).__init__(domain, is_nullable, expression,
-                                           equality_vector)
+        super(ExportPhrase, self).__init__(domain, is_nullable, expression)
         self.tag = tag
 
 
@@ -566,10 +559,11 @@ class ColumnPhrase(ExportPhrase):
     def __init__(self, tag, column, is_nullable, expression):
         assert isinstance(column, ColumnEntity)
         domain = column.domain
-        equality_vector = (tag, column)
-        super(ColumnPhrase, self).__init__(tag, domain, is_nullable,
-                                           expression, equality_vector)
+        super(ColumnPhrase, self).__init__(tag, domain, is_nullable, expression)
         self.column = column
+
+    def __basis__(self):
+        return (self.tag, self.column)
 
 
 class ReferencePhrase(ExportPhrase):
@@ -587,10 +581,12 @@ class ReferencePhrase(ExportPhrase):
 
     def __init__(self, tag, index, domain, is_nullable, expression):
         assert isinstance(index, int) and index >= 0
-        equality_vector = (tag, index)
         super(ReferencePhrase, self).__init__(tag, domain, is_nullable,
-                                              expression, equality_vector)
+                                              expression)
         self.index = index
+
+    def __basis__(self):
+        return (self.tag, self.index)
 
 
 class EmbeddingPhrase(ExportPhrase):
@@ -605,8 +601,10 @@ class EmbeddingPhrase(ExportPhrase):
     """
 
     def __init__(self, tag, domain, is_nullable, expression):
-        equality_vector = (tag,)
         super(EmbeddingPhrase, self).__init__(tag, domain, is_nullable,
-                                              expression, equality_vector)
+                                              expression)
+
+    def __basis__(self):
+        return (self.tag,)
 
 
