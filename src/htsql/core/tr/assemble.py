@@ -15,8 +15,8 @@ from ..util import Printable, Comparable, Record, listof, maybe
 from ..adapter import Adapter, adapt, adapt_many
 from ..domain import BooleanDomain
 from .coerce import coerce
-from .flow import (Code, LiteralCode, FormulaCode, CastCode, RecordCode,
-                   AnnihilatorCode, Unit, ColumnUnit, CompoundUnit)
+from .flow import (Code, SegmentCode, LiteralCode, FormulaCode, CastCode,
+                   RecordCode, AnnihilatorCode, Unit, ColumnUnit, CompoundUnit)
 from .term import (PreTerm, Term, UnaryTerm, BinaryTerm, TableTerm,
                    ScalarTerm, FilterTerm, JoinTerm, CorrelationTerm,
                    EmbeddingTerm, ProjectionTerm, OrderTerm, SegmentTerm,
@@ -1219,6 +1219,15 @@ class Evaluate(Adapter):
                                   " for a %r node" % self.code)
 
 
+class EvaluateSegment(Evaluate):
+
+    adapt(SegmentCode)
+
+    def __call__(self):
+        # Nested segments are serialized into a separate frame tree.
+        return []
+
+
 class EvaluateLiteral(Evaluate):
     """
     Evaluates a literal code.
@@ -1451,6 +1460,17 @@ class Decompose(Adapter):
             return row[index]
         compose_value.width = 1
         return compose_value
+
+
+class DecomposeSegment(Decompose):
+
+    adapt(SegmentCode)
+
+    def __call__(self):
+        def compose_null(row):
+            return None
+        compose_null.width = 0
+        return compose_null
 
 
 class DecomposeCompound(Decompose):

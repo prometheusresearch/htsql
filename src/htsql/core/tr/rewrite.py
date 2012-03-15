@@ -630,9 +630,7 @@ class CollectSegment(Collect):
     adapt(SegmentCode)
 
     def __call__(self):
-        # Collect units in the output flow and output columns.
-        self.state.collect(self.expression.flow)
-        self.state.collect(self.expression.code)
+        pass
 
 
 class ReplaceSegment(Replace):
@@ -640,9 +638,13 @@ class ReplaceSegment(Replace):
     adapt(SegmentCode)
 
     def __call__(self):
-        # Rewrite the output flow and output columns.
-        flow = self.state.replace(self.expression.flow)
-        code = self.state.replace(self.expression.code)
+        # Recombine the content of the segment against a blank state.
+        substate = self.state.spawn()
+        substate.collect(self.expression.flow)
+        substate.collect(self.expression.code)
+        substate.recombine()
+        flow = substate.replace(self.expression.flow)
+        code = substate.replace(self.expression.code)
         return self.expression.clone(flow=flow, code=code)
 
 

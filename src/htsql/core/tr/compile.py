@@ -564,13 +564,27 @@ class CompileSegment(Compile):
     adapt(SegmentCode)
 
     def __call__(self):
-        # Get the ordering of the segment flow.
-        order = arrange(self.expression.flow)
+        # Get the ordering of the segment flow.  We must respect the ordering
+        # of the parent segment.
+        order = arrange(self.state.baseline) + arrange(self.expression.flow)
         # List of expressions we need the term to export.
         codes = ([self.expression.code] +
                  [code for code, direction in order])
         # Construct a term corresponding to the segment flow.
-        kid = self.state.compile(self.expression.flow)
+        if self.state.baseline.is_root:
+            kid = self.state.compile(self.expression.flow)
+        else:
+            trunk_term = self.state.compile(self.state.baseline,
+                                            baseline=self.state.root)
+            shoot_term = self.compile_shoot(self.expression.flow, trunk_term)
+            joints = self.glue_terms(trunk_term, shoot_term)
+            trunk_term = self.inject_joints(trunk_term, joints)
+            routes = {}
+            routes.update(trunk_term.routes)
+            routes.update(shoot_term.routes)
+            kid = JoinTerm(self.state.tag(), trunk_term, shoot_term,
+                           joints, False, False,
+                           shoot_term.flow, self.state.root, routes)
         # Inject the expressions into the term.
         kid = self.state.inject(kid, codes)
         # The compiler does not guarantee that the produced term respects
@@ -579,9 +593,16 @@ class CompileSegment(Compile):
         if order:
             kid = OrderTerm(self.state.tag(), kid, order, None, None,
                             kid.flow, kid.baseline, kid.routes.copy())
+        # Compile nested segments.
+        subtrees = {}
+        for segment in self.expression.code.segments:
+            term = self.state.compile(segment,
+                                      baseline=self.expression.flow)
+            subtrees[segment] = term
         # Construct a segment term.
         return SegmentTerm(self.state.tag(), kid, self.expression.code,
-                           kid.flow, kid.routes.copy())
+                           subtrees, kid.flow, self.state.baseline,
+                           kid.routes.copy())
 
 
 class CompileFlow(Compile):

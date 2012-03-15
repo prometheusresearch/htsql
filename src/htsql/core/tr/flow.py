@@ -1327,7 +1327,14 @@ class Code(Expression):
     def units(self):
         return self.get_units()
 
+    @cachedproperty
+    def segments(self):
+        return self.get_segments()
+
     def get_units(self):
+        return []
+
+    def get_segments(self):
         return []
 
 
@@ -1351,6 +1358,11 @@ class SegmentCode(Code):
 
     def __basis__(self):
         return (self.flow, self.code)
+
+    @property
+    def segments(self):
+        # Do not cache to avoid reference cycles.
+        return [self]
 
 
 class LiteralCode(Code):
@@ -1402,6 +1414,9 @@ class CastCode(Code):
     def get_units(self):
         return self.base.units
 
+    def get_segments(self):
+        return self.base.segments
+
 
 class RecordCode(Code):
 
@@ -1421,6 +1436,12 @@ class RecordCode(Code):
             units.extend(field.units)
         return units
 
+    def get_segments(self):
+        segments = []
+        for field in self.fields:
+            segments.extend(field.segments)
+        return segments
+
 
 class AnnihilatorCode(Code):
 
@@ -1438,6 +1459,9 @@ class AnnihilatorCode(Code):
 
     def get_units(self):
         return [self.indicator]+self.code.units
+
+    def get_segments(self):
+        return self.indicator.segments+self.code.segments
 
 
 class FormulaCode(Formula, Code):
@@ -1478,6 +1502,12 @@ class FormulaCode(Formula, Code):
         for cell in self.arguments.cells():
             units.extend(cell.units)
         return units
+
+    def get_segments(self):
+        segments = []
+        for cell in self.arguments.cells():
+            segments.extend(cell.segments)
+        return segments
 
 
 class Unit(Code):
@@ -1589,6 +1619,9 @@ class CompoundUnit(Unit):
                     domain=domain,
                     binding=binding)
         self.code = code
+
+    def get_segments(self):
+        return self.code.segments
 
 
 class ColumnUnit(PrimitiveUnit):

@@ -14,7 +14,7 @@ This module declares term nodes.
 from ..util import (listof, dictof, tupleof, maybe,
                     Clonable, Printable, Comparable)
 from ..domain import BooleanDomain
-from .flow import Expression, Flow, Code, Unit, QueryExpr
+from .flow import Expression, Flow, Code, Unit, QueryExpr, SegmentCode
 
 
 class Joint(Comparable, Clonable, Printable):
@@ -623,14 +623,13 @@ class SegmentTerm(UnaryTerm):
         The operand.
     """
 
-    def __init__(self, tag, kid, code, flow, routes):
+    def __init__(self, tag, kid, code, subtrees, flow, baseline, routes):
         assert isinstance(code, Code)
-        root = flow
-        while not root.is_root:
-            root = root.base
+        assert isinstance(subtrees, dictof(SegmentCode, SegmentTerm))
         super(SegmentTerm, self).__init__(tag, kid,
-                                          flow, root, routes)
+                                          flow, baseline, routes)
         self.code = code
+        self.subtrees = subtrees
 
     def __str__(self):
         ## Display:
