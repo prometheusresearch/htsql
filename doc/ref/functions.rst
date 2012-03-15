@@ -1280,7 +1280,7 @@ selection operator.
    :cut: 3
 
 
-.. index:: html(), txt(), csv(), tsv(), json()
+.. index:: html(), txt(), csv(), tsv(), raw(), xml(), sql()
 
 Formatters
 ==========
@@ -1296,7 +1296,7 @@ Formatters
 +---------------+---------------------------------------+
 | `/:tsv`       | TSV (tab-separated values) output     |
 +---------------+---------------------------------------+
-| `/:json`      | JSON-serialized generic output        |
+| `/:raw`       | JSON-serialized generic output        |
 +---------------+---------------------------------------+
 | `/:obj`       | JSON-serialized object output         |
 +---------------+---------------------------------------+
@@ -1357,13 +1357,13 @@ output data on subsequent rows.
 Generic Output
 --------------
 
-Our primary default output, ``/:json``, is meant for generic tools that
+Our primary default output, ``/:raw``, is meant for generic tools that
 must handle arbitrary queries.  This format reflects our native product
 structure and has two corresponding sections:  ``meta`` details type
 information and ``data`` has the corresponding output data.  
 
 
-.. htsql:: /department{school,*}.limit(3)/:json
+.. htsql:: /department{school,*}.limit(3)/:raw
    :plain:
 
 This format is used by our visual ``shell`` query tool and also for
