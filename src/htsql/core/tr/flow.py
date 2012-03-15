@@ -11,7 +11,8 @@ This module declares flow and code nodes.
 """
 
 
-from ..util import (maybe, listof, tupleof, Clonable, Comparable, Printable)
+from ..util import (maybe, listof, tupleof, Clonable, Comparable, Printable,
+                    cachedproperty)
 from ..entity import TableEntity, ColumnEntity, Join
 from ..domain import Domain, BooleanDomain, ListDomain
 from .binding import Binding, QueryBinding, SegmentBinding
@@ -1317,14 +1318,17 @@ class Code(Expression):
         The unit expressions of which the code is composed.
     """
 
-    def __init__(self, domain, units, binding):
+    def __init__(self, domain, binding):
         assert isinstance(domain, Domain)
-        assert isinstance(units, maybe(listof(Unit)))
         super(Code, self).__init__(binding)
         self.domain = domain
-        # Do not assign when implemented as a property.
-        if units is not None:
-            self.units = units
+
+    @cachedproperty
+    def units(self):
+        return self.get_units()
+
+    def get_units(self):
+        return []
 
 
 class SegmentCode(Code):
@@ -1341,7 +1345,6 @@ class SegmentCode(Code):
         assert isinstance(binding, SegmentBinding)
         super(SegmentCode, self).__init__(
                 domain=ListDomain(code.domain),
-                units=[],
                 binding=binding)
         self.flow = flow
         self.code = code
@@ -1364,7 +1367,6 @@ class LiteralCode(Code):
     def __init__(self, value, domain, binding):
         super(LiteralCode, self).__init__(
                     domain=domain,
-                    units=[],
                     binding=binding)
         self.value = value
 
@@ -1391,29 +1393,33 @@ class CastCode(Code):
     def __init__(self, base, domain, binding):
         super(CastCode, self).__init__(
                     domain=domain,
-                    units=base.units,
                     binding=binding)
         self.base = base
 
     def __basis__(self):
         return (self.base, self.domain)
 
+    def get_units(self):
+        return self.base.units
+
 
 class RecordCode(Code):
 
     def __init__(self, fields, domain, binding):
         assert isinstance(fields, listof(Code))
-        units = []
-        for field in fields:
-            units.extend(field.units)
         super(RecordCode, self).__init__(
                 domain=domain,
-                units=units,
                 binding=binding)
         self.fields = fields
 
     def __basis__(self):
         return (tuple(self.fields), self.domain)
+
+    def get_units(self):
+        units = []
+        for field in self.fields:
+            units.extend(field.units)
+        return units
 
 
 class AnnihilatorCode(Code):
@@ -1423,13 +1429,15 @@ class AnnihilatorCode(Code):
         assert isinstance(indicator, Unit)
         super(AnnihilatorCode, self).__init__(
                 domain=code.domain,
-                units=[indicator]+code.units,
                 binding=binding)
         self.code = code
         self.indicator = indicator
 
     def __basis__(self):
         return (self.code, self.indicator)
+
+    def get_units(self):
+        return [self.indicator]+self.code.units
 
 
 class FormulaCode(Formula, Code):
@@ -1455,20 +1463,21 @@ class FormulaCode(Formula, Code):
         # Check that the arguments match the formula signature.
         arguments = Bag(**arguments)
         assert arguments.admits(Code, signature)
-        # Extract unit nodes from the arguments.
-        units = []
-        for cell in arguments.cells():
-            units.extend(cell.units)
         # The first two arguments are processed by the `Formula`
         # constructor, the rest of them go to the `Binding` constructor.
         super(FormulaCode, self).__init__(
                     signature, arguments,
                     domain=domain,
-                    units=units,
                     binding=binding)
 
     def __basis__(self):
         return (self.signature, self.domain, self.arguments.freeze())
+
+    def get_units(self):
+        units = []
+        for cell in self.arguments.cells():
+            units.extend(cell.units)
+        return units
 
 
 class Unit(Code):
@@ -1529,13 +1538,13 @@ class Unit(Code):
         assert isinstance(flow, Flow)
         super(Unit, self).__init__(
                     domain=domain,
-                    units=None,
                     binding=binding)
         self.flow = flow
 
     @property
     def units(self):
-        # Implemented as a property to avoid creating a cycle.
+        # Use `property` instead of `cachedproperty` to avoid
+        # creating a reference cycle.
         return [self]
 
     def singular(self, flow):
