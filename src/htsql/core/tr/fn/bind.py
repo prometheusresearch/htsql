@@ -447,7 +447,7 @@ class BindHTML(BindFormat):
 
 class BindJSON(BindFormat):
 
-    call('json')
+    call('json', 'raw')
     format = JSONFormat
 
 
