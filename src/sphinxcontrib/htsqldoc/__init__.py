@@ -556,7 +556,7 @@ class ScalarBuild(object):
         rows = [[] for idx in range(height)]
         if not height:
             return rows
-        rows[0].append((u"", 1, height, [u'htsql-dummy']))
+        rows[0].append((u"", height, 1, [u'htsql-dummy']))
         return rows
 
     def body_height(self, data, cut):
@@ -580,7 +580,7 @@ class ScalarBuild(object):
             data = unicode(data)
             if not data:
                 classes.append(u'htsql-empty-val')
-        rows[0].append((data, 1, height, classes))
+        rows[0].append((data, height, 1, classes))
         return rows
 
     def cut(self, height):
@@ -588,7 +588,7 @@ class ScalarBuild(object):
         if not height:
             return rows
         classes = [u'htsql-%s-type' % self.domain['type'], u'htsql-cut']
-        rows[0].append((u"", 1, height, classes))
+        rows[0].append((u"", height, 1, classes))
         return rows
 
     def measures(self, data, cut):
