@@ -4,7 +4,7 @@
 
 
 from ..adapter import adapt, Utility
-from ..util import Record
+from ..util import Record, listof
 from ..domain import ListDomain, RecordDomain, Profile
 from .command import RetrieveCmd, SQLCmd
 from .act import (analyze, Act, ProduceAction, SafeProduceAction,
@@ -16,6 +16,7 @@ from ..tr.compile import compile
 from ..tr.assemble import assemble
 from ..tr.reduce import reduce
 from ..tr.dump import serialize
+from ..tr.plan import Statement
 from ..connect import DBError, connect, normalize
 from ..error import EngineError
 
@@ -37,6 +38,71 @@ class Product(object):
         return (self.data is not None)
 
 
+class RowStream(object):
+
+    @classmethod
+    def open(cls, statement, cursor):
+        normalizers = [normalize(domain)
+                       for domain in statement.domains]
+        cursor.execute(statement.sql.encode('utf-8'))
+        rows = []
+        for row in cursor:
+            row = tuple(normalizer(item)
+                    for item, normalizer in zip(row, normalizers))
+            rows.append(row)
+        substreams = [cls.open(substatement, cursor)
+                      for substatement in statement.substatements]
+        return cls(rows, substreams)
+
+    def __init__(self, rows, substreams):
+        assert isinstance(rows, list)
+        assert isinstance(substreams, listof(RowStream))
+        self.rows = rows
+        self.substreams = substreams
+        self.top = 0
+        self.last_top = None
+        self.last_key = None
+
+    def __iter__(self):
+        self.top = 0
+        for row in self.rows:
+            yield row
+            self.top += 1
+
+    def get(self, stencil):
+        return tuple(self.rows[self.top][index]
+                     for index in stencil)
+
+    def slice(self, stencil, key):
+        if key != self.last_key:
+            self.last_top = self.top
+            self.last_key = key
+            if key != ():
+                while self.top < len(self.rows):
+                    row = self.rows[self.top]
+                    if key != tuple(row[index] for index in stencil):
+                        break
+                    yield row
+                    self.top += 1
+            else:
+                assert not stencil
+                while self.top < len(self.rows):
+                    yield self.rows[self.top]
+                    self.top += 1
+        else:
+            top = self.top
+            self.top = self.last_top
+            for idx in range(self.last_top, top):
+                self.top = idx
+                yield self.rows[idx]
+            self.top = top
+
+    def close(self):
+        assert self.top == len(self.rows)
+        for substream in self.substreams:
+            substream.close()
+
+
 class ProduceRetrieve(Act):
 
     adapt(RetrieveCmd, ProduceAction)
@@ -53,21 +119,15 @@ class ProduceRetrieve(Act):
         frame = assemble(term)
         frame = reduce(frame)
         plan = serialize(frame)
-        profile = plan.profile.clone(plan=plan)
-        records = None
+        meta = plan.profile.clone(plan=plan)
+        data = None
         if plan.statement:
-            normalizers = [normalize(domain)
-                           for domain in plan.statement.domains]
+            stream = None
             connection = None
             try:
                 connection = connect()
                 cursor = connection.cursor()
-                cursor.execute(plan.statement.sql.encode('utf-8'))
-                records = []
-                for row in cursor:
-                    row = tuple(normalizer(item)
-                                for item, normalizer in zip(row, normalizers))
-                    records.append(plan.compose(row))
+                stream = RowStream.open(plan.statement, cursor)
                 connection.commit()
                 connection.release()
             except DBError, exc:
@@ -77,7 +137,9 @@ class ProduceRetrieve(Act):
                 if connection is not None:
                     connection.invalidate()
                 raise
-        return Product(profile, records)
+            data = plan.compose(None, stream)
+            stream.close()
+        return Product(meta, data)
 
     def safe_patch(self, expression, limit):
         segment = expression.segment
@@ -124,7 +186,13 @@ class RenderSQL(Act):
         headers = [('Content-Type', 'text/plain; charset=UTF-8')]
         body = []
         if plan.statement:
-            body = [plan.statement.sql.encode('utf-8')]
+            queue = [plan.statement]
+            while queue:
+                statement = queue.pop(0)
+                if body:
+                    body.append("\n")
+                body.append(statement.sql.encode('utf-8'))
+                queue.extend(statement.substatements)
         return (status, headers, body)
 
 

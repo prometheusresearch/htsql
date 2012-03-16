@@ -17,7 +17,7 @@ from .coerce import coerce
 from .stitch import arrange
 from .term import PermanentTerm
 from .frame import (Clause, Frame, ScalarFrame, BranchFrame, NestedFrame,
-                    QueryFrame, Phrase, LiteralPhrase, NullPhrase,
+                    QueryFrame, SegmentFrame, Phrase, LiteralPhrase, NullPhrase,
                     TruePhrase, FalsePhrase, CastPhrase, FormulaPhrase,
                     ExportPhrase, ReferencePhrase, Anchor, LeadingAnchor)
 from .signature import (Signature, isformula, IsEqualSig, IsTotallyEqualSig,
@@ -265,6 +265,22 @@ class ReduceBranch(ReduceFrame):
                                 select=select, where=where,
                                 group=group, having=having,
                                 order=order)
+
+
+class ReduceSegment(ReduceBranch):
+
+    adapt(SegmentFrame)
+
+    def __call__(self):
+        frame = super(ReduceSegment, self).__call__()
+        if not frame.subtrees:
+            return frame
+        subtrees = []
+        for subframe in frame.subtrees:
+            subframe = self.state.collapse(subframe)
+            subframe = self.state.reduce(subframe)
+            subtrees.append(subframe)
+        return frame.clone(subtrees=subtrees)
 
 
 class Collapse(Adapter):

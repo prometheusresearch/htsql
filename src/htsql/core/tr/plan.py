@@ -17,11 +17,13 @@ from ..domain import Profile, Domain
 
 class Statement(Printable):
 
-    def __init__(self, sql, domains):
+    def __init__(self, sql, domains, substatements):
         assert isinstance(sql, unicode)
         assert isinstance(domains, listof(Domain))
+        assert isinstance(substatements, listof(Statement))
         self.sql = sql
         self.domains = domains
+        self.substatements = substatements
 
 
 class Plan(Printable):
@@ -32,12 +34,5 @@ class Plan(Printable):
         self.profile = profile
         self.statement = statement
         self.compose = compose
-
-    def __unicode__(self):
-        return (u"<%s>" % self.statement.sql
-                if self.statement is not None else u"<>")
-
-    def __str__(self):
-        return unicode(self).encode('utf-8')
 
 

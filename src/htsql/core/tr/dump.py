@@ -293,9 +293,7 @@ class SerializeQuery(Serialize):
         compose = self.clause.compose
         statement = None
         if self.clause.segment is not None:
-            sql = self.state.serialize(self.clause.segment)
-            domains = [phrase.domain for phrase in self.clause.segment.select]
-            statement = Statement(sql, domains)
+            statement = self.state.serialize(self.clause.segment)
 
         # Produce an execution plan.
         return Plan(profile, statement, compose)
@@ -327,7 +325,10 @@ class SerializeSegment(Serialize):
         self.state.dump(self.clause)
         # Retrieve and return the generated SQL.
         sql = self.state.flush()
-        return sql
+        domains = [phrase.domain for phrase in self.clause.select]
+        substatements = [self.state.serialize(subframe)
+                         for subframe in self.clause.subtrees]
+        return Statement(sql, domains, substatements)
 
     def aliasing(self, frame=None,
                  taken_select_aliases=None,

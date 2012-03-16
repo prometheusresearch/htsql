@@ -155,10 +155,17 @@ class EmitText(Emit):
             yield u" ----\n"
             if self.meta.syntax:
                 yield u" %s\n" % self.meta.syntax
-            sql = self.meta.plan.statement.sql
-            sql = re.sub(ur'[\0-\x09\x0b-\x1f\x7f]', u'\ufffd', sql)
-            for line in sql.splitlines():
-                yield u" %s\n" % line
+            queue = [(0, self.meta.plan.statement)]
+            while queue:
+                depth, statement = queue.pop(0)
+                sql = re.sub(ur'[\0-\x09\x0b-\x1f\x7f]', u'\ufffd',
+                             statement.sql)
+                if depth:
+                    yield u"\n"
+                for line in sql.splitlines():
+                    yield u" "*(depth*2+1) + "%s\n" % line
+                for substatement in statement.substatements:
+                    queue.append((depth+1, substatement))
 
 
 class ToText(Adapter):

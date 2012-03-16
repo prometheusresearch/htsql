@@ -294,7 +294,7 @@ def shell(engine, name='demo'):
       `job help createdb`
     """
     db = make_db(engine, name)
-    exe_htsql_ctl("shell %s" % db)
+    exe_htsql_ctl("shell %s -E htsql:debug=true" % db)
 
 
 @job
@@ -313,7 +313,7 @@ def serve(engine, name='demo'):
     db = make_db(engine, name)
     host = os.environ.get("HTSQL_HOST", "localhost")
     port = os.environ.get("HTSQL_PORT", "8080")
-    exe_htsql_ctl("serve %s %s %s" % (db, host, port))
+    exe_htsql_ctl("serve %s --host %s --port %s" % (db, host, port))
 
 
 @job

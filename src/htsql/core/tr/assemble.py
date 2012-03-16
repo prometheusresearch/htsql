@@ -173,7 +173,71 @@ class AssemblingState(object):
         self.claims_by_broker = None
         # Satisfied unit claims.
         self.phrases_by_claim = None
-        self.segment_indexes = None
+        # Stencils and other composition state.
+        self.subterms_by_segment = {}
+        self.stencils_by_term = {}
+        self.location_by_term = {}
+        self.shift_by_term = {}
+        self.name_stack = []
+        self.name = None
+        self.segment_stack = []
+        self.segment = None
+
+    def push_name(self, name):
+        assert isinstance(name, maybe(unicode))
+        self.name_stack.append(self.name)
+        self.name = name
+
+    def pop_name(self):
+        self.name = self.name_stack.pop()
+
+    def push_segment(self, code):
+        assert isinstance(code, SegmentCode)
+        term = self.subterms_by_segment[self.segment][code]
+        self.segment_stack.append(self.segment)
+        self.segment = term
+        self.shift_by_term[term] = 0
+
+    def pop_segment(self):
+        self.segment = self.segment_stack.pop()
+
+    def save_subterms(self, term, subterms):
+        assert isinstance(term, maybe(SegmentTerm))
+        assert isinstance(subterms, listof(SegmentTerm))
+        term_by_code = dict((subterm.code, subterm)
+                            for subterm in subterms)
+        self.subterms_by_segment[term] = term_by_code
+
+    def save_location(self, term, location):
+        assert isinstance(term, SegmentTerm)
+        assert isinstance(location, maybe(int))
+        self.location_by_term[term] = location
+
+    def get_location(self):
+        return self.location_by_term[self.segment]
+
+    def save_stencils(self, term, stencils):
+        assert isinstance(term, SegmentTerm)
+        assert isinstance(stencils, listof(listof(int))) and len(stencils) == 3
+        self.stencils_by_term[term] = stencils
+
+    def get_code_stencil(self):
+        return self.stencils_by_term[self.segment][0]
+
+    def get_superkey_stencil(self):
+        return self.stencils_by_term[self.segment][1]
+
+    def get_key_stencil(self):
+        return self.stencils_by_term[self.segment][2]
+
+    def get_next_index(self):
+        stencil = self.get_code_stencil()
+        index = stencil[self.shift_by_term[self.segment]]
+        self.shift_by_term[self.segment] += 1
+        return index
+
+    def decompose(self, code):
+        return Decompose.__invoke__(code, self)
 
     def set_tree(self, term):
         """
@@ -185,6 +249,7 @@ class AssemblingState(object):
             The term corresponding to the top-level ``SELECT`` statement.
         """
         assert isinstance(term, SegmentTerm)
+        assert not self.gate_stack
         # Use the segment term both as the dispatcher and the router.  We
         # set `is_nullable` to `False`, but the value does not really matter
         # since we never export from the segment frame.
@@ -467,10 +532,6 @@ class AssemblingState(object):
     def from_predicate(self, phrase):
         return FormulaPhrase(FromPredicateSig(), phrase.domain,
                              phrase.is_nullable, phrase.expression, op=phrase)
-
-    def set_indexes(self, indexes):
-        assert self.segment_indexes is None
-        self.segment_indexes = indexes
 
 
 class Assemble(Adapter):
@@ -1133,32 +1194,66 @@ class AssembleSegment(Assemble):
         # This is a top-level frame, so it can't have claims.
         assert not self.claims
         # Assign all the units in the `SELECT` clause.
-        self.state.schedule(self.term.code)
+        self.state.schedule(self.term.code.code)
+        for code in self.term.superkeys:
+            self.state.schedule(code)
+        if self.term.subtrees:
+            for code in self.term.keys:
+                self.state.schedule(code)
 
     def assemble_select(self):
         # Assemble a `SELECT` clause.
         select = []
-        indexes = []
+        stencils = []
+        phrase_groups = []
+        phrase_groups.append(self.state.evaluate_all(self.term.code.code))
+        phrase_groups.append([self.state.evaluate(code)
+                              for code in self.term.superkeys])
+        if self.term.subtrees:
+            phrase_groups.append([self.state.evaluate(code)
+                                  for code in self.term.keys])
+        else:
+            phrase_groups.append([])
         index_by_phrase = {}
-        phrases = self.state.evaluate_all(self.term.code)
-        for phrase in phrases:
-            if phrase not in index_by_phrase:
-                index = len(select)
-                select.append(phrase)
-                index_by_phrase[phrase] = index
-            indexes.append(index_by_phrase[phrase])
+        for phrases in phrase_groups:
+            stencil = []
+            for phrase in phrases:
+                if phrase not in index_by_phrase:
+                    index = len(select)
+                    select.append(phrase)
+                    index_by_phrase[phrase] = index
+                stencil.append(index_by_phrase[phrase])
+            stencils.append(stencil)
         if not select:
             select = [TruePhrase(self.term.code)]
-        self.state.set_indexes(indexes)
+        self.state.save_stencils(self.term, stencils)
         return select
+
+    def assemble_subtrees(self):
+        subtrees = []
+        duplicates = set()
+        for code in self.term.code.code.segments:
+            if code in duplicates:
+                continue
+            duplicates.add(code)
+            subterm = self.term.subtrees[code]
+            location = len(subtrees)
+            self.state.set_tree(subterm)
+            self.state.save_location(subterm, location)
+            subframe = self.state.assemble(subterm)
+            subtrees.append(subframe)
+        self.state.save_subterms(self.term,
+                                 [frame.term for frame in subtrees])
+        return subtrees
 
     def assemble_frame(self, include, embed, select,
                        where, group, having,
                        order, limit, offset):
-        # Assemble a `SELECT` statement.
+        subtrees = self.assemble_subtrees()
         return SegmentFrame(include, embed, select,
-                            where, group, having,
-                            order, limit, offset, self.term)
+                           where, group, having,
+                           order, limit, offset,
+                           subtrees, self.term)
 
 
 class AssembleQuery(Assemble):
@@ -1175,11 +1270,13 @@ class AssembleQuery(Assemble):
         if self.term.segment is not None:
             # Initialize the state.
             self.state.set_tree(self.term.segment)
+            self.state.save_location(self.term.segment, None)
+            self.state.save_subterms(None, [self.term.segment])
             # Compile the segment.
             segment = self.state.assemble(self.term.segment)
-            compose = decompose(self.term.segment.code,
-                                self.state.segment_indexes,
-                                self.term.binding.profile.tag)
+            # Generate the compositor.
+            self.state.push_name(self.term.binding.profile.tag)
+            compose = self.state.decompose(self.term.segment.code)
             # Clean up the state.
             self.state.flush()
         # Generate a frame node.
@@ -1445,20 +1542,16 @@ class Decompose(Adapter):
 
     adapt(Code)
 
-    def __init__(self, code, indexes, name):
+    def __init__(self, code, state):
         assert isinstance(code, Code)
-        assert isinstance(indexes, listof(int))
-        assert isinstance(name, maybe(unicode))
+        assert isinstance(state, AssemblingState)
         self.code = code
-        self.indexes = indexes
-        self.name = name
+        self.state = state
 
     def __call__(self):
-        assert len(self.indexes) > 0
-        index = self.indexes[0]
-        def compose_value(row, index=index):
+        index = self.state.get_next_index()
+        def compose_value(row, stream, index=index):
             return row[index]
-        compose_value.width = 1
         return compose_value
 
 
@@ -1467,10 +1560,34 @@ class DecomposeSegment(Decompose):
     adapt(SegmentCode)
 
     def __call__(self):
-        def compose_null(row):
-            return None
-        compose_null.width = 0
-        return compose_null
+        if self.state.segment is None:
+            self.state.push_segment(self.code)
+            compose_code = self.state.decompose(self.code.code)
+            self.state.pop_segment()
+            def compose_root_segment(row, stream, compose_code=compose_code):
+                items = []
+                for row in stream:
+                    items.append(compose_code(row, stream))
+                return items
+            return compose_root_segment
+        else:
+            key_stencil = self.state.get_key_stencil()
+            self.state.push_segment(self.code)
+            location = self.state.get_location()
+            superkey_stencil = self.state.get_superkey_stencil()
+            compose_code = self.state.decompose(self.code.code)
+            self.state.pop_segment()
+            def compose_nested_segment(row, stream, compose_code=compose_code,
+                                       location=location,
+                                       key_stencil=key_stencil,
+                                       superkey_stencil=superkey_stencil):
+                items = []
+                key = stream.get(key_stencil)
+                substream = stream.substreams[location]
+                for row in substream.slice(superkey_stencil, key):
+                    items.append(compose_code(row, substream))
+                return items
+            return compose_nested_segment
 
 
 class DecomposeCompound(Decompose):
@@ -1478,7 +1595,7 @@ class DecomposeCompound(Decompose):
     adapt(CompoundUnit)
 
     def __call__(self):
-        return decompose(self.code.code, self.indexes, self.name)
+        return self.state.decompose(self.code.code)
 
 
 class DecomposeRecord(Decompose):
@@ -1486,23 +1603,20 @@ class DecomposeRecord(Decompose):
     adapt(RecordCode)
 
     def __call__(self):
-        indexes = self.indexes
-        width = 0
         compose_fields = []
         field_names = []
         for field, profile in zip(self.code.fields,
                                   self.code.domain.fields):
-            compose_field = decompose(field, indexes, profile.tag)
-            compose_fields.append(compose_field)
-            indexes = indexes[compose_field.width:]
-            width += compose_field.width
             field_names.append(profile.tag)
-        record_class = Record.make(self.name, field_names)
-        def compose_record(row, record_class=record_class,
+            self.state.push_name(profile.tag)
+            compose_field = self.state.decompose(field)
+            self.state.pop_name()
+            compose_fields.append(compose_field)
+        record_class = Record.make(self.state.name, field_names)
+        def compose_record(row, stream, record_class=record_class,
                            compose_fields=compose_fields):
-            return record_class(*(compose_field(row)
-                                  for compose_field in compose_fields))
-        compose_record.width = width
+            return record_class(*[compose_field(row, stream)
+                                  for compose_field in compose_fields])
         return compose_record
 
 
@@ -1511,19 +1625,15 @@ class DecomposeAnnihilator(Decompose):
     adapt(AnnihilatorCode)
 
     def __call__(self):
-        assert len(self.indexes) > 0
-        indexes = self.indexes[1:]
-        compose_indicator = decompose(self.code.indicator, self.indexes)
-        compose = decompose(self.code.code,
-                            self.indexes[compose_indicator.width:],
-                            self.name)
-        def compose_nullable(row, compose_indicator=compose_indicator,
+        compose_indicator = self.state.decompose(self.code.indicator)
+        compose = self.state.decompose(self.code.code)
+        def compose_nullable(row, stream,
+                             compose_indicator=compose_indicator,
                              compose=compose):
-            if compose_indicator(row) is None:
+            value = compose(row, stream)
+            if compose_indicator(row, stream) is None:
                 return None
-            else:
-                return compose(row)
-        compose_nullable.width = compose.width+1
+            return value
         return compose_nullable
 
 
@@ -1545,9 +1655,5 @@ def assemble(term, state=None):
         state = AssemblingState()
     # Realize and apply the `Assemble` adapter; return the generated frame.
     return Assemble.__invoke__(term, state)
-
-
-def decompose(code, index, name=None):
-    return Decompose.__invoke__(code, index, name)
 
 

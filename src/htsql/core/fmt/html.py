@@ -529,13 +529,19 @@ class ListToHTML(ToHTML):
         if not height:
             return
         if not value:
+            row = []
             attributes = []
-            if self.width > 1:
-                attributes.append(u" colspan=\"%s\"" % self.width)
             if height > 1:
                 attributes.append(u" rowspan=\"%s\"" % height)
-            attributes.append(u" class=\"htsql-null-value\"")
-            yield [u"<td%s></td>" % u"".join(attributes)]
+            attributes.append(u" class=\"htsql-index htsql-null-record-value\"")
+            row.append(u"<td%s></td>" % u"".join(attributes))
+            attributes = []
+            if height > 1:
+                attributes.append(u" rowspan=\"%s\"" % height)
+            attributes.append(u" class=\"htsql-null-record-value\"")
+            row.extend([u"<td%s></td>" % u"".join(attributes)]*(self.width-1))
+            yield row
+            return
         items = iter(value)
         item = next(items)
         is_last = False
@@ -555,7 +561,7 @@ class ListToHTML(ToHTML):
             first_row = next(item_stream, [])
             attributes = []
             if item_height > 1:
-                attributes.append(u" rowspan=\"%s\"" % height)
+                attributes.append(u" rowspan=\"%s\"" % item_height)
             attributes.append(u" class=\"htsql-index\"")
             first_row.insert(0, u"<td%s>%s</td>"
                                 % (u"".join(attributes), index))

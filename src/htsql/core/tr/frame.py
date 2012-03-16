@@ -303,6 +303,15 @@ class SegmentFrame(BranchFrame):
 
     is_segment = True
 
+    def __init__(self, include, embed, select, where,
+                 group, having, order, limit, offset,
+                 subtrees, term):
+        assert isinstance(subtrees, listof(SegmentFrame))
+        super(SegmentFrame, self).__init__(include, embed, select, where,
+                                           group, having, order, limit, offset,
+                                           term)
+        self.subtrees = subtrees
+
 
 class Anchor(Clause):
     """

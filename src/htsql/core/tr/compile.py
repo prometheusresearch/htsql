@@ -53,6 +53,9 @@ class CompilingState(object):
         self.baseline_stack = []
         # The current baseline flow.
         self.baseline = None
+        # Support for nested segments.
+        self.superflow_stack = []
+        self.superflow = None
 
     def tag(self):
         """
@@ -76,8 +79,10 @@ class CompilingState(object):
         # Check that the state flows are not yet initialized.
         assert self.root is None
         assert self.baseline is None
+        assert self.superflow is None
         self.root = flow
         self.baseline = flow
+        self.superflow = flow
 
     def flush(self):
         """
@@ -90,6 +95,7 @@ class CompilingState(object):
         assert self.baseline is self.root
         self.root = None
         self.baseline = None
+        self.superflow = None
 
     def push_baseline(self, baseline):
         """
@@ -111,6 +117,13 @@ class CompilingState(object):
         Restores the previous baseline flow.
         """
         self.baseline = self.baseline_stack.pop()
+
+    def push_superflow(self, flow):
+        self.superflow_stack.append(self.superflow)
+        self.superflow = flow
+
+    def pop_superflow(self):
+        self.superflow = self.superflow_stack.pop()
 
     def compile(self, expression, baseline=None):
         """
@@ -566,15 +579,22 @@ class CompileSegment(Compile):
     def __call__(self):
         # Get the ordering of the segment flow.  We must respect the ordering
         # of the parent segment.
-        order = arrange(self.state.baseline) + arrange(self.expression.flow)
+        order = arrange(self.state.superflow) + arrange(self.expression.flow)
         # List of expressions we need the term to export.
         codes = ([self.expression.code] +
                  [code for code, direction in order])
         # Construct a term corresponding to the segment flow.
-        if self.state.baseline.is_root:
+        is_native = False
+        segment_flow = self.expression.flow
+        while segment_flow is not None:
+            if self.state.superflow.dominates(segment_flow):
+                is_native = True
+                break
+            segment_flow = segment_flow.base
+        if is_native:
             kid = self.state.compile(self.expression.flow)
         else:
-            trunk_term = self.state.compile(self.state.baseline,
+            trunk_term = self.state.compile(self.state.superflow,
                                             baseline=self.state.root)
             shoot_term = self.compile_shoot(self.expression.flow, trunk_term)
             joints = self.glue_terms(trunk_term, shoot_term)
@@ -596,13 +616,21 @@ class CompileSegment(Compile):
         # Compile nested segments.
         subtrees = {}
         for segment in self.expression.code.segments:
-            term = self.state.compile(segment,
-                                      baseline=self.expression.flow)
+            if segment in subtrees:
+                continue
+            self.state.push_superflow(self.expression.flow)
+            term = self.state.compile(segment)
+            self.state.pop_superflow()
             subtrees[segment] = term
+        # Construct keys for segment merging.
+        superkeys = [code for code, direction in arrange(self.state.superflow,
+                                                         with_strong=False)]
+        keys = [code for code, direction in arrange(self.expression.flow,
+                                                    with_strong=False)]
         # Construct a segment term.
-        return SegmentTerm(self.state.tag(), kid, self.expression.code,
-                           subtrees, kid.flow, self.state.baseline,
-                           kid.routes.copy())
+        return SegmentTerm(self.state.tag(), kid, self.expression,
+                           superkeys, keys, subtrees,
+                           kid.flow, kid.baseline, kid.routes.copy())
 
 
 class CompileFlow(Compile):

@@ -1,9 +1,9 @@
 
 $(document).ready(function() {
 
-    function log(data) {
+    function log() {
         if (console)
-            console.log(data);
+            console.log.apply(console, arguments);
     }
 
     function timing(point) {
@@ -715,7 +715,7 @@ $(document).ready(function() {
                 }
                 if (data === null) {
                     data = [];
-                    attrs = '';
+                    var attrs = '';
                     attrs += (height > 1) ? ' rowspan="'+height+'"' : '';
                     attrs += ' class="null-rec-val"';
                     for (var k = 0; k < fieldBuilds.length; k ++) {
@@ -782,7 +782,7 @@ $(document).ready(function() {
                 if (data === null) {
                     return 0;
                 }
-                height = 0;
+                var height = 0;
                 for (var k = 0; k < data.length; k ++) {
                     var itemHeight = itemBuild.bodyHeight(data[k]);
                     if (itemHeight == 0) {
@@ -797,15 +797,20 @@ $(document).ready(function() {
                 if (!height) {
                     return rows;
                 }
-                if (data === null) {
+                if (data === null || data.length == 0) {
                     for (var k = 0; k < height; k ++) {
                         rows.push([]);
                     }
                     var attrs = '';
-                    attrs += height > 1 ? ' rowspan="'+height+'"' : '';
-                    attrs += itemBuild.size > 0 ? ' colspan="'+(itemBuild.size+1)+'"' : '';
-                    attrs += ' class="dummy"';
-                    rows[0].unshift('<td'+attrs+'></td>');
+                    attrs += (height > 1) ? ' rowspan="'+height+'"' : '';
+                    attrs += ' class="index null-rec-val"';
+                    rows[0].push('<td'+attrs+'></td>');
+                    attrs = '';
+                    attrs += (height > 1) ? ' rowspan="'+height+'"' : '';
+                    attrs += ' class="null-rec-val"';
+                    for (var k = 0; k < itemBuild.size; k ++) {
+                        rows[0].push('<td'+attrs+'></td>');
+                    }
                 }
                 else {
                     for (var k = 0; k < data.length; k ++) {

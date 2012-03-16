@@ -623,12 +623,17 @@ class SegmentTerm(UnaryTerm):
         The operand.
     """
 
-    def __init__(self, tag, kid, code, subtrees, flow, baseline, routes):
-        assert isinstance(code, Code)
+    def __init__(self, tag, kid, code, superkeys, keys, subtrees,
+                 flow, baseline, routes):
+        assert isinstance(code, SegmentCode)
+        assert isinstance(superkeys, listof(Code))
+        assert isinstance(keys, listof(Code))
         assert isinstance(subtrees, dictof(SegmentCode, SegmentTerm))
         super(SegmentTerm, self).__init__(tag, kid,
                                           flow, baseline, routes)
         self.code = code
+        self.superkeys = superkeys
+        self.keys = keys
         self.subtrees = subtrees
 
     def __str__(self):
