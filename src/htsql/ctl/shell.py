@@ -24,10 +24,19 @@ import sys
 import os, os.path
 import re
 import subprocess
+import struct
 try:
     import readline
 except ImportError:
     readline = None
+try:
+    import termios
+except:
+    termios = None
+try:
+    import fcntl
+except:
+    fcntl = None
 
 
 class Cmd(object):
@@ -553,6 +562,12 @@ class GetPostBaseCmd(Cmd):
         # Execute the WSGI request.
         response = request.execute(self.state.app)
 
+        # Display the output using a pager when necessary.
+        self.dump(response)
+
+    def dump(self, response):
+        # Display the response.
+
         # Check for exceptions and incomplete responses.
         if response.exc_info is not None:
             exc_type, exc_value, exc_traceback = response.exc_info
@@ -563,15 +578,23 @@ class GetPostBaseCmd(Cmd):
             self.ctl.out("** incomplete response")
             return
 
-        # Check if we need to use the pager.
-        length = response.body.count('\n')
+        # Determine the output dimensions.
+        lines = response.body.splitlines()
+        length = len(lines)
+        if self.state.with_headers:
+            length += len(response.headers)+2
+        width = max(len(line.decode('utf-8', 'replace'))
+                    for line in lines) if lines else 0
+
+        # Check if the output fits the terminal screen.
+        max_lines, max_columns = self.routine.get_screen_size()
         if (self.state.with_pager
-                and length > self.routine.pager_line_threshold):
+                and (length >= max_lines or width >= max_columns)):
             # Pipe the response to the pager.
             stream = StringIO.StringIO()
             response.dump(stream, self.state.with_headers)
             output = stream.getvalue()
-            process = subprocess.Popen(self.routine.pager,
+            process = subprocess.Popen(self.routine.pager.split(),
                                        stdin=subprocess.PIPE)
             try:
                 process.communicate(output)
@@ -632,7 +655,7 @@ class PostCmd(GetPostBaseCmd):
     method = 'POST'
 
 
-class RunCmd(Cmd):
+class RunCmd(GetPostBaseCmd):
     """
     Implements the `run` command.
     """
@@ -656,6 +679,10 @@ class RunCmd(Cmd):
     with the response body, use `headers on`.
     """
 
+    @classmethod
+    def complete(cls, routine, argument):
+        return None
+
     def execute(self):
         # Check if the argument is suppied and is a valid filename.
         if not self.argument:
@@ -678,33 +705,8 @@ class RunCmd(Cmd):
                                   remote_user=self.state.remote_user)
         response = request.execute(self.state.app)
 
-        # Check for exceptions and incomplete responses.
-        if response.exc_info is not None:
-            exc_type, exc_value, exc_traceback = response.exc_info
-            traceback.print_exception(exc_type, exc_value, exc_traceback,
-                                      file=self.ctl.stderr)
-            return
-        if not response.complete():
-            self.ctl.out("** incomplete response")
-            return
-
-        # Check if we need to use the pager.
-        length = response.body.count('\n')
-        if (self.state.with_pager
-                and length > self.routine.pager_line_threshold):
-            # Pipe the response to the pager.
-            stream = StringIO.StringIO()
-            response.dump(stream, self.state.with_headers)
-            output = stream.getvalue()
-            process = subprocess.Popen(self.routine.pager,
-                                       stdin=subprocess.PIPE)
-            try:
-                process.communicate(output)
-            except IOError, exc:
-                self.ctl.out(exc)
-        else:
-            # Dump the response.
-            response.dump(self.ctl.stdout, self.state.with_headers)
+        # Display the response using a pager when necessary.
+        self.dump(response)
 
 
 class ShellState(object):
@@ -753,6 +755,7 @@ class VersionCmd(Cmd):
     def execute(self):
         self.ctl.out(self.ctl.get_legal())
         self.ctl.out()
+
 
 class DescribeCmd(Cmd):
     """
@@ -906,11 +909,12 @@ class ShellRoutine(DBRoutine):
     history_path = '~/.htsql/shell.history'
 
     # Potential pagers, used when $PAGER is not set.
-    default_pager_paths = ['/usr/bin/pager', '/usr/bin/more']
-
-    # The default value of the pager line threshold, used
-    # when $LINES is not set
-    default_pager_line_threshold = 25
+    default_pager_paths = [
+            '/bin/less -S',
+            '/usr/bin/less -S',
+            '/usr/local/bin/less -S',
+            '/bin/more',
+    ]
 
     # The pattern to check for commands.
     command_name_pattern = re.compile(r'^[a-zA-Z.?]')
@@ -976,12 +980,9 @@ class ShellRoutine(DBRoutine):
         self.command_by_name = {}
         # Path to the pager.
         self.pager = None
-        # The pager will be activated when the number of lines in the response
-        # exceeds this value.
-        self.pager_line_threshold = self.default_pager_line_threshold
         # Populate `command_by_name`.
         self.init_commands()
-        # Set `pager` and `pager_line_threshold`.
+        # Set the pager and the pager thresholds.
         self.init_pager()
         # The mutable shell state.
         self.state = ShellState(with_pager=(self.ctl.is_interactive and
@@ -999,7 +1000,7 @@ class ShellRoutine(DBRoutine):
                 self.command_by_name[name] = command_class
 
     def init_pager(self):
-        # Initialize the attributes `pager` and `pager_line_threshold`.
+        # Detect the pager.
 
         # Use the environment variable $PAGER; if not set, check for
         # some common pagers.
@@ -1007,16 +1008,59 @@ class ShellRoutine(DBRoutine):
             self.pager = os.environ['PAGER']
         else:
             for path in self.default_pager_paths:
-                if os.path.exists(path):
+                # Ignore parameters if any.
+                if os.path.exists(path.split()[0]):
                     self.pager = path
                     break
 
-        # $LINES indicates the number of lines in the terminal.
-        if 'LINES' in os.environ:
+    def get_screen_size(self):
+        # Determine the terminal dimensions.
+
+        # No dimensions in a non-interactive environment.
+        if not self.ctl.is_interactive:
+            return 0, 0
+
+        lines = None
+        columns = None
+
+        # Use TIOCGWINSZ ioctl call to determine the terminal dimensions.
+        if (fcntl is not None and
+                termios is not None and hasattr(termios, 'TIOCGWINSZ')):
+            # struct winsize {
+            #   unsigned short ws_row;
+            #   unsigned short ws_col;
+            #   unsigned short ws_xpixel;   /* unused */
+            #   unsigned short ws_ypixel;   /* unused */
+            # };
+            winsize = struct.pack('HHHH', 0, 0, 0, 0)
             try:
-                self.pager_line_threshold = int(os.environ['LINES'])
-            except ValueError:
+                winsize = fcntl.ioctl(self.ctl.stdout,
+                                      termios.TIOCGWINSZ, winsize)
+                lines, columns = struct.unpack('HHHH', winsize)[:2]
+            except IOError:
                 pass
+
+        # Try $LINES and $COLUMNS environment variables (usually not set).
+        if lines is None:
+            if 'LINES' in os.environ:
+                try:
+                    lines = int(os.environ['LINES'])
+                except ValueError:
+                    pass
+        if columns is None:
+            if 'COLUMNS' in os.environ:
+                try:
+                    columns = int(os.environ['COLUMNS'])
+                except ValueError:
+                    pass
+
+        # The default values.
+        if lines is None:
+            lines = 25
+        if columns is None:
+            columns = 80
+
+        return lines, columns
 
     def start(self, app):
         # Set the active HTSQL application.
@@ -1072,7 +1116,11 @@ class ShellRoutine(DBRoutine):
             prompt = "$ "
             app = self.state.app
             if app is not None and app.htsql.db is not None:
-                prompt = "%s$ " % app.htsql.db.database.strip(".sqlite")
+                # When the database is a file, strip the dirname and
+                # the extension.
+                database = os.path.basename(app.htsql.db.database)
+                database = os.path.splitext(database)[0]
+                prompt = "%s$ " % database
             try:
                 line = raw_input(prompt)
             except EOFError:

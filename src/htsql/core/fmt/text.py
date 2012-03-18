@@ -148,7 +148,7 @@ class EmitText(Emit):
                 line.append(u" |\n")
             else:
                 line.append(u" :\n")
-            yield "".join(line)
+            yield u"".join(line)
         yield u"\n"
         if (addon.debug and self.meta.plan is not None and
                 self.meta.plan.statement is not None):
@@ -163,7 +163,7 @@ class EmitText(Emit):
                 if depth:
                     yield u"\n"
                 for line in sql.splitlines():
-                    yield u" "*(depth*2+1) + "%s\n" % line
+                    yield u" "*(depth*2+1) + u"%s\n" % line
                 for substatement in statement.substatements:
                     queue.append((depth+1, substatement))
 
@@ -281,7 +281,7 @@ class StringToText(ToText):
             group = u" ".join(chunks[idx-size:idx])
             assert len(group) <= width
             line = u"%*s" % (-width, group)
-            lines.insert(0, line.encode('utf-8'))
+            lines.insert(0, line)
             idx -= size
         is_first = True
         for line in lines:
