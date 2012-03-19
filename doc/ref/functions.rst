@@ -1298,7 +1298,7 @@ Formatters
 +---------------+---------------------------------------+
 | `/:raw`       | JSON-serialized generic output        |
 +---------------+---------------------------------------+
-| `/:obj`       | JSON-serialized object output         |
+| `/:json`      | JSON-serialized object output         |
 +---------------+---------------------------------------+
 | `/:xml`       | XML-serialized object output          |
 +---------------+---------------------------------------+
@@ -1327,12 +1327,12 @@ headers and footers.
 Object Output
 -------------
 
-The ``/:xml`` and ``/:obj`` formatters produce a customary "object"
+The ``/:xml`` and ``/:json`` formatters produce a customary "object"
 structure which lack any header information.  These object formats are
 perfect for post-processing tools that already know about the query
 output structure, such as a Javascript program or XSLT stylesheet.
 
-.. htsql:: /department{school,*}.limit(3)/:obj
+.. htsql:: /department{school,*}.limit(3)/:json
    :plain:
 
 .. htsql:: /department{school,*}.limit(3)/:xml
@@ -1365,9 +1365,6 @@ information and ``data`` has the corresponding output data.
 
 .. htsql:: /department{school,*}.limit(3)/:raw
    :plain:
-
-This format is used by our visual ``shell`` query tool and also for
-producing output via our Sphinx plugin.
 
 Query Debug
 -----------
