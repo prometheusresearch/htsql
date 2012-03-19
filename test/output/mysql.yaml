@@ -5476,15 +5476,9 @@ tests:
              :                 :     :                                  :         : constructive criticism.          :
              | stdart          | 119 | Spring Basket Weaving Workshop   |         | A just-for-fun chance to learn   |
              :                 :     :                                  :         : the basics of basket weaving.    :
-             | tched           | 630 | Practice of Mathematics Teaching |       6 | Practice as a competent          |
-             :                 :     :                                  :         : mathematics teacher in one of    :
-             :                 :     :                                  :         : the public schools.              :
-             | tched           | 635 | Practice of Science Teaching     |       6 | Practice as a competent science  |
-             :                 :     :                                  :         : teacher in one of the public     :
-             :                 :     :                                  :         : schools.                         :
-             | tched           | 640 | Practice of Language Teaching    |       6 | Practice as a competent language |
-             :                 :     :                                  :         : teacher in one of the public     :
-             :                 :     :                                  :         : schools.                         :
+             | tched           | 630 | Practice of Mathematics Teaching |       6 | ""                               |
+             | tched           | 635 | Practice of Science Teaching     |       6 | \n                               |
+             | tched           | 640 | Practice of Language Teaching    |       6 | " "                              |
              | tched           | 509 | Public School Internship         |       5 | On-site supervised instructional |
              :                 :     :                                  :         : experience within a public       :
              :                 :     :                                  :         : school setting under the         :
@@ -8459,15 +8453,9 @@ tests:
              :                 :     : Education                        :         : topics in teacher education.     :
              :                 :     :                                  :         : This course may be taken         :
              :                 :     :                                  :         : repeatedly.                      :
-             | tched           | 630 | Practice of Mathematics Teaching |       6 | Practice as a competent          |
-             :                 :     :                                  :         : mathematics teacher in one of    :
-             :                 :     :                                  :         : the public schools.              :
-             | tched           | 635 | Practice of Science Teaching     |       6 | Practice as a competent science  |
-             :                 :     :                                  :         : teacher in one of the public     :
-             :                 :     :                                  :         : schools.                         :
-             | tched           | 640 | Practice of Language Teaching    |       6 | Practice as a competent language |
-             :                 :     :                                  :         : teacher in one of the public     :
-             :                 :     :                                  :         : schools.                         :
+             | tched           | 630 | Practice of Mathematics Teaching |       6 | ""                               |
+             | tched           | 635 | Practice of Science Teaching     |       6 | \n                               |
+             | tched           | 640 | Practice of Language Teaching    |       6 | " "                              |
 
              ----
              /define($avg_credits:=avg(course.credits)).course?credits>$avg_credits
@@ -8927,15 +8915,9 @@ tests:
              :                 :     : Education                        :         : topics in teacher education.     :
              :                 :     :                                  :         : This course may be taken         :
              :                 :     :                                  :         : repeatedly.                      :
-             | tched           | 630 | Practice of Mathematics Teaching |       6 | Practice as a competent          |
-             :                 :     :                                  :         : mathematics teacher in one of    :
-             :                 :     :                                  :         : the public schools.              :
-             | tched           | 635 | Practice of Science Teaching     |       6 | Practice as a competent science  |
-             :                 :     :                                  :         : teacher in one of the public     :
-             :                 :     :                                  :         : schools.                         :
-             | tched           | 640 | Practice of Language Teaching    |       6 | Practice as a competent language |
-             :                 :     :                                  :         : teacher in one of the public     :
-             :                 :     :                                  :         : schools.                         :
+             | tched           | 630 | Practice of Mathematics Teaching |       6 | ""                               |
+             | tched           | 635 | Practice of Science Teaching     |       6 | \n                               |
+             | tched           | 640 | Practice of Language Teaching    |       6 | " "                              |
 
              ----
              /course?credits>$avg_credits:where($avg_credits:=avg(course.credits))
@@ -9413,15 +9395,9 @@ tests:
              | tched           | 510 | Preschool Internship             |       5 | Supervised internship in a       |
              :                 :     :                                  :         : preschool or kindergarten        :
              :                 :     :                                  :         : setting.                         :
-             | tched           | 630 | Practice of Mathematics Teaching |       6 | Practice as a competent          |
-             :                 :     :                                  :         : mathematics teacher in one of    :
-             :                 :     :                                  :         : the public schools.              :
-             | tched           | 635 | Practice of Science Teaching     |       6 | Practice as a competent science  |
-             :                 :     :                                  :         : teacher in one of the public     :
-             :                 :     :                                  :         : schools.                         :
-             | tched           | 640 | Practice of Language Teaching    |       6 | Practice as a competent language |
-             :                 :     :                                  :         : teacher in one of the public     :
-             :                 :     :                                  :         : schools.                         :
+             | tched           | 630 | Practice of Mathematics Teaching |       6 | ""                               |
+             | tched           | 635 | Practice of Science Teaching     |       6 | \n                               |
+             | tched           | 640 | Practice of Language Teaching    |       6 | " "                              |
 
              ----
              /department.define($avg_credits:=avg(course.credits)).course?credits>$avg_credits
@@ -10388,15 +10364,9 @@ tests:
              | stdart          | 714 | Peer Portfolio Review            |       0 | An opportunity to practice       |
              :                 :     :                                  :         : giving and receiving             :
              :                 :     :                                  :         : constructive criticism.          :
-             | tched           | 630 | Practice of Mathematics Teaching |       6 | Practice as a competent          |
-             :                 :     :                                  :         : mathematics teacher in one of    :
-             :                 :     :                                  :         : the public schools.              :
-             | tched           | 635 | Practice of Science Teaching     |       6 | Practice as a competent science  |
-             :                 :     :                                  :         : teacher in one of the public     :
-             :                 :     :                                  :         : schools.                         :
-             | tched           | 640 | Practice of Language Teaching    |       6 | Practice as a competent language |
-             :                 :     :                                  :         : teacher in one of the public     :
-             :                 :     :                                  :         : schools.                         :
+             | tched           | 630 | Practice of Mathematics Teaching |       6 | ""                               |
+             | tched           | 635 | Practice of Science Teaching     |       6 | \n                               |
+             | tched           | 640 | Practice of Language Teaching    |       6 | " "                              |
 
              ----
              /course?credits>5|credits<3
@@ -12248,15 +12218,7 @@ tests:
              :                 :     : Education                        :         : topics in teacher education.     :
              :                 :     :                                  :         : This course may be taken         :
              :                 :     :                                  :         : repeatedly.                      :
-             | tched           | 630 | Practice of Mathematics Teaching |       6 | Practice as a competent          |
-             :                 :     :                                  :         : mathematics teacher in one of    :
-             :                 :     :                                  :         : the public schools.              :
-             | tched           | 635 | Practice of Science Teaching     |       6 | Practice as a competent science  |
-             :                 :     :                                  :         : teacher in one of the public     :
-             :                 :     :                                  :         : schools.                         :
-             | tched           | 640 | Practice of Language Teaching    |       6 | Practice as a competent language |
-             :                 :     :                                  :         : teacher in one of the public     :
-             :                 :     :                                  :         : schools.                         :
+             | tched           | 635 | Practice of Science Teaching     |       6 | \n                               |
 
              ----
              /course?description
@@ -12279,6 +12241,8 @@ tests:
              | department_code | no  | description |
             -+-----------------+-----+-------------+-
              | acc             | 100 |             |
+             | tched           | 630 | ""          |
+             | tched           | 640 | " "         |
 
              ----
              /course{department_code,no,description}?!description

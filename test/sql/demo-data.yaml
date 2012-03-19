@@ -409,10 +409,9 @@
     ['tched', 509, 'Public School Internship', 5, 'On-site supervised instructional experience within a public school setting under the leadership of an appropriate, competent professional.'],
     ['tched', 510, 'Preschool Internship', 5, 'Supervised internship in a preschool or kindergarten setting.'],
     ['tched', 520, 'Special Topics in Teacher Education', 4, 'Advanced study of selected topics in teacher education. This course may be taken repeatedly.'],
-    ['tched', 630, 'Practice of Mathematics Teaching', 6, 'Practice as a competent mathematics teacher in one of the public schools.'],
-    ['tched', 635, 'Practice of Science Teaching', 6, 'Practice as a competent science teacher in one of the public schools.'],
-    ['tched', 640, 'Practice of Language Teaching', 6, 'Practice as a competent language teacher in one of the public schools.'],
-
+    ['tched', 630, 'Practice of Mathematics Teaching', 6, ''],
+    ['tched', 635, 'Practice of Science Teaching', 6, '\n'],
+    ['tched', 640, 'Practice of Language Teaching', 6, ' '],
     ['edpol', 102, 'Introduction to Education', 3, 'Historical overview of education in political and philosophical context, role of education, comparison of contemporary and former educational practices.'],
     ['edpol', 117, 'Contemporary Society', 3, 'Provides basics of social analysis and perspectives of contemporary society development.'],
     ['edpol', 131, 'Sociology of Childhood', 3, 'This course gives understanding of various aspects of childhood including historical, philosophical, economic, considers children rights and diversity of childhood experiences, explores how this concepts impact education and care of children.'],
