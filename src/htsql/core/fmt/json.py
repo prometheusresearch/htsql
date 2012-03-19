@@ -17,7 +17,7 @@ from ..domain import (Domain, BooleanDomain, NumberDomain, FloatDomain,
                       StringDomain, EnumDomain, DateDomain, TimeDomain,
                       DateTimeDomain, ListDomain, RecordDomain,
                       VoidDomain, OpaqueDomain, Profile)
-from .format import JSONFormat, ObjFormat, EmitHeaders, Emit
+from .format import RawFormat, JSONFormat, EmitHeaders, Emit
 import re
 import math
 import decimal
@@ -155,7 +155,7 @@ def dump_json(iterator):
 class EmitJSONHeaders(EmitHeaders):
 
     adapt_many(JSONFormat,
-               ObjFormat)
+               RawFormat)
 
     def __call__(self):
         filename = None
@@ -171,6 +171,25 @@ class EmitJSONHeaders(EmitHeaders):
         yield ('Content-Disposition', 'inline; filename="%s.js"' % filename)
 
 
+class EmitRaw(Emit):
+
+    adapt(RawFormat)
+
+    def __call__(self):
+        return dump_json(purge_null_keys(self.emit()))
+
+    def emit(self):
+        data_to_raw = to_raw(self.meta.domain)
+        yield JS_MAP
+        yield u"meta"
+        for token in profile_to_raw(self.meta):
+            yield token
+        yield u"data"
+        for token in data_to_raw(self.data):
+            yield token
+        yield JS_END
+
+
 class EmitJSON(Emit):
 
     adapt(JSONFormat)
@@ -179,38 +198,19 @@ class EmitJSON(Emit):
         return dump_json(purge_null_keys(self.emit()))
 
     def emit(self):
-        data_to_json = to_json(self.meta.domain)
-        yield JS_MAP
-        yield u"meta"
-        for token in profile_to_json(self.meta):
-            yield token
-        yield u"data"
-        for token in data_to_json(self.data):
-            yield token
-        yield JS_END
-
-
-class EmitObj(Emit):
-
-    adapt(ObjFormat)
-
-    def __call__(self):
-        return dump_json(purge_null_keys(self.emit()))
-
-    def emit(self):
-        product_to_obj = to_obj(self.meta.domain)
+        product_to_json = to_json(self.meta.domain)
         if self.meta.tag:
             key = self.meta.tag
         else:
             key = unicode(0)
         yield JS_MAP
         yield key
-        for token in product_to_obj(self.data):
+        for token in product_to_json(self.data):
             yield token
         yield JS_END
 
 
-class ToJSON(Adapter):
+class ToRaw(Adapter):
 
     adapt(Domain)
 
@@ -228,13 +228,13 @@ class ToJSON(Adapter):
             yield self.domain.dump(value)
 
 
-class RecordToJSON(ToJSON):
+class RecordToRaw(ToRaw):
 
     adapt(RecordDomain)
 
     def __init__(self, domain):
-        super(RecordToJSON, self).__init__(domain)
-        self.fields_to_json = [to_json(field.domain)
+        super(RecordToRaw, self).__init__(domain)
+        self.fields_to_raw = [to_raw(field.domain)
                                for field in domain.fields]
 
     def scatter(self, value):
@@ -242,33 +242,33 @@ class RecordToJSON(ToJSON):
             yield None
         else:
             yield JS_SEQ
-            for item, field_to_json in zip(value, self.fields_to_json):
-                for token in field_to_json(item):
+            for item, field_to_raw in zip(value, self.fields_to_raw):
+                for token in field_to_raw(item):
                     yield token
             yield JS_END
 
 
-class ListToJSON(ToJSON):
+class ListToRaw(ToRaw):
 
     adapt(ListDomain)
 
     def __init__(self, domain):
-        super(ListToJSON, self).__init__(domain)
-        self.item_to_json = to_json(domain.item_domain)
+        super(ListToRaw, self).__init__(domain)
+        self.item_to_raw = to_raw(domain.item_domain)
 
     def scatter(self, value):
         if value is None:
             yield None
         else:
-            item_to_json = self.item_to_json
+            item_to_raw = self.item_to_raw
             yield JS_SEQ
             for item in value:
-                for token in item_to_json(item):
+                for token in item_to_raw(item):
                     yield token
             yield JS_END
 
 
-class NativeToJSON(ToJSON):
+class NativeToRaw(ToRaw):
 
     adapt_many(BooleanDomain,
                NumberDomain,
@@ -280,7 +280,7 @@ class NativeToJSON(ToJSON):
         yield value
 
 
-class NativeStringToJSON(ToJSON):
+class NativeStringToRaw(ToRaw):
 
     adapt_many(DateDomain,
                TimeDomain)
@@ -293,7 +293,7 @@ class NativeStringToJSON(ToJSON):
             yield unicode(value)
 
 
-class DateTimeToJSON(ToJSON):
+class DateTimeToRaw(ToRaw):
 
     adapt(DateTimeDomain)
 
@@ -307,7 +307,7 @@ class DateTimeToJSON(ToJSON):
             yield unicode(value)
 
 
-class OpaqueToJSON(ToJSON):
+class OpaqueToRaw(ToRaw):
 
     adapt(OpaqueDomain)
 
@@ -324,7 +324,7 @@ class OpaqueToJSON(ToJSON):
         yield value
 
 
-class MetaToJSON(Protocol):
+class MetaToRaw(Protocol):
 
     def __init__(self, name, profile):
         assert isinstance(name, str)
@@ -336,15 +336,15 @@ class MetaToJSON(Protocol):
         yield None
 
 
-class DomainMetaToJSON(MetaToJSON):
+class DomainMetaToRaw(MetaToRaw):
 
     call('domain')
 
     def __call__(self):
-        return domain_to_json(self.profile.domain)
+        return domain_to_raw(self.profile.domain)
 
 
-class SyntaxMetaToJSON(MetaToJSON):
+class SyntaxMetaToRaw(MetaToRaw):
 
     call('syntax')
 
@@ -355,7 +355,7 @@ class SyntaxMetaToJSON(MetaToJSON):
             yield unicode(self.profile.syntax)
 
 
-class TagMetaToJSON(MetaToJSON):
+class TagMetaToRaw(MetaToRaw):
 
     call('tag')
 
@@ -366,7 +366,7 @@ class TagMetaToJSON(MetaToJSON):
             yield self.profile.tag
 
 
-class HeaderMetaToJSON(MetaToJSON):
+class HeaderMetaToRaw(MetaToRaw):
 
     call('header')
 
@@ -374,7 +374,7 @@ class HeaderMetaToJSON(MetaToJSON):
         yield self.profile.header
 
 
-class PathMetaToJSON(MetaToJSON):
+class PathMetaToRaw(MetaToRaw):
 
     call('path')
 
@@ -394,7 +394,7 @@ class PathMetaToJSON(MetaToJSON):
             yield u".".join(names)
 
 
-class DomainToJSON(Adapter):
+class DomainToRaw(Adapter):
 
     adapt(Domain)
 
@@ -409,7 +409,7 @@ class DomainToJSON(Adapter):
         yield JS_END
 
 
-class VoidDomainToJSON(DomainToJSON):
+class VoidDomainToRaw(DomainToRaw):
 
     adapt(VoidDomain)
 
@@ -417,7 +417,7 @@ class VoidDomainToJSON(DomainToJSON):
         yield None
 
 
-class ListDomainToJSON(DomainToJSON):
+class ListDomainToRaw(DomainToRaw):
 
     adapt(ListDomain)
 
@@ -428,13 +428,13 @@ class ListDomainToJSON(DomainToJSON):
         yield u"item"
         yield JS_MAP
         yield u"domain"
-        for token in domain_to_json(self.domain.item_domain):
+        for token in domain_to_raw(self.domain.item_domain):
             yield token
         yield JS_END
         yield JS_END
 
 
-class RecordDomainToJSON(DomainToJSON):
+class RecordDomainToRaw(DomainToRaw):
 
     adapt(RecordDomain)
 
@@ -445,13 +445,13 @@ class RecordDomainToJSON(DomainToJSON):
         yield u"fields"
         yield JS_SEQ
         for field in self.domain.fields:
-            for token in profile_to_json(field):
+            for token in profile_to_raw(field):
                 yield token
         yield JS_END
         yield JS_END
 
 
-class ToObj(Adapter):
+class ToJSON(Adapter):
 
     adapt(Domain)
 
@@ -460,16 +460,16 @@ class ToObj(Adapter):
         self.domain = domain
 
     def __call__(self):
-        return to_json(self.domain)
+        return to_raw(self.domain)
 
 
-class RecordToObj(ToObj):
+class RecordToJSON(ToJSON):
 
     adapt(RecordDomain)
 
     def __init__(self, domain):
-        super(RecordToObj, self).__init__(domain)
-        self.fields_to_obj = [to_obj(field.domain) for field in domain.fields]
+        super(RecordToJSON, self).__init__(domain)
+        self.fields_to_json = [to_json(field.domain) for field in domain.fields]
         self.field_keys = []
         duplicates = set()
         for idx, field in enumerate(self.domain.fields):
@@ -488,21 +488,22 @@ class RecordToObj(ToObj):
             yield None
         else:
             yield JS_MAP
-            for item, field_to_obj, field_key in zip(value, self.fields_to_obj,
-                                                     self.field_keys):
+            for item, field_to_json, field_key in zip(value,
+                                                      self.fields_to_json,
+                                                      self.field_keys):
                 yield field_key
-                for token in field_to_obj(item):
+                for token in field_to_json(item):
                     yield token
             yield JS_END
 
 
-class ListToObj(ToObj):
+class ListToJSON(ToJSON):
 
     adapt(ListDomain)
 
     def __init__(self, domain):
-        super(ListToObj, self).__init__(domain)
-        self.item_to_obj = to_obj(domain.item_domain)
+        super(ListToJSON, self).__init__(domain)
+        self.item_to_json = to_json(domain.item_domain)
 
     def __call__(self):
         return self.scatter
@@ -512,31 +513,31 @@ class ListToObj(ToObj):
             yield None
         else:
             yield JS_SEQ
-            item_to_obj = self.item_to_obj
+            item_to_json = self.item_to_json
             for item in value:
-                for token in item_to_obj(item):
+                for token in item_to_json(item):
                     yield token
             yield JS_END
 
 
-def profile_to_json(profile):
+def profile_to_raw(profile):
     yield JS_MAP
-    for name in MetaToJSON.__catalogue__():
+    for name in MetaToRaw.__catalogue__():
         yield unicode(name)
-        for token in MetaToJSON.__invoke__(name, profile):
+        for token in MetaToRaw.__invoke__(name, profile):
             yield token
     yield JS_END
 
 
-def domain_to_json(domain):
-    return DomainToJSON.__invoke__(domain)
+def domain_to_raw(domain):
+    return DomainToRaw.__invoke__(domain)
+
+
+def to_raw(domain):
+    return ToRaw.__invoke__(domain)
 
 
 def to_json(domain):
     return ToJSON.__invoke__(domain)
-
-
-def to_obj(domain):
-    return ToObj.__invoke__(domain)
 
 

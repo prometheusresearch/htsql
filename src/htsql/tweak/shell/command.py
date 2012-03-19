@@ -23,7 +23,7 @@ from ...core.tr.signature import Signature, Slot
 from ...core.tr.error import BindError
 from ...core.tr.fn.bind import BindCommand
 from ...core.fmt.json import (escape_json, dump_json, JS_SEQ, JS_MAP, JS_END,
-                              to_json, profile_to_json)
+                              to_raw, profile_to_raw)
 from ..resource.locate import locate
 import re
 import cgi
@@ -325,11 +325,11 @@ class RenderEvaluate(Act):
         yield u"type"
         yield u"product"
         yield u"meta"
-        for token in profile_to_json(product.meta):
+        for token in profile_to_raw(product.meta):
             yield token
         yield u"data"
-        product_to_json = to_json(product.meta.domain)
-        for token in product_to_json(product.data):
+        product_to_raw = to_raw(product.meta.domain)
+        for token in product_to_raw(product.data):
             yield token
         yield u"more"
         yield (limit is not None and

@@ -20,11 +20,11 @@ class Format(object):
     pass
 
 
-class JSONFormat(Format):
+class RawFormat(Format):
     pass
 
 
-class ObjFormat(Format):
+class JSONFormat(Format):
     pass
 
 

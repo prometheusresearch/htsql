@@ -8,8 +8,8 @@ tests:
 
 - title: Supported Output Formats
   tests:
+  - uri: /school/:raw
   - uri: /school/:json
-  - uri: /school/:obj
   - uri: /school/:csv
   - uri: /school/:tsv
   - uri: /school/:xml
@@ -20,6 +20,9 @@ tests:
 
 - title: Format Selection by `Accept`
   tests:
+  - uri: /school
+    headers:
+      Accept: x-htsql/raw
   - uri: /school
     headers:
       Accept: application/json
@@ -41,6 +44,9 @@ tests:
   # Empty segment
   - uri: /
     headers:
+      Accept: x-htsql/raw
+  - uri: /
+    headers:
       Accept: application/json
   - uri: /
     headers:
@@ -59,10 +65,10 @@ tests:
   tests:
     - uri: /(school :as 'List of Schools')
             {name :as Name, count(department) :as '# of Departments'}
-            /:json
+            /:raw
     - uri: /(school :as 'List of Schools')
             {name :as Name, count(department) :as '# of Departments'}
-            /:obj
+            /:json
     - uri: /(school :as 'List of Schools')
             {name :as Name, count(department) :as '# of Departments'}
             /:csv
@@ -83,10 +89,10 @@ tests:
   tests:
   - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL',
            date('2010-04-15'), time('20:13:04.5'), datetime('2010-04-15 20:13')}
-          /:json
+          /:raw
   - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL',
            date('2010-04-15'), time('20:13:04.5'), datetime('2010-04-15 20:13')}
-          /:obj
+          /:json
   - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL',
            date('2010-04-15'), time('20:13:04.5'), datetime('2010-04-15 20:13')}
           /:csv
@@ -105,8 +111,8 @@ tests:
 
 - title: No Rows
   tests:
+  - uri: /school?false()/:raw
   - uri: /school?false()/:json
-  - uri: /school?false()/:obj
   - uri: /school?false()/:csv
   - uri: /school?false()/:tsv
   - uri: /school?false()/:xml
@@ -115,22 +121,22 @@ tests:
 
 - title: Empty Selector
   tests:
+  - uri: /{}/:raw
   - uri: /{}/:json
-  - uri: /{}/:obj
   - uri: /{}/:csv
   - uri: /{}/:tsv
   - uri: /{}/:xml
   - uri: /{}/:html
   - uri: /{}/:txt
+  - uri: /school{}?campus='old'/:raw
   - uri: /school{}?campus='old'/:json
-  - uri: /school{}?campus='old'/:obj
   - uri: /school{}?campus='old'/:csv
   - uri: /school{}?campus='old'/:tsv
   - uri: /school{}?campus='old'/:xml
   - uri: /school{}?campus='old'/:html
   - uri: /school{}?campus='old'/:txt
+  - uri: /department{name, school{}}?!school|school.campus='north'/:raw
   - uri: /department{name, school{}}?!school|school.campus='north'/:json
-  - uri: /department{name, school{}}?!school|school.campus='north'/:obj
   - uri: /department{name, school{}}?!school|school.campus='north'/:csv
   - uri: /department{name, school{}}?!school|school.campus='north'/:tsv
   - uri: /department{name, school{}}?!school|school.campus='north'/:xml
@@ -141,10 +147,10 @@ tests:
   tests:
   - uri: /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10',
            '%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F',
-           '%CE%BE', '\/%25''"&<>#', ''}/:json
+           '%CE%BE', '\/%25''"&<>#', ''}/:raw
   - uri: /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10',
            '%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F',
-           '%CE%BE', '\/%25''"&<>#', ''}/:obj
+           '%CE%BE', '\/%25''"&<>#', ''}/:json
   - uri: /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10',
            '%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F',
            '%CE%BE', '\/%25''"&<>#', ''}/:csv
@@ -165,7 +171,7 @@ tests:
   tests:
   - uri: /school/:retrieve
   - uri: /retrieve(/school)
-  - uri: /school/:retrieve/:json
+  - uri: /school/:retrieve/:raw
   - uri: /school/:sql
   - uri: /school/:retrieve/:sql
   # Errors

@@ -6032,95 +6032,50 @@ tests:
           - [Content-Disposition, inline; filename="school.js"]
           body: |
             {
-              "meta": {
-                "domain": {
-                  "type": "list",
-                  "item": {
-                    "domain": {
-                      "type": "record",
-                      "fields": [
-                        {
-                          "domain": {
-                            "type": "string"
-                          },
-                          "header": "code",
-                          "path": "school.code",
-                          "syntax": "code",
-                          "tag": "code"
-                        },
-                        {
-                          "domain": {
-                            "type": "string"
-                          },
-                          "header": "name",
-                          "path": "school.name",
-                          "syntax": "name",
-                          "tag": "name"
-                        },
-                        {
-                          "domain": {
-                            "type": "string"
-                          },
-                          "header": "campus",
-                          "path": "school.campus",
-                          "syntax": "campus",
-                          "tag": "campus"
-                        }
-                      ]
-                    }
-                  }
+              "school": [
+                {
+                  "code": "art",
+                  "name": "School of Art & Design",
+                  "campus": "old"
                 },
-                "header": "school",
-                "path": "school",
-                "syntax": "\/school",
-                "tag": "school"
-              },
-              "data": [
-                [
-                  "art",
-                  "School of Art & Design",
-                  "old"
-                ],
-                [
-                  "bus",
-                  "School of Business",
-                  "south"
-                ],
-                [
-                  "edu",
-                  "College of Education",
-                  "old"
-                ],
-                [
-                  "eng",
-                  "School of Engineering",
-                  "north"
-                ],
-                [
-                  "la",
-                  "School of Arts and Humanities",
-                  "old"
-                ],
-                [
-                  "mus",
-                  "School of Music & Dance",
-                  "south"
-                ],
-                [
-                  "ns",
-                  "School of Natural Sciences",
-                  "old"
-                ],
-                [
-                  "ph",
-                  "Public Honorariums",
-                  null
-                ],
-                [
-                  "sc",
-                  "School of Continuing Studies",
-                  null
-                ]
+                {
+                  "code": "bus",
+                  "name": "School of Business",
+                  "campus": "south"
+                },
+                {
+                  "code": "edu",
+                  "name": "College of Education",
+                  "campus": "old"
+                },
+                {
+                  "code": "eng",
+                  "name": "School of Engineering",
+                  "campus": "north"
+                },
+                {
+                  "code": "la",
+                  "name": "School of Arts and Humanities",
+                  "campus": "old"
+                },
+                {
+                  "code": "mus",
+                  "name": "School of Music & Dance",
+                  "campus": "south"
+                },
+                {
+                  "code": "ns",
+                  "name": "School of Natural Sciences",
+                  "campus": "old"
+                },
+                {
+                  "code": "ph",
+                  "name": "Public Honorariums"
+                },
+                {
+                  "code": "sc",
+                  "name": "School of Continuing Studies"
+                }
               ]
             }
         - uri: /course{department_code, no, title}?credits<3
@@ -25742,7 +25697,7 @@ tests:
       tests:
       - id: supported-output-formats
         tests:
-        - uri: /school/:json
+        - uri: /school/:raw
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
@@ -25840,7 +25795,7 @@ tests:
                 ]
               ]
             }
-        - uri: /school/:obj
+        - uri: /school/:json
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
@@ -26157,6 +26112,60 @@ tests:
         - uri: /school
           status: 200 OK
           headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="school.js"]
+          - [Vary, Accept]
+          body: |
+            {
+              "school": [
+                {
+                  "code": "art",
+                  "name": "School of Art & Design",
+                  "campus": "old"
+                },
+                {
+                  "code": "bus",
+                  "name": "School of Business",
+                  "campus": "south"
+                },
+                {
+                  "code": "edu",
+                  "name": "College of Education",
+                  "campus": "old"
+                },
+                {
+                  "code": "eng",
+                  "name": "School of Engineering",
+                  "campus": "north"
+                },
+                {
+                  "code": "la",
+                  "name": "School of Arts and Humanities",
+                  "campus": "old"
+                },
+                {
+                  "code": "mus",
+                  "name": "School of Music & Dance",
+                  "campus": "south"
+                },
+                {
+                  "code": "ns",
+                  "name": "School of Natural Sciences",
+                  "campus": "old"
+                },
+                {
+                  "code": "ph",
+                  "name": "Public Honorariums"
+                },
+                {
+                  "code": "sc",
+                  "name": "School of Continuing Studies"
+                }
+              ]
+            }
+        - uri: /school
+          status: 200 OK
+          headers:
           - [Content-Type, text/csv; charset=UTF-8]
           - [Content-Disposition, attachment; filename="school.csv"]
           - [Vary, Accept]
@@ -26324,6 +26333,14 @@ tests:
         - uri: /
           status: 200 OK
           headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="_.js"]
+          - [Vary, Accept]
+          body: |
+            {}
+        - uri: /
+          status: 200 OK
+          headers:
           - [Content-Type, text/csv; charset=UTF-8]
           - [Content-Disposition, attachment; filename="_.csv"]
           - [Vary, Accept]
@@ -26388,7 +26405,7 @@ tests:
       - id: the-`as`-decorator
         tests:
         - uri: /(school :as 'List of Schools') {name :as Name, count(department) :as
-            '# of Departments'} /:json
+            '# of Departments'} /:raw
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
@@ -26467,7 +26484,7 @@ tests:
               ]
             }
         - uri: /(school :as 'List of Schools') {name :as Name, count(department) :as
-            '# of Departments'} /:obj
+            '# of Departments'} /:json
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
@@ -26668,7 +26685,7 @@ tests:
       - id: data-types
         tests:
         - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL', date('2010-04-15'),
-            time('20:13:04.5'), datetime('2010-04-15 20:13')} /:json
+            time('20:13:04.5'), datetime('2010-04-15 20:13')} /:raw
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
@@ -26775,7 +26792,7 @@ tests:
               ]
             }
         - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL', date('2010-04-15'),
-            time('20:13:04.5'), datetime('2010-04-15 20:13')} /:obj
+            time('20:13:04.5'), datetime('2010-04-15 20:13')} /:json
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
@@ -26905,7 +26922,7 @@ tests:
                     TIMESTAMP('2010-04-15 20:13:00')
       - id: no-rows
         tests:
-        - uri: /school?false()/:json
+        - uri: /school?false()/:raw
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
@@ -26957,7 +26974,7 @@ tests:
               },
               "data": []
             }
-        - uri: /school?false()/:obj
+        - uri: /school?false()/:json
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
@@ -27049,7 +27066,7 @@ tests:
              ORDER BY 1 ASC
       - id: empty-selector
         tests:
-        - uri: /{}/:json
+        - uri: /{}/:raw
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
@@ -27073,7 +27090,7 @@ tests:
                 []
               ]
             }
-        - uri: /{}/:obj
+        - uri: /{}/:json
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
@@ -27153,7 +27170,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: ''
-        - uri: /school{}?campus='old'/:json
+        - uri: /school{}?campus='old'/:raw
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
@@ -27182,7 +27199,7 @@ tests:
                 []
               ]
             }
-        - uri: /school{}?campus='old'/:obj
+        - uri: /school{}?campus='old'/:json
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
@@ -27274,7 +27291,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: ''
-        - uri: /department{name, school{}}?!school|school.campus='north'/:json
+        - uri: /department{name, school{}}?!school|school.campus='north'/:raw
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
@@ -27347,7 +27364,7 @@ tests:
                 ]
               ]
             }
-        - uri: /department{name, school{}}?!school|school.campus='north'/:obj
+        - uri: /department{name, school{}}?!school|school.campus='north'/:json
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
@@ -27517,7 +27534,7 @@ tests:
       - id: special-characters
         tests:
         - uri: /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10', '%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F',
-            '%CE%BE', '\/%25''"&<>#', ''}/:json
+            '%CE%BE', '\/%25''"&<>#', ''}/:raw
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
@@ -27544,7 +27561,7 @@ tests:
             \     \"\\u0011\\u0012\\u0013\\u0014\\u0015\\u0016\\u0017\\u0018\\u0019\\u001A\\u001B\\u001C\\u001D\\u001E\\u001F\x7F\",\n
             \     \"\u03BE\",\n      \"\\\\\\/%'\\\"&<>#\",\n      \"\"\n    ]\n  ]\n}\n"
         - uri: /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10', '%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F',
-            '%CE%BE', '\/%25''"&<>#', ''}/:obj
+            '%CE%BE', '\/%25''"&<>#', ''}/:json
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
@@ -27692,7 +27709,7 @@ tests:
                     `school`.`campus`
              FROM `school`
              ORDER BY 1 ASC
-        - uri: /school/:retrieve/:json
+        - uri: /school/:retrieve/:raw
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]

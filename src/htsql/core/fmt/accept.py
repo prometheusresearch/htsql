@@ -4,7 +4,7 @@
 
 
 from ..adapter import Protocol, call, adapt
-from .format import (HTMLFormat, JSONFormat, ObjFormat, CSVFormat, TSVFormat,
+from .format import (HTMLFormat, RawFormat, JSONFormat, CSVFormat, TSVFormat,
                      XMLFormat, ProxyFormat, TextFormat, Emit, EmitHeaders,
                      emit, emit_headers)
 
@@ -26,52 +26,52 @@ class AcceptAny(Accept):
     format = HTMLFormat
 
 
+class AcceptRaw(Accept):
+
+    call("x-htsql/raw")
+    format = RawFormat
+
+
 class AcceptJSON(Accept):
 
     call("application/javascript",
          "application/json",
-         "x-htsql/x-json")
+         "x-htsql/json")
     format = JSONFormat
-
-
-class AcceptObj(Accept):
-
-    call("x-htsql/x-obj")
-    format = ObjFormat
 
 
 class AcceptCSV(Accept):
 
     call("text/csv",
-         "x-htsql/x-csv")
+         "x-htsql/csv")
     format = CSVFormat
 
 
 class AcceptTSV(AcceptCSV):
 
     call("text/tab-separated-values",
-         "x-htsql/x-tsv")
+         "x-htsql/tsv")
     format = TSVFormat
 
 
 class AcceptHTML(Accept):
 
     call("text/html",
-         "x-htsql/x-html")
+         "x-htsql/html")
     format = HTMLFormat
 
 
 class AcceptXML(Accept):
 
     call("application/xml",
-         "x-htsql/x-xml")
+         "x-htsql/xml")
     format = XMLFormat
 
 
 class AcceptText(Accept):
 
     call("text/plain",
-         "x-htsql/x-txt")
+         "x-htsql/txt")
     format = TextFormat
 
 

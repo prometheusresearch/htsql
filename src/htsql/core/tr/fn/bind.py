@@ -52,7 +52,7 @@ from .signature import (AsSig, SortDirectionSig, LimitSig, SortSig, CastSig,
                         SumSig, AvgSig, AggregateSig, QuantifySig,
                         DefineSig, WhereSig, SelectSig, LinkSig)
 from ...cmd.command import RendererCmd, DefaultCmd, RetrieveCmd, SQLCmd
-from ...fmt.format import (JSONFormat, ObjFormat, CSVFormat, TSVFormat,
+from ...fmt.format import (RawFormat, JSONFormat, CSVFormat, TSVFormat,
                            HTMLFormat, TextFormat, XMLFormat)
 import sys
 
@@ -445,16 +445,16 @@ class BindHTML(BindFormat):
     format = HTMLFormat
 
 
+class BindRaw(BindFormat):
+
+    call('raw')
+    format = RawFormat
+
+
 class BindJSON(BindFormat):
 
-    call('json', 'raw')
+    call('json')
     format = JSONFormat
-
-
-class BindObj(BindFormat):
-
-    call('obj')
-    format = ObjFormat
 
 
 class BindCSV(BindFormat):

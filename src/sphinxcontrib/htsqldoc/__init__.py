@@ -205,7 +205,7 @@ def depart_htsql_block(self, node):
 
 def load_uri(uri, error=False):
     try:
-        headers = { 'Accept': 'application/javascript' }
+        headers = { 'Accept': 'x-htsql/raw' }
         request = Request(uri, headers=headers)
         response = urlopen(request)
         content_type = response.info().gettype()
