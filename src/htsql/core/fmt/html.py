@@ -352,20 +352,44 @@ class EmitHTML(Emit):
         if headers_height > 0:
             yield u"<thead>\n"
             for row in product_to_html.headers(headers_height):
-                yield u"<tr>%s</tr>\n" % u"".join(row)
+                line = []
+                for content, colspan, rowspan, classes in row:
+                    attributes = []
+                    if colspan != 1:
+                        attributes.append(u" colspan=\"%s\"" % colspan)
+                    if rowspan != 1:
+                        attributes.append(u" rowspan=\"%s\"" % rowspan)
+                    if classes:
+                        attributes.append(u" class=\"%s\""
+                                          % u" ".join(classes))
+                    line.append(u"<th%s>%s</th>" % (u"".join(attributes),
+                                                    cgi.escape(content)))
+                yield u"<tr>%s</tr>\n" % u"".join(line)
             yield u"</thead>\n"
         if cells_height > 0:
             yield u"<tbody>\n"
             index = 0
             for row in product_to_html.cells(self.data, cells_height):
+                line = []
+                for content, colspan, rowspan, classes in row:
+                    attributes = []
+                    if colspan != 1:
+                        attributes.append(u" colspan=\"%s\"" % colspan)
+                    if rowspan != 1:
+                        attributes.append(u" rowspan=\"%s\"" % rowspan)
+                    if classes:
+                        attributes.append(u" class=\"%s\""
+                                          % u" ".join(classes))
+                    line.append(u"<td%s>%s</td>" % (u"".join(attributes),
+                                                    cgi.escape(content)))
                 index += 1
                 attributes = []
                 if index % 2:
-                    attributes.append(" class=\"htsql-odd-row\"")
+                    attributes.append(u" class=\"htsql-odd-row\"")
                 else:
-                    attributes.append(" class=\"htsql-even-row\"")
+                    attributes.append(u" class=\"htsql-even-row\"")
                 yield u"<tr%s>%s</tr>\n" % (u"".join(attributes),
-                                            u"".join(row))
+                                            u"".join(line))
             yield u"</tbody>\n"
         yield u"</table>\n"
 
@@ -378,17 +402,14 @@ class ToHTML(Adapter):
         assert isinstance(domain, Domain)
         self.domain = domain
         self.width = 1
+        self.is_bounded = True
 
     def __call__(self):
         return self
 
     def headers(self, height):
         if height > 0:
-            attributes = []
-            if height == 1:
-                attributes.append(u" rowspan=\"%s\"" % height)
-            attributes.append(u" class=\"htsql-empty-header\"")
-            yield [u"<th%s></th>" % "".join(attributes)]
+            yield [(u"", self.width, height, [u"htsql-empty-header"])]
 
     def headers_height(self):
         return 0
@@ -403,14 +424,8 @@ class ToHTML(Adapter):
             classes.append(u"htsql-null-value")
         elif not content:
             classes.append(u"htsql-empty-value")
-        else:
-            content = cgi.escape(content)
         classes.extend(self.classes(value))
-        attributes = []
-        if height > 1:
-            attributes.append(u" rowspan=\"%s\"" % height)
-        attributes.append(u" class=\"%s\"" % u" ".join(classes))
-        yield [u"<td%s>%s</td>" % (u"".join(attributes), content)]
+        yield [(content, self.width, height, classes)]
 
     def cells_height(self, value):
         return 1
@@ -444,6 +459,8 @@ class RecordToHTML(ToHTML):
                                for field in domain.fields]
         self.width = sum(field_to_html.width
                          for field_to_html in self.fields_to_html)
+        self.is_bounded = all(field_to_html.is_bounded
+                              for field_to_html in self.fields_to_html)
 
     def headers(self, height):
         if not self.width:
@@ -472,11 +489,7 @@ class RecordToHTML(ToHTML):
         if not self.width or not height:
             return
         if value is None:
-            attributes = []
-            if height > 1:
-                attributes.append(u" rowspan=\"%s\"" % height)
-            attributes.append(u" class=\"htsql-null-record-value\"")
-            yield [u"<td%s></td>" % u"".join(attributes)]*self.width
+            yield [(u"", 1, height, [u"htsql-null-record-value"])]*self.width
         else:
             streams = [field_to_html.cells(item, height)
                        for item, field_to_html in zip(value,
@@ -508,16 +521,13 @@ class ListToHTML(ToHTML):
         super(ListToHTML, self).__init__(domain)
         self.item_to_html = to_html(domain.item_domain)
         self.width = self.item_to_html.width+1
+        self.is_bounded = False
 
     def headers(self, height):
         if height > 0:
             item_stream = self.item_to_html.headers(height)
             first_row = next(item_stream)
-            attributes = []
-            if height > 1:
-                attributes.append(u" rowspan=\"%s\"" % height)
-            attributes.append(" class=\"htsql-empty-header\"")
-            first_row.insert(0, u"<th%s></th>" % u"".join(attributes))
+            first_row.insert(0, (u"", 1, height, [u"htsql-empty-header"]))
             yield first_row
             for row in item_stream:
                 yield row
@@ -530,16 +540,10 @@ class ListToHTML(ToHTML):
             return
         if not value:
             row = []
-            attributes = []
-            if height > 1:
-                attributes.append(u" rowspan=\"%s\"" % height)
-            attributes.append(u" class=\"htsql-index htsql-null-record-value\"")
-            row.append(u"<td%s></td>" % u"".join(attributes))
-            attributes = []
-            if height > 1:
-                attributes.append(u" rowspan=\"%s\"" % height)
-            attributes.append(u" class=\"htsql-null-record-value\"")
-            row.extend([u"<td%s></td>" % u"".join(attributes)]*(self.width-1))
+            row.append((u"", 1, height,
+                        [u"htsql-index", u"htsql-null-record-value"]))
+            row.extend([(u"", 1, height,
+                         [u"htsql-null-record-value"])]*(self.width-1))
             yield row
             return
         items = iter(value)
@@ -559,12 +563,14 @@ class ListToHTML(ToHTML):
             total_height -= item_height
             item_stream = self.item_to_html.cells(item, item_height)
             first_row = next(item_stream, [])
-            attributes = []
-            if item_height > 1:
-                attributes.append(u" rowspan=\"%s\"" % item_height)
-            attributes.append(u" class=\"htsql-index\"")
-            first_row.insert(0, u"<td%s>%s</td>"
-                                % (u"".join(attributes), index))
+            first_row.insert(0, (unicode(index), 1, item_height,
+                                 [u"htsql-index"]))
+            if not self.item_to_html.is_bounded:
+                first_row = [
+                        (content, colspan, rowspan,
+                         [u"htsql-section"]+classes
+                              if u"htsql-section" not in classes else classes)
+                        for content, colspan, rowspan, classes in first_row]
             yield first_row
             for row in item_stream:
                 yield row
@@ -672,6 +678,7 @@ class MetaToHTML(object):
         self.domain_to_html = to_html(profile.domain)
         self.width = self.domain_to_html.width
         self.header_level = self.domain_to_html.headers_height()+1
+        self.is_bounded = self.domain_to_html.is_bounded
 
     def headers(self, height):
         if not self.width or not height:
@@ -680,15 +687,12 @@ class MetaToHTML(object):
             for row in self.domain_to_html.headers(height):
                 yield row
             return
-        content = cgi.escape(self.profile.header)
-        attributes = []
-        if self.width > 1:
-            attributes.append(u" colspan=\"%s\"" % self.width)
-        if height > 1 and self.header_level == 1:
-            attributes.append(u" rowspan=\"%s\"" % height)
+        content = self.profile.header
+        classes = []
         if not content:
-            attributes.append(u" class=\"htsql-empty-header\"")
-        yield [u"<th%s>%s</th>" % (u"".join(attributes), content)]
+            classes.append(u"htsql-empty-header")
+        yield [(content, self.width, (height if self.header_level == 1 else 1),
+                classes)]
         if self.header_level > 1:
             for row in self.domain_to_html.headers(height-1):
                 yield row

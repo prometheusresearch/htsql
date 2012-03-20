@@ -7,7 +7,7 @@
   font-size: 100%;
   text-decoration: none;
   vertical-align: baseline;
-  border-size: 0;
+  border-width: 0;
   border-style: none;
   outline: 0;
   margin: 0;
@@ -310,20 +310,26 @@ button:active {
 }
 
 #grid tbody td {
-  border: solid #999999;
-  border-width: 0 1px;
+  border-left: 1px solid #999999;
+  border-right: 1px solid #999999;
+}
+
+#grid tbody td.section {
+  border-top: 1px dotted #999999;
+}
+
+#grid tbody td.null-rec-val {
+  border-left-style: dashed;
+  border-right-style: dashed;
 }
 
 #grid tbody td.index {
   color: #999999;
-  border-color: #1a1a1a;
+  border-left-style: solid;
+  border-right-color: #1a1a1a;
   -moz-user-select: none;
   -webkit-user-select: none;
   user-select: none;
-}
-
-#grid tbody td.null-rec-val {
-  border-style: dashed;
 }
 
 #grid tbody td.empty-val:after {

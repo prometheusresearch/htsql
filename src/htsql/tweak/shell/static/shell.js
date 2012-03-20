@@ -417,7 +417,13 @@ $(document).ready(function() {
             var row = head[k];
             table += '<tr>';
             for (var i = 0; i < row.length; i ++) {
-                table += row[i];
+                var cell = row[i];
+                var attrs = '';
+                attrs += (cell.colspan || 1) > 1 ? ' colspan="'+cell.colspan+'"' : '';
+                attrs += (cell.rowspan || 1) > 1 ? ' rowspan="'+cell.rowspan+'"' : '';
+                attrs += (cell.classes && cell.classes.length > 0) ?
+                    ' class="'+cell.classes.join(' ')+'"' : '';
+                table += '<th'+attrs+'>'+(cell.content || '')+'</th>';
             }
             table += '</tr>';
         }
@@ -427,7 +433,13 @@ $(document).ready(function() {
             var row = body[k];
             table += '<tr' + (k % 2 == 1 ? ' class="alt">' : '>');
             for (var i = 0; i < row.length; i ++) {
-                table += row[i];
+                var cell = row[i];
+                var attrs = '';
+                attrs += (cell.colspan || 1) > 1 ? ' colspan="'+cell.colspan+'"' : '';
+                attrs += (cell.rowspan || 1) > 1 ? ' rowspan="'+cell.rowspan+'"' : '';
+                attrs += (cell.classes && cell.classes.length > 0) ?
+                    ' class="'+cell.classes.join(' ')+'"' : '';
+                table += '<td'+attrs+'>'+(cell.content || '')+'</td>';
             }
             table += '</tr>';
         }
@@ -435,7 +447,13 @@ $(document).ready(function() {
             var row = foot[k];
             table += '<tr class="foot">';
             for (var i = 0; i < row.length; i ++) {
-                table += row[i];
+                var cell = row[i];
+                var attrs = '';
+                attrs += (cell.colspan || 1) > 1 ? ' colspan="'+cell.colspan+'"' : '';
+                attrs += (cell.rowspan || 1) > 1 ? ' rowspan="'+cell.rowspan+'"' : '';
+                attrs += (cell.classes && cell.classes.length > 0) ?
+                    ' class="'+cell.classes.join(' ')+'"' : '';
+                table += '<td'+attrs+'>'+(cell.content || '')+'</td>';
             }
             table += '</tr>';
         }
@@ -475,28 +493,25 @@ $(document).ready(function() {
         }
         return {
             size: profileBuild.size+1,
+            bounded: profileBuild.bounded,
             head: function () {
                 var height = profileBuild.headHeight();
                 if (height < 1) {
                     height = 1;
                 }
                 var rows = profileBuild.head(height);
-                var attrs = '';
-                attrs += height > 1 ? (' rowspan="'+height+'"') : '';
-                attrs += (rows.length == 0 && profileBuild.size > 0) ?
-                        (' colspan="'+(profileBuild.size+1)+'"') : '';
                 while (rows.length < height) {
                     rows.push([]);
                 }
-                attrs += ' class="dummy"'
-                rows[0].push('<th'+attrs+'></th>');
+                rows[0].push({ colspan: profileBuild.size+1,
+                               rowspan: height, classes: ['dummy'] });
                 return rows;
             },
             body: function () {
                 var height = profileBuild.bodyHeight(data);
                 var rows = profileBuild.body(data, height);
                 for (var k = 0; k < rows.length; k ++) {
-                    rows[k].push('<td class="dummy"></td>');
+                    rows[k].push({ classes: ['dummy'] });
                 }
                 return rows;
             },
@@ -504,7 +519,7 @@ $(document).ready(function() {
                 var height = profileBuild.footHeight(more);
                 var rows = profileBuild.foot(more, height);
                 for (var k = 0; k < rows.length; k ++) {
-                    rows[k].push('<td class="dummy"></td>');
+                    rows[k].push({ classes: ['dummy'] });
                 }
                 return rows;
             }
@@ -518,6 +533,7 @@ $(document).ready(function() {
         }
         return {
             size: domainBuild.size,
+            bounded: domainBuild.bounded,
             headHeight: function () {
                 return domainBuild.headHeight()+1;
             },
@@ -532,14 +548,12 @@ $(document).ready(function() {
                         rows.push([]);
                     }
                 }
-                var attrs = '';
-                attrs += (height > 1 && domainBuild.headHeight() == 0)
-                        ? (' rowspan="'+height+'"') : '';
-                attrs += domainBuild.size > 1 ? (' colspan="'+domainBuild.size+'"') : '';
-                var cell = meta.header.replace(/&/g, '&amp;')
-                                      .replace(/</g, '&lt;')
-                                      .replace(/>/g, '&gt;');
-                rows[0].push('<th'+attrs+'>'+cell+'</th>');
+                var rowspan = (height > 1 && domainBuild.headHeight() == 0) ? height : 1,
+                    colspan = domainBuild.size,
+                    content = meta.header.replace(/&/g, '&amp;')
+                                         .replace(/</g, '&lt;')
+                                         .replace(/>/g, '&gt;');
+                rows[0].push({ rowspan: rowspan, colspan: colspan, content: content });
                 return rows;
             },
             bodyHeight: function (data) {
@@ -569,6 +583,7 @@ $(document).ready(function() {
         }
         return {
             size: 1,
+            bounded: true,
             headHeight: function () {
                 return 0;
             },
@@ -578,10 +593,7 @@ $(document).ready(function() {
                     rows.push([]);
                 }
                 if (height > 0) {
-                    var attrs = '';
-                    attrs += height > 1 ? ' rowspan="'+height+'"' : '';
-                    attrs += ' class="dummy"';
-                    rows[0].push('<th'+attrs+'></th>');
+                    rows[0].push({ rowspan: height, classes: ['dummy'] });
                 }
                 return rows;
             },
@@ -593,39 +605,33 @@ $(document).ready(function() {
                 for (var k = 0; k < height; k ++) {
                     rows.push([]);
                 }
-                var attrs = '';
-                attrs += height > 1 ? ' rowspan="'+height+'"' : '';
-                classes = [];
+                var classes = [];
                 if (meta.type) {
                     classes.push(meta.type);
                 }
-                var cell = data;
-                if (cell === null) {
-                    cell = '';
+                var content = data;
+                if (content === null) {
+                    content = '';
                     classes.push('null-val');
                 }
-                else if (cell === true) {
-                    cell = 'true';
+                else if (content === true) {
+                    content = 'true';
                     classes.push('true-val');
                 }
-                else if (cell === false) {
-                    cell = 'false';
+                else if (content === false) {
+                    content = 'false';
                     classes.push('false-val');
                 }
                 else {
-                    cell = ''+cell;
-                    if (cell === '') {
+                    content = ''+content;
+                    if (content === '') {
                         classes.push('empty-val');
                     }
                 }
-                classes = classes.join(' ');
-                if (classes) {
-                    attrs += ' class="'+classes+'"';
-                }
-                cell = cell.replace(/&/g, '&amp;')
-                           .replace(/</g, '&lt;')
-                           .replace(/>/g, '&gt;');
-                rows[0].push('<td'+attrs+'>'+cell+'</td>');
+                content = content.replace(/&/g, '&amp;')
+                                 .replace(/</g, '&lt;')
+                                 .replace(/>/g, '&gt;');
+                rows[0].push({ rowspan: height, classes: classes, content: content });
                 return rows;
             },
             footHeight: function (more) {
@@ -636,9 +642,7 @@ $(document).ready(function() {
                 for (var k = 0; k < height; k ++) {
                     rows.push([]);
                 }
-                var attrs = '';
-                attrs += height > 1 ? ' rowspan="'+height+'"' : '';
-                classes = [];
+                var classes = [];
                 if (meta.type) {
                     classes.push(meta.type);
                 }
@@ -648,8 +652,7 @@ $(document).ready(function() {
                 else {
                     classes.push('dummy');
                 }
-                attrs += ' class="'+classes.join(' ')+'"';
-                rows[0].push('<td'+attrs+'></td>');
+                rows[0].push({ rowspan: height, classes: classes });
                 return rows;
             }
         };
@@ -658,13 +661,16 @@ $(document).ready(function() {
     function buildForRecord(meta) {
         var fieldBuilds = [];
         var size = 0;
+        var bounded = true;
         for (var k = 0; k < meta.fields.length; k ++) {
             var fieldBuild = buildForProfile(meta.fields[k]);
             fieldBuilds.push(fieldBuild);
             size += fieldBuild.size;
+            bounded = bounded && fieldBuild.bounded;
         }
         return {
             size: size,
+            bounded: bounded,
             headHeight: function () {
                 if (!size) {
                     return 0;
@@ -714,12 +720,8 @@ $(document).ready(function() {
                     rows.push([]);
                 }
                 if (data === null) {
-                    data = [];
-                    var attrs = '';
-                    attrs += (height > 1) ? ' rowspan="'+height+'"' : '';
-                    attrs += ' class="null-rec-val"';
                     for (var k = 0; k < fieldBuilds.length; k ++) {
-                        rows[0].push('<td'+attrs+'></td>');
+                        rows[0].push({ rowspan: height, classes: ['null-rec-val'] });
                     }
                 }
                 else {
@@ -765,16 +767,14 @@ $(document).ready(function() {
         var itemBuild = buildForDomain(meta.item.domain);
         return {
             size: itemBuild.size+1,
+            bounded: false,
             headHeight: function () {
                 return itemBuild.headHeight();
             },
             head: function(height) {
                 var rows = itemBuild.head(height);
                 if (height > 0) {
-                    var attrs = '';
-                    attrs += height > 1 ? ' rowspan="'+height+'"' : '';
-                    attrs += ' class="dummy"';
-                    rows[0].unshift('<th'+attrs+'></th>');
+                    rows[0].unshift({ rowspan: height, classes: ['dummy'] });
                 }
                 return rows;
             },
@@ -801,15 +801,9 @@ $(document).ready(function() {
                     for (var k = 0; k < height; k ++) {
                         rows.push([]);
                     }
-                    var attrs = '';
-                    attrs += (height > 1) ? ' rowspan="'+height+'"' : '';
-                    attrs += ' class="index null-rec-val"';
-                    rows[0].push('<td'+attrs+'></td>');
-                    attrs = '';
-                    attrs += (height > 1) ? ' rowspan="'+height+'"' : '';
-                    attrs += ' class="null-rec-val"';
+                    rows[0].push({ rowspan: height, classes: ['index', 'null-rec-val'] });
                     for (var k = 0; k < itemBuild.size; k ++) {
-                        rows[0].push('<td'+attrs+'></td>');
+                        rows[0].push({ rowspan: height, classes: ['null-rec-val']});
                     }
                 }
                 else {
@@ -823,10 +817,18 @@ $(document).ready(function() {
                         }
                         height -= itemHeight;
                         var itemRows = itemBuild.body(data[k], itemHeight);
-                        var attrs = '';
-                        attrs += itemHeight > 1 ? ' rowspan="'+itemHeight+'"' : '';
-                        attrs += ' class="index"';
-                        itemRows[0].unshift('<td'+attrs+'>'+(k+1)+'</td>');
+                        itemRows[0].unshift({ rowspan: itemHeight, classes: ['index'],
+                                              content: ''+(k+1) });
+                        if (!itemBuild.bounded) {
+                            var row = itemRows[0];
+                            for (var i = 0; i < row.length; i ++) {
+                                var classes = row[i].classes || [];
+                                if (classes[0] != 'section') {
+                                    classes.unshift('section');
+                                }
+                                row[i].classes = classes;
+                            }
+                        }
                         for (var i = 0; i < itemRows.length; i ++) {
                             rows.push(itemRows[i]);
                         }
@@ -844,9 +846,7 @@ $(document).ready(function() {
             foot: function (more, height) {
                 var rows = itemBuild.foot(more, height);
                 if (height > 0) {
-                    var attrs = '';
-                    attrs += height > 1 ? ' rowspan="'+height+'"' : '';
-                    classes = [];
+                    var classes = [];
                     classes.push('index');
                     if (more) {
                         classes.push('more');
@@ -854,8 +854,7 @@ $(document).ready(function() {
                     else {
                         classes.push('dummy');
                     }
-                    attrs += ' class="'+classes.join(' ')+'"';
-                    rows[0].unshift('<td'+attrs+'></th>');
+                    rows[0].unshift({ rowspan: height, classes: classes });
                 }
                 return rows;
             }
@@ -865,6 +864,7 @@ $(document).ready(function() {
     function buildForVoid(meta) {
         return {
             size: 0,
+            bounded: true,
             headHeight: function () {
                 return 0;
             },
