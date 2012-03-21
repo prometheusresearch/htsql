@@ -1346,18 +1346,20 @@ class SegmentCode(Code):
         The output flow of the segment.
     """
 
-    def __init__(self, flow, code, binding):
+    def __init__(self, root, flow, code, binding):
+        assert isinstance(root, Flow)
         assert isinstance(flow, Flow)
         assert isinstance(code, Code)
         assert isinstance(binding, SegmentBinding)
         super(SegmentCode, self).__init__(
                 domain=ListDomain(code.domain),
                 binding=binding)
+        self.root = root
         self.flow = flow
         self.code = code
 
     def __basis__(self):
-        return (self.flow, self.code)
+        return (self.root, self.flow, self.code)
 
     @property
     def segments(self):

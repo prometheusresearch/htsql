@@ -453,6 +453,41 @@ tests:
     - uri: /{(school^campus).campus}
       expect: 400
 
+  - title: Nested Segments
+    tests:
+    - uri: /school{code, /department{name}, /program{title}}
+    - uri: /school{code, /department{name}, /program{title}}?code={'bus','mus','sc'}
+    - uri: /school.filter(code={'bus','mus','sc'}){code, /department{name}, /program{title}}
+    - uri: /school{code, /department{name}.limit(3), /program{title}.limit(3)}.limit(3)
+    - uri: /{/school.limit(3), /department.limit(3)}
+    - uri: /school{code, /department{name}.sort(count(course))}.sort(count(program))
+    - uri: /school{code,
+                   /department{name,
+                               /course{title,
+                                       /class{year, season, section}.sort(count(enrollment))}
+                                      .filter(credits>=5)
+                                      .sort(count(class))}
+                              .sort(count(course))}
+                  .filter(code='art')
+    - uri: /school^campus{campus, count(school)+, /school}
+    - uri: /school^campus{campus, count(school)+,
+                          /school{name, count(program^degree)+, count(program),
+                                  /program^degree{degree, /program{title}}}}?campus='old'
+    - uri: /department{code, /school.program{title}, school{/program{title}}}
+    - uri: /department{code,
+                       /(school?code='bus').program{title},
+                       (school?code='bus').(/program{title}),
+                       school?code='bus'{/program{title}}}.limit(3)/:json
+    - uri: /department{code, /school{code}}?count(course)>=20
+    - uri: /school{*, /@school}
+    - uri: /school?exists(program){*, /fork(campus)}
+    - uri: /school{code, department.(/course)}
+      expect: 400
+    - uri: /school{code, department{/course}}
+      expect: 400
+    - uri: /school{code, /root().department}
+      expect: 400
+
 - title: Known issues
   tests:
   # Should produce a row for each record of `school`.

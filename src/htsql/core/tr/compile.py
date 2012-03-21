@@ -577,34 +577,47 @@ class CompileSegment(Compile):
     adapt(SegmentCode)
 
     def __call__(self):
+        if not self.state.superflow.spans(self.expression.root):
+            raise CompileError("a singular expression is expected",
+                               self.expression.root.mark)
+        chain = self.state.superflow_stack + \
+                [self.state.superflow, self.expression.root,
+                 self.expression.flow]
         # Get the ordering of the segment flow.  We must respect the ordering
         # of the parent segment.
-        order = arrange(self.state.superflow) + arrange(self.expression.flow)
+        order = []
+        for flow in chain:
+            order.extend(arrange(flow))
         # List of expressions we need the term to export.
         codes = ([self.expression.code] +
                  [code for code, direction in order])
+        idx = 0
+        while idx+1 < len(chain):
+            parent_flow = chain[idx]
+            child_flow = chain[idx+1]
+            is_native = False
+            while child_flow is not None:
+                if parent_flow.dominates(child_flow):
+                    is_native = True
+                    break
+                child_flow = child_flow.base
+            if is_native:
+                del chain[idx]
+            else:
+                idx += 1
         # Construct a term corresponding to the segment flow.
-        is_native = False
-        segment_flow = self.expression.flow
-        while segment_flow is not None:
-            if self.state.superflow.dominates(segment_flow):
-                is_native = True
-                break
-            segment_flow = segment_flow.base
-        if is_native:
-            kid = self.state.compile(self.expression.flow)
-        else:
-            trunk_term = self.state.compile(self.state.superflow,
-                                            baseline=self.state.root)
-            shoot_term = self.compile_shoot(self.expression.flow, trunk_term)
+        trunk_term = self.state.compile(chain[0], baseline=self.state.root)
+        for flow in chain[1:]:
+            shoot_term = self.compile_shoot(flow, trunk_term)
             joints = self.glue_terms(trunk_term, shoot_term)
             trunk_term = self.inject_joints(trunk_term, joints)
             routes = {}
             routes.update(trunk_term.routes)
             routes.update(shoot_term.routes)
-            kid = JoinTerm(self.state.tag(), trunk_term, shoot_term,
-                           joints, False, False,
-                           shoot_term.flow, self.state.root, routes)
+            trunk_term = JoinTerm(self.state.tag(), trunk_term, shoot_term,
+                                  joints, False, False,
+                                  shoot_term.flow, self.state.root, routes)
+        kid = trunk_term
         # Inject the expressions into the term.
         kid = self.state.inject(kid, codes)
         # The compiler does not guarantee that the produced term respects
@@ -618,8 +631,10 @@ class CompileSegment(Compile):
         for segment in self.expression.code.segments:
             if segment in subtrees:
                 continue
+            self.state.push_superflow(self.expression.root)
             self.state.push_superflow(self.expression.flow)
             term = self.state.compile(segment)
+            self.state.pop_superflow()
             self.state.pop_superflow()
             subtrees[segment] = term
         # Construct keys for segment merging.

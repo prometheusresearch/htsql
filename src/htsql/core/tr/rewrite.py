@@ -606,9 +606,10 @@ class RewriteSegment(Rewrite):
 
     def __call__(self):
         # Rewrite the output flow and output record.
+        root = self.state.rewrite(self.expression.root)
         flow = self.state.rewrite(self.expression.flow)
         code = self.state.rewrite(self.expression.code)
-        return self.expression.clone(flow=flow, code=code)
+        return self.expression.clone(root=root, flow=flow, code=code)
 
 
 class UnmaskSegment(Unmask):
@@ -620,9 +621,11 @@ class UnmaskSegment(Unmask):
         code = self.state.unmask(self.expression.code,
                                  mask=self.expression.flow)
         # Unmask the flow itself.
-        flow = self.state.unmask(self.expression.flow)
+        flow = self.state.unmask(self.expression.flow,
+                                 mask=self.expression.root)
+        root = self.state.unmask(self.expression.root)
         # Produce a clone of the segment with new flow and output columns.
-        return self.expression.clone(flow=flow, code=code)
+        return self.expression.clone(root=root, flow=flow, code=code)
 
 
 class CollectSegment(Collect):
@@ -640,12 +643,14 @@ class ReplaceSegment(Replace):
     def __call__(self):
         # Recombine the content of the segment against a blank state.
         substate = self.state.spawn()
+        substate.collect(self.expression.root)
         substate.collect(self.expression.flow)
         substate.collect(self.expression.code)
         substate.recombine()
+        root = substate.replace(self.expression.root)
         flow = substate.replace(self.expression.flow)
         code = substate.replace(self.expression.code)
-        return self.expression.clone(flow=flow, code=code)
+        return self.expression.clone(root=root, flow=flow, code=code)
 
 
 class RewriteFlow(Rewrite):

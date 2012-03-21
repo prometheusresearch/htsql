@@ -365,12 +365,12 @@ class EncodeAggregate(EncodeFunction):
         if flow.spans(plural_flow):
             raise EncodeError("a plural operand is expected", op.mark)
         if not plural_flow.spans(flow):
-            raise EncodeError("a valid plural operand is expected",
+            raise EncodeError("a descendant operand is expected",
                               op.mark)
         # FIXME: handled by the compiler.
         #if not all(plural_flow.spans(unit.flow)
         #           for unit in plural_units):
-        #    raise EncodeError("a valid plural operand is expected",
+        #    raise EncodeError("a descendant operand is expected",
         #                      op.mark)
         return plural_flow
 

@@ -25499,6 +25499,1249 @@ tests:
               compile error: a singular expression is expected:
                   /{(school^campus).campus}
                                     ^^^^^^
+        - id: nested-segments
+          tests:
+          - uri: /school{code, /department{name}, /program{title}}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school                                                           |
+               +------+------------------------+----------------------------------+
+               |      | department             | program                          |
+               |      +------------------------+----------------------------------+
+               | code | name                   | title                            |
+              -+------+------------------------+----------------------------------+-
+               | art  | Art History            | Post Baccalaureate in Art        |
+               :      | Studio Art             | History                          :
+               :      :                        | Bachelor of Arts in Art History  |
+               :      :                        | Bachelor of Arts in Studio Art   |
+               | bus  | Accounting             | Master of Arts in Economics      |
+               :      | Economics              | Graduate Certificate in          |
+               :      | Management & Marketing | Accounting                       :
+               :      :                        | Certificate in Business          |
+               :      :                        : Administration                   :
+               :      :                        | B.S. in Accounting               |
+               :      :                        | Bachelor of Business             |
+               :      :                        : Administration                   :
+               :      :                        | Bachelor of Arts in Economics    |
+               | edu  | Educational Policy     | Master of Arts in Education      |
+               :      | Teacher Education      | Leadership                       :
+               :      :                        | M.S. in Education                |
+               :      :                        | Master of Arts in Literacy       |
+               :      :                        : Education                        :
+               :      :                        | Master of Arts in Teaching       |
+               :      :                        | Certificate in Science Teaching  |
+               :      :                        | Bachelor of Arts in Math         |
+               :      :                        : Education                        :
+               :      :                        | Bachelor of Arts in Science      |
+               :      :                        : Education                        :
+               | eng  | Bioengineering         | M.S. in Bioengineering           |
+               :      | Computer Science       | M.S. in Business and Engineering |
+               :      | Electrical Engineering | M.S. in Electrical Engineering   |
+               :      | Mechanical Engineering | M.S. in Mechanical Engineering   |
+               :      :                        | B.S. in Bioengineering           |
+               :      :                        | B.S. in Computer Science         |
+               :      :                        | B.S. in Electrical Engineering   |
+               :      :                        | B.S. in Mechanical Engineering   |
+               | la   | English                | Master of Arts in English        |
+               :      | History                | Master of Arts in Modern         |
+               :      | Foreign Languages      | Languages                        :
+               :      | Political Science      | Master of Arts in Science        |
+               :      | Psychology             | Teaching                         :
+               :      :                        | Science Writing                  |
+               :      :                        | Bachelor of Arts in English      |
+               :      :                        | Bachelor of Arts in History      |
+               :      :                        | Bachelor of Arts in Political    |
+               :      :                        : Science                          :
+               :      :                        | Bachelor of Arts in Psychology   |
+               :      :                        | Bachelor of Arts in Spanish      |
+               | mus  | Piano                  |                                  :
+               :      | Strings                |                                  :
+               :      | Vocals                 |                                  :
+               :      | Wind                   |                                  :
+               | ns   | Astronomy              | Masters of Science in            |
+               :      | Chemistry              | Mathematics                      :
+               :      | Mathematics            | Doctorate of Science in          |
+               :      | Physics                | Mathematics                      :
+               :      :                        | Bachelor of Science in Astronomy |
+               :      :                        | Bachelor of Science in Chemistry |
+               :      :                        | Bachelor of Science in           |
+               :      :                        : Mathematics                      :
+               :      :                        | Bachelor of Science in Physics   |
+               | ph   |                        | Honorary PhD                     |
+               | sc   |                        :                                  :
+
+               ----
+               /school{code,/department{name},/program{title}}
+               SELECT "school"."code"
+               FROM "ad"."school"
+               ORDER BY 1 ASC
+
+                 SELECT "department"."name",
+                        "school"."code"
+                 FROM "ad"."school"
+                      INNER JOIN "ad"."department"
+                                 ON ("school"."code" = "department"."school_code")
+                 ORDER BY 2 ASC, "department"."code" ASC
+
+                 SELECT "program"."title",
+                        "school"."code"
+                 FROM "ad"."school"
+                      INNER JOIN "ad"."program"
+                                 ON ("school"."code" = "program"."school_code")
+                 ORDER BY 2 ASC, "program"."school_code" ASC, "program"."code" ASC
+          - uri: /school{code, /department{name}, /program{title}}?code={'bus','mus','sc'}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school                                                        |
+               +------+------------------------+-------------------------------+
+               |      | department             | program                       |
+               |      +------------------------+-------------------------------+
+               | code | name                   | title                         |
+              -+------+------------------------+-------------------------------+-
+               | bus  | Accounting             | Master of Arts in Economics   |
+               :      | Economics              | Graduate Certificate in       |
+               :      | Management & Marketing | Accounting                    :
+               :      :                        | Certificate in Business       |
+               :      :                        : Administration                :
+               :      :                        | B.S. in Accounting            |
+               :      :                        | Bachelor of Business          |
+               :      :                        : Administration                :
+               :      :                        | Bachelor of Arts in Economics |
+               | mus  | Piano                  |                               :
+               :      | Strings                |                               :
+               :      | Vocals                 |                               :
+               :      | Wind                   |                               :
+               | sc   |                        :                               :
+
+               ----
+               /school{code,/department{name},/program{title}}?code={'bus','mus','sc'}
+               SELECT "school"."code"
+               FROM "ad"."school"
+               WHERE ("school"."code" IN ('bus', 'mus', 'sc'))
+               ORDER BY 1 ASC
+
+                 SELECT "department"."name",
+                        "school"."code"
+                 FROM "ad"."school"
+                      INNER JOIN "ad"."department"
+                                 ON ("school"."code" = "department"."school_code")
+                 WHERE ("school"."code" IN ('bus', 'mus', 'sc'))
+                 ORDER BY 2 ASC, "department"."code" ASC
+
+                 SELECT "program"."title",
+                        "school"."code"
+                 FROM "ad"."school"
+                      INNER JOIN "ad"."program"
+                                 ON ("school"."code" = "program"."school_code")
+                 WHERE ("school"."code" IN ('bus', 'mus', 'sc'))
+                 ORDER BY 2 ASC, "program"."school_code" ASC, "program"."code" ASC
+          - uri: /school.filter(code={'bus','mus','sc'}){code, /department{name},
+              /program{title}}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school                                                        |
+               +------+------------------------+-------------------------------+
+               |      | department             | program                       |
+               |      +------------------------+-------------------------------+
+               | code | name                   | title                         |
+              -+------+------------------------+-------------------------------+-
+               | bus  | Accounting             | Master of Arts in Economics   |
+               :      | Economics              | Graduate Certificate in       |
+               :      | Management & Marketing | Accounting                    :
+               :      :                        | Certificate in Business       |
+               :      :                        : Administration                :
+               :      :                        | B.S. in Accounting            |
+               :      :                        | Bachelor of Business          |
+               :      :                        : Administration                :
+               :      :                        | Bachelor of Arts in Economics |
+               | mus  | Piano                  |                               :
+               :      | Strings                |                               :
+               :      | Vocals                 |                               :
+               :      | Wind                   |                               :
+               | sc   |                        :                               :
+
+               ----
+               /school.filter(code={'bus','mus','sc'}){code,/department{name},/program{title}}
+               SELECT "school"."code"
+               FROM "ad"."school"
+               WHERE ("school"."code" IN ('bus', 'mus', 'sc'))
+               ORDER BY 1 ASC
+
+                 SELECT "department"."name",
+                        "school"."code"
+                 FROM "ad"."school"
+                      INNER JOIN "ad"."department"
+                                 ON ("school"."code" = "department"."school_code")
+                 WHERE ("school"."code" IN ('bus', 'mus', 'sc'))
+                 ORDER BY 2 ASC, "department"."code" ASC
+
+                 SELECT "program"."title",
+                        "school"."code"
+                 FROM "ad"."school"
+                      INNER JOIN "ad"."program"
+                                 ON ("school"."code" = "program"."school_code")
+                 WHERE ("school"."code" IN ('bus', 'mus', 'sc'))
+                 ORDER BY 2 ASC, "program"."school_code" ASC, "program"."code" ASC
+          - uri: /school{code, /department{name}.limit(3), /program{title}.limit(3)}.limit(3)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school                                               |
+               +------+-------------+---------------------------------+
+               |      | department  | program                         |
+               |      +-------------+---------------------------------+
+               | code | name        | title                           |
+              -+------+-------------+---------------------------------+-
+               | art  | Art History | Post Baccalaureate in Art       |
+               :      | Studio Art  | History                         :
+               :      :             | Bachelor of Arts in Art History |
+               :      :             | Bachelor of Arts in Studio Art  |
+               | bus  | Accounting  |                                 :
+               | edu  |             :                                 :
+
+               ----
+               /school{code,/department{name}.limit(3),/program{title}.limit(3)}.limit(3)
+               SELECT "school"."code"
+               FROM "ad"."school"
+               ORDER BY 1 ASC
+               LIMIT 3
+
+                 SELECT "department"."name",
+                        "department"."code_1"
+                 FROM (SELECT "school"."code"
+                       FROM "ad"."school"
+                       ORDER BY 1 ASC
+                       LIMIT 3) AS "school"
+                      INNER JOIN (SELECT "department"."name",
+                                         "school"."code" AS "code_1",
+                                         "department"."code" AS "code_2"
+                                  FROM "ad"."school"
+                                       INNER JOIN "ad"."department"
+                                                  ON ("school"."code" = "department"."school_code")
+                                  ORDER BY 2 ASC, 3 ASC
+                                  LIMIT 3) AS "department"
+                                 ON ("school"."code" = "department"."code_1")
+                 ORDER BY 2 ASC, "department"."code_2" ASC
+
+                 SELECT "program"."title",
+                        "program"."code_1"
+                 FROM (SELECT "school"."code"
+                       FROM "ad"."school"
+                       ORDER BY 1 ASC
+                       LIMIT 3) AS "school"
+                      INNER JOIN (SELECT "program"."title",
+                                         "school"."code" AS "code_1",
+                                         "program"."school_code",
+                                         "program"."code" AS "code_2"
+                                  FROM "ad"."school"
+                                       INNER JOIN "ad"."program"
+                                                  ON ("school"."code" = "program"."school_code")
+                                  ORDER BY 2 ASC, 3 ASC, 4 ASC
+                                  LIMIT 3) AS "program"
+                                 ON ("school"."code" = "program"."code_1")
+                 ORDER BY 2 ASC, "program"."school_code" ASC, "program"."code_2" ASC
+          - uri: /{/school.limit(3), /department.limit(3)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school                                 | department                         |
+               +------+------------------------+--------+--------+-------------+-------------+
+               | code | name                   | campus | code   | name        | school_code |
+              -+------+------------------------+--------+--------+-------------+-------------+-
+               | art  | School of Art & Design | old    | acc    | Accounting  | bus         |
+               | bus  | School of Business     | south  | arthis | Art History | art         |
+               | edu  | College of Education   | old    | astro  | Astronomy   | ns          |
+
+               ----
+               /{/school.limit(3),/department.limit(3)}
+               SELECT TRUE
+
+                 SELECT "school"."code",
+                        "school"."name",
+                        "school"."campus"
+                 FROM "ad"."school"
+                 ORDER BY 1 ASC
+                 LIMIT 3
+
+                 SELECT "department"."code",
+                        "department"."name",
+                        "department"."school_code"
+                 FROM "ad"."department"
+                 ORDER BY 1 ASC
+                 LIMIT 3
+          - uri: /school{code, /department{name}.sort(count(course))}.sort(count(program))
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school                        |
+               +------+------------------------+
+               |      | department             |
+               |      +------------------------+
+               | code | name                   |
+              -+------+------------------------+-
+               | mus  | Piano                  |
+               :      | Strings                |
+               :      | Vocals                 |
+               :      | Wind                   |
+               | sc   |                        :
+               | ph   |                        :
+               | art  | Studio Art             |
+               :      | Art History            |
+               | bus  | Accounting             |
+               :      | Economics              |
+               :      | Management & Marketing |
+               | ns   | Mathematics            |
+               :      | Chemistry              |
+               :      | Astronomy              |
+               :      | Physics                |
+               | edu  | Educational Policy     |
+               :      | Teacher Education      |
+               | eng  | Electrical Engineering |
+               :      | Bioengineering         |
+               :      | Mechanical Engineering |
+               :      | Computer Science       |
+               | la   | History                |
+               :      | Psychology             |
+               :      | Political Science      |
+               :      | English                |
+               :      | Foreign Languages      |
+
+               ----
+               /school{code,/department{name}.sort(count(course))}.sort(count(program))
+               SELECT "school"."code"
+               FROM "ad"."school"
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                            "program"."school_code"
+                                     FROM "ad"."program"
+                                     GROUP BY 2) AS "program"
+                                    ON ("school"."code" = "program"."school_code")
+               ORDER BY COALESCE("program"."count", 0) ASC, 1 ASC
+
+                 SELECT "department"."name",
+                        "school"."code"
+                 FROM "ad"."school"
+                      INNER JOIN "ad"."department"
+                                 ON ("school"."code" = "department"."school_code")
+                      LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                              "program"."school_code"
+                                       FROM "ad"."program"
+                                       GROUP BY 2) AS "program"
+                                      ON ("school"."code" = "program"."school_code")
+                      LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                              "course"."department_code"
+                                       FROM "ad"."course"
+                                       GROUP BY 2) AS "course"
+                                      ON ("department"."code" = "course"."department_code")
+                 ORDER BY COALESCE("program"."count", 0) ASC, 2 ASC, COALESCE("course"."count", 0) ASC, "department"."code" ASC
+          - uri: /school{code, /department{name, /course{title, /class{year, season,
+              section}.sort(count(enrollment))} .filter(credits>=5) .sort(count(class))}
+              .sort(count(course))} .filter(code='art')
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school                                                                      |
+               +------+----------------------------------------------------------------------+
+               |      | department                                                           |
+               |      +-------------+--------------------------------------------------------+
+               |      |             | course                                                 |
+               |      |             +------------------------------+-------------------------+
+               |      |             |                              | class                   |
+               |      |             |                              +------+--------+---------+
+               | code | name        | title                        | year | season | section |
+              -+------+-------------+------------------------------+------+--------+---------+-
+               | art  | Studio Art  | Drawing Master Class         | 2009 | spring | 001     |
+               :      :             :                              | 2010 | spring | 001     |
+               :      :             | Advanced Painting            | 2009 | spring | 001     |
+               :      :             :                              | 2010 | fall   | 001     |
+               :      :             :                              | 2010 | spring | 001     |
+               :      :             | Photography                  | 2007 | fall   | 001     |
+               :      :             :                              | 2009 | fall   | 001     |
+               :      :             :                              | 2008 | fall   | 001     |
+               :      :             :                              | 2010 | fall   | 001     |
+               :      | Art History | Antique Art: Greece and Rome | 2007 | fall   | 001     |
+               :      :             :                              | 2009 | fall   | 001     |
+               :      :             :                              | 2010 | fall   | 001     |
+               :      :             | Islamic Art                  | 2007 | spring | 001     |
+               :      :             :                              | 2008 | spring | 001     |
+               :      :             :                              | 2009 | spring | 001     |
+               :      :             :                              | 2010 | spring | 001     |
+               :      :             | Art of Photography           | 2008 | spring | 001     |
+               :      :             :                              | 2009 | spring | 001     |
+               :      :             :                              | 2010 | spring | 001     |
+               :      :             :                              | 2008 | fall   | 001     |
+               :      :             :                              | 2009 | fall   | 001     |
+               :      :             :                              | 2010 | fall   | 001     |
+
+               ----
+               /school{code,/department{name,/course{title,/class{year,season,section}.sort(count(enrollment))}.filter(credits>=5).sort(count(class))}.sort(count(course))}.filter(code='art')
+               SELECT "school"."code"
+               FROM "ad"."school"
+               WHERE ("school"."code" = 'art')
+               ORDER BY 1 ASC
+
+                 SELECT "department"."name",
+                        "school"."code",
+                        "department"."code"
+                 FROM "ad"."school"
+                      INNER JOIN (SELECT "department"."name",
+                                         "department"."code",
+                                         "department"."school_code"
+                                  FROM "ad"."department") AS "department"
+                                 ON ("school"."code" = "department"."school_code")
+                      LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                              "course"."department_code"
+                                       FROM "ad"."course"
+                                       GROUP BY 2) AS "course"
+                                      ON ("department"."code" = "course"."department_code")
+                 WHERE ("school"."code" = 'art')
+                 ORDER BY 2 ASC, COALESCE("course"."count", 0) ASC, 3 ASC
+
+                   SELECT "course_1"."title",
+                          "school"."code",
+                          "course_1"."code",
+                          "course_1"."department_code",
+                          "course_1"."no"
+                   FROM "ad"."school"
+                        INNER JOIN (SELECT "course"."title",
+                                           "department"."code",
+                                           "course"."department_code",
+                                           "course"."no",
+                                           "department"."school_code"
+                                    FROM "ad"."department"
+                                         INNER JOIN "ad"."course"
+                                                    ON ("department"."code" = "course"."department_code")
+                                    WHERE ("course"."credits" >= 5)) AS "course_1"
+                                   ON ("school"."code" = "course_1"."school_code")
+                        LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                                "course"."department_code"
+                                         FROM "ad"."course"
+                                         GROUP BY 2) AS "course_2"
+                                        ON ("course_1"."code" = "course_2"."department_code")
+                        LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                                "class"."department_code",
+                                                "class"."course_no"
+                                         FROM "cd"."class"
+                                         GROUP BY 2, 3) AS "class"
+                                        ON (("course_1"."department_code" = "class"."department_code") AND ("course_1"."no" = "class"."course_no"))
+                   WHERE ("school"."code" = 'art')
+                   ORDER BY 2 ASC, COALESCE("course_2"."count", 0) ASC, 3 ASC, COALESCE("class"."count", 0) ASC, 4 ASC, 5 ASC
+
+                     SELECT "class_1"."year",
+                            "class_1"."season",
+                            "class_1"."section",
+                            "school"."code",
+                            "course_1"."code",
+                            "course_1"."department_code",
+                            "course_1"."no"
+                     FROM "ad"."school"
+                          INNER JOIN (SELECT "department"."code",
+                                             "course"."department_code",
+                                             "course"."no",
+                                             "department"."school_code"
+                                      FROM "ad"."department"
+                                           INNER JOIN "ad"."course"
+                                                      ON ("department"."code" = "course"."department_code")
+                                      WHERE ("course"."credits" >= 5)) AS "course_1"
+                                     ON ("school"."code" = "course_1"."school_code")
+                          INNER JOIN (SELECT "class"."year",
+                                             "class"."season",
+                                             "class"."section",
+                                             "class"."department_code",
+                                             "class"."course_no",
+                                             "class"."class_seq"
+                                      FROM "cd"."class") AS "class_1"
+                                     ON (("course_1"."department_code" = "class_1"."department_code") AND ("course_1"."no" = "class_1"."course_no"))
+                          LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                                  "course"."department_code"
+                                           FROM "ad"."course"
+                                           GROUP BY 2) AS "course_2"
+                                          ON ("course_1"."code" = "course_2"."department_code")
+                          LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                                  "class"."department_code",
+                                                  "class"."course_no"
+                                           FROM "cd"."class"
+                                           GROUP BY 2, 3) AS "class_2"
+                                          ON (("course_1"."department_code" = "class_2"."department_code") AND ("course_1"."no" = "class_2"."course_no"))
+                          LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                                  "enrollment"."class_seq"
+                                           FROM "ed"."enrollment"
+                                           GROUP BY 2) AS "enrollment"
+                                          ON ("class_1"."class_seq" = "enrollment"."class_seq")
+                     WHERE ("school"."code" = 'art')
+                     ORDER BY 4 ASC, COALESCE("course_2"."count", 0) ASC, 5 ASC, COALESCE("class_2"."count", 0) ASC, 6 ASC, 7 ASC, COALESCE("enrollment"."count", 0) ASC, "class_1"."department_code" ASC, "class_1"."course_no" ASC, 1 ASC, 2 ASC, 3 ASC
+          - uri: /school^campus{campus, count(school)+, /school}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school^campus                                                          |
+               +--------+---------------+-----------------------------------------------+
+               |        |               | school                                        |
+               |        |               +------+-------------------------------+--------+
+               | campus | count(school) | code | name                          | campus |
+              -+--------+---------------+------+-------------------------------+--------+-
+               | north  |             1 | eng  | School of Engineering         | north  |
+               | south  |             2 | bus  | School of Business            | south  |
+               :        :               | mus  | School of Music & Dance       | south  |
+               | old    |             4 | art  | School of Art & Design        | old    |
+               :        :               | edu  | College of Education          | old    |
+               :        :               | la   | School of Arts and Humanities | old    |
+               :        :               | ns   | School of Natural Sciences    | old    |
+
+               ----
+               /school^campus{campus,count(school)+,/school}
+               SELECT "school"."campus",
+                      COUNT(TRUE)
+               FROM "ad"."school"
+               WHERE ("school"."campus" IS NOT NULL)
+               GROUP BY 1
+               ORDER BY 2 ASC, 1 ASC NULLS FIRST
+
+                 SELECT "school_1"."code",
+                        "school_1"."name",
+                        "school_1"."campus"
+                 FROM "ad"."school" AS "school_1"
+                      LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                              "school"."campus"
+                                       FROM "ad"."school"
+                                       GROUP BY 2) AS "school_2"
+                                      ON ("school_1"."campus" = "school_2"."campus")
+                 WHERE ("school_1"."campus" IS NOT NULL)
+                 ORDER BY COALESCE("school_2"."count", 0) ASC, 3 ASC NULLS FIRST, 1 ASC
+          - uri: /school^campus{campus, count(school)+, /school{name, count(program^degree)+,
+              count(program), /program^degree{degree, /program{title}}}}?campus='old'
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school^campus                                                                                                                               |
+               +--------+---------------+--------------------------------------------------------------------------------------------------------------------+
+               |        |               | school                                                                                                             |
+               |        |               +-------------------------------+-----------------------+----------------+-------------------------------------------+
+               |        |               |                               |                       |                | program^degree                            |
+               |        |               |                               |                       |                +--------+----------------------------------+
+               |        |               |                               |                       |                |        | program                          |
+               |        |               |                               |                       |                |        +----------------------------------+
+               | campus | count(school) | name                          | count(program^degree) | count(program) | degree | title                            |
+              -+--------+---------------+-------------------------------+-----------------------+----------------+--------+----------------------------------+-
+               | old    |             4 | School of Art & Design        |                     2 |              3 | ba     | Bachelor of Arts in Art History  |
+               :        :               :                               :                       :                :        | Bachelor of Arts in Studio Art   |
+               :        :               :                               :                       :                | pb     | Post Baccalaureate in Art        |
+               :        :               :                               :                       :                :        : History                          :
+               :        :               | School of Arts and Humanities |                     3 |              9 | ba     | Bachelor of Arts in English      |
+               :        :               :                               :                       :                :        | Bachelor of Arts in History      |
+               :        :               :                               :                       :                :        | Bachelor of Arts in Political    |
+               :        :               :                               :                       :                :        : Science                          :
+               :        :               :                               :                       :                :        | Bachelor of Arts in Psychology   |
+               :        :               :                               :                       :                :        | Bachelor of Arts in Spanish      |
+               :        :               :                               :                       :                | ct     | Science Writing                  |
+               :        :               :                               :                       :                | ma     | Master of Arts in English        |
+               :        :               :                               :                       :                :        | Master of Arts in Modern         |
+               :        :               :                               :                       :                :        : Languages                        :
+               :        :               :                               :                       :                :        | Master of Arts in Science        |
+               :        :               :                               :                       :                :        : Teaching                         :
+               :        :               | School of Natural Sciences    |                     3 |              6 | bs     | Bachelor of Science in Astronomy |
+               :        :               :                               :                       :                :        | Bachelor of Science in Chemistry |
+               :        :               :                               :                       :                :        | Bachelor of Science in           |
+               :        :               :                               :                       :                :        : Mathematics                      :
+               :        :               :                               :                       :                :        | Bachelor of Science in Physics   |
+               :        :               :                               :                       :                | ms     | Masters of Science in            |
+               :        :               :                               :                       :                :        : Mathematics                      :
+               :        :               :                               :                       :                | ph     | Doctorate of Science in          |
+               :        :               :                               :                       :                :        : Mathematics                      :
+               :        :               | College of Education          |                     4 |              7 | ba     | Bachelor of Arts in Math         |
+               :        :               :                               :                       :                :        : Education                        :
+               :        :               :                               :                       :                :        | Bachelor of Arts in Science      |
+               :        :               :                               :                       :                :        : Education                        :
+               :        :               :                               :                       :                | ct     | Certificate in Science Teaching  |
+               :        :               :                               :                       :                | ma     | Master of Arts in Education      |
+               :        :               :                               :                       :                :        : Leadership                       :
+               :        :               :                               :                       :                :        | Master of Arts in Literacy       |
+               :        :               :                               :                       :                :        : Education                        :
+               :        :               :                               :                       :                :        | Master of Arts in Teaching       |
+               :        :               :                               :                       :                | ms     | M.S. in Education                |
+
+               ----
+               /school^campus{campus,count(school)+,/school{name,count(program^degree)+,count(program),/program^degree{degree,/program{title}}}}?campus='old'
+               SELECT "school"."campus",
+                      COUNT(TRUE)
+               FROM "ad"."school"
+               WHERE ("school"."campus" IS NOT NULL)
+               GROUP BY 1
+               HAVING ("school"."campus" = 'old')
+               ORDER BY 2 ASC, 1 ASC NULLS FIRST
+
+                 SELECT "school_2"."name",
+                        COALESCE("program_1"."count", 0),
+                        COALESCE("program_2"."count", 0),
+                        "school_1"."campus",
+                        "school_2"."code"
+                 FROM (SELECT "school"."campus",
+                              COUNT(TRUE) AS "count"
+                       FROM "ad"."school"
+                       WHERE ("school"."campus" IS NOT NULL)
+                       GROUP BY 1) AS "school_1"
+                      INNER JOIN (SELECT "school"."name",
+                                         "school"."code",
+                                         "school"."campus"
+                                  FROM "ad"."school") AS "school_2"
+                                 ON ("school_1"."campus" = "school_2"."campus")
+                      LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                              "program"."school_code"
+                                       FROM (SELECT "program"."school_code"
+                                             FROM "ad"."program"
+                                             WHERE ("program"."degree" IS NOT NULL)
+                                             GROUP BY 1, "program"."degree") AS "program"
+                                       GROUP BY 2) AS "program_1"
+                                      ON ("school_2"."code" = "program_1"."school_code")
+                      LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                              "program"."school_code"
+                                       FROM "ad"."program"
+                                       GROUP BY 2) AS "program_2"
+                                      ON ("school_2"."code" = "program_2"."school_code")
+                 WHERE ("school_1"."campus" = 'old')
+                 ORDER BY "school_1"."count" ASC, 4 ASC NULLS FIRST, 2 ASC, 5 ASC
+
+                   SELECT "program_1"."degree",
+                          "school"."campus",
+                          "program_1"."code"
+                   FROM (SELECT "school"."campus",
+                                COUNT(TRUE) AS "count"
+                         FROM "ad"."school"
+                         WHERE ("school"."campus" IS NOT NULL)
+                         GROUP BY 1) AS "school"
+                        INNER JOIN (SELECT "program"."degree",
+                                           "school"."code",
+                                           "school"."campus"
+                                    FROM "ad"."school"
+                                         INNER JOIN (SELECT "program"."degree",
+                                                            "program"."school_code"
+                                                     FROM "ad"."program"
+                                                     WHERE ("program"."degree" IS NOT NULL)
+                                                     GROUP BY 2, 1) AS "program"
+                                                    ON ("school"."code" = "program"."school_code")) AS "program_1"
+                                   ON ("school"."campus" = "program_1"."campus")
+                        LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                                "program"."school_code"
+                                         FROM (SELECT "program"."school_code"
+                                               FROM "ad"."program"
+                                               WHERE ("program"."degree" IS NOT NULL)
+                                               GROUP BY 1, "program"."degree") AS "program"
+                                         GROUP BY 2) AS "program_2"
+                                        ON ("program_1"."code" = "program_2"."school_code")
+                   WHERE ("school"."campus" = 'old')
+                   ORDER BY "school"."count" ASC, 2 ASC NULLS FIRST, COALESCE("program_2"."count", 0) ASC, 3 ASC, 1 ASC NULLS FIRST
+
+                     SELECT "program_1"."title",
+                            "school"."campus",
+                            "program_1"."code_1",
+                            "program_1"."degree"
+                     FROM (SELECT "school"."campus",
+                                  COUNT(TRUE) AS "count"
+                           FROM "ad"."school"
+                           WHERE ("school"."campus" IS NOT NULL)
+                           GROUP BY 1) AS "school"
+                          INNER JOIN (SELECT "program"."title",
+                                             "school"."code" AS "code_1",
+                                             "program"."degree",
+                                             "program"."school_code",
+                                             "program"."code" AS "code_2",
+                                             "school"."campus"
+                                      FROM "ad"."school"
+                                           INNER JOIN (SELECT "program"."title",
+                                                              "program"."degree",
+                                                              "program"."school_code",
+                                                              "program"."code"
+                                                       FROM "ad"."program"
+                                                       WHERE ("program"."degree" IS NOT NULL)) AS "program"
+                                                      ON ("school"."code" = "program"."school_code")) AS "program_1"
+                                     ON ("school"."campus" = "program_1"."campus")
+                          LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                                  "program"."school_code"
+                                           FROM (SELECT "program"."school_code"
+                                                 FROM "ad"."program"
+                                                 WHERE ("program"."degree" IS NOT NULL)
+                                                 GROUP BY 1, "program"."degree") AS "program"
+                                           GROUP BY 2) AS "program_2"
+                                          ON ("program_1"."code_1" = "program_2"."school_code")
+                     WHERE ("school"."campus" = 'old')
+                     ORDER BY "school"."count" ASC, 2 ASC NULLS FIRST, COALESCE("program_2"."count", 0) ASC, 3 ASC, 4 ASC NULLS FIRST, "program_1"."school_code" ASC, "program_1"."code_2" ASC
+          - uri: /department{code, /school.program{title}, school{/program{title}}}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | department                                                                   |
+               +--------+----------------------------------+----------------------------------+
+               |        | program                          | school                           |
+               |        +----------------------------------+----------------------------------+
+               |        |                                  | program                          |
+               |        |                                  +----------------------------------+
+               | code   | title                            | title                            |
+              -+--------+----------------------------------+----------------------------------+-
+               | acc    | Master of Arts in Economics      | Master of Arts in Economics      |
+               :        | Graduate Certificate in          | Graduate Certificate in          |
+               :        : Accounting                       : Accounting                       :
+               :        | Certificate in Business          | Certificate in Business          |
+               :        : Administration                   : Administration                   :
+               :        | B.S. in Accounting               | B.S. in Accounting               |
+               :        | Bachelor of Business             | Bachelor of Business             |
+               :        : Administration                   : Administration                   :
+               :        | Bachelor of Arts in Economics    | Bachelor of Arts in Economics    |
+               | arthis | Post Baccalaureate in Art        | Post Baccalaureate in Art        |
+               :        : History                          : History                          :
+               :        | Bachelor of Arts in Art History  | Bachelor of Arts in Art History  |
+               :        | Bachelor of Arts in Studio Art   | Bachelor of Arts in Studio Art   |
+               | astro  | Masters of Science in            | Masters of Science in            |
+               :        : Mathematics                      : Mathematics                      :
+               :        | Doctorate of Science in          | Doctorate of Science in          |
+               :        : Mathematics                      : Mathematics                      :
+               :        | Bachelor of Science in Astronomy | Bachelor of Science in Astronomy |
+               :        | Bachelor of Science in Chemistry | Bachelor of Science in Chemistry |
+               :        | Bachelor of Science in           | Bachelor of Science in           |
+               :        : Mathematics                      : Mathematics                      :
+               :        | Bachelor of Science in Physics   | Bachelor of Science in Physics   |
+               | be     | M.S. in Bioengineering           | M.S. in Bioengineering           |
+               :        | M.S. in Business and Engineering | M.S. in Business and Engineering |
+               :        | M.S. in Electrical Engineering   | M.S. in Electrical Engineering   |
+               :        | M.S. in Mechanical Engineering   | M.S. in Mechanical Engineering   |
+               :        | B.S. in Bioengineering           | B.S. in Bioengineering           |
+               :        | B.S. in Computer Science         | B.S. in Computer Science         |
+               :        | B.S. in Electrical Engineering   | B.S. in Electrical Engineering   |
+               :        | B.S. in Mechanical Engineering   | B.S. in Mechanical Engineering   |
+               | bursar |                                  :                                  :
+               | career |                                  :                                  :
+               | chem   | Masters of Science in            | Masters of Science in            |
+               :        : Mathematics                      : Mathematics                      :
+               :        | Doctorate of Science in          | Doctorate of Science in          |
+               :        : Mathematics                      : Mathematics                      :
+               :        | Bachelor of Science in Astronomy | Bachelor of Science in Astronomy |
+               :        | Bachelor of Science in Chemistry | Bachelor of Science in Chemistry |
+               :        | Bachelor of Science in           | Bachelor of Science in           |
+               :        : Mathematics                      : Mathematics                      :
+               :        | Bachelor of Science in Physics   | Bachelor of Science in Physics   |
+               | comp   | M.S. in Bioengineering           | M.S. in Bioengineering           |
+               :        | M.S. in Business and Engineering | M.S. in Business and Engineering |
+               :        | M.S. in Electrical Engineering   | M.S. in Electrical Engineering   |
+               :        | M.S. in Mechanical Engineering   | M.S. in Mechanical Engineering   |
+               :        | B.S. in Bioengineering           | B.S. in Bioengineering           |
+               :        | B.S. in Computer Science         | B.S. in Computer Science         |
+               :        | B.S. in Electrical Engineering   | B.S. in Electrical Engineering   |
+               :        | B.S. in Mechanical Engineering   | B.S. in Mechanical Engineering   |
+               | econ   | Master of Arts in Economics      | Master of Arts in Economics      |
+               :        | Graduate Certificate in          | Graduate Certificate in          |
+               :        : Accounting                       : Accounting                       :
+               :        | Certificate in Business          | Certificate in Business          |
+               :        : Administration                   : Administration                   :
+               :        | B.S. in Accounting               | B.S. in Accounting               |
+               :        | Bachelor of Business             | Bachelor of Business             |
+               :        : Administration                   : Administration                   :
+               :        | Bachelor of Arts in Economics    | Bachelor of Arts in Economics    |
+               | edpol  | Master of Arts in Education      | Master of Arts in Education      |
+               :        : Leadership                       : Leadership                       :
+               :        | M.S. in Education                | M.S. in Education                |
+               :        | Master of Arts in Literacy       | Master of Arts in Literacy       |
+               :        : Education                        : Education                        :
+               :        | Master of Arts in Teaching       | Master of Arts in Teaching       |
+               :        | Certificate in Science Teaching  | Certificate in Science Teaching  |
+               :        | Bachelor of Arts in Math         | Bachelor of Arts in Math         |
+               :        : Education                        : Education                        :
+               :        | Bachelor of Arts in Science      | Bachelor of Arts in Science      |
+               :        : Education                        : Education                        :
+               | ee     | M.S. in Bioengineering           | M.S. in Bioengineering           |
+               :        | M.S. in Business and Engineering | M.S. in Business and Engineering |
+               :        | M.S. in Electrical Engineering   | M.S. in Electrical Engineering   |
+               :        | M.S. in Mechanical Engineering   | M.S. in Mechanical Engineering   |
+               :        | B.S. in Bioengineering           | B.S. in Bioengineering           |
+               :        | B.S. in Computer Science         | B.S. in Computer Science         |
+               :        | B.S. in Electrical Engineering   | B.S. in Electrical Engineering   |
+               :        | B.S. in Mechanical Engineering   | B.S. in Mechanical Engineering   |
+               | eng    | Master of Arts in English        | Master of Arts in English        |
+               :        | Master of Arts in Modern         | Master of Arts in Modern         |
+               :        : Languages                        : Languages                        :
+               :        | Master of Arts in Science        | Master of Arts in Science        |
+               :        : Teaching                         : Teaching                         :
+               :        | Science Writing                  | Science Writing                  |
+               :        | Bachelor of Arts in English      | Bachelor of Arts in English      |
+               :        | Bachelor of Arts in History      | Bachelor of Arts in History      |
+               :        | Bachelor of Arts in Political    | Bachelor of Arts in Political    |
+               :        : Science                          : Science                          :
+               :        | Bachelor of Arts in Psychology   | Bachelor of Arts in Psychology   |
+               :        | Bachelor of Arts in Spanish      | Bachelor of Arts in Spanish      |
+               | hist   | Master of Arts in English        | Master of Arts in English        |
+               :        | Master of Arts in Modern         | Master of Arts in Modern         |
+               :        : Languages                        : Languages                        :
+               :        | Master of Arts in Science        | Master of Arts in Science        |
+               :        : Teaching                         : Teaching                         :
+               :        | Science Writing                  | Science Writing                  |
+               :        | Bachelor of Arts in English      | Bachelor of Arts in English      |
+               :        | Bachelor of Arts in History      | Bachelor of Arts in History      |
+               :        | Bachelor of Arts in Political    | Bachelor of Arts in Political    |
+               :        : Science                          : Science                          :
+               :        | Bachelor of Arts in Psychology   | Bachelor of Arts in Psychology   |
+               :        | Bachelor of Arts in Spanish      | Bachelor of Arts in Spanish      |
+               | lang   | Master of Arts in English        | Master of Arts in English        |
+               :        | Master of Arts in Modern         | Master of Arts in Modern         |
+               :        : Languages                        : Languages                        :
+               :        | Master of Arts in Science        | Master of Arts in Science        |
+               :        : Teaching                         : Teaching                         :
+               :        | Science Writing                  | Science Writing                  |
+               :        | Bachelor of Arts in English      | Bachelor of Arts in English      |
+               :        | Bachelor of Arts in History      | Bachelor of Arts in History      |
+               :        | Bachelor of Arts in Political    | Bachelor of Arts in Political    |
+               :        : Science                          : Science                          :
+               :        | Bachelor of Arts in Psychology   | Bachelor of Arts in Psychology   |
+               :        | Bachelor of Arts in Spanish      | Bachelor of Arts in Spanish      |
+               | me     | M.S. in Bioengineering           | M.S. in Bioengineering           |
+               :        | M.S. in Business and Engineering | M.S. in Business and Engineering |
+               :        | M.S. in Electrical Engineering   | M.S. in Electrical Engineering   |
+               :        | M.S. in Mechanical Engineering   | M.S. in Mechanical Engineering   |
+               :        | B.S. in Bioengineering           | B.S. in Bioengineering           |
+               :        | B.S. in Computer Science         | B.S. in Computer Science         |
+               :        | B.S. in Electrical Engineering   | B.S. in Electrical Engineering   |
+               :        | B.S. in Mechanical Engineering   | B.S. in Mechanical Engineering   |
+               | mm     | Master of Arts in Economics      | Master of Arts in Economics      |
+               :        | Graduate Certificate in          | Graduate Certificate in          |
+               :        : Accounting                       : Accounting                       :
+               :        | Certificate in Business          | Certificate in Business          |
+               :        : Administration                   : Administration                   :
+               :        | B.S. in Accounting               | B.S. in Accounting               |
+               :        | Bachelor of Business             | Bachelor of Business             |
+               :        : Administration                   : Administration                   :
+               :        | Bachelor of Arts in Economics    | Bachelor of Arts in Economics    |
+               | mth    | Masters of Science in            | Masters of Science in            |
+               :        : Mathematics                      : Mathematics                      :
+               :        | Doctorate of Science in          | Doctorate of Science in          |
+               :        : Mathematics                      : Mathematics                      :
+               :        | Bachelor of Science in Astronomy | Bachelor of Science in Astronomy |
+               :        | Bachelor of Science in Chemistry | Bachelor of Science in Chemistry |
+               :        | Bachelor of Science in           | Bachelor of Science in           |
+               :        : Mathematics                      : Mathematics                      :
+               :        | Bachelor of Science in Physics   | Bachelor of Science in Physics   |
+               | parent |                                  :                                  :
+               | phys   | Masters of Science in            | Masters of Science in            |
+               :        : Mathematics                      : Mathematics                      :
+               :        | Doctorate of Science in          | Doctorate of Science in          |
+               :        : Mathematics                      : Mathematics                      :
+               :        | Bachelor of Science in Astronomy | Bachelor of Science in Astronomy |
+               :        | Bachelor of Science in Chemistry | Bachelor of Science in Chemistry |
+               :        | Bachelor of Science in           | Bachelor of Science in           |
+               :        : Mathematics                      : Mathematics                      :
+               :        | Bachelor of Science in Physics   | Bachelor of Science in Physics   |
+               | pia    |                                  :                                  :
+               | poli   | Master of Arts in English        | Master of Arts in English        |
+               :        | Master of Arts in Modern         | Master of Arts in Modern         |
+               :        : Languages                        : Languages                        :
+               :        | Master of Arts in Science        | Master of Arts in Science        |
+               :        : Teaching                         : Teaching                         :
+               :        | Science Writing                  | Science Writing                  |
+               :        | Bachelor of Arts in English      | Bachelor of Arts in English      |
+               :        | Bachelor of Arts in History      | Bachelor of Arts in History      |
+               :        | Bachelor of Arts in Political    | Bachelor of Arts in Political    |
+               :        : Science                          : Science                          :
+               :        | Bachelor of Arts in Psychology   | Bachelor of Arts in Psychology   |
+               :        | Bachelor of Arts in Spanish      | Bachelor of Arts in Spanish      |
+               | psych  | Master of Arts in English        | Master of Arts in English        |
+               :        | Master of Arts in Modern         | Master of Arts in Modern         |
+               :        : Languages                        : Languages                        :
+               :        | Master of Arts in Science        | Master of Arts in Science        |
+               :        : Teaching                         : Teaching                         :
+               :        | Science Writing                  | Science Writing                  |
+               :        | Bachelor of Arts in English      | Bachelor of Arts in English      |
+               :        | Bachelor of Arts in History      | Bachelor of Arts in History      |
+               :        | Bachelor of Arts in Political    | Bachelor of Arts in Political    |
+               :        : Science                          : Science                          :
+               :        | Bachelor of Arts in Psychology   | Bachelor of Arts in Psychology   |
+               :        | Bachelor of Arts in Spanish      | Bachelor of Arts in Spanish      |
+               | stdart | Post Baccalaureate in Art        | Post Baccalaureate in Art        |
+               :        : History                          : History                          :
+               :        | Bachelor of Arts in Art History  | Bachelor of Arts in Art History  |
+               :        | Bachelor of Arts in Studio Art   | Bachelor of Arts in Studio Art   |
+               | str    |                                  :                                  :
+               | tched  | Master of Arts in Education      | Master of Arts in Education      |
+               :        : Leadership                       : Leadership                       :
+               :        | M.S. in Education                | M.S. in Education                |
+               :        | Master of Arts in Literacy       | Master of Arts in Literacy       |
+               :        : Education                        : Education                        :
+               :        | Master of Arts in Teaching       | Master of Arts in Teaching       |
+               :        | Certificate in Science Teaching  | Certificate in Science Teaching  |
+               :        | Bachelor of Arts in Math         | Bachelor of Arts in Math         |
+               :        : Education                        : Education                        :
+               :        | Bachelor of Arts in Science      | Bachelor of Arts in Science      |
+               :        : Education                        : Education                        :
+               | voc    |                                  :                                  :
+               | win    |                                  :                                  :
+
+               ----
+               /department{code,/school.program{title},school{/program{title}}}
+               SELECT "department"."code",
+                      "school"."!"
+               FROM "ad"."department"
+                    LEFT OUTER JOIN (SELECT TRUE AS "!",
+                                            "school"."code"
+                                     FROM "ad"."school") AS "school"
+                                    ON ("department"."school_code" = "school"."code")
+               ORDER BY 1 ASC
+
+                 SELECT "program"."title",
+                        "department"."code"
+                 FROM "ad"."department"
+                      INNER JOIN "ad"."school"
+                                 ON ("department"."school_code" = "school"."code")
+                      INNER JOIN "ad"."program"
+                                 ON ("school"."code" = "program"."school_code")
+                 ORDER BY 2 ASC, "program"."school_code" ASC, "program"."code" ASC
+
+                 SELECT "program"."title",
+                        "department"."code"
+                 FROM "ad"."department"
+                      INNER JOIN "ad"."school"
+                                 ON ("department"."school_code" = "school"."code")
+                      INNER JOIN "ad"."program"
+                                 ON ("school"."code" = "program"."school_code")
+                 ORDER BY 2 ASC, "program"."school_code" ASC, "program"."code" ASC
+          - uri: /department{code, /(school?code='bus').program{title}, (school?code='bus').(/program{title}),
+              school?code='bus'{/program{title}}}.limit(3)/:json
+            status: 200 OK
+            headers:
+            - [Content-Type, application/javascript]
+            - [Content-Disposition, inline; filename="department.js"]
+            body: |
+              {
+                "department": [
+                  {
+                    "code": "acc",
+                    "program": [
+                      {
+                        "title": "Master of Arts in Economics"
+                      },
+                      {
+                        "title": "Graduate Certificate in Accounting"
+                      },
+                      {
+                        "title": "Certificate in Business Administration"
+                      },
+                      {
+                        "title": "B.S. in Accounting"
+                      },
+                      {
+                        "title": "Bachelor of Business Administration"
+                      },
+                      {
+                        "title": "Bachelor of Arts in Economics"
+                      }
+                    ],
+                    "2": [
+                      {
+                        "title": "Master of Arts in Economics"
+                      },
+                      {
+                        "title": "Graduate Certificate in Accounting"
+                      },
+                      {
+                        "title": "Certificate in Business Administration"
+                      },
+                      {
+                        "title": "B.S. in Accounting"
+                      },
+                      {
+                        "title": "Bachelor of Business Administration"
+                      },
+                      {
+                        "title": "Bachelor of Arts in Economics"
+                      }
+                    ],
+                    "school": {
+                      "program": [
+                        {
+                          "title": "Master of Arts in Economics"
+                        },
+                        {
+                          "title": "Graduate Certificate in Accounting"
+                        },
+                        {
+                          "title": "Certificate in Business Administration"
+                        },
+                        {
+                          "title": "B.S. in Accounting"
+                        },
+                        {
+                          "title": "Bachelor of Business Administration"
+                        },
+                        {
+                          "title": "Bachelor of Arts in Economics"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "code": "arthis",
+                    "program": [],
+                    "2": []
+                  },
+                  {
+                    "code": "astro",
+                    "program": [],
+                    "2": []
+                  }
+                ]
+              }
+          - uri: /department{code, /school{code}}?count(course)>=20
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | department      |
+               +--------+--------+
+               |        | school |
+               |        +--------+
+               | code   | code   |
+              -+--------+--------+-
+               | arthis | art    |
+               | astro  | ns     |
+               | comp   | eng    |
+               | eng    | la     |
+               | lang   | la     |
+               | phys   | ns     |
+
+               ----
+               /department{code,/school{code}}?count(course)>=20
+               SELECT "department"."code"
+               FROM "ad"."department"
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                            "course"."department_code"
+                                     FROM "ad"."course"
+                                     GROUP BY 2) AS "course"
+                                    ON ("department"."code" = "course"."department_code")
+               WHERE (COALESCE("course"."count", 0) >= 20)
+               ORDER BY 1 ASC
+
+                 SELECT "school"."code",
+                        "department"."code"
+                 FROM "ad"."department"
+                      LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                              "course"."department_code"
+                                       FROM "ad"."course"
+                                       GROUP BY 2) AS "course"
+                                      ON ("department"."code" = "course"."department_code")
+                      INNER JOIN "ad"."school"
+                                 ON ("department"."school_code" = "school"."code")
+                 WHERE (COALESCE("course"."count", 0) >= 20)
+                 ORDER BY 2 ASC
+          - uri: /school{*, /@school}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school                                                                                        |
+               +------+-------------------------------+--------+-----------------------------------------------+
+               |      |                               |        | school                                        |
+               |      |                               |        +------+-------------------------------+--------+
+               | code | name                          | campus | code | name                          | campus |
+              -+------+-------------------------------+--------+------+-------------------------------+--------+-
+               | art  | School of Art & Design        | old    | art  | School of Art & Design        | old    |
+               :      :                               :        | bus  | School of Business            | south  |
+               :      :                               :        | edu  | College of Education          | old    |
+               :      :                               :        | eng  | School of Engineering         | north  |
+               :      :                               :        | la   | School of Arts and Humanities | old    |
+               :      :                               :        | mus  | School of Music & Dance       | south  |
+               :      :                               :        | ns   | School of Natural Sciences    | old    |
+               :      :                               :        | ph   | Public Honorariums            |        |
+               :      :                               :        | sc   | School of Continuing Studies  |        |
+               | bus  | School of Business            | south  | art  | School of Art & Design        | old    |
+               :      :                               :        | bus  | School of Business            | south  |
+               :      :                               :        | edu  | College of Education          | old    |
+               :      :                               :        | eng  | School of Engineering         | north  |
+               :      :                               :        | la   | School of Arts and Humanities | old    |
+               :      :                               :        | mus  | School of Music & Dance       | south  |
+               :      :                               :        | ns   | School of Natural Sciences    | old    |
+               :      :                               :        | ph   | Public Honorariums            |        |
+               :      :                               :        | sc   | School of Continuing Studies  |        |
+               | edu  | College of Education          | old    | art  | School of Art & Design        | old    |
+               :      :                               :        | bus  | School of Business            | south  |
+               :      :                               :        | edu  | College of Education          | old    |
+               :      :                               :        | eng  | School of Engineering         | north  |
+               :      :                               :        | la   | School of Arts and Humanities | old    |
+               :      :                               :        | mus  | School of Music & Dance       | south  |
+               :      :                               :        | ns   | School of Natural Sciences    | old    |
+               :      :                               :        | ph   | Public Honorariums            |        |
+               :      :                               :        | sc   | School of Continuing Studies  |        |
+               | eng  | School of Engineering         | north  | art  | School of Art & Design        | old    |
+               :      :                               :        | bus  | School of Business            | south  |
+               :      :                               :        | edu  | College of Education          | old    |
+               :      :                               :        | eng  | School of Engineering         | north  |
+               :      :                               :        | la   | School of Arts and Humanities | old    |
+               :      :                               :        | mus  | School of Music & Dance       | south  |
+               :      :                               :        | ns   | School of Natural Sciences    | old    |
+               :      :                               :        | ph   | Public Honorariums            |        |
+               :      :                               :        | sc   | School of Continuing Studies  |        |
+               | la   | School of Arts and Humanities | old    | art  | School of Art & Design        | old    |
+               :      :                               :        | bus  | School of Business            | south  |
+               :      :                               :        | edu  | College of Education          | old    |
+               :      :                               :        | eng  | School of Engineering         | north  |
+               :      :                               :        | la   | School of Arts and Humanities | old    |
+               :      :                               :        | mus  | School of Music & Dance       | south  |
+               :      :                               :        | ns   | School of Natural Sciences    | old    |
+               :      :                               :        | ph   | Public Honorariums            |        |
+               :      :                               :        | sc   | School of Continuing Studies  |        |
+               | mus  | School of Music & Dance       | south  | art  | School of Art & Design        | old    |
+               :      :                               :        | bus  | School of Business            | south  |
+               :      :                               :        | edu  | College of Education          | old    |
+               :      :                               :        | eng  | School of Engineering         | north  |
+               :      :                               :        | la   | School of Arts and Humanities | old    |
+               :      :                               :        | mus  | School of Music & Dance       | south  |
+               :      :                               :        | ns   | School of Natural Sciences    | old    |
+               :      :                               :        | ph   | Public Honorariums            |        |
+               :      :                               :        | sc   | School of Continuing Studies  |        |
+               | ns   | School of Natural Sciences    | old    | art  | School of Art & Design        | old    |
+               :      :                               :        | bus  | School of Business            | south  |
+               :      :                               :        | edu  | College of Education          | old    |
+               :      :                               :        | eng  | School of Engineering         | north  |
+               :      :                               :        | la   | School of Arts and Humanities | old    |
+               :      :                               :        | mus  | School of Music & Dance       | south  |
+               :      :                               :        | ns   | School of Natural Sciences    | old    |
+               :      :                               :        | ph   | Public Honorariums            |        |
+               :      :                               :        | sc   | School of Continuing Studies  |        |
+               | ph   | Public Honorariums            |        | art  | School of Art & Design        | old    |
+               :      :                               :        | bus  | School of Business            | south  |
+               :      :                               :        | edu  | College of Education          | old    |
+               :      :                               :        | eng  | School of Engineering         | north  |
+               :      :                               :        | la   | School of Arts and Humanities | old    |
+               :      :                               :        | mus  | School of Music & Dance       | south  |
+               :      :                               :        | ns   | School of Natural Sciences    | old    |
+               :      :                               :        | ph   | Public Honorariums            |        |
+               :      :                               :        | sc   | School of Continuing Studies  |        |
+               | sc   | School of Continuing Studies  |        | art  | School of Art & Design        | old    |
+               :      :                               :        | bus  | School of Business            | south  |
+               :      :                               :        | edu  | College of Education          | old    |
+               :      :                               :        | eng  | School of Engineering         | north  |
+               :      :                               :        | la   | School of Arts and Humanities | old    |
+               :      :                               :        | mus  | School of Music & Dance       | south  |
+               :      :                               :        | ns   | School of Natural Sciences    | old    |
+               :      :                               :        | ph   | Public Honorariums            |        |
+               :      :                               :        | sc   | School of Continuing Studies  |        |
+
+               ----
+               /school{*,/@school}
+               SELECT "school"."code",
+                      "school"."name",
+                      "school"."campus"
+               FROM "ad"."school"
+               ORDER BY 1 ASC
+
+                 SELECT "school_2"."code",
+                        "school_2"."name",
+                        "school_2"."campus",
+                        "school_1"."code"
+                 FROM "ad"."school" AS "school_1"
+                      CROSS JOIN "ad"."school" AS "school_2"
+                 ORDER BY 4 ASC, 1 ASC
+          - uri: /school?exists(program){*, /fork(campus)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school                                                                                        |
+               +------+-------------------------------+--------+-----------------------------------------------+
+               |      |                               |        | fork(campus)                                  |
+               |      |                               |        +------+-------------------------------+--------+
+               | code | name                          | campus | code | name                          | campus |
+              -+------+-------------------------------+--------+------+-------------------------------+--------+-
+               | art  | School of Art & Design        | old    | art  | School of Art & Design        | old    |
+               :      :                               :        | edu  | College of Education          | old    |
+               :      :                               :        | la   | School of Arts and Humanities | old    |
+               :      :                               :        | ns   | School of Natural Sciences    | old    |
+               | bus  | School of Business            | south  | bus  | School of Business            | south  |
+               | edu  | College of Education          | old    | art  | School of Art & Design        | old    |
+               :      :                               :        | edu  | College of Education          | old    |
+               :      :                               :        | la   | School of Arts and Humanities | old    |
+               :      :                               :        | ns   | School of Natural Sciences    | old    |
+               | eng  | School of Engineering         | north  | eng  | School of Engineering         | north  |
+               | la   | School of Arts and Humanities | old    | art  | School of Art & Design        | old    |
+               :      :                               :        | edu  | College of Education          | old    |
+               :      :                               :        | la   | School of Arts and Humanities | old    |
+               :      :                               :        | ns   | School of Natural Sciences    | old    |
+               | ns   | School of Natural Sciences    | old    | art  | School of Art & Design        | old    |
+               :      :                               :        | edu  | College of Education          | old    |
+               :      :                               :        | la   | School of Arts and Humanities | old    |
+               :      :                               :        | ns   | School of Natural Sciences    | old    |
+               | ph   | Public Honorariums            |        |      :                               :        :
+
+               ----
+               /school?exists(program){*,/fork(campus)}
+               SELECT "school"."code",
+                      "school"."name",
+                      "school"."campus"
+               FROM "ad"."school"
+               WHERE EXISTS(SELECT TRUE
+                            FROM "ad"."program"
+                            WHERE ("school"."code" = "program"."school_code"))
+               ORDER BY 1 ASC
+
+                 SELECT "school_2"."code",
+                        "school_2"."name",
+                        "school_2"."campus",
+                        "school_1"."code"
+                 FROM "ad"."school" AS "school_1"
+                      INNER JOIN (SELECT "school"."code",
+                                         "school"."name",
+                                         "school"."campus"
+                                  FROM "ad"."school"
+                                  WHERE EXISTS(SELECT TRUE
+                                               FROM "ad"."program"
+                                               WHERE ("school"."code" = "program"."school_code"))) AS "school_2"
+                                 ON ("school_1"."campus" = "school_2"."campus")
+                 WHERE EXISTS(SELECT TRUE
+                              FROM "ad"."program"
+                              WHERE ("school_1"."code" = "program"."school_code"))
+                 ORDER BY 4 ASC, 1 ASC
+          - uri: /school{code, department.(/course)}
+            status: 400 Bad Request
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |
+              compile error: a singular expression is expected:
+                  /school{code, department.(/course)}
+                                ^^^^^^^^^^
+          - uri: /school{code, department{/course}}
+            status: 400 Bad Request
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |
+              compile error: a singular expression is expected:
+                  /school{code, department{/course}}
+                                ^^^^^^^^^^^^^^^^^^^
+          - uri: /school{code, /root().department}
+            status: 400 Bad Request
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |
+              encode error: a descendant segment flow is expected:
+                  /school{code, /root().department}
+                                ^^^^^^^^^^^^^^^^^^
       - id: known-issues
         tests:
         - uri: /school.true()
@@ -27667,6 +28910,1569 @@ tests:
             SELECT '\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\n \uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD',\n
             \       '\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD',\n
             \       '\u03BE',\n        E'\\\\/%''\"&<>#',\n        ''\n"
+      - id: nested-segments
+        tests:
+        - uri: /{/null, /school.limit(3), /department.limit(5)}/:raw
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="_.js"]
+          body: |
+            {
+              "meta": {
+                "domain": {
+                  "type": "list",
+                  "item": {
+                    "domain": {
+                      "type": "record",
+                      "fields": [
+                        {
+                          "domain": {
+                            "type": "list",
+                            "item": {
+                              "domain": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "header": "null",
+                          "syntax": "\/null",
+                          "tag": "null"
+                        },
+                        {
+                          "domain": {
+                            "type": "list",
+                            "item": {
+                              "domain": {
+                                "type": "record",
+                                "fields": [
+                                  {
+                                    "domain": {
+                                      "type": "string"
+                                    },
+                                    "header": "code",
+                                    "path": "school.code",
+                                    "syntax": "code",
+                                    "tag": "code"
+                                  },
+                                  {
+                                    "domain": {
+                                      "type": "string"
+                                    },
+                                    "header": "name",
+                                    "path": "school.name",
+                                    "syntax": "name",
+                                    "tag": "name"
+                                  },
+                                  {
+                                    "domain": {
+                                      "type": "string"
+                                    },
+                                    "header": "campus",
+                                    "path": "school.campus",
+                                    "syntax": "campus",
+                                    "tag": "campus"
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "header": "school",
+                          "path": "school",
+                          "syntax": "\/school.limit(3)",
+                          "tag": "school"
+                        },
+                        {
+                          "domain": {
+                            "type": "list",
+                            "item": {
+                              "domain": {
+                                "type": "record",
+                                "fields": [
+                                  {
+                                    "domain": {
+                                      "type": "string"
+                                    },
+                                    "header": "code",
+                                    "path": "department.code",
+                                    "syntax": "code",
+                                    "tag": "code"
+                                  },
+                                  {
+                                    "domain": {
+                                      "type": "string"
+                                    },
+                                    "header": "name",
+                                    "path": "department.name",
+                                    "syntax": "name",
+                                    "tag": "name"
+                                  },
+                                  {
+                                    "domain": {
+                                      "type": "string"
+                                    },
+                                    "header": "school_code",
+                                    "path": "department.school_code",
+                                    "syntax": "school_code",
+                                    "tag": "school_code"
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "header": "department",
+                          "path": "department",
+                          "syntax": "\/department.limit(5)",
+                          "tag": "department"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "path": "",
+                "syntax": "\/{\/null,\/school.limit(3),\/department.limit(5)}"
+              },
+              "data": [
+                [
+                  [],
+                  [
+                    [
+                      "art",
+                      "School of Art & Design",
+                      "old"
+                    ],
+                    [
+                      "bus",
+                      "School of Business",
+                      "south"
+                    ],
+                    [
+                      "edu",
+                      "College of Education",
+                      "old"
+                    ]
+                  ],
+                  [
+                    [
+                      "acc",
+                      "Accounting",
+                      "bus"
+                    ],
+                    [
+                      "arthis",
+                      "Art History",
+                      "art"
+                    ],
+                    [
+                      "astro",
+                      "Astronomy",
+                      "ns"
+                    ],
+                    [
+                      "be",
+                      "Bioengineering",
+                      "eng"
+                    ],
+                    [
+                      "bursar",
+                      "Bursar's Office",
+                      null
+                    ]
+                  ]
+                ]
+              ]
+            }
+        - uri: /{/null, /school.limit(3), /department.limit(5)}/:json
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="_.js"]
+          body: |
+            {
+              "0": [
+                {
+                  "null": [],
+                  "school": [
+                    {
+                      "code": "art",
+                      "name": "School of Art & Design",
+                      "campus": "old"
+                    },
+                    {
+                      "code": "bus",
+                      "name": "School of Business",
+                      "campus": "south"
+                    },
+                    {
+                      "code": "edu",
+                      "name": "College of Education",
+                      "campus": "old"
+                    }
+                  ],
+                  "department": [
+                    {
+                      "code": "acc",
+                      "name": "Accounting",
+                      "school_code": "bus"
+                    },
+                    {
+                      "code": "arthis",
+                      "name": "Art History",
+                      "school_code": "art"
+                    },
+                    {
+                      "code": "astro",
+                      "name": "Astronomy",
+                      "school_code": "ns"
+                    },
+                    {
+                      "code": "be",
+                      "name": "Bioengineering",
+                      "school_code": "eng"
+                    },
+                    {
+                      "code": "bursar",
+                      "name": "Bursar's Office"
+                    }
+                  ]
+                }
+              ]
+            }
+        - uri: /{/null, /school.limit(3), /department.limit(5)}/:csv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/csv; charset=UTF-8]
+          - [Content-Disposition, attachment; filename="_.csv"]
+          body: "null,code,name,campus,code,name,school_code\r\n,art,School of Art
+            & Design,old,acc,Accounting,bus\r\n,bus,School of Business,south,arthis,Art
+            History,art\r\n,edu,College of Education,old,astro,Astronomy,ns\r\n,,,,be,Bioengineering,eng\r\n,,,,bursar,Bursar's
+            Office,\r\n"
+        - uri: /{/null, /school.limit(3), /department.limit(5)}/:tsv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/tab-separated-values; charset=UTF-8]
+          - [Content-Disposition, attachment; filename="_.tsv"]
+          body: "null\tcode\tname\tcampus\tcode\tname\tschool_code\r\n\tart\tSchool
+            of Art & Design\told\tacc\tAccounting\tbus\r\n\tbus\tSchool of Business\tsouth\tarthis\tArt
+            History\tart\r\n\tedu\tCollege of Education\told\tastro\tAstronomy\tns\r\n\t\t\t\tbe\tBioengineering\teng\r\n\t\t\t\tbursar\tBursar's
+            Office\t\r\n"
+        - uri: /{/null, /school.limit(3), /department.limit(5)}/:xml
+          status: 200 OK
+          headers:
+          - [Content-Type, application/xml]
+          - [Content-Disposition, inline; filename="_.xml"]
+          body: |
+            <?xml version="1.0" encoding="UTF-8" ?>
+            <htsql:result xmlns:htsql="http://htsql.org/2010/xml">
+              <_>
+                <school>
+                  <code>art</code>
+                  <name>School of Art &amp; Design</name>
+                  <campus>old</campus>
+                </school>
+                <school>
+                  <code>bus</code>
+                  <name>School of Business</name>
+                  <campus>south</campus>
+                </school>
+                <school>
+                  <code>edu</code>
+                  <name>College of Education</name>
+                  <campus>old</campus>
+                </school>
+                <department>
+                  <code>acc</code>
+                  <name>Accounting</name>
+                  <school_code>bus</school_code>
+                </department>
+                <department>
+                  <code>arthis</code>
+                  <name>Art History</name>
+                  <school_code>art</school_code>
+                </department>
+                <department>
+                  <code>astro</code>
+                  <name>Astronomy</name>
+                  <school_code>ns</school_code>
+                </department>
+                <department>
+                  <code>be</code>
+                  <name>Bioengineering</name>
+                  <school_code>eng</school_code>
+                </department>
+                <department>
+                  <code>bursar</code>
+                  <name>Bursar's Office</name>
+                </department>
+              </_>
+            </htsql:result>
+        - uri: /{/null, /school.limit(3), /department.limit(5)}/:html
+          status: 200 OK
+          headers:
+          - [Content-Type, text/html; charset=UTF-8]
+          body: |
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <title></title>
+            <style type="text/css">
+            table.htsql-output { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
+            table.htsql-output > thead { background-color: #f2f2f2; border-bottom: 1px solid #1a1a1a }
+            table.htsql-output > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align: center; vertical-align: bottom; overflow: hidden; word-wrap: break-word; border-top: 1px solid #999999; border-left: 1px solid #999999 }
+            table.htsql-output > thead > tr > th.htsql-empty-header:after { content: "\A0" }
+            table.htsql-output > tbody > tr.htsql-odd-row { background-color: #ffffff }
+            table.htsql-output > tbody > tr.htsql-even-row { background-color: #f2f2f2 }
+            table.htsql-output > tbody > tr:hover { color: #ffffff; background-color: #333333 }
+            table.htsql-output > tbody > tr > td { padding: 0.2em 0.5em; vertical-align: baseline; overflow: hidden; word-wrap: break-word; border-left: 1px solid #999999; border-right: 1px solid #999999 }
+            table.htsql-output > tbody > tr > td.htsql-integer-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-decimal-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-float-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-null-value:after { content: "\A0" }
+            table.htsql-output > tbody > tr > td.htsql-empty-value { color: #999999 }
+            table.htsql-output > tbody > tr > td.htsql-empty-value:after { content: "\2B1A" }
+            table.htsql-output > tbody > tr > td.htsql-false-value { font-style: italic }
+            table.htsql-output > tbody > tr > td.htsql-null-record-value { border-left-style: dashed; border-right-style: dashed }
+            table.htsql-output > tbody > tr > td.htsql-section { border-top: 1px dotted #999999 }
+            table.htsql-output > tbody > tr > td.htsql-index { font-size: 90%; font-weight: bold; text-align: right; width: 0; color: #999999; border-left-style: solid; border-right-color: #1a1a1a; -moz-user-select: none; -webkit-user-select: none; user-select: none }
+            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
+            div.htsql-welcome > h1 { font-size: 200%; font-weight: bold; margin: 1px 0 0 }
+            div.htsql-welcome > p { margin: 1px 0 0 }
+            </style>
+            </head>
+            <body>
+            <table class="htsql-output" summary="">
+            <thead>
+            <tr><th rowspan="2" class="htsql-empty-header"></th><th colspan="2" rowspan="2">null</th><th colspan="4">school</th><th colspan="4">department</th></tr>
+            <tr><th class="htsql-empty-header"></th><th>code</th><th>name</th><th>campus</th><th class="htsql-empty-header"></th><th>code</th><th>name</th><th>school_code</th></tr>
+            </thead>
+            <tbody>
+            <tr class="htsql-odd-row"><td rowspan="5" class="htsql-section htsql-index">1</td><td rowspan="5" class="htsql-section htsql-index htsql-null-record-value"></td><td rowspan="5" class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-index">1</td><td class="htsql-section htsql-string-type">art</td><td class="htsql-section htsql-string-type">School of Art &amp; Design</td><td class="htsql-section htsql-string-type">old</td><td class="htsql-section htsql-index">1</td><td class="htsql-section htsql-string-type">acc</td><td class="htsql-section htsql-string-type">Accounting</td><td class="htsql-section htsql-string-type">bus</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-string-type">bus</td><td class="htsql-string-type">School of Business</td><td class="htsql-string-type">south</td><td class="htsql-index">2</td><td class="htsql-string-type">arthis</td><td class="htsql-string-type">Art History</td><td class="htsql-string-type">art</td></tr>
+            <tr class="htsql-odd-row"><td rowspan="3" class="htsql-index">3</td><td rowspan="3" class="htsql-string-type">edu</td><td rowspan="3" class="htsql-string-type">College of Education</td><td rowspan="3" class="htsql-string-type">old</td><td class="htsql-index">3</td><td class="htsql-string-type">astro</td><td class="htsql-string-type">Astronomy</td><td class="htsql-string-type">ns</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">4</td><td class="htsql-string-type">be</td><td class="htsql-string-type">Bioengineering</td><td class="htsql-string-type">eng</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-string-type">bursar</td><td class="htsql-string-type">Bursar's Office</td><td class="htsql-string-type htsql-null-value"></td></tr>
+            </tbody>
+            </table>
+            </body>
+            </html>
+        - uri: /{/null, /school.limit(3), /department.limit(5)}/:txt
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |      | school                                 | department                             |
+             |      +------+------------------------+--------+--------+-----------------+-------------+
+             | null | code | name                   | campus | code   | name            | school_code |
+            -+------+------+------------------------+--------+--------+-----------------+-------------+-
+             :      | art  | School of Art & Design | old    | acc    | Accounting      | bus         |
+             :      | bus  | School of Business     | south  | arthis | Art History     | art         |
+             :      | edu  | College of Education   | old    | astro  | Astronomy       | ns          |
+             :      :      :                        :        | be     | Bioengineering  | eng         |
+             :      :      :                        :        | bursar | Bursar's Office |             |
+
+             ----
+             /{/null,/school.limit(3),/department.limit(5)}
+             SELECT TRUE
+
+               SELECT NULL
+               WHERE FALSE
+
+               SELECT "school"."code",
+                      "school"."name",
+                      "school"."campus"
+               FROM "ad"."school"
+               ORDER BY 1 ASC
+               LIMIT 3
+
+               SELECT "department"."code",
+                      "department"."name",
+                      "department"."school_code"
+               FROM "ad"."department"
+               ORDER BY 1 ASC
+               LIMIT 5
+        - uri: /school?code={'edu','mus','sc'} {name, /program{degree, title}, /department{name,
+            /course{no, title}}}/:raw
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="school.js"]
+          body: |
+            {
+              "meta": {
+                "domain": {
+                  "type": "list",
+                  "item": {
+                    "domain": {
+                      "type": "record",
+                      "fields": [
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "name",
+                          "path": "school.name",
+                          "syntax": "name",
+                          "tag": "name"
+                        },
+                        {
+                          "domain": {
+                            "type": "list",
+                            "item": {
+                              "domain": {
+                                "type": "record",
+                                "fields": [
+                                  {
+                                    "domain": {
+                                      "type": "string"
+                                    },
+                                    "header": "degree",
+                                    "path": "school.program.degree",
+                                    "syntax": "degree",
+                                    "tag": "degree"
+                                  },
+                                  {
+                                    "domain": {
+                                      "type": "string"
+                                    },
+                                    "header": "title",
+                                    "path": "school.program.title",
+                                    "syntax": "title",
+                                    "tag": "title"
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "header": "program",
+                          "path": "school.program",
+                          "syntax": "\/program{degree,title}",
+                          "tag": "program"
+                        },
+                        {
+                          "domain": {
+                            "type": "list",
+                            "item": {
+                              "domain": {
+                                "type": "record",
+                                "fields": [
+                                  {
+                                    "domain": {
+                                      "type": "string"
+                                    },
+                                    "header": "name",
+                                    "path": "school.department.name",
+                                    "syntax": "name",
+                                    "tag": "name"
+                                  },
+                                  {
+                                    "domain": {
+                                      "type": "list",
+                                      "item": {
+                                        "domain": {
+                                          "type": "record",
+                                          "fields": [
+                                            {
+                                              "domain": {
+                                                "type": "integer"
+                                              },
+                                              "header": "no",
+                                              "path": "school.department.course.no",
+                                              "syntax": "no",
+                                              "tag": "no"
+                                            },
+                                            {
+                                              "domain": {
+                                                "type": "string"
+                                              },
+                                              "header": "title",
+                                              "path": "school.department.course.title",
+                                              "syntax": "title",
+                                              "tag": "title"
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    },
+                                    "header": "course",
+                                    "path": "school.department.course",
+                                    "syntax": "\/course{no,title}",
+                                    "tag": "course"
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "header": "department",
+                          "path": "school.department",
+                          "syntax": "\/department{name,\/course{no,title}}",
+                          "tag": "department"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "header": "school",
+                "path": "school",
+                "syntax": "\/school?code={'edu','mus','sc'}{name,\/program{degree,title},\/department{name,\/course{no,title}}}",
+                "tag": "school"
+              },
+              "data": [
+                [
+                  "College of Education",
+                  [
+                    [
+                      "ma",
+                      "Master of Arts in Education Leadership"
+                    ],
+                    [
+                      "ms",
+                      "M.S. in Education"
+                    ],
+                    [
+                      "ma",
+                      "Master of Arts in Literacy Education"
+                    ],
+                    [
+                      "ma",
+                      "Master of Arts in Teaching"
+                    ],
+                    [
+                      "ct",
+                      "Certificate in Science Teaching"
+                    ],
+                    [
+                      "ba",
+                      "Bachelor of Arts in Math Education"
+                    ],
+                    [
+                      "ba",
+                      "Bachelor of Arts in Science Education"
+                    ]
+                  ],
+                  [
+                    [
+                      "Educational Policy",
+                      [
+                        [
+                          102,
+                          "Introduction to Education"
+                        ],
+                        [
+                          117,
+                          "Contemporary Society"
+                        ],
+                        [
+                          131,
+                          "Sociology of Childhood"
+                        ],
+                        [
+                          202,
+                          "Technology in the Classroom"
+                        ],
+                        [
+                          213,
+                          "Technology, Society and Schools"
+                        ],
+                        [
+                          229,
+                          "Economics and Education Policy"
+                        ],
+                        [
+                          231,
+                          "Politics and Education Policy"
+                        ],
+                        [
+                          236,
+                          "Education Policy Analysis"
+                        ],
+                        [
+                          301,
+                          "Children's Literature"
+                        ],
+                        [
+                          316,
+                          "Education Policy and Practice"
+                        ],
+                        [
+                          337,
+                          "Social Analysis of Education Policy"
+                        ],
+                        [
+                          351,
+                          "Classroom Visit"
+                        ],
+                        [
+                          413,
+                          "Organizational Analysis of Education Policy"
+                        ],
+                        [
+                          431,
+                          "Seminar in Education Policy I"
+                        ],
+                        [
+                          432,
+                          "Seminar in Education Policy II"
+                        ],
+                        [
+                          505,
+                          "Qualitative Research in Education Policy"
+                        ]
+                      ]
+                    ],
+                    [
+                      "Teacher Education",
+                      [
+                        [
+                          110,
+                          "Teaching Methodology"
+                        ],
+                        [
+                          122,
+                          "Theory and Practice of Early Childhood Education"
+                        ],
+                        [
+                          155,
+                          "Methods of Early Science Education"
+                        ],
+                        [
+                          179,
+                          "Play as Education Method"
+                        ],
+                        [
+                          208,
+                          "Developmental Psychology"
+                        ],
+                        [
+                          211,
+                          "Selection of Learning Resources"
+                        ],
+                        [
+                          256,
+                          "Teacher Identity"
+                        ],
+                        [
+                          367,
+                          "Problems in Education Management"
+                        ],
+                        [
+                          401,
+                          "Challenges of Teaching the Gifted and Talented"
+                        ],
+                        [
+                          430,
+                          "Techniques of Mathematics Teaching"
+                        ],
+                        [
+                          435,
+                          "Techniques of Science Teaching"
+                        ],
+                        [
+                          440,
+                          "Techniques of Language Teaching"
+                        ],
+                        [
+                          500,
+                          "Problems in Education"
+                        ],
+                        [
+                          509,
+                          "Public School Internship"
+                        ],
+                        [
+                          510,
+                          "Preschool Internship"
+                        ],
+                        [
+                          520,
+                          "Special Topics in Teacher Education"
+                        ],
+                        [
+                          630,
+                          "Practice of Mathematics Teaching"
+                        ],
+                        [
+                          635,
+                          "Practice of Science Teaching"
+                        ],
+                        [
+                          640,
+                          "Practice of Language Teaching"
+                        ]
+                      ]
+                    ]
+                  ]
+                ],
+                [
+                  "School of Music & Dance",
+                  [],
+                  [
+                    [
+                      "Piano",
+                      []
+                    ],
+                    [
+                      "Strings",
+                      []
+                    ],
+                    [
+                      "Vocals",
+                      []
+                    ],
+                    [
+                      "Wind",
+                      []
+                    ]
+                  ]
+                ],
+                [
+                  "School of Continuing Studies",
+                  [],
+                  []
+                ]
+              ]
+            }
+        - uri: /school?code={'edu','mus','sc'} {name, /program{degree, title}, /department{name,
+            /course{no, title}}}/:json
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="school.js"]
+          body: |
+            {
+              "school": [
+                {
+                  "name": "College of Education",
+                  "program": [
+                    {
+                      "degree": "ma",
+                      "title": "Master of Arts in Education Leadership"
+                    },
+                    {
+                      "degree": "ms",
+                      "title": "M.S. in Education"
+                    },
+                    {
+                      "degree": "ma",
+                      "title": "Master of Arts in Literacy Education"
+                    },
+                    {
+                      "degree": "ma",
+                      "title": "Master of Arts in Teaching"
+                    },
+                    {
+                      "degree": "ct",
+                      "title": "Certificate in Science Teaching"
+                    },
+                    {
+                      "degree": "ba",
+                      "title": "Bachelor of Arts in Math Education"
+                    },
+                    {
+                      "degree": "ba",
+                      "title": "Bachelor of Arts in Science Education"
+                    }
+                  ],
+                  "department": [
+                    {
+                      "name": "Educational Policy",
+                      "course": [
+                        {
+                          "no": 102,
+                          "title": "Introduction to Education"
+                        },
+                        {
+                          "no": 117,
+                          "title": "Contemporary Society"
+                        },
+                        {
+                          "no": 131,
+                          "title": "Sociology of Childhood"
+                        },
+                        {
+                          "no": 202,
+                          "title": "Technology in the Classroom"
+                        },
+                        {
+                          "no": 213,
+                          "title": "Technology, Society and Schools"
+                        },
+                        {
+                          "no": 229,
+                          "title": "Economics and Education Policy"
+                        },
+                        {
+                          "no": 231,
+                          "title": "Politics and Education Policy"
+                        },
+                        {
+                          "no": 236,
+                          "title": "Education Policy Analysis"
+                        },
+                        {
+                          "no": 301,
+                          "title": "Children's Literature"
+                        },
+                        {
+                          "no": 316,
+                          "title": "Education Policy and Practice"
+                        },
+                        {
+                          "no": 337,
+                          "title": "Social Analysis of Education Policy"
+                        },
+                        {
+                          "no": 351,
+                          "title": "Classroom Visit"
+                        },
+                        {
+                          "no": 413,
+                          "title": "Organizational Analysis of Education Policy"
+                        },
+                        {
+                          "no": 431,
+                          "title": "Seminar in Education Policy I"
+                        },
+                        {
+                          "no": 432,
+                          "title": "Seminar in Education Policy II"
+                        },
+                        {
+                          "no": 505,
+                          "title": "Qualitative Research in Education Policy"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Teacher Education",
+                      "course": [
+                        {
+                          "no": 110,
+                          "title": "Teaching Methodology"
+                        },
+                        {
+                          "no": 122,
+                          "title": "Theory and Practice of Early Childhood Education"
+                        },
+                        {
+                          "no": 155,
+                          "title": "Methods of Early Science Education"
+                        },
+                        {
+                          "no": 179,
+                          "title": "Play as Education Method"
+                        },
+                        {
+                          "no": 208,
+                          "title": "Developmental Psychology"
+                        },
+                        {
+                          "no": 211,
+                          "title": "Selection of Learning Resources"
+                        },
+                        {
+                          "no": 256,
+                          "title": "Teacher Identity"
+                        },
+                        {
+                          "no": 367,
+                          "title": "Problems in Education Management"
+                        },
+                        {
+                          "no": 401,
+                          "title": "Challenges of Teaching the Gifted and Talented"
+                        },
+                        {
+                          "no": 430,
+                          "title": "Techniques of Mathematics Teaching"
+                        },
+                        {
+                          "no": 435,
+                          "title": "Techniques of Science Teaching"
+                        },
+                        {
+                          "no": 440,
+                          "title": "Techniques of Language Teaching"
+                        },
+                        {
+                          "no": 500,
+                          "title": "Problems in Education"
+                        },
+                        {
+                          "no": 509,
+                          "title": "Public School Internship"
+                        },
+                        {
+                          "no": 510,
+                          "title": "Preschool Internship"
+                        },
+                        {
+                          "no": 520,
+                          "title": "Special Topics in Teacher Education"
+                        },
+                        {
+                          "no": 630,
+                          "title": "Practice of Mathematics Teaching"
+                        },
+                        {
+                          "no": 635,
+                          "title": "Practice of Science Teaching"
+                        },
+                        {
+                          "no": 640,
+                          "title": "Practice of Language Teaching"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "School of Music & Dance",
+                  "program": [],
+                  "department": [
+                    {
+                      "name": "Piano",
+                      "course": []
+                    },
+                    {
+                      "name": "Strings",
+                      "course": []
+                    },
+                    {
+                      "name": "Vocals",
+                      "course": []
+                    },
+                    {
+                      "name": "Wind",
+                      "course": []
+                    }
+                  ]
+                },
+                {
+                  "name": "School of Continuing Studies",
+                  "program": [],
+                  "department": []
+                }
+              ]
+            }
+        - uri: /school?code={'edu','mus','sc'} {name, /program{degree, title}, /department{name,
+            /course{no, title}}}/:csv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/csv; charset=UTF-8]
+          - [Content-Disposition, attachment; filename="school.csv"]
+          body: "name,degree,title,name,no,title\r\nCollege of Education,ma,Master
+            of Arts in Education Leadership,Educational Policy,102,Introduction to
+            Education\r\n,ms,M.S. in Education,,117,Contemporary Society\r\n,ma,Master
+            of Arts in Literacy Education,,131,Sociology of Childhood\r\n,ma,Master
+            of Arts in Teaching,,202,Technology in the Classroom\r\n,ct,Certificate
+            in Science Teaching,,213,\"Technology, Society and Schools\"\r\n,ba,Bachelor
+            of Arts in Math Education,,229,Economics and Education Policy\r\n,ba,Bachelor
+            of Arts in Science Education,,231,Politics and Education Policy\r\n,,,,236,Education
+            Policy Analysis\r\n,,,,301,Children's Literature\r\n,,,,316,Education
+            Policy and Practice\r\n,,,,337,Social Analysis of Education Policy\r\n,,,,351,Classroom
+            Visit\r\n,,,,413,Organizational Analysis of Education Policy\r\n,,,,431,Seminar
+            in Education Policy I\r\n,,,,432,Seminar in Education Policy II\r\n,,,,505,Qualitative
+            Research in Education Policy\r\n,,,Teacher Education,110,Teaching Methodology\r\n,,,,122,Theory
+            and Practice of Early Childhood Education\r\n,,,,155,Methods of Early
+            Science Education\r\n,,,,179,Play as Education Method\r\n,,,,208,Developmental
+            Psychology\r\n,,,,211,Selection of Learning Resources\r\n,,,,256,Teacher
+            Identity\r\n,,,,367,Problems in Education Management\r\n,,,,401,Challenges
+            of Teaching the Gifted and Talented\r\n,,,,430,Techniques of Mathematics
+            Teaching\r\n,,,,435,Techniques of Science Teaching\r\n,,,,440,Techniques
+            of Language Teaching\r\n,,,,500,Problems in Education\r\n,,,,509,Public
+            School Internship\r\n,,,,510,Preschool Internship\r\n,,,,520,Special Topics
+            in Teacher Education\r\n,,,,630,Practice of Mathematics Teaching\r\n,,,,635,Practice
+            of Science Teaching\r\n,,,,640,Practice of Language Teaching\r\nSchool
+            of Music & Dance,,,Piano,,\r\n,,,Strings,,\r\n,,,Vocals,,\r\n,,,Wind,,\r\nSchool
+            of Continuing Studies,,,,,\r\n"
+        - uri: /school?code={'edu','mus','sc'} {name, /program{degree, title}, /department{name,
+            /course{no, title}}}/:tsv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/tab-separated-values; charset=UTF-8]
+          - [Content-Disposition, attachment; filename="school.tsv"]
+          body: "name\tdegree\ttitle\tname\tno\ttitle\r\nCollege of Education\tma\tMaster
+            of Arts in Education Leadership\tEducational Policy\t102\tIntroduction
+            to Education\r\n\tms\tM.S. in Education\t\t117\tContemporary Society\r\n\tma\tMaster
+            of Arts in Literacy Education\t\t131\tSociology of Childhood\r\n\tma\tMaster
+            of Arts in Teaching\t\t202\tTechnology in the Classroom\r\n\tct\tCertificate
+            in Science Teaching\t\t213\tTechnology, Society and Schools\r\n\tba\tBachelor
+            of Arts in Math Education\t\t229\tEconomics and Education Policy\r\n\tba\tBachelor
+            of Arts in Science Education\t\t231\tPolitics and Education Policy\r\n\t\t\t\t236\tEducation
+            Policy Analysis\r\n\t\t\t\t301\tChildren's Literature\r\n\t\t\t\t316\tEducation
+            Policy and Practice\r\n\t\t\t\t337\tSocial Analysis of Education Policy\r\n\t\t\t\t351\tClassroom
+            Visit\r\n\t\t\t\t413\tOrganizational Analysis of Education Policy\r\n\t\t\t\t431\tSeminar
+            in Education Policy I\r\n\t\t\t\t432\tSeminar in Education Policy II\r\n\t\t\t\t505\tQualitative
+            Research in Education Policy\r\n\t\t\tTeacher Education\t110\tTeaching
+            Methodology\r\n\t\t\t\t122\tTheory and Practice of Early Childhood Education\r\n\t\t\t\t155\tMethods
+            of Early Science Education\r\n\t\t\t\t179\tPlay as Education Method\r\n\t\t\t\t208\tDevelopmental
+            Psychology\r\n\t\t\t\t211\tSelection of Learning Resources\r\n\t\t\t\t256\tTeacher
+            Identity\r\n\t\t\t\t367\tProblems in Education Management\r\n\t\t\t\t401\tChallenges
+            of Teaching the Gifted and Talented\r\n\t\t\t\t430\tTechniques of Mathematics
+            Teaching\r\n\t\t\t\t435\tTechniques of Science Teaching\r\n\t\t\t\t440\tTechniques
+            of Language Teaching\r\n\t\t\t\t500\tProblems in Education\r\n\t\t\t\t509\tPublic
+            School Internship\r\n\t\t\t\t510\tPreschool Internship\r\n\t\t\t\t520\tSpecial
+            Topics in Teacher Education\r\n\t\t\t\t630\tPractice of Mathematics Teaching\r\n\t\t\t\t635\tPractice
+            of Science Teaching\r\n\t\t\t\t640\tPractice of Language Teaching\r\nSchool
+            of Music & Dance\t\t\tPiano\t\t\r\n\t\t\tStrings\t\t\r\n\t\t\tVocals\t\t\r\n\t\t\tWind\t\t\r\nSchool
+            of Continuing Studies\t\t\t\t\t\r\n"
+        - uri: /school?code={'edu','mus','sc'} {name, /program{degree, title}, /department{name,
+            /course{no, title}}}/:xml
+          status: 200 OK
+          headers:
+          - [Content-Type, application/xml]
+          - [Content-Disposition, inline; filename="school.xml"]
+          body: |
+            <?xml version="1.0" encoding="UTF-8" ?>
+            <htsql:result xmlns:htsql="http://htsql.org/2010/xml">
+              <school>
+                <name>College of Education</name>
+                <program>
+                  <degree>ma</degree>
+                  <title>Master of Arts in Education Leadership</title>
+                </program>
+                <program>
+                  <degree>ms</degree>
+                  <title>M.S. in Education</title>
+                </program>
+                <program>
+                  <degree>ma</degree>
+                  <title>Master of Arts in Literacy Education</title>
+                </program>
+                <program>
+                  <degree>ma</degree>
+                  <title>Master of Arts in Teaching</title>
+                </program>
+                <program>
+                  <degree>ct</degree>
+                  <title>Certificate in Science Teaching</title>
+                </program>
+                <program>
+                  <degree>ba</degree>
+                  <title>Bachelor of Arts in Math Education</title>
+                </program>
+                <program>
+                  <degree>ba</degree>
+                  <title>Bachelor of Arts in Science Education</title>
+                </program>
+                <department>
+                  <name>Educational Policy</name>
+                  <course>
+                    <no>102</no>
+                    <title>Introduction to Education</title>
+                  </course>
+                  <course>
+                    <no>117</no>
+                    <title>Contemporary Society</title>
+                  </course>
+                  <course>
+                    <no>131</no>
+                    <title>Sociology of Childhood</title>
+                  </course>
+                  <course>
+                    <no>202</no>
+                    <title>Technology in the Classroom</title>
+                  </course>
+                  <course>
+                    <no>213</no>
+                    <title>Technology, Society and Schools</title>
+                  </course>
+                  <course>
+                    <no>229</no>
+                    <title>Economics and Education Policy</title>
+                  </course>
+                  <course>
+                    <no>231</no>
+                    <title>Politics and Education Policy</title>
+                  </course>
+                  <course>
+                    <no>236</no>
+                    <title>Education Policy Analysis</title>
+                  </course>
+                  <course>
+                    <no>301</no>
+                    <title>Children's Literature</title>
+                  </course>
+                  <course>
+                    <no>316</no>
+                    <title>Education Policy and Practice</title>
+                  </course>
+                  <course>
+                    <no>337</no>
+                    <title>Social Analysis of Education Policy</title>
+                  </course>
+                  <course>
+                    <no>351</no>
+                    <title>Classroom Visit</title>
+                  </course>
+                  <course>
+                    <no>413</no>
+                    <title>Organizational Analysis of Education Policy</title>
+                  </course>
+                  <course>
+                    <no>431</no>
+                    <title>Seminar in Education Policy I</title>
+                  </course>
+                  <course>
+                    <no>432</no>
+                    <title>Seminar in Education Policy II</title>
+                  </course>
+                  <course>
+                    <no>505</no>
+                    <title>Qualitative Research in Education Policy</title>
+                  </course>
+                </department>
+                <department>
+                  <name>Teacher Education</name>
+                  <course>
+                    <no>110</no>
+                    <title>Teaching Methodology</title>
+                  </course>
+                  <course>
+                    <no>122</no>
+                    <title>Theory and Practice of Early Childhood Education</title>
+                  </course>
+                  <course>
+                    <no>155</no>
+                    <title>Methods of Early Science Education</title>
+                  </course>
+                  <course>
+                    <no>179</no>
+                    <title>Play as Education Method</title>
+                  </course>
+                  <course>
+                    <no>208</no>
+                    <title>Developmental Psychology</title>
+                  </course>
+                  <course>
+                    <no>211</no>
+                    <title>Selection of Learning Resources</title>
+                  </course>
+                  <course>
+                    <no>256</no>
+                    <title>Teacher Identity</title>
+                  </course>
+                  <course>
+                    <no>367</no>
+                    <title>Problems in Education Management</title>
+                  </course>
+                  <course>
+                    <no>401</no>
+                    <title>Challenges of Teaching the Gifted and Talented</title>
+                  </course>
+                  <course>
+                    <no>430</no>
+                    <title>Techniques of Mathematics Teaching</title>
+                  </course>
+                  <course>
+                    <no>435</no>
+                    <title>Techniques of Science Teaching</title>
+                  </course>
+                  <course>
+                    <no>440</no>
+                    <title>Techniques of Language Teaching</title>
+                  </course>
+                  <course>
+                    <no>500</no>
+                    <title>Problems in Education</title>
+                  </course>
+                  <course>
+                    <no>509</no>
+                    <title>Public School Internship</title>
+                  </course>
+                  <course>
+                    <no>510</no>
+                    <title>Preschool Internship</title>
+                  </course>
+                  <course>
+                    <no>520</no>
+                    <title>Special Topics in Teacher Education</title>
+                  </course>
+                  <course>
+                    <no>630</no>
+                    <title>Practice of Mathematics Teaching</title>
+                  </course>
+                  <course>
+                    <no>635</no>
+                    <title>Practice of Science Teaching</title>
+                  </course>
+                  <course>
+                    <no>640</no>
+                    <title>Practice of Language Teaching</title>
+                  </course>
+                </department>
+              </school>
+              <school>
+                <name>School of Music &amp; Dance</name>
+                <department>
+                  <name>Piano</name>
+                </department>
+                <department>
+                  <name>Strings</name>
+                </department>
+                <department>
+                  <name>Vocals</name>
+                </department>
+                <department>
+                  <name>Wind</name>
+                </department>
+              </school>
+              <school>
+                <name>School of Continuing Studies</name>
+              </school>
+            </htsql:result>
+        - uri: /school?code={'edu','mus','sc'} {name, /program{degree, title}, /department{name,
+            /course{no, title}}}/:html
+          status: 200 OK
+          headers:
+          - [Content-Type, text/html; charset=UTF-8]
+          body: |
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <title>school</title>
+            <style type="text/css">
+            table.htsql-output { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
+            table.htsql-output > thead { background-color: #f2f2f2; border-bottom: 1px solid #1a1a1a }
+            table.htsql-output > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align: center; vertical-align: bottom; overflow: hidden; word-wrap: break-word; border-top: 1px solid #999999; border-left: 1px solid #999999 }
+            table.htsql-output > thead > tr > th.htsql-empty-header:after { content: "\A0" }
+            table.htsql-output > tbody > tr.htsql-odd-row { background-color: #ffffff }
+            table.htsql-output > tbody > tr.htsql-even-row { background-color: #f2f2f2 }
+            table.htsql-output > tbody > tr:hover { color: #ffffff; background-color: #333333 }
+            table.htsql-output > tbody > tr > td { padding: 0.2em 0.5em; vertical-align: baseline; overflow: hidden; word-wrap: break-word; border-left: 1px solid #999999; border-right: 1px solid #999999 }
+            table.htsql-output > tbody > tr > td.htsql-integer-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-decimal-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-float-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-null-value:after { content: "\A0" }
+            table.htsql-output > tbody > tr > td.htsql-empty-value { color: #999999 }
+            table.htsql-output > tbody > tr > td.htsql-empty-value:after { content: "\2B1A" }
+            table.htsql-output > tbody > tr > td.htsql-false-value { font-style: italic }
+            table.htsql-output > tbody > tr > td.htsql-null-record-value { border-left-style: dashed; border-right-style: dashed }
+            table.htsql-output > tbody > tr > td.htsql-section { border-top: 1px dotted #999999 }
+            table.htsql-output > tbody > tr > td.htsql-index { font-size: 90%; font-weight: bold; text-align: right; width: 0; color: #999999; border-left-style: solid; border-right-color: #1a1a1a; -moz-user-select: none; -webkit-user-select: none; user-select: none }
+            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
+            div.htsql-welcome > h1 { font-size: 200%; font-weight: bold; margin: 1px 0 0 }
+            div.htsql-welcome > p { margin: 1px 0 0 }
+            </style>
+            </head>
+            <body>
+            <table class="htsql-output" summary="school">
+            <thead>
+            <tr><th colspan="10">school</th></tr>
+            <tr><th rowspan="3" class="htsql-empty-header"></th><th rowspan="3">name</th><th colspan="3">program</th><th colspan="5">department</th></tr>
+            <tr><th rowspan="2" class="htsql-empty-header"></th><th rowspan="2">degree</th><th rowspan="2">title</th><th rowspan="2" class="htsql-empty-header"></th><th rowspan="2">name</th><th colspan="3">course</th></tr>
+            <tr><th class="htsql-empty-header"></th><th>no</th><th>title</th></tr>
+            </thead>
+            <tbody>
+            <tr class="htsql-odd-row"><td rowspan="35" class="htsql-section htsql-index">1</td><td rowspan="35" class="htsql-section htsql-string-type">College of Education</td><td class="htsql-section htsql-index">1</td><td class="htsql-section htsql-string-type">ma</td><td class="htsql-section htsql-string-type">Master of Arts in Education Leadership</td><td rowspan="16" class="htsql-section htsql-index">1</td><td rowspan="16" class="htsql-section htsql-string-type">Educational Policy</td><td class="htsql-section htsql-index">1</td><td class="htsql-section htsql-integer-type">102</td><td class="htsql-section htsql-string-type">Introduction to Education</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-string-type">ms</td><td class="htsql-string-type">M.S. in Education</td><td class="htsql-index">2</td><td class="htsql-integer-type">117</td><td class="htsql-string-type">Contemporary Society</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">3</td><td class="htsql-string-type">ma</td><td class="htsql-string-type">Master of Arts in Literacy Education</td><td class="htsql-index">3</td><td class="htsql-integer-type">131</td><td class="htsql-string-type">Sociology of Childhood</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">4</td><td class="htsql-string-type">ma</td><td class="htsql-string-type">Master of Arts in Teaching</td><td class="htsql-index">4</td><td class="htsql-integer-type">202</td><td class="htsql-string-type">Technology in the Classroom</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-string-type">ct</td><td class="htsql-string-type">Certificate in Science Teaching</td><td class="htsql-index">5</td><td class="htsql-integer-type">213</td><td class="htsql-string-type">Technology, Society and Schools</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">6</td><td class="htsql-string-type">ba</td><td class="htsql-string-type">Bachelor of Arts in Math Education</td><td class="htsql-index">6</td><td class="htsql-integer-type">229</td><td class="htsql-string-type">Economics and Education Policy</td></tr>
+            <tr class="htsql-odd-row"><td rowspan="29" class="htsql-index">7</td><td rowspan="29" class="htsql-string-type">ba</td><td rowspan="29" class="htsql-string-type">Bachelor of Arts in Science Education</td><td class="htsql-index">7</td><td class="htsql-integer-type">231</td><td class="htsql-string-type">Politics and Education Policy</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">8</td><td class="htsql-integer-type">236</td><td class="htsql-string-type">Education Policy Analysis</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">9</td><td class="htsql-integer-type">301</td><td class="htsql-string-type">Children's Literature</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">10</td><td class="htsql-integer-type">316</td><td class="htsql-string-type">Education Policy and Practice</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">11</td><td class="htsql-integer-type">337</td><td class="htsql-string-type">Social Analysis of Education Policy</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">12</td><td class="htsql-integer-type">351</td><td class="htsql-string-type">Classroom Visit</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">13</td><td class="htsql-integer-type">413</td><td class="htsql-string-type">Organizational Analysis of Education Policy</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">14</td><td class="htsql-integer-type">431</td><td class="htsql-string-type">Seminar in Education Policy I</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">15</td><td class="htsql-integer-type">432</td><td class="htsql-string-type">Seminar in Education Policy II</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">16</td><td class="htsql-integer-type">505</td><td class="htsql-string-type">Qualitative Research in Education Policy</td></tr>
+            <tr class="htsql-odd-row"><td rowspan="19" class="htsql-section htsql-index">2</td><td rowspan="19" class="htsql-section htsql-string-type">Teacher Education</td><td class="htsql-section htsql-index">1</td><td class="htsql-section htsql-integer-type">110</td><td class="htsql-section htsql-string-type">Teaching Methodology</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-integer-type">122</td><td class="htsql-string-type">Theory and Practice of Early Childhood Education</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">3</td><td class="htsql-integer-type">155</td><td class="htsql-string-type">Methods of Early Science Education</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">4</td><td class="htsql-integer-type">179</td><td class="htsql-string-type">Play as Education Method</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-integer-type">208</td><td class="htsql-string-type">Developmental Psychology</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">6</td><td class="htsql-integer-type">211</td><td class="htsql-string-type">Selection of Learning Resources</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">7</td><td class="htsql-integer-type">256</td><td class="htsql-string-type">Teacher Identity</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">8</td><td class="htsql-integer-type">367</td><td class="htsql-string-type">Problems in Education Management</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">9</td><td class="htsql-integer-type">401</td><td class="htsql-string-type">Challenges of Teaching the Gifted and Talented</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">10</td><td class="htsql-integer-type">430</td><td class="htsql-string-type">Techniques of Mathematics Teaching</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">11</td><td class="htsql-integer-type">435</td><td class="htsql-string-type">Techniques of Science Teaching</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">12</td><td class="htsql-integer-type">440</td><td class="htsql-string-type">Techniques of Language Teaching</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">13</td><td class="htsql-integer-type">500</td><td class="htsql-string-type">Problems in Education</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">14</td><td class="htsql-integer-type">509</td><td class="htsql-string-type">Public School Internship</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">15</td><td class="htsql-integer-type">510</td><td class="htsql-string-type">Preschool Internship</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">16</td><td class="htsql-integer-type">520</td><td class="htsql-string-type">Special Topics in Teacher Education</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">17</td><td class="htsql-integer-type">630</td><td class="htsql-string-type">Practice of Mathematics Teaching</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">18</td><td class="htsql-integer-type">635</td><td class="htsql-string-type">Practice of Science Teaching</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">19</td><td class="htsql-integer-type">640</td><td class="htsql-string-type">Practice of Language Teaching</td></tr>
+            <tr class="htsql-even-row"><td rowspan="4" class="htsql-section htsql-index">2</td><td rowspan="4" class="htsql-section htsql-string-type">School of Music &amp; Dance</td><td rowspan="4" class="htsql-section htsql-index htsql-null-record-value"></td><td rowspan="4" class="htsql-section htsql-null-record-value"></td><td rowspan="4" class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-index">1</td><td class="htsql-section htsql-string-type">Piano</td><td class="htsql-section htsql-index htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-section htsql-index">2</td><td class="htsql-section htsql-string-type">Strings</td><td class="htsql-section htsql-index htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td></tr>
+            <tr class="htsql-even-row"><td class="htsql-section htsql-index">3</td><td class="htsql-section htsql-string-type">Vocals</td><td class="htsql-section htsql-index htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-section htsql-index">4</td><td class="htsql-section htsql-string-type">Wind</td><td class="htsql-section htsql-index htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td></tr>
+            <tr class="htsql-even-row"><td class="htsql-section htsql-index">3</td><td class="htsql-section htsql-string-type">School of Continuing Studies</td><td class="htsql-section htsql-index htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-index htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td></tr>
+            </tbody>
+            </table>
+            </body>
+            </html>
+        - uri: /school?code={'edu','mus','sc'} {name, /program{degree, title}, /department{name,
+            /course{no, title}}}/:txt
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school                                                                                                                                 |
+             +------------------------------+-------------------------------------------+-------------------------------------------------------------+
+             |                              | program                                   | department                                                  |
+             |                              +--------+----------------------------------+--------------------+----------------------------------------+
+             |                              |        |                                  |                    | course                                 |
+             |                              |        |                                  |                    +-----+----------------------------------+
+             | name                         | degree | title                            | name               | no  | title                            |
+            -+------------------------------+--------+----------------------------------+--------------------+-----+----------------------------------+-
+             | College of Education         | ma     | Master of Arts in Education      | Educational Policy | 102 | Introduction to Education        |
+             :                              :        : Leadership                       :                    | 117 | Contemporary Society             |
+             :                              | ms     | M.S. in Education                |                    | 131 | Sociology of Childhood           |
+             :                              | ma     | Master of Arts in Literacy       |                    | 202 | Technology in the Classroom      |
+             :                              :        : Education                        :                    | 213 | Technology, Society and Schools  |
+             :                              | ma     | Master of Arts in Teaching       |                    | 229 | Economics and Education Policy   |
+             :                              | ct     | Certificate in Science Teaching  |                    | 231 | Politics and Education Policy    |
+             :                              | ba     | Bachelor of Arts in Math         |                    | 236 | Education Policy Analysis        |
+             :                              :        : Education                        :                    | 301 | Children's Literature            |
+             :                              | ba     | Bachelor of Arts in Science      |                    | 316 | Education Policy and Practice    |
+             :                              :        : Education                        :                    | 337 | Social Analysis of Education     |
+             :                              :        :                                  :                    :     : Policy                           :
+             :                              :        :                                  :                    | 351 | Classroom Visit                  |
+             :                              :        :                                  :                    | 413 | Organizational Analysis of       |
+             :                              :        :                                  :                    :     : Education Policy                 :
+             :                              :        :                                  :                    | 431 | Seminar in Education Policy I    |
+             :                              :        :                                  :                    | 432 | Seminar in Education Policy II   |
+             :                              :        :                                  :                    | 505 | Qualitative Research in          |
+             :                              :        :                                  :                    :     : Education Policy                 :
+             :                              :        :                                  | Teacher Education  | 110 | Teaching Methodology             |
+             :                              :        :                                  :                    | 122 | Theory and Practice of Early     |
+             :                              :        :                                  :                    :     : Childhood Education              :
+             :                              :        :                                  :                    | 155 | Methods of Early Science         |
+             :                              :        :                                  :                    :     : Education                        :
+             :                              :        :                                  :                    | 179 | Play as Education Method         |
+             :                              :        :                                  :                    | 208 | Developmental Psychology         |
+             :                              :        :                                  :                    | 211 | Selection of Learning Resources  |
+             :                              :        :                                  :                    | 256 | Teacher Identity                 |
+             :                              :        :                                  :                    | 367 | Problems in Education Management |
+             :                              :        :                                  :                    | 401 | Challenges of Teaching the       |
+             :                              :        :                                  :                    :     : Gifted and Talented              :
+             :                              :        :                                  :                    | 430 | Techniques of Mathematics        |
+             :                              :        :                                  :                    :     : Teaching                         :
+             :                              :        :                                  :                    | 435 | Techniques of Science Teaching   |
+             :                              :        :                                  :                    | 440 | Techniques of Language Teaching  |
+             :                              :        :                                  :                    | 500 | Problems in Education            |
+             :                              :        :                                  :                    | 509 | Public School Internship         |
+             :                              :        :                                  :                    | 510 | Preschool Internship             |
+             :                              :        :                                  :                    | 520 | Special Topics in Teacher        |
+             :                              :        :                                  :                    :     : Education                        :
+             :                              :        :                                  :                    | 630 | Practice of Mathematics Teaching |
+             :                              :        :                                  :                    | 635 | Practice of Science Teaching     |
+             :                              :        :                                  :                    | 640 | Practice of Language Teaching    |
+             | School of Music & Dance      |        :                                  | Piano              |     :                                  :
+             :                              :        :                                  | Strings            |     :                                  :
+             :                              :        :                                  | Vocals             |     :                                  :
+             :                              :        :                                  | Wind               |     :                                  :
+             | School of Continuing Studies |        :                                  :                    :     :                                  :
+
+             ----
+             /school?code={'edu','mus','sc'}{name,/program{degree,title},/department{name,/course{no,title}}}
+             SELECT "school"."name",
+                    "school"."code"
+             FROM "ad"."school"
+             WHERE ("school"."code" IN ('edu', 'mus', 'sc'))
+             ORDER BY 2 ASC
+
+               SELECT "program"."degree",
+                      "program"."title",
+                      "school"."code"
+               FROM "ad"."school"
+                    INNER JOIN "ad"."program"
+                               ON ("school"."code" = "program"."school_code")
+               WHERE ("school"."code" IN ('edu', 'mus', 'sc'))
+               ORDER BY 3 ASC, "program"."school_code" ASC, "program"."code" ASC
+
+               SELECT "department"."name",
+                      "school"."code",
+                      "department"."code"
+               FROM "ad"."school"
+                    INNER JOIN "ad"."department"
+                               ON ("school"."code" = "department"."school_code")
+               WHERE ("school"."code" IN ('edu', 'mus', 'sc'))
+               ORDER BY 2 ASC, 3 ASC
+
+                 SELECT "course"."no",
+                        "course"."title",
+                        "school"."code",
+                        "course"."code"
+                 FROM "ad"."school"
+                      INNER JOIN (SELECT "course"."no",
+                                         "course"."title",
+                                         "department"."code",
+                                         "course"."department_code",
+                                         "department"."school_code"
+                                  FROM "ad"."department"
+                                       INNER JOIN "ad"."course"
+                                                  ON ("department"."code" = "course"."department_code")) AS "course"
+                                 ON ("school"."code" = "course"."school_code")
+                 WHERE ("school"."code" IN ('edu', 'mus', 'sc'))
+                 ORDER BY 3 ASC, 4 ASC, "course"."department_code" ASC, 1 ASC
+        - uri: /(/(/(/(/true))))/:raw
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="true.js"]
+          body: |
+            {
+              "meta": {
+                "domain": {
+                  "type": "list",
+                  "item": {
+                    "domain": {
+                      "type": "list",
+                      "item": {
+                        "domain": {
+                          "type": "list",
+                          "item": {
+                            "domain": {
+                              "type": "list",
+                              "item": {
+                                "domain": {
+                                  "type": "list",
+                                  "item": {
+                                    "domain": {
+                                      "type": "boolean"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "header": "true",
+                "syntax": "\/(\/(\/(\/(\/true))))",
+                "tag": "true"
+              },
+              "data": [
+                [
+                  [
+                    [
+                      [
+                        true
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+        - uri: /(/(/(/(/true))))/:json
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="true.js"]
+          body: |
+            {
+              "true": [
+                [
+                  [
+                    [
+                      [
+                        true
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+        - uri: /(/(/(/(/true))))/:csv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/csv; charset=UTF-8]
+          - [Content-Disposition, attachment; filename="true.csv"]
+          body: "true\r\n1\r\n"
+        - uri: /(/(/(/(/true))))/:tsv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/tab-separated-values; charset=UTF-8]
+          - [Content-Disposition, attachment; filename="true.tsv"]
+          body: "true\r\n1\r\n"
+        - uri: /(/(/(/(/true))))/:xml
+          status: 200 OK
+          headers:
+          - [Content-Type, application/xml]
+          - [Content-Disposition, inline; filename="true.xml"]
+          body: |
+            <?xml version="1.0" encoding="UTF-8" ?>
+            <htsql:result xmlns:htsql="http://htsql.org/2010/xml">
+              <true>true</true>
+            </htsql:result>
+        - uri: /(/(/(/(/true))))/:html
+          status: 200 OK
+          headers:
+          - [Content-Type, text/html; charset=UTF-8]
+          body: |
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <title>true</title>
+            <style type="text/css">
+            table.htsql-output { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
+            table.htsql-output > thead { background-color: #f2f2f2; border-bottom: 1px solid #1a1a1a }
+            table.htsql-output > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align: center; vertical-align: bottom; overflow: hidden; word-wrap: break-word; border-top: 1px solid #999999; border-left: 1px solid #999999 }
+            table.htsql-output > thead > tr > th.htsql-empty-header:after { content: "\A0" }
+            table.htsql-output > tbody > tr.htsql-odd-row { background-color: #ffffff }
+            table.htsql-output > tbody > tr.htsql-even-row { background-color: #f2f2f2 }
+            table.htsql-output > tbody > tr:hover { color: #ffffff; background-color: #333333 }
+            table.htsql-output > tbody > tr > td { padding: 0.2em 0.5em; vertical-align: baseline; overflow: hidden; word-wrap: break-word; border-left: 1px solid #999999; border-right: 1px solid #999999 }
+            table.htsql-output > tbody > tr > td.htsql-integer-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-decimal-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-float-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-null-value:after { content: "\A0" }
+            table.htsql-output > tbody > tr > td.htsql-empty-value { color: #999999 }
+            table.htsql-output > tbody > tr > td.htsql-empty-value:after { content: "\2B1A" }
+            table.htsql-output > tbody > tr > td.htsql-false-value { font-style: italic }
+            table.htsql-output > tbody > tr > td.htsql-null-record-value { border-left-style: dashed; border-right-style: dashed }
+            table.htsql-output > tbody > tr > td.htsql-section { border-top: 1px dotted #999999 }
+            table.htsql-output > tbody > tr > td.htsql-index { font-size: 90%; font-weight: bold; text-align: right; width: 0; color: #999999; border-left-style: solid; border-right-color: #1a1a1a; -moz-user-select: none; -webkit-user-select: none; user-select: none }
+            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
+            div.htsql-welcome > h1 { font-size: 200%; font-weight: bold; margin: 1px 0 0 }
+            div.htsql-welcome > p { margin: 1px 0 0 }
+            </style>
+            </head>
+            <body>
+            <table class="htsql-output" summary="true">
+            <thead>
+            <tr><th colspan="6">true</th></tr>
+            </thead>
+            <tbody>
+            <tr class="htsql-odd-row"><td class="htsql-section htsql-index">1</td><td class="htsql-section htsql-index">1</td><td class="htsql-section htsql-index">1</td><td class="htsql-section htsql-index">1</td><td class="htsql-section htsql-index">1</td><td class="htsql-section htsql-boolean-type htsql-true-value">true</td></tr>
+            </tbody>
+            </table>
+            </body>
+            </html>
+        - uri: /(/(/(/(/true))))/:txt
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | true |
+            -+------+-
+             | true |
+
+             ----
+             /(/(/(/(/true))))
+             SELECT TRUE
+
+               SELECT TRUE
+
+                 SELECT TRUE
+
+                   SELECT TRUE
+
+                     SELECT TRUE
       - id: commands
         tests:
         - uri: /school/:retrieve
@@ -32334,7 +35140,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: a valid plural expression is expected:
+            encode error: a descendant expression is expected:
                 /department{code, count($school^campus)} :where $school:=school
                                                                          ^^^^^^
         - uri: /school^true()
@@ -32430,7 +35236,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: a valid plural operand is expected:
+            encode error: a descendant operand is expected:
                 /department{code, count($school{code})} :where $school:=school
                                   ^^^^^^^^^^^^^^^^^^^^
         - uri: /school{code, count(program|department)}

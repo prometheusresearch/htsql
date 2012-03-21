@@ -203,6 +203,7 @@ class EncodeSegment(Encode):
     adapt(SegmentBinding)
 
     def __call__(self):
+        root = self.state.relate(self.binding.base)
         code = self.state.encode(self.binding.seed)
         # List of all unit expressions.
         units = code.units
@@ -228,11 +229,14 @@ class EncodeSegment(Encode):
             # Otherwise, `flows` contains a single maximal flow node.
             else:
                 [flow] = flows
+        if not flow.spans(root):
+            raise EncodeError("a descendant segment flow is expected",
+                              self.binding.mark)
         if coerce(code.domain) is not None:
             filter = FormulaCode(IsNullSig(-1), coerce(BooleanDomain()),
                                  code.binding, op=code)
             flow = FilteredFlow(flow, filter, flow.binding)
-        return SegmentCode(flow, code, self.binding)
+        return SegmentCode(root, flow, code, self.binding)
 
 
 class RelateRoot(Relate):
@@ -329,7 +333,7 @@ class RelateQuotient(Relate):
         if base.spans(seed):
             raise EncodeError("a plural expression is expected", seed.mark)
         if not seed.spans(base):
-            raise EncodeError("a valid plural expression is expected",
+            raise EncodeError("a descendant expression is expected",
                               seed.mark)
         # Encode the kernel expressions.
         kernels = [self.state.encode(binding)

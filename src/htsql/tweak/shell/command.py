@@ -329,7 +329,10 @@ class RenderEvaluate(Act):
             yield token
         yield u"data"
         product_to_raw = to_raw(product.meta.domain)
-        for token in product_to_raw(product.data):
+        data = product.data
+        if limit is not None and isinstance(data, list) and len(data) > limit:
+            data = data[:limit]
+        for token in product_to_raw(data):
             yield token
         yield u"more"
         yield (limit is not None and

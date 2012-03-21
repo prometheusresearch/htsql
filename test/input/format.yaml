@@ -167,6 +167,44 @@ tests:
            '%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F',
            '%CE%BE', '\/%25''"&<>#', ''}/:txt
 
+- title: Nested Segments
+  tests:
+  - uri: /{/null, /school.limit(3), /department.limit(5)}/:raw
+  - uri: /{/null, /school.limit(3), /department.limit(5)}/:json
+  - uri: /{/null, /school.limit(3), /department.limit(5)}/:csv
+  - uri: /{/null, /school.limit(3), /department.limit(5)}/:tsv
+  - uri: /{/null, /school.limit(3), /department.limit(5)}/:xml
+  - uri: /{/null, /school.limit(3), /department.limit(5)}/:html
+  - uri: /{/null, /school.limit(3), /department.limit(5)}/:txt
+  - uri: /school?code={'edu','mus','sc'}
+                {name, /program{degree, title},
+                 /department{name, /course{no, title}}}/:raw
+  - uri: /school?code={'edu','mus','sc'}
+                {name, /program{degree, title},
+                 /department{name, /course{no, title}}}/:json
+  - uri: /school?code={'edu','mus','sc'}
+                {name, /program{degree, title},
+                 /department{name, /course{no, title}}}/:csv
+  - uri: /school?code={'edu','mus','sc'}
+                {name, /program{degree, title},
+                 /department{name, /course{no, title}}}/:tsv
+  - uri: /school?code={'edu','mus','sc'}
+                {name, /program{degree, title},
+                 /department{name, /course{no, title}}}/:xml
+  - uri: /school?code={'edu','mus','sc'}
+                {name, /program{degree, title},
+                 /department{name, /course{no, title}}}/:html
+  - uri: /school?code={'edu','mus','sc'}
+                {name, /program{degree, title},
+                 /department{name, /course{no, title}}}/:txt
+  - uri: /(/(/(/(/true))))/:raw
+  - uri: /(/(/(/(/true))))/:json
+  - uri: /(/(/(/(/true))))/:csv
+  - uri: /(/(/(/(/true))))/:tsv
+  - uri: /(/(/(/(/true))))/:xml
+  - uri: /(/(/(/(/true))))/:html
+  - uri: /(/(/(/(/true))))/:txt
+
 - title: Commands
   tests:
   - uri: /school/:retrieve
