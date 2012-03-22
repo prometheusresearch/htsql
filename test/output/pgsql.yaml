@@ -20079,6 +20079,36 @@ tests:
                                     ON ("department"."code" = "course"."department_code")
                ORDER BY 1 ASC
                LIMIT 10
+          - uri: /school?code='art'{code, count(department.limit(10))}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school                             |
+               +------+-----------------------------+
+               | code | count(department.limit(10)) |
+              -+------+-----------------------------+-
+               | art  |                           2 |
+
+               ----
+               /school?code='art'{code,count(department.limit(10))}
+               SELECT "school"."code",
+                      COALESCE("department"."count", 0)
+               FROM "ad"."school"
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                            "department"."code"
+                                     FROM (SELECT "school"."code"
+                                           FROM "ad"."school"
+                                                INNER JOIN "ad"."department"
+                                                           ON ("school"."code" = "department"."school_code")
+                                           WHERE ("school"."code" = 'art')
+                                           ORDER BY 1 ASC, "department"."code" ASC
+                                           LIMIT 10) AS "department"
+                                     GROUP BY 2) AS "department"
+                                    ON ("school"."code" = "department"."code")
+               WHERE ("school"."code" = 'art')
+               ORDER BY 1 ASC
         - id: root,-this,-direct-and-fiber-functions
           tests:
           - uri: /{count(school)*count(department),count(school.({} -> department))}
@@ -25782,6 +25812,40 @@ tests:
                  FROM "ad"."department"
                  ORDER BY 1 ASC
                  LIMIT 3
+          - uri: /school?code='art'{*, /department.limit(3)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school                                                                      |
+               +------+------------------------+--------+------------------------------------+
+               |      |                        |        | department                         |
+               |      |                        |        +--------+-------------+-------------+
+               | code | name                   | campus | code   | name        | school_code |
+              -+------+------------------------+--------+--------+-------------+-------------+-
+               | art  | School of Art & Design | old    | arthis | Art History | art         |
+               :      :                        :        | stdart | Studio Art  | art         |
+
+               ----
+               /school?code='art'{*,/department.limit(3)}
+               SELECT "school"."code",
+                      "school"."name",
+                      "school"."campus"
+               FROM "ad"."school"
+               WHERE ("school"."code" = 'art')
+               ORDER BY 1 ASC
+
+                 SELECT "department"."code",
+                        "department"."name",
+                        "department"."school_code",
+                        "school"."code"
+                 FROM "ad"."school"
+                      INNER JOIN "ad"."department"
+                                 ON ("school"."code" = "department"."school_code")
+                 WHERE ("school"."code" = 'art')
+                 ORDER BY 4 ASC, 1 ASC
+                 LIMIT 3
           - uri: /school{code, /department{name}.sort(count(course))}.sort(count(program))
             status: 200 OK
             headers:
@@ -30753,6 +30817,97 @@ tests:
              FROM "ad"."school"
              ORDER BY 1 ASC
              LIMIT 10000
+        - uri: /school?code='art'{*, /department}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | school                                                                      |
+             +------+------------------------+--------+------------------------------------+
+             |      |                        |        | department                         |
+             |      |                        |        +--------+-------------+-------------+
+             | code | name                   | campus | code   | name        | school_code |
+            -+------+------------------------+--------+--------+-------------+-------------+-
+             | art  | School of Art & Design | old    | arthis | Art History | art         |
+             :      :                        :        | stdart | Studio Art  | art         |
+
+             ----
+             /school?code='art'{*,/department}
+             SELECT "school"."code",
+                    "school"."name",
+                    "school"."campus"
+             FROM "ad"."school"
+             WHERE ("school"."code" = 'art')
+             ORDER BY 1 ASC
+             LIMIT 10000
+
+               SELECT "department"."code_1",
+                      "department"."name",
+                      "department"."school_code",
+                      "department"."code_2"
+               FROM (SELECT "school"."code"
+                     FROM "ad"."school"
+                     WHERE ("school"."code" = 'art')
+                     ORDER BY 1 ASC
+                     LIMIT 10000) AS "school"
+                    INNER JOIN (SELECT "department"."code" AS "code_1",
+                                       "department"."name",
+                                       "department"."school_code",
+                                       "school"."code" AS "code_2"
+                                FROM "ad"."school"
+                                     INNER JOIN "ad"."department"
+                                                ON ("school"."code" = "department"."school_code")
+                                WHERE ("school"."code" = 'art')
+                                ORDER BY 4 ASC, 1 ASC
+                                LIMIT 10000) AS "department"
+                               ON ("school"."code" = "department"."code_2")
+               ORDER BY 4 ASC, 1 ASC
+        - uri: /school{*, /department}?code='art'
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | school                                                                      |
+             +------+------------------------+--------+------------------------------------+
+             |      |                        |        | department                         |
+             |      |                        |        +--------+-------------+-------------+
+             | code | name                   | campus | code   | name        | school_code |
+            -+------+------------------------+--------+--------+-------------+-------------+-
+             | art  | School of Art & Design | old    | arthis | Art History | art         |
+             :      :                        :        | stdart | Studio Art  | art         |
+
+             ----
+             /school{*,/department}?code='art'
+             SELECT "school"."code",
+                    "school"."name",
+                    "school"."campus"
+             FROM "ad"."school"
+             WHERE ("school"."code" = 'art')
+             ORDER BY 1 ASC
+             LIMIT 10000
+
+               SELECT "department"."code_1",
+                      "department"."name",
+                      "department"."school_code",
+                      "department"."code_2"
+               FROM (SELECT "school"."code"
+                     FROM "ad"."school"
+                     WHERE ("school"."code" = 'art')
+                     ORDER BY 1 ASC
+                     LIMIT 10000) AS "school"
+                    INNER JOIN (SELECT "department"."code" AS "code_1",
+                                       "department"."name",
+                                       "department"."school_code",
+                                       "school"."code" AS "code_2"
+                                FROM "ad"."school"
+                                     INNER JOIN "ad"."department"
+                                                ON ("school"."code" = "department"."school_code")
+                                ORDER BY 4 ASC, 1 ASC
+                                LIMIT 10000) AS "department"
+                               ON ("school"."code" = "department"."code_2")
+               ORDER BY 4 ASC, 1 ASC
         - uri: /school.limit(10001)
           status: 200 OK
           headers:

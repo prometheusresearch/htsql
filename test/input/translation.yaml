@@ -195,6 +195,8 @@ tests:
     - uri: /department{code, count(course?credits=$max_credits)}.limit(10)
             :where department.$max_credits := max(course.credits)
     - uri: /department{code, count(course?credits=max(fork().credits))}.limit(10)
+    # Test for a bug with LIMIT preventing unmasking a filter
+    - uri: /school?code='art'{code, count(department.limit(10))}
 
   - title: Root, This, Direct and Fiber functions
     tests:
@@ -460,6 +462,7 @@ tests:
     - uri: /school.filter(code={'bus','mus','sc'}){code, /department{name}, /program{title}}
     - uri: /school{code, /department{name}.limit(3), /program{title}.limit(3)}.limit(3)
     - uri: /{/school.limit(3), /department.limit(3)}
+    - uri: /school?code='art'{*, /department.limit(3)}
     - uri: /school{code, /department{name}.sort(count(course))}.sort(count(program))
     - uri: /school{code,
                    /department{name,

@@ -586,8 +586,14 @@ class CompileSegment(Compile):
         # Get the ordering of the segment flow.  We must respect the ordering
         # of the parent segment.
         order = []
+        duplicates = set()
         for flow in chain:
-            order.extend(arrange(flow))
+            for code, direction in arrange(flow):
+                if code in duplicates:
+                    continue
+                order.append((code, direction))
+                duplicates.add(code)
+
         # List of expressions we need the term to export.
         codes = ([self.expression.code] +
                  [code for code, direction in order])
@@ -603,6 +609,8 @@ class CompileSegment(Compile):
                 child_flow = child_flow.base
             if is_native:
                 del chain[idx]
+                if idx > 0:
+                    idx -= 1
             else:
                 idx += 1
         # Construct a term corresponding to the segment flow.

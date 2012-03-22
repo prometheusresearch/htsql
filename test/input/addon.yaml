@@ -25,6 +25,8 @@ tests:
 
   - uri: /{2+2}
   - uri: /school
+  - uri: /school?code='art'{*, /department}
+  - uri: /school{*, /department}?code='art'
 
   # Merging consecutive limits.
   - uri: /school.limit(10001)

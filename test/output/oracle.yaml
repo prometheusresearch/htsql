@@ -20375,6 +20375,37 @@ tests:
                                      GROUP BY "COURSE_1"."DEPARTMENT_CODE") "COURSE"
                                     ON ("DEPARTMENT"."CODE" = "COURSE"."DEPARTMENT_CODE")
                ORDER BY 1 ASC
+          - uri: /school?code='art'{code, count(department.limit(10))}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school                             |
+               +------+-----------------------------+
+               | code | count(department.limit(10)) |
+              -+------+-----------------------------+-
+               | art  |                           2 |
+
+               ----
+               /school?code='art'{code,count(department.limit(10))}
+               SELECT "SCHOOL"."CODE",
+                      COALESCE("DEPARTMENT"."count", 0)
+               FROM "SCHOOL"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "DEPARTMENT"."CODE"
+                                     FROM (SELECT "DEPARTMENT"."CODE"
+                                           FROM (SELECT "SCHOOL"."CODE"
+                                                 FROM "SCHOOL"
+                                                      INNER JOIN "DEPARTMENT"
+                                                                 ON ("SCHOOL"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
+                                                 WHERE ("SCHOOL"."CODE" = 'art')
+                                                 ORDER BY 1 ASC, "DEPARTMENT"."CODE" ASC) "DEPARTMENT"
+                                           WHERE (ROWNUM < 11)) "DEPARTMENT"
+                                     GROUP BY "DEPARTMENT"."CODE") "DEPARTMENT"
+                                    ON ("SCHOOL"."CODE" = "DEPARTMENT"."CODE")
+               WHERE ("SCHOOL"."CODE" = 'art')
+               ORDER BY 1 ASC
         - id: root,-this,-direct-and-fiber-functions
           tests:
           - uri: /{count(school)*count(department),count(school.({} -> department))}
@@ -26082,6 +26113,49 @@ tests:
                              ORDER BY 1 ASC) "DEPARTMENT"
                        WHERE (ROWNUM < 4)) "DEPARTMENT"
                  ORDER BY 1 ASC
+          - uri: /school?code='art'{*, /department.limit(3)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school                                                                      |
+               +------+------------------------+--------+------------------------------------+
+               |      |                        |        | department                         |
+               |      |                        |        +--------+-------------+-------------+
+               | code | name                   | campus | code   | name        | school_code |
+              -+------+------------------------+--------+--------+-------------+-------------+-
+               | art  | School of Art & Design | old    | arthis | Art History | art         |
+               :      :                        :        | stdart | Studio Art  | art         |
+
+               ----
+               /school?code='art'{*,/department.limit(3)}
+               SELECT "SCHOOL"."CODE",
+                      "SCHOOL"."NAME",
+                      "SCHOOL"."CAMPUS"
+               FROM "SCHOOL"
+               WHERE ("SCHOOL"."CODE" = 'art')
+               ORDER BY 1 ASC
+
+                 SELECT "DEPARTMENT"."CODE_1",
+                        "DEPARTMENT"."NAME",
+                        "DEPARTMENT"."SCHOOL_CODE",
+                        "DEPARTMENT"."CODE_2"
+                 FROM (SELECT "DEPARTMENT"."CODE_1",
+                              "DEPARTMENT"."NAME",
+                              "DEPARTMENT"."SCHOOL_CODE",
+                              "DEPARTMENT"."CODE_2"
+                       FROM (SELECT "DEPARTMENT"."CODE" AS "CODE_1",
+                                    "DEPARTMENT"."NAME",
+                                    "DEPARTMENT"."SCHOOL_CODE",
+                                    "SCHOOL"."CODE" AS "CODE_2"
+                             FROM "SCHOOL"
+                                  INNER JOIN "DEPARTMENT"
+                                             ON ("SCHOOL"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
+                             WHERE ("SCHOOL"."CODE" = 'art')
+                             ORDER BY 4 ASC, 1 ASC) "DEPARTMENT"
+                       WHERE (ROWNUM < 4)) "DEPARTMENT"
+                 ORDER BY 4 ASC, 1 ASC
           - uri: /school{code, /department{name}.sort(count(course))}.sort(count(program))
             status: 200 OK
             headers:
@@ -31076,6 +31150,121 @@ tests:
                          ORDER BY 1 ASC) "SCHOOL"
                    WHERE (ROWNUM < 10001)) "SCHOOL"
              ORDER BY 1 ASC
+        - uri: /school?code='art'{*, /department}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | school                                                                      |
+             +------+------------------------+--------+------------------------------------+
+             |      |                        |        | department                         |
+             |      |                        |        +--------+-------------+-------------+
+             | code | name                   | campus | code   | name        | school_code |
+            -+------+------------------------+--------+--------+-------------+-------------+-
+             | art  | School of Art & Design | old    | arthis | Art History | art         |
+             :      :                        :        | stdart | Studio Art  | art         |
+
+             ----
+             /school?code='art'{*,/department}
+             SELECT "SCHOOL"."CODE",
+                    "SCHOOL"."NAME",
+                    "SCHOOL"."CAMPUS"
+             FROM (SELECT "SCHOOL"."CODE",
+                          "SCHOOL"."NAME",
+                          "SCHOOL"."CAMPUS"
+                   FROM (SELECT "SCHOOL"."CODE",
+                                "SCHOOL"."NAME",
+                                "SCHOOL"."CAMPUS"
+                         FROM "SCHOOL"
+                         WHERE ("SCHOOL"."CODE" = 'art')
+                         ORDER BY 1 ASC) "SCHOOL"
+                   WHERE (ROWNUM < 10001)) "SCHOOL"
+             ORDER BY 1 ASC
+
+               SELECT "DEPARTMENT"."CODE_1",
+                      "DEPARTMENT"."NAME",
+                      "DEPARTMENT"."SCHOOL_CODE",
+                      "DEPARTMENT"."CODE_2"
+               FROM (SELECT "SCHOOL"."CODE"
+                     FROM (SELECT "SCHOOL"."CODE"
+                           FROM "SCHOOL"
+                           WHERE ("SCHOOL"."CODE" = 'art')
+                           ORDER BY 1 ASC) "SCHOOL"
+                     WHERE (ROWNUM < 10001)) "SCHOOL"
+                    INNER JOIN (SELECT "DEPARTMENT"."CODE_1",
+                                       "DEPARTMENT"."NAME",
+                                       "DEPARTMENT"."SCHOOL_CODE",
+                                       "DEPARTMENT"."CODE_2"
+                                FROM (SELECT "DEPARTMENT"."CODE" AS "CODE_1",
+                                             "DEPARTMENT"."NAME",
+                                             "DEPARTMENT"."SCHOOL_CODE",
+                                             "SCHOOL"."CODE" AS "CODE_2"
+                                      FROM "SCHOOL"
+                                           INNER JOIN "DEPARTMENT"
+                                                      ON ("SCHOOL"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
+                                      WHERE ("SCHOOL"."CODE" = 'art')
+                                      ORDER BY 4 ASC, 1 ASC) "DEPARTMENT"
+                                WHERE (ROWNUM < 10001)) "DEPARTMENT"
+                               ON ("SCHOOL"."CODE" = "DEPARTMENT"."CODE_2")
+               ORDER BY 4 ASC, 1 ASC
+        - uri: /school{*, /department}?code='art'
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | school                                                                      |
+             +------+------------------------+--------+------------------------------------+
+             |      |                        |        | department                         |
+             |      |                        |        +--------+-------------+-------------+
+             | code | name                   | campus | code   | name        | school_code |
+            -+------+------------------------+--------+--------+-------------+-------------+-
+             | art  | School of Art & Design | old    | arthis | Art History | art         |
+             :      :                        :        | stdart | Studio Art  | art         |
+
+             ----
+             /school{*,/department}?code='art'
+             SELECT "SCHOOL"."CODE",
+                    "SCHOOL"."NAME",
+                    "SCHOOL"."CAMPUS"
+             FROM (SELECT "SCHOOL"."CODE",
+                          "SCHOOL"."NAME",
+                          "SCHOOL"."CAMPUS"
+                   FROM (SELECT "SCHOOL"."CODE",
+                                "SCHOOL"."NAME",
+                                "SCHOOL"."CAMPUS"
+                         FROM "SCHOOL"
+                         WHERE ("SCHOOL"."CODE" = 'art')
+                         ORDER BY 1 ASC) "SCHOOL"
+                   WHERE (ROWNUM < 10001)) "SCHOOL"
+             ORDER BY 1 ASC
+
+               SELECT "DEPARTMENT"."CODE_1",
+                      "DEPARTMENT"."NAME",
+                      "DEPARTMENT"."SCHOOL_CODE",
+                      "DEPARTMENT"."CODE_2"
+               FROM (SELECT "SCHOOL"."CODE"
+                     FROM (SELECT "SCHOOL"."CODE"
+                           FROM "SCHOOL"
+                           WHERE ("SCHOOL"."CODE" = 'art')
+                           ORDER BY 1 ASC) "SCHOOL"
+                     WHERE (ROWNUM < 10001)) "SCHOOL"
+                    INNER JOIN (SELECT "DEPARTMENT"."CODE_1",
+                                       "DEPARTMENT"."NAME",
+                                       "DEPARTMENT"."SCHOOL_CODE",
+                                       "DEPARTMENT"."CODE_2"
+                                FROM (SELECT "DEPARTMENT"."CODE" AS "CODE_1",
+                                             "DEPARTMENT"."NAME",
+                                             "DEPARTMENT"."SCHOOL_CODE",
+                                             "SCHOOL"."CODE" AS "CODE_2"
+                                      FROM "SCHOOL"
+                                           INNER JOIN "DEPARTMENT"
+                                                      ON ("SCHOOL"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
+                                      ORDER BY 4 ASC, 1 ASC) "DEPARTMENT"
+                                WHERE (ROWNUM < 10001)) "DEPARTMENT"
+                               ON ("SCHOOL"."CODE" = "DEPARTMENT"."CODE_2")
+               ORDER BY 4 ASC, 1 ASC
         - uri: /school.limit(10001)
           status: 200 OK
           headers:

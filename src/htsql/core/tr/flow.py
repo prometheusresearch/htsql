@@ -424,6 +424,7 @@ class Flow(Expression):
 
     is_axis = False
     is_root = False
+    is_commutative = True
 
     def __init__(self, base, family, is_contracting, is_expanding, binding):
         assert isinstance(base, maybe(Flow))
@@ -523,6 +524,9 @@ class Flow(Expression):
                 # discard it.
                 # FIXME: may break if the flow contains a non-matching
                 # `limit/offset` operation?
+                if not (my_ancestor.is_commutative or
+                        my_ancestor == their_ancestor):
+                    return self
                 if my_ancestor.is_axis:
                     flow = my_ancestor.clone(base=flow)
                 my_ancestors.pop()
@@ -539,6 +543,8 @@ class Flow(Expression):
                 # The ancestors represent different operations, `B`'s ancestor
                 # is an axis, and `A`'s ancestor is not.  Here we apply the
                 # `A`'s ancestor.
+                if not my_ancestor.is_commutative:
+                    return self
                 flow = my_ancestor.clone(base=flow)
                 my_ancestors.pop()
             else:
@@ -549,6 +555,8 @@ class Flow(Expression):
         # Reapply the unprocessed ancestors.
         while my_ancestors:
             my_ancestor = my_ancestors.pop()
+            if not my_ancestor.is_commutative:
+                return self
             flow = my_ancestor.clone(base=flow)
         # We have a pruned flow here.
         return flow
@@ -1257,6 +1265,7 @@ class OrderedFlow(Flow):
         self.order = order
         self.limit = limit
         self.offset = offset
+        self.is_commutative = (limit is None and offset is None)
 
     def __basis__(self):
         return (self.base, tuple(self.order))
