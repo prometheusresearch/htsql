@@ -21,11 +21,11 @@ from .binding import (Binding, ScopingBinding, ChainingBinding, WrappingBinding,
                       SegmentBinding, HomeBinding, RootBinding, TableBinding,
                       FreeTableBinding, AttachedTableBinding,
                       ColumnBinding, QuotientBinding, ComplementBinding,
-                      CoverBinding, ForkBinding, LinkBinding, RescopingBinding,
-                      DefinitionBinding, SelectionBinding, WildSelectionBinding,
-                      DirectionBinding, RerouteBinding, ReferenceRerouteBinding,
-                      TitleBinding, AliasBinding, CommandBinding,
-                      ImplicitCastBinding,
+                      CoverBinding, ForkBinding, LinkBinding, ClipBinding,
+                      RescopingBinding, DefinitionBinding, SelectionBinding,
+                      WildSelectionBinding, DirectionBinding, RerouteBinding,
+                      ReferenceRerouteBinding, TitleBinding, AliasBinding,
+                      CommandBinding, ImplicitCastBinding,
                       FreeTableRecipe, AttachedTableRecipe, ColumnRecipe,
                       ComplementRecipe, KernelRecipe, BindingRecipe,
                       SubstitutionRecipe, ClosedRecipe, InvalidRecipe,
@@ -852,7 +852,11 @@ class LookupAttributeInCover(Lookup):
     # Find an attribute in a cover scope.
 
     adapt_many((CoverBinding, AttributeProbe),
-               (CoverBinding, AttributeSetProbe))
+               (CoverBinding, AttributeSetProbe),
+               (CoverBinding, ComplementProbe),
+               (ClipBinding, AttributeProbe),
+               (ClipBinding, AttributeSetProbe),
+               (ClipBinding, ComplementProbe))
 
     def __call__(self):
         # Delegate all lookup requests to the seed flow.
@@ -862,7 +866,8 @@ class LookupAttributeInCover(Lookup):
 class ExpandCover(Lookup):
     # Expand public columns from a cover scope.
 
-    adapt(CoverBinding, ExpansionProbe)
+    adapt_many((CoverBinding, ExpansionProbe),
+               (ClipBinding, ExpansionProbe))
 
     def __call__(self):
         # Ignore pure selector expansion probes.

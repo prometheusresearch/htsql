@@ -73,6 +73,15 @@ class LinkSig(Signature):
     ]
 
 
+class TopSig(Signature):
+
+    slots = [
+            Slot('seed'),
+            Slot('limit', is_mandatory=False),
+            Slot('offset', is_mandatory=False),
+    ]
+
+
 class CastSig(Signature):
 
     slots = [

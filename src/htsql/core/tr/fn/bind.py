@@ -23,7 +23,7 @@ from ..binding import (LiteralBinding, SortBinding, SieveBinding,
                        WrappingBinding, TitleBinding, DirectionBinding,
                        QuotientBinding, AssignmentBinding, DefinitionBinding,
                        SelectionBinding, HomeBinding, RescopingBinding,
-                       CoverBinding, ForkBinding, CommandBinding,
+                       CoverBinding, ForkBinding, ClipBinding, CommandBinding,
                        SegmentBinding, QueryBinding, Binding,
                        BindingRecipe, ComplementRecipe, KernelRecipe,
                        SubstitutionRecipe, ClosedRecipe)
@@ -50,7 +50,7 @@ from .signature import (AsSig, SortDirectionSig, LimitSig, SortSig, CastSig,
                         RoundSig, RoundToSig, TruncSig, TruncToSig, LengthSig,
                         ContainsSig, ExistsSig, CountSig, MinMaxSig,
                         SumSig, AvgSig, AggregateSig, QuantifySig,
-                        DefineSig, WhereSig, SelectSig, LinkSig)
+                        DefineSig, WhereSig, SelectSig, LinkSig, TopSig)
 from ...cmd.command import RendererCmd, DefaultCmd, RetrieveCmd, SQLCmd
 from ...fmt.format import (RawFormat, JSONFormat, CSVFormat, TSVFormat,
                            HTMLFormat, TextFormat, XMLFormat)
@@ -704,6 +704,34 @@ class BindFork(BindMacro):
         return ForkBinding(self.state.scope, elements, self.syntax)
 
 
+class BindTop(BindMacro):
+
+    call('top')
+    signature = TopSig
+
+    def parse(self, argument):
+        try:
+            if not isinstance(argument, NumberSyntax):
+                raise ValueError
+            value = int(argument.value)
+            if not (value >= 0):
+                raise ValueError
+            if not isinstance(value, int):
+                raise ValueError
+        except ValueError:
+            raise BindError("function '%s' expects a non-negative integer"
+                            % self.name.encode('utf-8'), argument.mark)
+        return value
+
+    def expand(self, seed, limit=None, offset=None):
+        seed = self.state.bind(seed)
+        if limit is not None:
+            limit = self.parse(limit)
+        if offset is not None:
+            offset = self.parse(offset)
+        return ClipBinding(self.state.scope, seed, limit, offset, self.syntax)
+
+
 class BindDirectionBase(BindMacro):
 
     signature = SortDirectionSig
@@ -743,6 +771,8 @@ class BindLimit(BindMacro):
                 raise ValueError
             value = int(argument.value)
             if not (value >= 0):
+                raise ValueError
+            if not isinstance(value, int):
                 raise ValueError
         except ValueError:
             raise BindError("function '%s' expects a non-negative integer"

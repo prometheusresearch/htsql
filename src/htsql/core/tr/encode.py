@@ -22,13 +22,13 @@ from .binding import (Binding, QueryBinding, SegmentBinding, WrappingBinding,
                       SelectionBinding, HomeBinding, RootBinding,
                       FreeTableBinding, AttachedTableBinding, ColumnBinding,
                       QuotientBinding, KernelBinding, ComplementBinding,
-                      CoverBinding, ForkBinding, LinkBinding, SieveBinding,
-                      SortBinding, CastBinding, RescopingBinding,
+                      CoverBinding, ForkBinding, LinkBinding, ClipBinding,
+                      SieveBinding, SortBinding, CastBinding, RescopingBinding,
                       LiteralBinding, FormulaBinding)
 from .lookup import direct
 from .flow import (RootFlow, ScalarFlow, DirectTableFlow, FiberTableFlow,
                    QuotientFlow, ComplementFlow, MonikerFlow, ForkedFlow,
-                   LinkedFlow, FilteredFlow, OrderedFlow,
+                   LinkedFlow, ClippedFlow, FilteredFlow, OrderedFlow,
                    QueryExpr, SegmentCode, LiteralCode, FormulaCode,
                    CastCode, RecordCode, AnnihilatorCode,
                    ColumnUnit, ScalarUnit, KernelUnit)
@@ -414,6 +414,17 @@ class RelateLink(Relate):
         #        raise EncodeError("a singular expression is expected",
         #                          rcode.mark)
         return LinkedFlow(base, seed, images, self.binding)
+
+
+class RelateClip(Relate):
+
+    adapt(ClipBinding)
+
+    def __call__(self):
+        base = self.state.relate(self.binding.base)
+        seed = self.state.relate(self.binding.seed)
+        return ClippedFlow(base, seed, self.binding.limit,
+                           self.binding.offset, self.binding)
 
 
 class EncodeColumn(Encode):

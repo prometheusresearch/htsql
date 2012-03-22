@@ -11,13 +11,13 @@ This module implements the rewriting process.
 """
 
 
-from ..adapter import Utility, Adapter, adapt
+from ..adapter import Utility, Adapter, adapt, adapt_many
 from ..domain import BooleanDomain
 from .error import EncodeError
 from .coerce import coerce
 from .flow import (Expression, QueryExpr, SegmentCode, Flow, RootFlow,
                    QuotientFlow, ComplementFlow, MonikerFlow, ForkedFlow,
-                   LinkedFlow, FilteredFlow, OrderedFlow,
+                   LinkedFlow, ClippedFlow, FilteredFlow, OrderedFlow,
                    Code, LiteralCode, CastCode, RecordCode,
                    AnnihilatorCode, FormulaCode, Unit,
                    CompoundUnit, ScalarUnit, AggregateUnitBase, AggregateUnit,
@@ -781,7 +781,8 @@ class ReplaceQuotient(ReplaceFlow):
 
 class RewriteMoniker(RewriteFlow):
 
-    adapt(MonikerFlow)
+    adapt_many(MonikerFlow,
+               ClippedFlow)
 
     def __call__(self):
         # Apply the adapter to all child nodes.
@@ -792,7 +793,8 @@ class RewriteMoniker(RewriteFlow):
 
 class UnmaskMoniker(UnmaskFlow):
 
-    adapt(MonikerFlow)
+    adapt_many(MonikerFlow,
+               ClippedFlow)
 
     def __call__(self):
         # Unmask the seed flow against the parent flow.
@@ -804,7 +806,8 @@ class UnmaskMoniker(UnmaskFlow):
 
 class ReplaceMoniker(Replace):
 
-    adapt(MonikerFlow)
+    adapt_many(MonikerFlow,
+               ClippedFlow)
 
     def __call__(self):
         # Replace the parent flow.

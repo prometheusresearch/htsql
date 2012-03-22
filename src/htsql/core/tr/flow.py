@@ -1184,6 +1184,53 @@ class LinkedFlow(Flow):
                    self.seed, ", ".join(str(rop) for lop, rop in self.images))
 
 
+class ClippedFlow(Flow):
+
+    is_axis = True
+
+    def __init__(self, base, seed, limit, offset, binding, companions=[]):
+        assert isinstance(base, Flow)
+        assert isinstance(seed, Flow)
+        assert seed.spans(base)
+        assert not base.spans(seed)
+        assert isinstance(limit, maybe(int))
+        assert isinstance(offset, maybe(int))
+        assert isinstance(companions, listof(Code))
+        # Determine an axial ancestor of `seed` spanned by `base`.
+        ground = seed
+        while not ground.is_axis:
+            ground = ground.base
+        assert not base.spans(ground)
+        while not base.spans(ground.base):
+            ground = ground.base
+        is_contracting = (limit is None)
+        is_expanding = (seed.dominates(base) and offset is None
+                        and (limit is None or limit > 0))
+        super(ClippedFlow, self).__init__(
+                    base=base,
+                    family=seed.family,
+                    is_contracting=is_contracting,
+                    is_expanding=is_expanding,
+                    binding=binding)
+        self.seed = seed
+        self.ground = ground
+        self.limit = limit
+        self.offset = offset
+        self.companions = companions
+
+    def __basis__(self):
+        return (self.base, self.seed, self.limit, self.offset)
+
+    def __str__(self):
+        # Display:
+        #   (<base> . (<seed>) [<offset>:<offset>+<limit>])
+        return "(%s . (%s) [%s:%s+%s])" \
+                % (self.base, self.seed,
+                   self.offset if self.offset is not None else 0,
+                   self.offset if self.offset is not None else 0,
+                   self.limit if self.limit is not None else 1)
+
+
 class FilteredFlow(Flow):
     """
     Represents a filtering operation.

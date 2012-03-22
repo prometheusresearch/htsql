@@ -356,6 +356,18 @@ class LinkBinding(ScopingBinding):
         self.images = images
 
 
+class ClipBinding(ScopingBinding):
+
+    def __init__(self, base, seed, limit, offset, syntax):
+        assert isinstance(seed, Binding)
+        assert isinstance(limit, maybe(int))
+        assert isinstance(offset, maybe(int))
+        super(ClipBinding, self).__init__(base, seed.domain, syntax)
+        self.seed = seed
+        self.limit = limit
+        self.offset = offset
+
+
 class SieveBinding(ChainingBinding):
     """
     Represents a sieve expression.
