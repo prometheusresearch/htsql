@@ -348,7 +348,13 @@ class RenderEvaluate(Act):
 
     def render_sql(self, plan):
         if plan.statement is not None:
-            sql = plan.statement.sql
+            sql = []
+            queue = [plan.statement]
+            while queue:
+                statement = queue.pop(0)
+                sql.append(statement.sql)
+                queue.extend(statement.substatements)
+            sql = u"\n".join(sql)
         else:
             sql = u""
         yield JS_MAP
