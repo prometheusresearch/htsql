@@ -7,7 +7,14 @@ from htsql.core.domain import StringDomain
 from htsql.core.tr.signature import isformula, ToPredicateSig, FromPredicateSig
 from htsql.core.tr.frame import ScalarFrame, NullPhrase, LeadingAnchor
 from htsql.core.tr.reduce import (ReduceScalar, ReduceBranch, ReduceLiteral,
-                                  ReduceFromPredicate, ReduceToPredicate)
+                                  ReduceFromPredicate, ReduceToPredicate,
+                                  InterlinkBranch)
+
+
+class OracleInterlinkBranch(InterlinkBranch):
+
+    def interlink_group(self):
+        return self.frame.group
 
 
 class OracleReduceScalar(ReduceScalar):

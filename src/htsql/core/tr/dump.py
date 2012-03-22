@@ -25,7 +25,7 @@ from .frame import (Clause, Frame, TableFrame, BranchFrame, NestedFrame,
                     FormulaPhrase, Anchor, LeadingAnchor)
 from .signature import (Signature, isformula, IsEqualSig, IsTotallyEqualSig,
                         IsInSig, IsNullSig, IfNullSig, NullIfSig, CompareSig,
-                        AndSig, OrSig, NotSig, ToPredicateSig,
+                        AndSig, OrSig, NotSig, SortDirectionSig, ToPredicateSig,
                         FromPredicateSig)
 from .plan import Plan, Statement
 import StringIO
@@ -1111,16 +1111,7 @@ class DumpBranch(Dump):
         self.write(u"GROUP BY ")
         # Write the `GROUP BY` items.
         for index, phrase in enumerate(self.frame.group):
-            # SQL syntax allows us to refer to a `SELECT` column in
-            # a `GROUP BY` clause by position.  Thus, when a `GROUP BY`
-            # element coincides with some `SELECT` phrase, we could avoid
-            # serializing the same phrase twice.
-            if phrase in self.frame.select:
-                position = self.frame.select.index(phrase)+1
-                self.write(unicode(position))
-            # Otherwise, just serialize the phrase.
-            else:
-                self.format("{kernel}", kernel=phrase)
+            self.format(u"{kernel}", kernel=phrase)
             # Dump the trailing comma.
             if index < len(self.frame.group)-1:
                 self.write(u", ")
@@ -1158,10 +1149,6 @@ class DumpBranch(Dump):
     def dump_order(self):
         # Serialize an `ORDER BY` clause.  Dump:
         #   ORDER BY <phrase> (ASC|DESC), ...
-        # Note: the default serializer assumes that the `ASC` modifier
-        # lists `NULL` values first, and the `DESC` modifier lists `NULL`
-        # values last.  Backends for which it is not so must override
-        # this method.
 
         # Nothing to write if there is no `ORDER BY` items.
         if not self.frame.order:
@@ -1169,18 +1156,8 @@ class DumpBranch(Dump):
         self.newline()
         self.write(u"ORDER BY ")
         # Write the `GROUP BY` items.
-        for index, (phrase, direction) in enumerate(self.frame.order):
-            # Just as with `GROUP BY`, an `ORDER BY` item could refer
-            # to a `SELECT` column by position.  We do it when possible
-            # to avoid serializing the same phrase node twice.
-            if phrase in self.frame.select:
-                position = self.frame.select.index(phrase)+1
-                self.write(unicode(position))
-            # The regular case: serialize the node.
-            else:
-                self.format("{kernel}", kernel=phrase)
-            # Write the direction modifier.
-            self.format(" {direction:switch{ASC|DESC}}", direction=direction)
+        for index, phrase in enumerate(self.frame.order):
+            self.format("{kernel}", kernel=phrase)
             # Write the trailing comma.
             if index < len(self.frame.order)-1:
                 self.write(u", ")
@@ -1972,6 +1949,19 @@ class DumpCompare(DumpBySignature):
         #   (<lop> (<|<=|>|>=) <rop>)
         self.format("({lop} {relation:pass} {rop})",
                     self.arguments, relation=unicode(self.signature.relation))
+
+
+class DumpSortDirection(DumpBySignature):
+
+    adapt(SortDirectionSig)
+
+    def __call__(self):
+        # Note: the default serializer assumes that the `ASC` modifier
+        # lists `NULL` values first, and the `DESC` modifier lists `NULL`
+        # values last.  Backends for which it is not so must override
+        # this adapter.
+        self.format("{base} {direction:switch{ASC|DESC}}", self.arguments,
+                    self.signature)
 
 
 class DumpToPredicate(DumpBySignature):

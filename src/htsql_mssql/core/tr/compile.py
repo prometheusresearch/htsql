@@ -7,8 +7,7 @@ from htsql.core.domain import BooleanDomain, IntegerDomain
 from htsql.core.tr.term import PermanentTerm, FilterTerm
 from htsql.core.tr.flow import LiteralCode, FormulaCode, ScalarUnit
 from htsql.core.tr.coerce import coerce
-from htsql.core.tr.signature import CompareSig, AndSig
-from htsql.core.tr.fn.signature import SortDirectionSig
+from htsql.core.tr.signature import CompareSig, AndSig, SortDirectionSig
 from .signature import RowNumberSig
 from htsql.core.tr.compile import CompileOrdered
 from htsql.core.tr.stitch import arrange, spread
@@ -66,6 +65,5 @@ class MSSQLCompileOrdered(CompileOrdered):
             routes[unit] = routes[unit.clone(flow=self.backbone)]
         return FilterTerm(self.state.tag(), kid, filter,
                           self.flow, kid.baseline, routes)
-
 
 

@@ -13,7 +13,8 @@ from htsql.core.tr.dump import (SerializeSegment, Dump, DumpBranch, DumpAnchor,
                                 DumpFloat, DumpTime, DumpDateTime,
                                 DumpToFloat, DumpToDecimal, DumpToString,
                                 DumpToDate, DumpToTime, DumpToDateTime,
-                                DumpIsTotallyEqual, DumpBySignature)
+                                DumpIsTotallyEqual, DumpBySignature,
+                                DumpSortDirection)
 from htsql.core.tr.fn.dump import (DumpLength, DumpSubstring, DumpDateIncrement,
                                    DumpDateDecrement, DumpDateDifference,
                                    DumpMakeDate, DumpCombineDateTime,
@@ -37,37 +38,19 @@ class OracleDumpScalar(Dump):
 
 class OracleDumpBranch(DumpBranch):
 
-    def dump_group(self):
-        if not self.frame.group:
-            return
-        self.newline()
-        self.write(u"GROUP BY ")
-        for index, phrase in enumerate(self.frame.group):
-            self.format("{kernel}", kernel=phrase)
-            if index < len(self.frame.group)-1:
-                self.write(u", ")
-
-    def dump_order(self):
-        if not self.frame.order:
-            return
-        self.newline()
-        self.write(u"ORDER BY ")
-        for index, (phrase, direction) in enumerate(self.frame.order):
-            if phrase in self.frame.select:
-                position = self.frame.select.index(phrase)+1
-                self.write(unicode(position))
-            else:
-                self.format("{kernel}", kernel=phrase)
-            self.format(" {direction:switch{ASC|DESC}}", direction=direction)
-            if phrase.is_nullable:
-                self.format(" NULLS {direction:switch{FIRST|LAST}}",
-                            direction=direction)
-            if index < len(self.frame.order)-1:
-                self.write(u", ")
-
     def dump_limit(self):
         assert self.frame.limit is None
         assert self.frame.offset is None
+
+
+class OracleDumpSortDirection(DumpSortDirection):
+
+    def __call__(self):
+        self.format("{base} {direction:switch{ASC|DESC}}",
+                    self.arguments, self.signature)
+        if self.phrase.is_nullable:
+            self.format(" NULLS {direction:switch{FIRST|LAST}}",
+                        self.signature)
 
 
 class OracleDumpLeadingAnchor(DumpLeadingAnchor):

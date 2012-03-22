@@ -240,12 +240,8 @@ class BranchFrame(Frame):
     `having` (:class:`Phrase` or ``None``)
         Represents the ``HAVING`` clause.
 
-    `order` (a list of pairs `(phrase, direction)`)
+    `order` (a list of :class:`Phrase`)
         Represents the ``ORDER BY`` clause.
-
-        Here `phrase` is a :class:`Phrase` instance, `direction`
-        is either ``+1`` (indicates ascending order) or ``-1``
-        (indicates descending order).
 
     `limit` (a non-negative integer or ``None``)
         Represents the ``LIMIT`` clause.
@@ -270,7 +266,7 @@ class BranchFrame(Frame):
         assert isinstance(where, maybe(Phrase))
         assert isinstance(group, listof(Phrase))
         assert isinstance(having, maybe(Phrase))
-        assert isinstance(order, listof(tupleof(Phrase, int)))
+        assert isinstance(order, listof(Phrase))
         assert isinstance(limit, maybe(int))
         assert isinstance(offset, maybe(int))
         assert limit is None or limit >= 0

@@ -4,9 +4,9 @@
 
 
 from htsql.core.domain import IntegerDomain
-from htsql.core.tr.dump import (FormatLiteral, DumpBranch, DumpFloat,
-                                DumpDecimal, DumpDate, DumpTime, DumpDateTime,
-                                DumpToDecimal, DumpToFloat, DumpToString)
+from htsql.core.tr.dump import (FormatLiteral, DumpFloat, DumpDecimal, DumpDate,
+                                DumpTime, DumpDateTime, DumpToDecimal,
+                                DumpToFloat, DumpToString, DumpSortDirection)
 from htsql.core.tr.fn.dump import (DumpLike, DumpDateIncrement,
                                    DumpDateDecrement, DumpDateDifference,
                                    DumpMakeDate, DumpExtractYear,
@@ -25,25 +25,14 @@ class PGSQLFormatLiteral(FormatLiteral):
             self.stream.write(u"'%s'" % value)
 
 
-class PGSQLDumpBranch(DumpBranch):
+class PGSQLDumpSortDirection(DumpSortDirection):
 
-    def dump_order(self):
-        if not self.frame.order:
-            return
-        self.newline()
-        self.write(u"ORDER BY ")
-        for index, (phrase, direction) in enumerate(self.frame.order):
-            if phrase in self.frame.select:
-                position = self.frame.select.index(phrase)+1
-                self.write(unicode(position))
-            else:
-                self.format("{kernel}", kernel=phrase)
-            self.format(" {direction:switch{ASC|DESC}}", direction=direction)
-            if phrase.is_nullable:
-                self.format(" NULLS {direction:switch{FIRST|LAST}}",
-                            direction=direction)
-            if index < len(self.frame.order)-1:
-                self.write(u", ")
+    def __call__(self):
+        self.format("{base} {direction:switch{ASC|DESC}}",
+                    self.arguments, self.signature)
+        if self.phrase.is_nullable:
+            self.format(" NULLS {direction:switch{FIRST|LAST}}",
+                        self.signature)
 
 
 class PGSQLDumpFloat(DumpFloat):

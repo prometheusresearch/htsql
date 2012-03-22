@@ -12,7 +12,7 @@ This module implements the reducing process.
 
 
 from ..adapter import Adapter, adapt
-from ..domain import BooleanDomain, StringDomain
+from ..domain import BooleanDomain, StringDomain, IntegerDomain
 from .coerce import coerce
 from .stitch import arrange
 from .term import PermanentTerm
@@ -22,8 +22,8 @@ from .frame import (Clause, Frame, ScalarFrame, BranchFrame, NestedFrame,
                     ExportPhrase, ReferencePhrase, Anchor, LeadingAnchor)
 from .signature import (Signature, isformula, IsEqualSig, IsTotallyEqualSig,
                         IsInSig, IsNullSig, IfNullSig, NullIfSig,
-                        AndSig, OrSig, NotSig, FromPredicateSig,
-                        ToPredicateSig)
+                        AndSig, OrSig, NotSig, SortDirectionSig,
+                        FromPredicateSig, ToPredicateSig)
 
 
 class ReducingState(object):
@@ -73,6 +73,9 @@ class ReducingState(object):
         """
         # Realize and apply the `Collapse` adapter.
         return Collapse.__invoke__(frame, self)
+
+    def interlink(self, frame):
+        return Interlink.__invoke__(frame, self)
 
     def to_predicate(self, phrase):
         phrase = FormulaPhrase(ToPredicateSig(), phrase.domain,
@@ -182,7 +185,9 @@ class ReduceBranch(ReduceFrame):
 
     def reduce_embed(self):
         # Collapse and reduce the embedded subframes.
-        return [self.state.reduce(self.state.collapse(frame))
+        return [self.state.interlink(
+                self.state.reduce(
+                self.state.collapse(frame)))
                 for frame in self.frame.embed]
 
     def reduce_select(self):
@@ -236,14 +241,15 @@ class ReduceBranch(ReduceFrame):
         # also eliminate duplicates and literals.
         order = []
         duplicates = set()
-        for phrase, direction in self.frame.order:
+        for phrase in self.frame.order:
             phrase = self.state.reduce(phrase)
-            if isinstance(phrase, LiteralPhrase):
-                continue
-            if phrase in duplicates:
-                continue
-            order.append((phrase, direction))
-            duplicates.add(phrase)
+            if isformula(phrase, SortDirectionSig):
+                if isinstance(phrase.base, LiteralPhrase):
+                    continue
+                if phrase.base in duplicates:
+                    continue
+            order.append(phrase)
+            duplicates.add(phrase.base)
         return order
 
     def __call__(self):
@@ -279,6 +285,7 @@ class ReduceSegment(ReduceBranch):
         for subframe in frame.subtrees:
             subframe = self.state.collapse(subframe)
             subframe = self.state.reduce(subframe)
+            subframe = self.state.interlink(subframe)
             subtrees.append(subframe)
         return frame.clone(subtrees=subtrees)
 
@@ -553,6 +560,52 @@ class CollapseBranch(Collapse):
         return self.state.collapse(frame)
 
 
+class Interlink(Adapter):
+
+    adapt(Frame)
+
+    def __init__(self, frame, state):
+        assert isinstance(frame, Frame)
+        assert isinstance(state, ReducingState)
+        self.frame = frame
+        self.state = state
+
+    def __call__(self):
+        return self.frame
+
+
+class InterlinkBranch(Interlink):
+
+    adapt(BranchFrame)
+
+    def interlink_group(self):
+        group = []
+        for index, phrase in enumerate(self.frame.group):
+            if phrase in self.frame.select:
+                position = self.frame.select.index(phrase)+1
+                phrase = LiteralPhrase(position, coerce(IntegerDomain()),
+                                       phrase.expression)
+            group.append(phrase)
+        return group
+
+    def interlink_order(self):
+        order = []
+        for index, phrase in enumerate(self.frame.order):
+            if isformula(phrase, SortDirectionSig):
+                if phrase.base in self.frame.select:
+                    position = self.frame.select.index(phrase.base)+1
+                    base = LiteralPhrase(position, coerce(IntegerDomain()),
+                                         phrase.base.expression)
+                    phrase = phrase.clone(base=base)
+            order.append(phrase)
+        return order
+
+    def __call__(self):
+        group = self.interlink_group()
+        order = self.interlink_order()
+        return self.frame.clone(group=group, order=order)
+
+
 class ReduceAnchor(Reduce):
     """
     Reduces a ``JOIN`` clause.
@@ -562,7 +615,9 @@ class ReduceAnchor(Reduce):
 
     def __call__(self):
         # Collapse and reduce (in that order!) the subframe.
-        frame = self.state.reduce(self.state.collapse(self.clause.frame))
+        frame = self.state.interlink(
+                self.state.reduce(
+                self.state.collapse(self.clause.frame)))
         # Reduce the join condition.
         condition = (self.state.reduce(self.clause.condition)
                      if self.clause.condition is not None else None)
@@ -585,6 +640,7 @@ class ReduceQuery(Reduce):
         segment = self.clause.segment
         segment = self.state.collapse(segment)
         segment = self.state.reduce(segment)
+        segment = self.state.interlink(segment)
         # Clear the state variables.
         self.state.flush()
         # Update the query frame.

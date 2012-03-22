@@ -26,7 +26,6 @@ from htsql.core.tr.fn.dump import (DumpRound, DumpRoundTo, DumpTrunc,
                                    DumpDateIncrement, DumpDateDecrement,
                                    DumpDateTimeIncrement,
                                    DumpDateTimeDecrement, DumpDateDifference)
-from htsql.core.tr.fn.signature import SortDirectionSig
 from .signature import RowNumberSig
 import math
 
@@ -69,16 +68,6 @@ class MSSQLDumpBranch(DumpBranch):
                 self.newline()
         self.dedent()
 
-    def dump_group(self):
-        if not self.frame.group:
-            return
-        self.newline()
-        self.write(u"GROUP BY ")
-        for index, phrase in enumerate(self.frame.group):
-            self.format("{kernel}", kernel=phrase)
-            if index < len(self.frame.group)-1:
-                self.write(u", ")
-
     def dump_limit(self):
         assert self.frame.offset is None
 
@@ -107,15 +96,6 @@ class MSSQLDumpRowNumber(DumpBySignature):
     def __call__(self):
         self.format("ROW_NUMBER() OVER (ORDER BY {ops:union{, }})",
                     self.arguments)
-
-
-class MSSQLDumpSortDirection(DumpBySignature):
-
-    adapt(SortDirectionSig)
-
-    def __call__(self):
-        self.format("{base} {direction:switch{ASC|DESC}}",
-                    self.arguments, self.signature)
 
 
 class MSSQLDumpBoolean(DumpBoolean):

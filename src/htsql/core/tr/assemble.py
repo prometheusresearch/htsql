@@ -28,7 +28,7 @@ from .frame import (ScalarFrame, TableFrame, NestedFrame,
                     FormulaPhrase, Anchor, LeadingAnchor)
 from .signature import (Signature, IsEqualSig, IsTotallyEqualSig, IsInSig,
                         IsNullSig, NullIfSig, IfNullSig, CompareSig,
-                        AndSig, OrSig, NotSig, ToPredicateSig,
+                        AndSig, OrSig, NotSig, SortDirectionSig, ToPredicateSig,
                         FromPredicateSig)
 
 
@@ -889,7 +889,10 @@ class AssembleOrder(Assemble):
             if not code.units:
                 continue
             phrase = self.state.evaluate(code, router=self.term.kid)
-            order.append((phrase, direction))
+            phrase = FormulaPhrase(SortDirectionSig(direction),
+                                   phrase.domain, phrase.is_nullable,
+                                   phrase.expression, base=phrase)
+            order.append(phrase)
         return order
 
     def assemble_limit(self):

@@ -4,7 +4,14 @@
 
 
 from htsql.core.tr.signature import isformula, FromPredicateSig, ToPredicateSig
-from htsql.core.tr.reduce import ReduceFromPredicate, ReduceToPredicate
+from htsql.core.tr.reduce import (ReduceFromPredicate, ReduceToPredicate,
+                                  InterlinkBranch)
+
+
+class MSSQLInterlinkBranch(InterlinkBranch):
+
+    def interlink_group(self):
+        return self.frame.group
 
 
 class MSSQLReduceFromPredicate(ReduceFromPredicate):

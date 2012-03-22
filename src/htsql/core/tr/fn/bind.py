@@ -35,8 +35,8 @@ from ..lookup import direct, expand, guess_tag, lookup_command
 from ..signature import (Signature, NullarySig, UnarySig, BinarySig,
                          CompareSig, IsEqualSig, IsTotallyEqualSig, IsInSig,
                          IsNullSig, IfNullSig, NullIfSig, AndSig, OrSig,
-                         NotSig)
-from .signature import (AsSig, SortDirectionSig, LimitSig, SortSig, CastSig,
+                         NotSig, SortDirectionSig)
+from .signature import (AsSig, LimitSig, SortSig, CastSig,
                         MakeDateSig, MakeDateTimeSig, CombineDateTimeSig,
                         ExtractYearSig, ExtractMonthSig, ExtractDaySig,
                         ExtractHourSig, ExtractMinuteSig, ExtractSecondSig,

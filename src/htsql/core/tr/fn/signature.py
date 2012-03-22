@@ -30,20 +30,6 @@ class AsSig(Signature):
     ]
 
 
-class SortDirectionSig(Signature):
-
-    slots = [
-            Slot('base'),
-    ]
-
-    def __init__(self, direction):
-        assert direction in [+1, -1]
-        self.direction = direction
-
-    def __basis__(self):
-        return (self.direction,)
-
-
 class LimitSig(Signature):
 
     slots = [
