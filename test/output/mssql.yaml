@@ -55,7 +55,7 @@ tests:
              | code   | name                   | school_code |
             -+--------+------------------------+-------------+-
              | acc    | Accounting             | bus         |
-             | arthis | Art History            | art         |
+             | arthis | Art History            | la          |
              | astro  | Astronomy              | ns          |
              | be     | Bioengineering         | eng         |
              | bursar | Bursar's Office        |             |
@@ -1309,12 +1309,11 @@ tests:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | department                         |
-             +--------+-------------+-------------+
-             | code   | name        | school_code |
-            -+--------+-------------+-------------+-
-             | arthis | Art History | art         |
-             | stdart | Studio Art  | art         |
+             | department                        |
+             +--------+------------+-------------+
+             | code   | name       | school_code |
+            -+--------+------------+-------------+-
+             | stdart | Studio Art | art         |
 
              ----
              /(school?code='art').department
@@ -2742,11 +2741,11 @@ tests:
              +-------------------------------+-------------------+
              | name                          | count(department) |
             -+-------------------------------+-------------------+-
-             | School of Art & Design        |                 2 |
+             | School of Art & Design        |                 1 |
              | School of Business            |                 3 |
              | College of Education          |                 2 |
              | School of Engineering         |                 4 |
-             | School of Arts and Humanities |                 5 |
+             | School of Arts and Humanities |                 6 |
              | School of Music & Dance       |                 4 |
              | School of Natural Sciences    |                 4 |
              | Public Honorariums            |                 0 |
@@ -2773,11 +2772,11 @@ tests:
              +-------------------------------+------------+
              | name                          | # of Dept. |
             -+-------------------------------+------------+-
-             | School of Art & Design        |          2 |
+             | School of Art & Design        |          1 |
              | School of Business            |          3 |
              | College of Education          |          2 |
              | School of Engineering         |          4 |
-             | School of Arts and Humanities |          5 |
+             | School of Arts and Humanities |          6 |
              | School of Music & Dance       |          4 |
              | School of Natural Sciences    |          4 |
              | Public Honorariums            |          0 |
@@ -2890,26 +2889,26 @@ tests:
              | School of Business            | Accounting             | Audit                            |
              | School of Business            | Accounting             | Advanced Accounting              |
              | School of Business            | Accounting             | Accounting Internship            |
-             | School of Art & Design        | Art History            | History of Art Criticism I       |
-             | School of Art & Design        | Art History            | History of Art Criticism II      |
-             | School of Art & Design        | Art History            | North American Native Art        |
-             | School of Art & Design        | Art History            | Antique Art: Greece and Rome     |
-             | School of Art & Design        | Art History            | Antique Art: The Middle East     |
-             | School of Art & Design        | Art History            | Arts of Asia                     |
-             | School of Art & Design        | Art History            | Medieval Christian Art           |
-             | School of Art & Design        | Art History            | Asian Architecture               |
-             | School of Art & Design        | Art History            | Italian Renaissance Art          |
-             | School of Art & Design        | Art History            | Dutch and Flemish Painting       |
-             | School of Art & Design        | Art History            | Impressionism                    |
-             | School of Art & Design        | Art History            | Modernism                        |
-             | School of Art & Design        | Art History            | Postmodernism                    |
-             | School of Art & Design        | Art History            | Islamic Art                      |
-             | School of Art & Design        | Art History            | Art of Photography               |
-             | School of Art & Design        | Art History            | Industrial Architecture          |
-             | School of Art & Design        | Art History            | Contemporary Latin American Art  |
-             | School of Art & Design        | Art History            | Methods in Art History           |
-             | School of Art & Design        | Art History            | Museum and Gallery Management    |
-             | School of Art & Design        | Art History            | Materials and Construction in    |
+             | School of Arts and Humanities | Art History            | History of Art Criticism I       |
+             | School of Arts and Humanities | Art History            | History of Art Criticism II      |
+             | School of Arts and Humanities | Art History            | North American Native Art        |
+             | School of Arts and Humanities | Art History            | Antique Art: Greece and Rome     |
+             | School of Arts and Humanities | Art History            | Antique Art: The Middle East     |
+             | School of Arts and Humanities | Art History            | Arts of Asia                     |
+             | School of Arts and Humanities | Art History            | Medieval Christian Art           |
+             | School of Arts and Humanities | Art History            | Asian Architecture               |
+             | School of Arts and Humanities | Art History            | Italian Renaissance Art          |
+             | School of Arts and Humanities | Art History            | Dutch and Flemish Painting       |
+             | School of Arts and Humanities | Art History            | Impressionism                    |
+             | School of Arts and Humanities | Art History            | Modernism                        |
+             | School of Arts and Humanities | Art History            | Postmodernism                    |
+             | School of Arts and Humanities | Art History            | Islamic Art                      |
+             | School of Arts and Humanities | Art History            | Art of Photography               |
+             | School of Arts and Humanities | Art History            | Industrial Architecture          |
+             | School of Arts and Humanities | Art History            | Contemporary Latin American Art  |
+             | School of Arts and Humanities | Art History            | Methods in Art History           |
+             | School of Arts and Humanities | Art History            | Museum and Gallery Management    |
+             | School of Arts and Humanities | Art History            | Materials and Construction in    |
              :                               :                        : European Art                     :
              | School of Natural Sciences    | Astronomy              | General Astronomy I              |
              | School of Natural Sciences    | Astronomy              | General Astronomy I Lab          |
@@ -3317,26 +3316,26 @@ tests:
              | School of Business            | Accounting             | Audit                            |
              | School of Business            | Accounting             | Advanced Accounting              |
              | School of Business            | Accounting             | Accounting Internship            |
-             | School of Art & Design        | Art History            | History of Art Criticism I       |
-             | School of Art & Design        | Art History            | History of Art Criticism II      |
-             | School of Art & Design        | Art History            | North American Native Art        |
-             | School of Art & Design        | Art History            | Antique Art: Greece and Rome     |
-             | School of Art & Design        | Art History            | Antique Art: The Middle East     |
-             | School of Art & Design        | Art History            | Arts of Asia                     |
-             | School of Art & Design        | Art History            | Medieval Christian Art           |
-             | School of Art & Design        | Art History            | Asian Architecture               |
-             | School of Art & Design        | Art History            | Italian Renaissance Art          |
-             | School of Art & Design        | Art History            | Dutch and Flemish Painting       |
-             | School of Art & Design        | Art History            | Impressionism                    |
-             | School of Art & Design        | Art History            | Modernism                        |
-             | School of Art & Design        | Art History            | Postmodernism                    |
-             | School of Art & Design        | Art History            | Islamic Art                      |
-             | School of Art & Design        | Art History            | Art of Photography               |
-             | School of Art & Design        | Art History            | Industrial Architecture          |
-             | School of Art & Design        | Art History            | Contemporary Latin American Art  |
-             | School of Art & Design        | Art History            | Methods in Art History           |
-             | School of Art & Design        | Art History            | Museum and Gallery Management    |
-             | School of Art & Design        | Art History            | Materials and Construction in    |
+             | School of Arts and Humanities | Art History            | History of Art Criticism I       |
+             | School of Arts and Humanities | Art History            | History of Art Criticism II      |
+             | School of Arts and Humanities | Art History            | North American Native Art        |
+             | School of Arts and Humanities | Art History            | Antique Art: Greece and Rome     |
+             | School of Arts and Humanities | Art History            | Antique Art: The Middle East     |
+             | School of Arts and Humanities | Art History            | Arts of Asia                     |
+             | School of Arts and Humanities | Art History            | Medieval Christian Art           |
+             | School of Arts and Humanities | Art History            | Asian Architecture               |
+             | School of Arts and Humanities | Art History            | Italian Renaissance Art          |
+             | School of Arts and Humanities | Art History            | Dutch and Flemish Painting       |
+             | School of Arts and Humanities | Art History            | Impressionism                    |
+             | School of Arts and Humanities | Art History            | Modernism                        |
+             | School of Arts and Humanities | Art History            | Postmodernism                    |
+             | School of Arts and Humanities | Art History            | Islamic Art                      |
+             | School of Arts and Humanities | Art History            | Art of Photography               |
+             | School of Arts and Humanities | Art History            | Industrial Architecture          |
+             | School of Arts and Humanities | Art History            | Contemporary Latin American Art  |
+             | School of Arts and Humanities | Art History            | Methods in Art History           |
+             | School of Arts and Humanities | Art History            | Museum and Gallery Management    |
+             | School of Arts and Humanities | Art History            | Materials and Construction in    |
              :                               :                        : European Art                     :
              | School of Natural Sciences    | Astronomy              | General Astronomy I              |
              | School of Natural Sciences    | Astronomy              | General Astronomy I Lab          |
@@ -3730,7 +3729,7 @@ tests:
              | code   | name                   | school_code | code | name                          | campus |
             -+--------+------------------------+-------------+------+-------------------------------+--------+-
              | acc    | Accounting             | bus         | bus  | School of Business            | south  |
-             | arthis | Art History            | art         | art  | School of Art & Design        | old    |
+             | arthis | Art History            | la          | la   | School of Arts and Humanities | old    |
              | astro  | Astronomy              | ns          | ns   | School of Natural Sciences    | old    |
              | be     | Bioengineering         | eng         | eng  | School of Engineering         | north  |
              | bursar | Bursar's Office        |             |      |                               |        |
@@ -6330,7 +6329,7 @@ tests:
           - [Content-Type, text/csv; charset=UTF-8]
           - [Content-Disposition, attachment; filename="department.csv"]
           body: "name,name,count(course)\r\nSchool of Arts and Humanities,English,21\r\nSchool
-            of Arts and Humanities,Foreign Languages,21\r\nSchool of Art & Design,Art
+            of Arts and Humanities,Foreign Languages,21\r\nSchool of Arts and Humanities,Art
             History,20\r\nSchool of Arts and Humanities,Political Science,19\r\nSchool
             of Art & Design,Studio Art,19\r\n"
       - id: relating-and-aggregating-data
@@ -6848,11 +6847,11 @@ tests:
              +-------------------------------+----------------+-------------------+
              | name                          | count(program) | count(department) |
             -+-------------------------------+----------------+-------------------+-
-             | School of Art & Design        |              3 |                 2 |
+             | School of Art & Design        |              3 |                 1 |
              | School of Business            |              6 |                 3 |
              | College of Education          |              7 |                 2 |
              | School of Engineering         |              8 |                 4 |
-             | School of Arts and Humanities |              9 |                 5 |
+             | School of Arts and Humanities |              9 |                 6 |
              | School of Music & Dance       |              0 |                 4 |
              | School of Natural Sciences    |              6 |                 4 |
              | Public Honorariums            |              1 |                 0 |
@@ -6935,11 +6934,11 @@ tests:
              +-------------------------------+-------------------------------+
              | name                          | avg(department.count(course)) |
             -+-------------------------------+-------------------------------+-
-             | School of Art & Design        |                     19.500000 |
+             | School of Art & Design        |                     19.000000 |
              | School of Business            |                     14.666666 |
              | College of Education          |                     17.500000 |
              | School of Engineering         |                     17.750000 |
-             | School of Arts and Humanities |                     19.000000 |
+             | School of Arts and Humanities |                     19.166666 |
              | School of Music & Dance       |                      0.000000 |
              | School of Natural Sciences    |                     18.500000 |
              | Public Honorariums            |                               |
@@ -6971,11 +6970,11 @@ tests:
              +-------------------------------+--------------------------------------------+
              | name                          | count(department?exists(course?credits>3)) |
             -+-------------------------------+--------------------------------------------+-
-             | School of Art & Design        |                                          2 |
+             | School of Art & Design        |                                          1 |
              | School of Business            |                                          3 |
              | College of Education          |                                          1 |
              | School of Engineering         |                                          4 |
-             | School of Arts and Humanities |                                          5 |
+             | School of Arts and Humanities |                                          6 |
              | School of Music & Dance       |                                          0 |
              | School of Natural Sciences    |                                          4 |
              | Public Honorariums            |                                          0 |
@@ -7356,7 +7355,7 @@ tests:
              | code   | name                   | school_code |
             -+--------+------------------------+-------------+-
              | acc    | Accounting             | bus         |
-             | arthis | Art History            | art         |
+             | arthis | Art History            | la          |
              | astro  | Astronomy              | ns          |
              | be     | Bioengineering         | eng         |
              | bursar | Bursar's Office        |             |
@@ -7400,7 +7399,6 @@ tests:
              +--------+------------------------+-------------+
              | code   | name                   | school_code |
             -+--------+------------------------+-------------+-
-             | arthis | Art History            | art         |
              | stdart | Studio Art             | art         |
              | acc    | Accounting             | bus         |
              | econ   | Economics              | bus         |
@@ -7411,6 +7409,7 @@ tests:
              | comp   | Computer Science       | eng         |
              | ee     | Electrical Engineering | eng         |
              | me     | Mechanical Engineering | eng         |
+             | arthis | Art History            | la          |
              | eng    | English                | la          |
              | hist   | History                | la          |
              | lang   | Foreign Languages      | la          |
@@ -7447,7 +7446,7 @@ tests:
              | name                          | count(department) |
             -+-------------------------------+-------------------+-
              | School of Engineering         |                 4 |
-             | School of Arts and Humanities |                 5 |
+             | School of Arts and Humanities |                 6 |
              | School of Music & Dance       |                 4 |
              | School of Natural Sciences    |                 4 |
 
@@ -7474,7 +7473,7 @@ tests:
              | name                          | num_dept |
             -+-------------------------------+----------+-
              | School of Engineering         |        4 |
-             | School of Arts and Humanities |        5 |
+             | School of Arts and Humanities |        6 |
              | School of Music & Dance       |        4 |
              | School of Natural Sciences    |        4 |
 
@@ -7501,7 +7500,7 @@ tests:
              | name                          | num_dept |
             -+-------------------------------+----------+-
              | School of Engineering         |        4 |
-             | School of Arts and Humanities |        5 |
+             | School of Arts and Humanities |        6 |
              | School of Music & Dance       |        4 |
              | School of Natural Sciences    |        4 |
 
@@ -9866,7 +9865,7 @@ tests:
              | code   | name                   | school_code |
             -+--------+------------------------+-------------+-
              | acc    | Accounting             | bus         |
-             | arthis | Art History            | art         |
+             | arthis | Art History            | la          |
              | astro  | Astronomy              | ns          |
              | be     | Bioengineering         | eng         |
              | bursar | Bursar's Office        |             |
@@ -9910,7 +9909,7 @@ tests:
              | code   | name                   | school_code |
             -+--------+------------------------+-------------+-
              | acc    | Accounting             | bus         |
-             | arthis | Art History            | art         |
+             | arthis | Art History            | la          |
              | astro  | Astronomy              | ns          |
              | be     | Bioengineering         | eng         |
              | bursar | Bursar's Office        |             |
@@ -9955,7 +9954,7 @@ tests:
              | code   | name                   | school_code |
             -+--------+------------------------+-------------+-
              | acc    | Accounting             | bus         |
-             | arthis | Art History            | art         |
+             | arthis | Art History            | la          |
              | astro  | Astronomy              | ns          |
              | be     | Bioengineering         | eng         |
              | chem   | Chemistry              | ns          |
@@ -9999,7 +9998,7 @@ tests:
              | code   | name                   | school_code |
             -+--------+------------------------+-------------+-
              | acc    | Accounting             | bus         |
-             | arthis | Art History            | art         |
+             | arthis | Art History            | la          |
              | econ   | Economics              | bus         |
              | edpol  | Educational Policy     | edu         |
              | eng    | English                | la          |
@@ -10062,7 +10061,7 @@ tests:
              +--------+-------------------+-------------+
              | code   | name              | school_code |
             -+--------+-------------------+-------------+-
-             | arthis | Art History       | art         |
+             | arthis | Art History       | la          |
              | astro  | Astronomy         | ns          |
              | comp   | Computer Science  | eng         |
              | eng    | English           | la          |
@@ -12312,6 +12311,7 @@ tests:
              | code   | name                   | school_code |
             -+--------+------------------------+-------------+-
              | acc    | Accounting             | bus         |
+             | arthis | Art History            | la          |
              | astro  | Astronomy              | ns          |
              | be     | Bioengineering         | eng         |
              | bursar | Bursar's Office        |             |
@@ -15297,7 +15297,7 @@ tests:
              | code   | code | boolean(school) |
             -+--------+------+-----------------+-
              | acc    | bus  | true            |
-             | arthis | art  | true            |
+             | arthis | la   | true            |
              | astro  | ns   | true            |
              | be     | eng  | true            |
              | bursar |      | false           |
@@ -15662,7 +15662,6 @@ tests:
              +--------+------------------------+-------------+
              | code   | name                   | school_code |
             -+--------+------------------------+-------------+-
-             | arthis | Art History            | art         |
              | stdart | Studio Art             | art         |
              | acc    | Accounting             | bus         |
              | econ   | Economics              | bus         |
@@ -15673,6 +15672,7 @@ tests:
              | comp   | Computer Science       | eng         |
              | ee     | Electrical Engineering | eng         |
              | me     | Mechanical Engineering | eng         |
+             | arthis | Art History            | la          |
              | eng    | English                | la          |
              | hist   | History                | la          |
              | lang   | Foreign Languages      | la          |
@@ -15767,7 +15767,7 @@ tests:
              | code   | name                   | school_code |
             -+--------+------------------------+-------------+-
              | acc    | Accounting             | bus         |
-             | arthis | Art History            | art         |
+             | arthis | Art History            | la          |
              | astro  | Astronomy              | ns          |
              | be     | Bioengineering         | eng         |
              | bursar | Bursar's Office        |             |
@@ -16212,10 +16212,18 @@ tests:
              | bus         | ubusad   | Bachelor of Business             | bs     |              |
              :             :          : Administration                   :        :              :
              | bus         | uecon    | Bachelor of Arts in Economics    | ba     | gecon        |
-             | art         | gart     | Post Baccalaureate in Art        | pb     |              |
-             :             :          : History                          :        :              :
-             | art         | uhist    | Bachelor of Arts in Art History  | ba     |              |
-             | art         | ustudio  | Bachelor of Arts in Studio Art   | ba     |              |
+             | la          | gengl    | Master of Arts in English        | ma     |              |
+             | la          | glang    | Master of Arts in Modern         | ma     |              |
+             :             :          : Languages                        :        :              :
+             | la          | gscitch  | Master of Arts in Science        | ma     |              |
+             :             :          : Teaching                         :        :              :
+             | la          | psciwri  | Science Writing                  | ct     |              |
+             | la          | uengl    | Bachelor of Arts in English      | ba     | gengl        |
+             | la          | uhist    | Bachelor of Arts in History      | ba     |              |
+             | la          | upolisci | Bachelor of Arts in Political    | ba     |              |
+             :             :          : Science                          :        :              :
+             | la          | upsych   | Bachelor of Arts in Psychology   | ba     |              |
+             | la          | uspan    | Bachelor of Arts in Spanish      | ba     |              |
              | ns          | gmth     | Masters of Science in            | ms     | pmth         |
              :             :          : Mathematics                      :        :              :
              | ns          | pmth     | Doctorate of Science in          | ph     |              |
@@ -16714,7 +16722,7 @@ tests:
              | code   | name                   | school_code |
             -+--------+------------------------+-------------+-
              | acc    | Accounting             | bus         |
-             | arthis | Art History            | art         |
+             | arthis | Art History            | la          |
              | astro  | Astronomy              | ns          |
              | be     | Bioengineering         | eng         |
              | chem   | Chemistry              | ns          |
@@ -16761,7 +16769,7 @@ tests:
              | code   | name                   | school_code |
             -+--------+------------------------+-------------+-
              | acc    | Accounting             | bus         |
-             | arthis | Art History            | art         |
+             | arthis | Art History            | la          |
              | astro  | Astronomy              | ns          |
              | be     | Bioengineering         | eng         |
              | bursar | Bursar's Office        |             |
@@ -16806,7 +16814,7 @@ tests:
              | code   | name                   | school_code |
             -+--------+------------------------+-------------+-
              | acc    | Accounting             | bus         |
-             | arthis | Art History            | art         |
+             | arthis | Art History            | la          |
              | astro  | Astronomy              | ns          |
              | be     | Bioengineering         | eng         |
              | bursar | Bursar's Office        |             |
@@ -16875,7 +16883,7 @@ tests:
              | bursar | Bursar's Office        |             |
              | be     | Bioengineering         | eng         |
              | astro  | Astronomy              | ns          |
-             | arthis | Art History            | art         |
+             | arthis | Art History            | la          |
              | acc    | Accounting             | bus         |
 
              ----
@@ -16898,7 +16906,6 @@ tests:
              | bursar | Bursar's Office        |             |
              | career | Career Development     |             |
              | parent | Parents & Alumni       |             |
-             | arthis | Art History            | art         |
              | stdart | Studio Art             | art         |
              | acc    | Accounting             | bus         |
              | econ   | Economics              | bus         |
@@ -16909,6 +16916,7 @@ tests:
              | comp   | Computer Science       | eng         |
              | ee     | Electrical Engineering | eng         |
              | me     | Mechanical Engineering | eng         |
+             | arthis | Art History            | la          |
              | eng    | English                | la          |
              | hist   | History                | la          |
              | lang   | Foreign Languages      | la          |
@@ -16950,6 +16958,7 @@ tests:
              | str    | Strings                | mus         |
              | voc    | Vocals                 | mus         |
              | win    | Wind                   | mus         |
+             | arthis | Art History            | la          |
              | eng    | English                | la          |
              | hist   | History                | la          |
              | lang   | Foreign Languages      | la          |
@@ -16964,7 +16973,6 @@ tests:
              | acc    | Accounting             | bus         |
              | econ   | Economics              | bus         |
              | mm     | Management & Marketing | bus         |
-             | arthis | Art History            | art         |
              | stdart | Studio Art             | art         |
              | bursar | Bursar's Office        |             |
              | career | Career Development     |             |
@@ -16990,7 +16998,7 @@ tests:
              | code   | name                   | school_code |
             -+--------+------------------------+-------------+-
              | acc    | Accounting             | bus         |
-             | arthis | Art History            | art         |
+             | arthis | Art History            | la          |
              | astro  | Astronomy              | ns          |
              | be     | Bioengineering         | eng         |
              | chem   | Chemistry              | ns          |
@@ -17033,7 +17041,6 @@ tests:
              +--------+------------------------+-------------+
              | code   | name                   | school_code |
             -+--------+------------------------+-------------+-
-             | arthis | Art History            | art         |
              | stdart | Studio Art             | art         |
              | acc    | Accounting             | bus         |
              | econ   | Economics              | bus         |
@@ -17044,6 +17051,7 @@ tests:
              | comp   | Computer Science       | eng         |
              | ee     | Electrical Engineering | eng         |
              | me     | Mechanical Engineering | eng         |
+             | arthis | Art History            | la          |
              | eng    | English                | la          |
              | hist   | History                | la          |
              | lang   | Foreign Languages      | la          |
@@ -17484,7 +17492,7 @@ tests:
              | name                          | name                   |
             -+-------------------------------+------------------------+-
              | School of Business            | Accounting             |
-             | School of Art & Design        | Art History            |
+             | School of Arts and Humanities | Art History            |
              | School of Natural Sciences    | Astronomy              |
              | School of Engineering         | Bioengineering         |
              |                               | Bursar's Office        |
@@ -17557,7 +17565,7 @@ tests:
              | code | name                          | campus | code   | name                   | school_code |
             -+------+-------------------------------+--------+--------+------------------------+-------------+-
              | bus  | School of Business            | south  | acc    | Accounting             | bus         |
-             | art  | School of Art & Design        | old    | arthis | Art History            | art         |
+             | la   | School of Arts and Humanities | old    | arthis | Art History            | la          |
              | ns   | School of Natural Sciences    | old    | astro  | Astronomy              | ns          |
              | eng  | School of Engineering         | north  | be     | Bioengineering         | eng         |
              |      |                               |        | bursar | Bursar's Office        |             |
@@ -17661,11 +17669,11 @@ tests:
              +-------------------------------+------------------+
              | Name                          | # of Departments |
             -+-------------------------------+------------------+-
-             | School of Art & Design        |                2 |
+             | School of Art & Design        |                1 |
              | School of Business            |                3 |
              | College of Education          |                2 |
              | School of Engineering         |                4 |
-             | School of Arts and Humanities |                5 |
+             | School of Arts and Humanities |                6 |
              | School of Music & Dance       |                4 |
              | School of Natural Sciences    |                4 |
              | Public Honorariums            |                0 |
@@ -17808,7 +17816,7 @@ tests:
                +--------+-------------------+-------------+
                | code   | name              | school_code |
               -+--------+-------------------+-------------+-
-               | arthis | Art History       | art         |
+               | arthis | Art History       | la          |
                | eng    | English           | la          |
                | hist   | History           | la          |
                | lang   | Foreign Languages | la          |
@@ -17990,7 +17998,7 @@ tests:
                | code   | name                   | school_code |
               -+--------+------------------------+-------------+-
                | acc    | Accounting             | bus         |
-               | arthis | Art History            | art         |
+               | arthis | Art History            | la          |
                | astro  | Astronomy              | ns          |
                | be     | Bioengineering         | eng         |
                | chem   | Chemistry              | ns          |
@@ -18106,7 +18114,7 @@ tests:
                +--------+-------------------+-------------+
                | code   | name              | school_code |
               -+--------+-------------------+-------------+-
-               | arthis | Art History       | art         |
+               | arthis | Art History       | la          |
                | eng    | English           | la          |
                | hist   | History           | la          |
                | lang   | Foreign Languages | la          |
@@ -18162,7 +18170,7 @@ tests:
                | code | name                          | campus | code   | name                   | school_code |
               -+------+-------------------------------+--------+--------+------------------------+-------------+-
                | bus  | School of Business            | south  | acc    | Accounting             | bus         |
-               | art  | School of Art & Design        | old    | arthis | Art History            | art         |
+               | la   | School of Arts and Humanities | old    | arthis | Art History            | la          |
                | ns   | School of Natural Sciences    | old    | astro  | Astronomy              | ns          |
                | eng  | School of Engineering         | north  | be     | Bioengineering         | eng         |
                |      |                               |        | bursar | Bursar's Office        |             |
@@ -18212,8 +18220,8 @@ tests:
                | school.name+' - '+name           |
               -+----------------------------------+-
                | School of Business - Accounting  |
-               | School of Art & Design - Art     |
-               : History                          :
+               | School of Arts and Humanities -  |
+               : Art History                      :
                | School of Natural Sciences -     |
                : Astronomy                        :
                | School of Engineering -          |
@@ -18303,7 +18311,7 @@ tests:
                | code | name                          | campus | code   | name                   | school_code |
               -+------+-------------------------------+--------+--------+------------------------+-------------+-
                | bus  | School of Business            | south  | acc    | Accounting             | bus         |
-               | art  | School of Art & Design        | old    | arthis | Art History            | art         |
+               | la   | School of Arts and Humanities | old    | arthis | Art History            | la          |
                | ns   | School of Natural Sciences    | old    | astro  | Astronomy              | ns          |
                | eng  | School of Engineering         | north  | be     | Bioengineering         | eng         |
                :      :                               :        | bursar | Bursar's Office        |             |
@@ -18623,11 +18631,11 @@ tests:
                +------+-------------------------------------+
                | code | count(department.course{credits=3}) |
               -+------+-------------------------------------+-
-               | art  |                                  19 |
+               | art  |                                   5 |
                | bus  |                                  32 |
                | edu  |                                  23 |
                | eng  |                                  51 |
-               | la   |                                  61 |
+               | la   |                                  75 |
                | mus  |                                   0 |
                | ns   |                                  34 |
                | ph   |                                   0 |
@@ -18646,7 +18654,7 @@ tests:
                                      GROUP BY [department].[school_code]) AS [course]
                                     ON ([school].[code] = [course].[school_code])
                ORDER BY 1 ASC
-          - uri: /school{code}?count(department.course{credits=3})=61
+          - uri: /school{code}?count(department.course{credits=3})=75
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -18659,7 +18667,7 @@ tests:
                | la     |
 
                ----
-               /school{code}?count(department.course{credits=3})=61
+               /school{code}?count(department.course{credits=3})=75
                SELECT [school].[code]
                FROM [ad].[school]
                     LEFT OUTER JOIN (SELECT COUNT(NULLIF((CASE WHEN ([course].[credits] = 3) THEN 1 WHEN NOT ([course].[credits] = 3) THEN 0 END), 0)) AS [count],
@@ -18669,7 +18677,7 @@ tests:
                                                      ON ([department].[code] = [course].[department_code])
                                      GROUP BY [department].[school_code]) AS [course]
                                     ON ([school].[code] = [course].[school_code])
-               WHERE (COALESCE([course].[count], 0) = 61)
+               WHERE (COALESCE([course].[count], 0) = 75)
                ORDER BY 1 ASC
           - uri: /department?exists(course.credits=6)
             status: 200 OK
@@ -18682,7 +18690,7 @@ tests:
                | code   | name              | school_code |
               -+--------+-------------------+-------------+-
                | acc    | Accounting        | bus         |
-               | arthis | Art History       | art         |
+               | arthis | Art History       | la          |
                | comp   | Computer Science  | eng         |
                | econ   | Economics         | bus         |
                | lang   | Foreign Languages | la          |
@@ -18792,7 +18800,7 @@ tests:
                | code   | name                   | school_code |
               -+--------+------------------------+-------------+-
                | acc    | Accounting             | bus         |
-               | arthis | Art History            | art         |
+               | arthis | Art History            | la          |
                | astro  | Astronomy              | ns          |
                | be     | Bioengineering         | eng         |
                | chem   | Chemistry              | ns          |
@@ -18857,11 +18865,11 @@ tests:
                +------+-------------------------------+--------+-------------------+
                | code | name                          | campus | count(department) |
               -+------+-------------------------------+--------+-------------------+-
-               | art  | School of Art & Design        | old    |                 2 |
+               | art  | School of Art & Design        | old    |                 1 |
                | bus  | School of Business            | south  |                 3 |
                | edu  | College of Education          | old    |                 2 |
                | eng  | School of Engineering         | north  |                 4 |
-               | la   | School of Arts and Humanities | old    |                 5 |
+               | la   | School of Arts and Humanities | old    |                 6 |
                | mus  | School of Music & Dance       | south  |                 4 |
                | ns   | School of Natural Sciences    | old    |                 4 |
                | ph   | Public Honorariums            |        |                 0 |
@@ -18890,11 +18898,11 @@ tests:
                +------+-------------------------------+--------+----------------------------------+
                | code | name                          | campus | count(department?exists(course)) |
               -+------+-------------------------------+--------+----------------------------------+-
-               | art  | School of Art & Design        | old    |                                2 |
+               | art  | School of Art & Design        | old    |                                1 |
                | bus  | School of Business            | south  |                                3 |
                | edu  | College of Education          | old    |                                2 |
                | eng  | School of Engineering         | north  |                                4 |
-               | la   | School of Arts and Humanities | old    |                                5 |
+               | la   | School of Arts and Humanities | old    |                                6 |
                | mus  | School of Music & Dance       | south  |                                0 |
                | ns   | School of Natural Sciences    | old    |                                4 |
                | ph   | Public Honorariums            |        |                                0 |
@@ -18927,11 +18935,11 @@ tests:
                +------+-------------------+----------------+
                | code | count(department) | count(program) |
               -+------+-------------------+----------------+-
-               | art  |                 2 |              3 |
+               | art  |                 1 |              3 |
                | bus  |                 3 |              6 |
                | edu  |                 2 |              7 |
                | eng  |                 4 |              8 |
-               | la   |                 5 |              9 |
+               | la   |                 6 |              9 |
                | mus  |                 4 |              0 |
                | ns   |                 4 |              6 |
                | ph   |                 0 |              1 |
@@ -19063,7 +19071,7 @@ tests:
                | code   | code | count(school.program) | count(program) |
               -+--------+------+-----------------------+----------------+-
                | acc    | bus  |                     6 |              6 |
-               | arthis | art  |                     3 |              3 |
+               | arthis | la   |                     9 |              9 |
                | astro  | ns   |                     6 |              6 |
                | be     | eng  |                     8 |              8 |
                | bursar |      |                     0 |                |
@@ -19125,7 +19133,7 @@ tests:
                | code   | code | exists(school.program) | exists(program) |
               -+--------+------+------------------------+-----------------+-
                | acc    | bus  | true                   | true            |
-               | arthis | art  | true                   | true            |
+               | arthis | la   | true                   | true            |
                | astro  | ns   | true                   | true            |
                | be     | eng  | true                   | true            |
                | bursar |      | false                  |                 |
@@ -19874,7 +19882,7 @@ tests:
                +---------------------------+
                | count(course.title~$code) |
               -+---------------------------+-
-               |                        13 |
+               |                         1 |
 
                ----
                /school.define($code:=code).department.limit(1){count(course.title~$code)}
@@ -20116,7 +20124,7 @@ tests:
                +------+-----------------------------+
                | code | count(department.limit(10)) |
               -+------+-----------------------------+-
-               | art  |                           2 |
+               | art  |                           1 |
 
                ----
                /school?code='art'{code,count(department.limit(10))}
@@ -20202,7 +20210,7 @@ tests:
                +------+-------------------+
                | code | count(department) |
               -+------+-------------------+-
-               | la   |                 5 |
+               | la   |                 6 |
 
                ----
                /school{code,count(department)}?count(department)=max(({}->school).count(department))
@@ -20341,11 +20349,11 @@ tests:
                |                               |                   +-------------------+
                | name                          | count(department) | count(department) |
               -+-------------------------------+-------------------+-------------------+-
-               | School of Art & Design        |                 2 |                   :
+               | School of Art & Design        |                 1 |                   :
                | School of Business            |                 3 |                 3 |
                | College of Education          |                 2 |                 2 |
                | School of Engineering         |                 4 |                 4 |
-               | School of Arts and Humanities |                 5 |                   :
+               | School of Arts and Humanities |                 6 |                   :
                | School of Music & Dance       |                 4 |                 4 |
                | School of Natural Sciences    |                 4 |                 4 |
                | Public Honorariums            |                 0 |                 0 |
@@ -20430,7 +20438,7 @@ tests:
                | code   | code   | code   |
               -+--------+--------+--------+-
                | acc    | bus    | bus    |
-               | arthis | art    |        :
+               | arthis | la     |        :
                | astro  | ns     | ns     |
                | bursar |        :        :
                | career |        :        :
@@ -20611,19 +20619,15 @@ tests:
             - [Vary, Accept]
             body: |2
                | department                                                                   |
-               +--------+-------------+-------------+-------+-------------------+-------------+
-               | code   | name        | school_code | code  | name              | school_code |
-              -+--------+-------------+-------------+-------+-------------------+-------------+-
-               | arthis | Art History | art         | eng   | English           | la          |
-               | arthis | Art History | art         | hist  | History           | la          |
-               | arthis | Art History | art         | lang  | Foreign Languages | la          |
-               | arthis | Art History | art         | poli  | Political Science | la          |
-               | arthis | Art History | art         | psych | Psychology        | la          |
-               | stdart | Studio Art  | art         | eng   | English           | la          |
-               | stdart | Studio Art  | art         | hist  | History           | la          |
-               | stdart | Studio Art  | art         | lang  | Foreign Languages | la          |
-               | stdart | Studio Art  | art         | poli  | Political Science | la          |
-               | stdart | Studio Art  | art         | psych | Psychology        | la          |
+               +--------+------------+-------------+--------+-------------------+-------------+
+               | code   | name       | school_code | code   | name              | school_code |
+              -+--------+------------+-------------+--------+-------------------+-------------+-
+               | stdart | Studio Art | art         | arthis | Art History       | la          |
+               | stdart | Studio Art | art         | eng    | English           | la          |
+               | stdart | Studio Art | art         | hist   | History           | la          |
+               | stdart | Studio Art | art         | lang   | Foreign Languages | la          |
+               | stdart | Studio Art | art         | poli   | Political Science | la          |
+               | stdart | Studio Art | art         | psych  | Psychology        | la          |
 
                ----
                /(department?school.code='art').home().(department?school.code='la'){root().(department?school.code='art').*,*}
@@ -20691,7 +20695,7 @@ tests:
               -+------+-------------------+-
                | bus  |                 3 |
                | eng  |                 4 |
-               | la   |                 5 |
+               | la   |                 6 |
                | mus  |                 4 |
                | ns   |                 4 |
 
@@ -20727,7 +20731,6 @@ tests:
                +--------+------------------------+-------------+
                | code   | name                   | school_code |
               -+--------+------------------------+-------------+-
-               | arthis | Art History            | art         |
                | stdart | Studio Art             | art         |
                | acc    | Accounting             | bus         |
                | econ   | Economics              | bus         |
@@ -20738,6 +20741,7 @@ tests:
                | comp   | Computer Science       | eng         |
                | ee     | Electrical Engineering | eng         |
                | me     | Mechanical Engineering | eng         |
+               | arthis | Art History            | la          |
                | eng    | English                | la          |
                | hist   | History                | la          |
                | lang   | Foreign Languages      | la          |
@@ -20774,11 +20778,11 @@ tests:
                +------+----------------------------+
                | code | count(moniker(department)) |
               -+------+----------------------------+-
-               | art  |                          2 |
+               | art  |                          1 |
                | bus  |                          3 |
                | edu  |                          2 |
                | eng  |                          4 |
-               | la   |                          5 |
+               | la   |                          6 |
                | mus  |                          4 |
                | ns   |                          4 |
                | ph   |                          0 |
@@ -20806,7 +20810,7 @@ tests:
                | code   | name                   | school_code |
               -+--------+------------------------+-------------+-
                | acc    | Accounting             | bus         |
-               | arthis | Art History            | art         |
+               | arthis | Art History            | la          |
                | astro  | Astronomy              | ns          |
                | be     | Bioengineering         | eng         |
                | bursar | Bursar's Office        |             |
@@ -20833,7 +20837,7 @@ tests:
                | voc    | Vocals                 | mus         |
                | win    | Wind                   | mus         |
                | acc    | Accounting             | bus         |
-               | arthis | Art History            | art         |
+               | arthis | Art History            | la          |
                | astro  | Astronomy              | ns          |
                | be     | Bioengineering         | eng         |
                | bursar | Bursar's Office        |             |
@@ -20860,7 +20864,7 @@ tests:
                | voc    | Vocals                 | mus         |
                | win    | Wind                   | mus         |
                | acc    | Accounting             | bus         |
-               | arthis | Art History            | art         |
+               | arthis | Art History            | la          |
                | astro  | Astronomy              | ns          |
                | be     | Bioengineering         | eng         |
                | bursar | Bursar's Office        |             |
@@ -20887,7 +20891,7 @@ tests:
                | voc    | Vocals                 | mus         |
                | win    | Wind                   | mus         |
                | acc    | Accounting             | bus         |
-               | arthis | Art History            | art         |
+               | arthis | Art History            | la          |
                | astro  | Astronomy              | ns          |
                | be     | Bioengineering         | eng         |
                | bursar | Bursar's Office        |             |
@@ -20914,7 +20918,7 @@ tests:
                | voc    | Vocals                 | mus         |
                | win    | Wind                   | mus         |
                | acc    | Accounting             | bus         |
-               | arthis | Art History            | art         |
+               | arthis | Art History            | la          |
                | astro  | Astronomy              | ns          |
                | be     | Bioengineering         | eng         |
                | bursar | Bursar's Office        |             |
@@ -20941,7 +20945,7 @@ tests:
                | voc    | Vocals                 | mus         |
                | win    | Wind                   | mus         |
                | acc    | Accounting             | bus         |
-               | arthis | Art History            | art         |
+               | arthis | Art History            | la          |
                | astro  | Astronomy              | ns          |
                | be     | Bioengineering         | eng         |
                | bursar | Bursar's Office        |             |
@@ -20968,7 +20972,7 @@ tests:
                | voc    | Vocals                 | mus         |
                | win    | Wind                   | mus         |
                | acc    | Accounting             | bus         |
-               | arthis | Art History            | art         |
+               | arthis | Art History            | la          |
                | astro  | Astronomy              | ns          |
                | be     | Bioengineering         | eng         |
                | bursar | Bursar's Office        |             |
@@ -20995,7 +20999,7 @@ tests:
                | voc    | Vocals                 | mus         |
                | win    | Wind                   | mus         |
                | acc    | Accounting             | bus         |
-               | arthis | Art History            | art         |
+               | arthis | Art History            | la          |
                | astro  | Astronomy              | ns          |
                | be     | Bioengineering         | eng         |
                | bursar | Bursar's Office        |             |
@@ -21022,7 +21026,7 @@ tests:
                | voc    | Vocals                 | mus         |
                | win    | Wind                   | mus         |
                | acc    | Accounting             | bus         |
-               | arthis | Art History            | art         |
+               | arthis | Art History            | la          |
                | astro  | Astronomy              | ns          |
                | be     | Bioengineering         | eng         |
                | bursar | Bursar's Office        |             |
@@ -21095,12 +21099,11 @@ tests:
             - [Content-Type, text/plain; charset=UTF-8]
             - [Vary, Accept]
             body: |2
-               | moniker(department)                |
-               +--------+-------------+-------------+
-               | code   | name        | school_code |
-              -+--------+-------------+-------------+-
-               | arthis | Art History | art         |
-               | stdart | Studio Art  | art         |
+               | moniker(department)               |
+               +--------+------------+-------------+
+               | code   | name       | school_code |
+              -+--------+------------+-------------+-
+               | stdart | Studio Art | art         |
 
                ----
                /(school?code='art').moniker(department)
@@ -21125,7 +21128,7 @@ tests:
                +------+----------------------------+
                | code | count(moniker(department)) |
               -+------+----------------------------+-
-               | art  |                          2 |
+               | art  |                          1 |
 
                ----
                /(school?code='art'){code,count(moniker(department))}
@@ -21150,7 +21153,7 @@ tests:
                | code   | name                   | school_code |
               -+--------+------------------------+-------------+-
                | acc    | Accounting             | bus         |
-               | arthis | Art History            | art         |
+               | arthis | Art History            | la          |
                | astro  | Astronomy              | ns          |
                | be     | Bioengineering         | eng         |
                | bursar | Bursar's Office        |             |
@@ -21371,7 +21374,6 @@ tests:
                +--------+------------------------+-------------+
                | code   | name                   | school_code |
               -+--------+------------------------+-------------+-
-               | arthis | Art History            | art         |
                | stdart | Studio Art             | art         |
                | acc    | Accounting             | bus         |
                | econ   | Economics              | bus         |
@@ -21382,6 +21384,7 @@ tests:
                | comp   | Computer Science       | eng         |
                | ee     | Electrical Engineering | eng         |
                | me     | Mechanical Engineering | eng         |
+               | arthis | Art History            | la          |
                | eng    | English                | la          |
                | hist   | History                | la          |
                | lang   | Foreign Languages      | la          |
@@ -21418,7 +21421,6 @@ tests:
                +--------+---------------+
                | code   | count(course) |
               -+--------+---------------+-
-               | arthis |            20 |
                | stdart |            19 |
 
                ----
@@ -21448,11 +21450,11 @@ tests:
                +------+--------------------------------------+----------------------------------------------------------+
                | code | count(code->department{school_code}) | avg((code->department{school_code}).sum(course.credits)) |
               -+------+--------------------------------------+----------------------------------------------------------+-
-               | art  |                                    2 |                                                69.000000 |
+               | art  |                                    1 |                                                68.000000 |
                | bus  |                                    3 |                                                50.666666 |
                | edu  |                                    2 |                                                60.500000 |
                | eng  |                                    4 |                                                56.250000 |
-               | la   |                                    5 |                                                64.600000 |
+               | la   |                                    6 |                                                65.500000 |
                | mus  |                                    4 |                                                 0.000000 |
                | ns   |                                    4 |                                                59.000000 |
                | ph   |                                    0 |                                                          |
@@ -21487,7 +21489,7 @@ tests:
                +------+--------------------------------------+----------------------------------------------------------+
                | code | count(code->department{school_code}) | avg((code->department{school_code}).sum(course.credits)) |
               -+------+--------------------------------------+----------------------------------------------------------+-
-               | art  |                                    2 |                                                69.000000 |
+               | art  |                                    1 |                                                68.000000 |
 
                ----
                /school{code,count(code->department{school_code}),avg((code->department{school_code}).sum(course.credits))}?code='art'
@@ -22664,12 +22666,11 @@ tests:
             - [Content-Type, text/plain; charset=UTF-8]
             - [Vary, Accept]
             body: |2
-               | department                         |
-               +--------+-------------+-------------+
-               | code   | name        | school_code |
-              -+--------+-------------+-------------+-
-               | arthis | Art History | art         |
-               | stdart | Studio Art  | art         |
+               | department                        |
+               +--------+------------+-------------+
+               | code   | name       | school_code |
+              -+--------+------------+-------------+-
+               | stdart | Studio Art | art         |
 
                ----
                /(school?code='art').department
@@ -22705,11 +22706,11 @@ tests:
                +------+--------+--------+--------+----------+
                | code | min(c) | max(c) | sum(c) | avg(c)   |
               -+------+--------+--------+--------+----------+-
-               | art  |      0 |      6 |    138 | 3.631578 |
+               | art  |      0 |      6 |     68 | 3.777777 |
                | bus  |      2 |      6 |    152 | 3.454545 |
                | edu  |      3 |      6 |    121 | 3.558823 |
                | eng  |      2 |      8 |    225 | 3.169014 |
-               | la   |      2 |      6 |    323 | 3.400000 |
+               | la   |      2 |      6 |    393 | 3.417391 |
                | ns   |      1 |      6 |    236 | 3.189189 |
 
                ----
@@ -23170,7 +23171,7 @@ tests:
                | code | num_dept |
               -+------+----------+-
                | eng  |        4 |
-               | la   |        5 |
+               | la   |        6 |
                | mus  |        4 |
                | ns   |        4 |
 
@@ -23197,7 +23198,7 @@ tests:
                | code | $num_dept |
               -+------+-----------+-
                | eng  |         4 |
-               | la   |         5 |
+               | la   |         6 |
                | mus  |         4 |
                | ns   |         4 |
 
@@ -24629,7 +24630,8 @@ tests:
                | ct             |
                | ma             |
                | ba             |
-               | pb             |
+               | ct             |
+               | ma             |
                | bs             |
                | ms             |
                | ph             |
@@ -24709,8 +24711,6 @@ tests:
               -+----------------+-
                | ba             |
                | pb             |
-               | ba             |
-               | pb             |
 
                ----
                /department.((school?code='art').program^degree)
@@ -24736,10 +24736,6 @@ tests:
                +-------------+---------+---------------------------------+--------+--------------+
                | school_code | code    | title                           | degree | part_of_code |
               -+-------------+---------+---------------------------------+--------+--------------+-
-               | art         | uhist   | Bachelor of Arts in Art History | ba     |              |
-               | art         | ustudio | Bachelor of Arts in Studio Art  | ba     |              |
-               | art         | gart    | Post Baccalaureate in Art       | pb     |              |
-               :             :         : History                         :        :              :
                | art         | uhist   | Bachelor of Arts in Art History | ba     |              |
                | art         | ustudio | Bachelor of Arts in Studio Art  | ba     |              |
                | art         | gart    | Post Baccalaureate in Art       | pb     |              |
@@ -25536,8 +25532,8 @@ tests:
                |      +------------------------+----------------------------------+
                | code | name                   | title                            |
               -+------+------------------------+----------------------------------+-
-               | art  | Art History            | Post Baccalaureate in Art        |
-               :      | Studio Art             | History                          :
+               | art  | Studio Art             | Post Baccalaureate in Art        |
+               :      :                        : History                          :
                :      :                        | Bachelor of Arts in Art History  |
                :      :                        | Bachelor of Arts in Studio Art   |
                | bus  | Accounting             | Master of Arts in Economics      |
@@ -25568,12 +25564,12 @@ tests:
                :      :                        | B.S. in Computer Science         |
                :      :                        | B.S. in Electrical Engineering   |
                :      :                        | B.S. in Mechanical Engineering   |
-               | la   | English                | Master of Arts in English        |
-               :      | History                | Master of Arts in Modern         |
-               :      | Foreign Languages      | Languages                        :
-               :      | Political Science      | Master of Arts in Science        |
-               :      | Psychology             | Teaching                         :
-               :      :                        | Science Writing                  |
+               | la   | Art History            | Master of Arts in English        |
+               :      | English                | Master of Arts in Modern         |
+               :      | History                | Languages                        :
+               :      | Foreign Languages      | Master of Arts in Science        |
+               :      | Political Science      | Teaching                         :
+               :      | Psychology             | Science Writing                  |
                :      :                        | Bachelor of Arts in English      |
                :      :                        | Bachelor of Arts in History      |
                :      :                        | Bachelor of Arts in Political    |
@@ -25720,18 +25716,19 @@ tests:
             - [Content-Type, text/plain; charset=UTF-8]
             - [Vary, Accept]
             body: |2
-               | school                                               |
-               +------+-------------+---------------------------------+
-               |      | department  | program                         |
-               |      +-------------+---------------------------------+
-               | code | name        | title                           |
-              -+------+-------------+---------------------------------+-
-               | art  | Art History | Post Baccalaureate in Art       |
-               :      | Studio Art  | History                         :
-               :      :             | Bachelor of Arts in Art History |
-               :      :             | Bachelor of Arts in Studio Art  |
-               | bus  | Accounting  |                                 :
-               | edu  |             :                                 :
+               | school                                              |
+               +------+------------+---------------------------------+
+               |      | department | program                         |
+               |      +------------+---------------------------------+
+               | code | name       | title                           |
+              -+------+------------+---------------------------------+-
+               | art  | Studio Art | Post Baccalaureate in Art       |
+               :      :            : History                         :
+               :      :            | Bachelor of Arts in Art History |
+               :      :            | Bachelor of Arts in Studio Art  |
+               | bus  | Accounting |                                 :
+               :      | Economics  |                                 :
+               | edu  |            :                                 :
 
                ----
                /school{code,/department{name}.limit(3),/program{title}.limit(3)}.limit(3)
@@ -25785,7 +25782,7 @@ tests:
                | code | name                   | campus | code   | name        | school_code |
               -+------+------------------------+--------+--------+-------------+-------------+-
                | art  | School of Art & Design | old    | acc    | Accounting  | bus         |
-               | bus  | School of Business     | south  | arthis | Art History | art         |
+               | bus  | School of Business     | south  | arthis | Art History | la          |
                | edu  | College of Education   | old    | astro  | Astronomy   | ns          |
 
                ----
@@ -25811,14 +25808,13 @@ tests:
             - [Content-Type, text/plain; charset=UTF-8]
             - [Vary, Accept]
             body: |2
-               | school                                                                      |
-               +------+------------------------+--------+------------------------------------+
-               |      |                        |        | department                         |
-               |      |                        |        +--------+-------------+-------------+
-               | code | name                   | campus | code   | name        | school_code |
-              -+------+------------------------+--------+--------+-------------+-------------+-
-               | art  | School of Art & Design | old    | arthis | Art History | art         |
-               :      :                        :        | stdart | Studio Art  | art         |
+               | school                                                                     |
+               +------+------------------------+--------+-----------------------------------+
+               |      |                        |        | department                        |
+               |      |                        |        +--------+------------+-------------+
+               | code | name                   | campus | code   | name       | school_code |
+              -+------+------------------------+--------+--------+------------+-------------+-
+               | art  | School of Art & Design | old    | stdart | Studio Art | art         |
 
                ----
                /school?code='art'{*,/department.limit(3)}
@@ -25858,7 +25854,6 @@ tests:
                | sc   |                        :
                | ph   |                        :
                | art  | Studio Art             |
-               :      | Art History            |
                | bus  | Accounting             |
                :      | Economics              |
                :      | Management & Marketing |
@@ -25875,6 +25870,7 @@ tests:
                | la   | History                |
                :      | Psychology             |
                :      | Political Science      |
+               :      | Art History            |
                :      | English                |
                :      | Foreign Languages      |
 
@@ -25913,38 +25909,25 @@ tests:
             - [Content-Type, text/plain; charset=UTF-8]
             - [Vary, Accept]
             body: |2
-               | school                                                                      |
-               +------+----------------------------------------------------------------------+
-               |      | department                                                           |
-               |      +-------------+--------------------------------------------------------+
-               |      |             | course                                                 |
-               |      |             +------------------------------+-------------------------+
-               |      |             |                              | class                   |
-               |      |             |                              +------+--------+---------+
-               | code | name        | title                        | year | season | section |
-              -+------+-------------+------------------------------+------+--------+---------+-
-               | art  | Studio Art  | Drawing Master Class         | 2009 | spring | 001     |
-               :      :             :                              | 2010 | spring | 001     |
-               :      :             | Advanced Painting            | 2009 | spring | 001     |
-               :      :             :                              | 2010 | fall   | 001     |
-               :      :             :                              | 2010 | spring | 001     |
-               :      :             | Photography                  | 2007 | fall   | 001     |
-               :      :             :                              | 2009 | fall   | 001     |
-               :      :             :                              | 2008 | fall   | 001     |
-               :      :             :                              | 2010 | fall   | 001     |
-               :      | Art History | Antique Art: Greece and Rome | 2007 | fall   | 001     |
-               :      :             :                              | 2009 | fall   | 001     |
-               :      :             :                              | 2010 | fall   | 001     |
-               :      :             | Islamic Art                  | 2007 | spring | 001     |
-               :      :             :                              | 2008 | spring | 001     |
-               :      :             :                              | 2009 | spring | 001     |
-               :      :             :                              | 2010 | spring | 001     |
-               :      :             | Art of Photography           | 2008 | spring | 001     |
-               :      :             :                              | 2009 | spring | 001     |
-               :      :             :                              | 2010 | spring | 001     |
-               :      :             :                              | 2008 | fall   | 001     |
-               :      :             :                              | 2009 | fall   | 001     |
-               :      :             :                              | 2010 | fall   | 001     |
+               | school                                                             |
+               +------+-------------------------------------------------------------+
+               |      | department                                                  |
+               |      +------------+------------------------------------------------+
+               |      |            | course                                         |
+               |      |            +----------------------+-------------------------+
+               |      |            |                      | class                   |
+               |      |            |                      +------+--------+---------+
+               | code | name       | title                | year | season | section |
+              -+------+------------+----------------------+------+--------+---------+-
+               | art  | Studio Art | Drawing Master Class | 2009 | spring | 001     |
+               :      :            :                      | 2010 | spring | 001     |
+               :      :            | Advanced Painting    | 2009 | spring | 001     |
+               :      :            :                      | 2010 | fall   | 001     |
+               :      :            :                      | 2010 | spring | 001     |
+               :      :            | Photography          | 2007 | fall   | 001     |
+               :      :            :                      | 2009 | fall   | 001     |
+               :      :            :                      | 2008 | fall   | 001     |
+               :      :            :                      | 2010 | fall   | 001     |
 
                ----
                /school{code,/department{name,/course{title,/class{year,season,section}.sort(count(enrollment))}.filter(credits>=5).sort(count(class))}.sort(count(course))}.filter(code='art')
@@ -26265,10 +26248,18 @@ tests:
                :        | Bachelor of Business             | Bachelor of Business             |
                :        : Administration                   : Administration                   :
                :        | Bachelor of Arts in Economics    | Bachelor of Arts in Economics    |
-               | arthis | Post Baccalaureate in Art        | Post Baccalaureate in Art        |
-               :        : History                          : History                          :
-               :        | Bachelor of Arts in Art History  | Bachelor of Arts in Art History  |
-               :        | Bachelor of Arts in Studio Art   | Bachelor of Arts in Studio Art   |
+               | arthis | Master of Arts in English        | Master of Arts in English        |
+               :        | Master of Arts in Modern         | Master of Arts in Modern         |
+               :        : Languages                        : Languages                        :
+               :        | Master of Arts in Science        | Master of Arts in Science        |
+               :        : Teaching                         : Teaching                         :
+               :        | Science Writing                  | Science Writing                  |
+               :        | Bachelor of Arts in English      | Bachelor of Arts in English      |
+               :        | Bachelor of Arts in History      | Bachelor of Arts in History      |
+               :        | Bachelor of Arts in Political    | Bachelor of Arts in Political    |
+               :        : Science                          : Science                          :
+               :        | Bachelor of Arts in Psychology   | Bachelor of Arts in Psychology   |
+               :        | Bachelor of Arts in Spanish      | Bachelor of Arts in Spanish      |
                | astro  | Masters of Science in            | Masters of Science in            |
                :        : Mathematics                      : Mathematics                      :
                :        | Doctorate of Science in          | Doctorate of Science in          |
@@ -26575,7 +26566,7 @@ tests:
                |        +--------+
                | code   | code   |
               -+--------+--------+-
-               | arthis | art    |
+               | arthis | la     |
                | astro  | ns     |
                | comp   | eng    |
                | eng    | la     |
@@ -27759,7 +27750,7 @@ tests:
               "data": [
                 [
                   "School of Art & Design",
-                  2
+                  1
                 ],
                 [
                   "School of Business",
@@ -27775,7 +27766,7 @@ tests:
                 ],
                 [
                   "School of Arts and Humanities",
-                  5
+                  6
                 ],
                 [
                   "School of Music & Dance",
@@ -27806,7 +27797,7 @@ tests:
               "school": [
                 {
                   "name": "School of Art & Design",
-                  "1": 2
+                  "1": 1
                 },
                 {
                   "name": "School of Business",
@@ -27822,7 +27813,7 @@ tests:
                 },
                 {
                   "name": "School of Arts and Humanities",
-                  "1": 5
+                  "1": 6
                 },
                 {
                   "name": "School of Music & Dance",
@@ -27848,8 +27839,8 @@ tests:
           headers:
           - [Content-Type, text/csv; charset=UTF-8]
           - [Content-Disposition, attachment; filename="List of Schools.csv"]
-          body: "Name,# of Departments\r\nSchool of Art & Design,2\r\nSchool of Business,3\r\nCollege
-            of Education,2\r\nSchool of Engineering,4\r\nSchool of Arts and Humanities,5\r\nSchool
+          body: "Name,# of Departments\r\nSchool of Art & Design,1\r\nSchool of Business,3\r\nCollege
+            of Education,2\r\nSchool of Engineering,4\r\nSchool of Arts and Humanities,6\r\nSchool
             of Music & Dance,4\r\nSchool of Natural Sciences,4\r\nPublic Honorariums,0\r\nSchool
             of Continuing Studies,0\r\n"
         - uri: /(school :as 'List of Schools') {name :as Name, count(department) :as
@@ -27858,9 +27849,9 @@ tests:
           headers:
           - [Content-Type, text/tab-separated-values; charset=UTF-8]
           - [Content-Disposition, attachment; filename="List of Schools.tsv"]
-          body: "Name\t# of Departments\r\nSchool of Art & Design\t2\r\nSchool of
+          body: "Name\t# of Departments\r\nSchool of Art & Design\t1\r\nSchool of
             Business\t3\r\nCollege of Education\t2\r\nSchool of Engineering\t4\r\nSchool
-            of Arts and Humanities\t5\r\nSchool of Music & Dance\t4\r\nSchool of Natural
+            of Arts and Humanities\t6\r\nSchool of Music & Dance\t4\r\nSchool of Natural
             Sciences\t4\r\nPublic Honorariums\t0\r\nSchool of Continuing Studies\t0\r\n"
         - uri: /(school :as 'List of Schools') {name :as Name, count(department) :as
             '# of Departments'} /:xml
@@ -27873,7 +27864,7 @@ tests:
             <htsql:result xmlns:htsql="http://htsql.org/2010/xml">
               <school>
                 <name>School of Art &amp; Design</name>
-                <_2>2</_2>
+                <_2>1</_2>
               </school>
               <school>
                 <name>School of Business</name>
@@ -27889,7 +27880,7 @@ tests:
               </school>
               <school>
                 <name>School of Arts and Humanities</name>
-                <_2>5</_2>
+                <_2>6</_2>
               </school>
               <school>
                 <name>School of Music &amp; Dance</name>
@@ -27950,11 +27941,11 @@ tests:
             <tr><th class="htsql-empty-header"></th><th>Name</th><th># of Departments</th></tr>
             </thead>
             <tbody>
-            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-string-type">School of Art &amp; Design</td><td class="htsql-integer-type">2</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-string-type">School of Art &amp; Design</td><td class="htsql-integer-type">1</td></tr>
             <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-string-type">School of Business</td><td class="htsql-integer-type">3</td></tr>
             <tr class="htsql-odd-row"><td class="htsql-index">3</td><td class="htsql-string-type">College of Education</td><td class="htsql-integer-type">2</td></tr>
             <tr class="htsql-even-row"><td class="htsql-index">4</td><td class="htsql-string-type">School of Engineering</td><td class="htsql-integer-type">4</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-string-type">School of Arts and Humanities</td><td class="htsql-integer-type">5</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-string-type">School of Arts and Humanities</td><td class="htsql-integer-type">6</td></tr>
             <tr class="htsql-even-row"><td class="htsql-index">6</td><td class="htsql-string-type">School of Music &amp; Dance</td><td class="htsql-integer-type">4</td></tr>
             <tr class="htsql-odd-row"><td class="htsql-index">7</td><td class="htsql-string-type">School of Natural Sciences</td><td class="htsql-integer-type">4</td></tr>
             <tr class="htsql-even-row"><td class="htsql-index">8</td><td class="htsql-string-type">Public Honorariums</td><td class="htsql-integer-type">0</td></tr>
@@ -27973,11 +27964,11 @@ tests:
              +-------------------------------+------------------+
              | Name                          | # of Departments |
             -+-------------------------------+------------------+-
-             | School of Art & Design        |                2 |
+             | School of Art & Design        |                1 |
              | School of Business            |                3 |
              | College of Education          |                2 |
              | School of Engineering         |                4 |
-             | School of Arts and Humanities |                5 |
+             | School of Arts and Humanities |                6 |
              | School of Music & Dance       |                4 |
              | School of Natural Sciences    |                4 |
              | Public Honorariums            |                0 |
@@ -29123,7 +29114,7 @@ tests:
                     [
                       "arthis",
                       "Art History",
-                      "art"
+                      "la"
                     ],
                     [
                       "astro",
@@ -29180,7 +29171,7 @@ tests:
                     {
                       "code": "arthis",
                       "name": "Art History",
-                      "school_code": "art"
+                      "school_code": "la"
                     },
                     {
                       "code": "astro",
@@ -29207,7 +29198,7 @@ tests:
           - [Content-Disposition, attachment; filename="_.csv"]
           body: "null,code,name,campus,code,name,school_code\r\n,art,School of Art
             & Design,old,acc,Accounting,bus\r\n,bus,School of Business,south,arthis,Art
-            History,art\r\n,edu,College of Education,old,astro,Astronomy,ns\r\n,,,,be,Bioengineering,eng\r\n,,,,bursar,Bursar's
+            History,la\r\n,edu,College of Education,old,astro,Astronomy,ns\r\n,,,,be,Bioengineering,eng\r\n,,,,bursar,Bursar's
             Office,\r\n"
         - uri: /{/null, /school.limit(3), /department.limit(5)}/:tsv
           status: 200 OK
@@ -29216,7 +29207,7 @@ tests:
           - [Content-Disposition, attachment; filename="_.tsv"]
           body: "null\tcode\tname\tcampus\tcode\tname\tschool_code\r\n\tart\tSchool
             of Art & Design\told\tacc\tAccounting\tbus\r\n\tbus\tSchool of Business\tsouth\tarthis\tArt
-            History\tart\r\n\tedu\tCollege of Education\told\tastro\tAstronomy\tns\r\n\t\t\t\tbe\tBioengineering\teng\r\n\t\t\t\tbursar\tBursar's
+            History\tla\r\n\tedu\tCollege of Education\told\tastro\tAstronomy\tns\r\n\t\t\t\tbe\tBioengineering\teng\r\n\t\t\t\tbursar\tBursar's
             Office\t\r\n"
         - uri: /{/null, /school.limit(3), /department.limit(5)}/:xml
           status: 200 OK
@@ -29250,7 +29241,7 @@ tests:
                 <department>
                   <code>arthis</code>
                   <name>Art History</name>
-                  <school_code>art</school_code>
+                  <school_code>la</school_code>
                 </department>
                 <department>
                   <code>astro</code>
@@ -29310,7 +29301,7 @@ tests:
             </thead>
             <tbody>
             <tr class="htsql-odd-row"><td rowspan="5" class="htsql-section htsql-index">1</td><td rowspan="5" class="htsql-section htsql-index htsql-null-record-value"></td><td rowspan="5" class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-index">1</td><td class="htsql-section htsql-string-type">art</td><td class="htsql-section htsql-string-type">School of Art &amp; Design</td><td class="htsql-section htsql-string-type">old</td><td class="htsql-section htsql-index">1</td><td class="htsql-section htsql-string-type">acc</td><td class="htsql-section htsql-string-type">Accounting</td><td class="htsql-section htsql-string-type">bus</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-string-type">bus</td><td class="htsql-string-type">School of Business</td><td class="htsql-string-type">south</td><td class="htsql-index">2</td><td class="htsql-string-type">arthis</td><td class="htsql-string-type">Art History</td><td class="htsql-string-type">art</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-string-type">bus</td><td class="htsql-string-type">School of Business</td><td class="htsql-string-type">south</td><td class="htsql-index">2</td><td class="htsql-string-type">arthis</td><td class="htsql-string-type">Art History</td><td class="htsql-string-type">la</td></tr>
             <tr class="htsql-odd-row"><td rowspan="3" class="htsql-index">3</td><td rowspan="3" class="htsql-string-type">edu</td><td rowspan="3" class="htsql-string-type">College of Education</td><td rowspan="3" class="htsql-string-type">old</td><td class="htsql-index">3</td><td class="htsql-string-type">astro</td><td class="htsql-string-type">Astronomy</td><td class="htsql-string-type">ns</td></tr>
             <tr class="htsql-even-row"><td class="htsql-index">4</td><td class="htsql-string-type">be</td><td class="htsql-string-type">Bioengineering</td><td class="htsql-string-type">eng</td></tr>
             <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-string-type">bursar</td><td class="htsql-string-type">Bursar's Office</td><td class="htsql-string-type htsql-null-value"></td></tr>
@@ -29328,7 +29319,7 @@ tests:
              | null | code | name                   | campus | code   | name            | school_code |
             -+------+------+------------------------+--------+--------+-----------------+-------------+-
              :      | art  | School of Art & Design | old    | acc    | Accounting      | bus         |
-             :      | bus  | School of Business     | south  | arthis | Art History     | art         |
+             :      | bus  | School of Business     | south  | arthis | Art History     | la          |
              :      | edu  | College of Education   | old    | astro  | Astronomy       | ns          |
              :      :      :                        :        | be     | Bioengineering  | eng         |
              :      :      :                        :        | bursar | Bursar's Office |             |
@@ -30822,14 +30813,13 @@ tests:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | school                                                                      |
-             +------+------------------------+--------+------------------------------------+
-             |      |                        |        | department                         |
-             |      |                        |        +--------+-------------+-------------+
-             | code | name                   | campus | code   | name        | school_code |
-            -+------+------------------------+--------+--------+-------------+-------------+-
-             | art  | School of Art & Design | old    | arthis | Art History | art         |
-             :      :                        :        | stdart | Studio Art  | art         |
+             | school                                                                     |
+             +------+------------------------+--------+-----------------------------------+
+             |      |                        |        | department                        |
+             |      |                        |        +--------+------------+-------------+
+             | code | name                   | campus | code   | name       | school_code |
+            -+------+------------------------+--------+--------+------------+-------------+-
+             | art  | School of Art & Design | old    | stdart | Studio Art | art         |
 
              ----
              /school?code='art'{*,/department}
@@ -30868,14 +30858,13 @@ tests:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | school                                                                      |
-             +------+------------------------+--------+------------------------------------+
-             |      |                        |        | department                         |
-             |      |                        |        +--------+-------------+-------------+
-             | code | name                   | campus | code   | name        | school_code |
-            -+------+------------------------+--------+--------+-------------+-------------+-
-             | art  | School of Art & Design | old    | arthis | Art History | art         |
-             :      :                        :        | stdart | Studio Art  | art         |
+             | school                                                                     |
+             +------+------------------------+--------+-----------------------------------+
+             |      |                        |        | department                        |
+             |      |                        |        +--------+------------+-------------+
+             | code | name                   | campus | code   | name       | school_code |
+            -+------+------------------------+--------+--------+------------+-------------+-
+             | art  | School of Art & Design | old    | stdart | Studio Art | art         |
 
              ----
              /school{*,/department}?code='art'
@@ -32814,11 +32803,11 @@ tests:
              +------+-------------------+
              | code | count(department) |
             -+------+-------------------+-
-             | art  |                 2 |
+             | art  |                 1 |
              | bus  |                 3 |
              | edu  |                 2 |
              | eng  |                 4 |
-             | la   |                 5 |
+             | la   |                 6 |
              | mus  |                 4 |
              | ns   |                 4 |
              | ph   |                 0 |
@@ -35196,59 +35185,113 @@ tests:
       id: embedding
       tests:
       - py-include: test/code/test_embedding.py
-        stdout: |
-          URI: /school{code, count(program), count(department)}
-          school(code=u'art', [1]=3, [2]=2)
-          school(code=u'bus', [1]=6, [2]=3)
-          school(code=u'edu', [1]=7, [2]=2)
-          school(code=u'eng', [1]=8, [2]=4)
-          school(code=u'la', [1]=9, [2]=5)
-          school(code=u'mus', [1]=0, [2]=4)
-          school(code=u'ns', [1]=6, [2]=4)
-          school(code=u'ph', [1]=1, [2]=0)
-          school(code=u'sc', [1]=0, [2]=0)
+        stdout: 'URI: /school{code, count(program), count(department)}
+
+          school(code=u''art'', [1]=3, [2]=1)
+
+          school(code=u''bus'', [1]=6, [2]=3)
+
+          school(code=u''edu'', [1]=7, [2]=2)
+
+          school(code=u''eng'', [1]=8, [2]=4)
+
+          school(code=u''la'', [1]=9, [2]=6)
+
+          school(code=u''mus'', [1]=0, [2]=4)
+
+          school(code=u''ns'', [1]=6, [2]=4)
+
+          school(code=u''ph'', [1]=1, [2]=0)
+
+          school(code=u''sc'', [1]=0, [2]=0)
+
 
           URI: /school{name, count(program)}?code=$school_code
-          $school_code: 'bus'
+
+          $school_code: ''bus''
+
           School of Business: 6
+
 
           URI: /school{name, num_prog:=count(program)}?num_prog>=$min_prog&num_prog<=$max_prog
+
           $min_prog: 6
+
           $max_prog: 8
+
           School of Business: 6
+
           College of Education: 7
+
           School of Engineering: 8
+
           School of Natural Sciences: 6
 
+
           URI: /school?campus==$campus
+
           $campus: None
-          school(code=u'ph', name=u'Public Honorariums', campus=None)
-          school(code=u'sc', name=u'School of Continuing Studies', campus=None)
+
+          school(code=u''ph'', name=u''Public Honorariums'', campus=None)
+
+          school(code=u''sc'', name=u''School of Continuing Studies'', campus=None)
+
 
           URI: /school?campus=$campus
-          $campus: ['north', 'south']
-          school(code=u'bus', name=u'School of Business', campus=u'south')
-          school(code=u'eng', name=u'School of Engineering', campus=u'north')
-          school(code=u'mus', name=u'School of Music & Dance', campus=u'south')
 
-          URI: /{$untyped, $selector, $boolean, $integer, $float, $decimal, $date, $time, $datetime}
-          $untyped: 'HTSQL'
-          $selector: ['HTTP', 'SQL']
+          $campus: [''north'', ''south'']
+
+          school(code=u''bus'', name=u''School of Business'', campus=u''south'')
+
+          school(code=u''eng'', name=u''School of Engineering'', campus=u''north'')
+
+          school(code=u''mus'', name=u''School of Music & Dance'', campus=u''south'')
+
+
+          URI: /{$untyped, $selector, $boolean, $integer, $float, $decimal, $date,
+          $time, $datetime}
+
+          $untyped: ''HTSQL''
+
+          $selector: [''HTTP'', ''SQL'']
+
           $boolean: True
+
           $integer: 3571
+
           $float: -0.57721
-          $decimal: Decimal('0.875')
+
+          $decimal: Decimal(''0.875'')
+
           $date: datetime.date(2010, 4, 15)
+
           $time: datetime.time(20, 3)
+
           $datetime: datetime.datetime(2010, 4, 15, 20, 3)
-          Record([0]=u'HTSQL', [1]=Record([0]=u'HTTP', [1]=u'SQL'), [2]=True, [3]=3571, [4]=-0.57721, [5]=Decimal('0.875'), [6]=datetime.date(2010, 4, 15), [7]=datetime.time(20, 3), [8]=datetime.datetime(2010, 4, 15, 20, 3))
+
+          Record([0]=u''HTSQL'', [1]=Record([0]=u''HTTP'', [1]=u''SQL''), [2]=True,
+          [3]=3571, [4]=-0.57721, [5]=Decimal(''0.875''), [6]=datetime.date(2010,
+          4, 15), [7]=datetime.time(20, 3), [8]=datetime.datetime(2010, 4, 15, 20,
+          3))
+
 
           URI: /meta(/link?table.name=$table_name)
-          $table_name: 'school'
-          link(table_name=u'school', name=u'department', is_singular=False, target_name=u'department', reverse_name=u'school')
-          link(table_name=u'school', name=u'program', is_singular=False, target_name=u'program', reverse_name=u'school')
+
+          $table_name: ''school''
+
+          link(table_name=u''school'', name=u''department'', is_singular=False, target_name=u''department'',
+          reverse_name=u''school'')
+
+          link(table_name=u''school'', name=u''program'', is_singular=False, target_name=u''program'',
+          reverse_name=u''school'')
+
 
           URI: /school
-          school(code=u'art', name=u'School of Art & Design', campus=u'old')
-          school(code=u'bus', name=u'School of Business', campus=u'south')
-          school(code=u'edu', name=u'College of Education', campus=u'old')
+
+          school(code=u''art'', name=u''School of Art & Design'', campus=u''old'')
+
+          school(code=u''bus'', name=u''School of Business'', campus=u''south'')
+
+          school(code=u''edu'', name=u''College of Education'', campus=u''old'')
+
+'

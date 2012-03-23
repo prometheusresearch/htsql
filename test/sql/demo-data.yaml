@@ -34,7 +34,7 @@
     ['ee', 'Electrical Engineering', 'eng'],
     ['me', 'Mechanical Engineering', 'eng'],
     ['be', 'Bioengineering', 'eng'],
-    ['arthis', 'Art History', 'art'],
+    ['arthis', 'Art History', 'la'],
     ['stdart', 'Studio Art', 'art'],
     ['tched', 'Teacher Education', 'edu'],
     ['edpol', 'Educational Policy', 'edu'],

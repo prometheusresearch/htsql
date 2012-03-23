@@ -64,7 +64,7 @@ tests:
     - uri: /department{code,count(course{credits=3})}
     - uri: /department{code,count(course?credits=3)}
     - uri: /school{code,count(department.course{credits=3})}
-    - uri: /school{code}?count(department.course{credits=3})=61
+    - uri: /school{code}?count(department.course{credits=3})=75
     - uri: /department?exists(course.credits=6)
     - uri: /department?every(course.credits=6)
     - uri: /department{code,min(course.credits),max(course.credits)}
