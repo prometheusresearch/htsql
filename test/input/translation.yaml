@@ -493,6 +493,8 @@ tests:
 
 - title: Known issues
   tests:
+  # A bug in collapsing two frames with ORDER BY clauses.
+  - uri: /school.sort(code-).limit(10)
   # Should produce a row for each record of `school`.
   - uri: /school.true()
   # If `school.campus` is treated as a link to a scalar class,

@@ -488,8 +488,11 @@ tests:
 
     exit: 0
   - py: GET-1
-    stdout: |+
-      File not found.
+    stdout: |2+
+       | count(school) |
+      -+---------------+-
+       |             9 |
+
 
   - end-ctl: [server, 'sqlite:build/regress/sqlite/htsql_demo.sqlite', -q]
     stdout: ''

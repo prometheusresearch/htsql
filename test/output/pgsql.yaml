@@ -26799,6 +26799,34 @@ tests:
                                 ^^^^^^^^^^^^^^^^^^
       - id: known-issues
         tests:
+        - uri: /school.sort(code-).limit(10)
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | school                                        |
+             +------+-------------------------------+--------+
+             | code | name                          | campus |
+            -+------+-------------------------------+--------+-
+             | sc   | School of Continuing Studies  |        |
+             | ph   | Public Honorariums            |        |
+             | ns   | School of Natural Sciences    | old    |
+             | mus  | School of Music & Dance       | south  |
+             | la   | School of Arts and Humanities | old    |
+             | eng  | School of Engineering         | north  |
+             | edu  | College of Education          | old    |
+             | bus  | School of Business            | south  |
+             | art  | School of Art & Design        | old    |
+
+             ----
+             /school.sort(code-).limit(10)
+             SELECT "school"."code",
+                    "school"."name",
+                    "school"."campus"
+             FROM "ad"."school"
+             ORDER BY 1 DESC
+             LIMIT 10
         - uri: /school.true()
           status: 200 OK
           headers:
@@ -34226,12 +34254,11 @@ tests:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | department  |
-             +-------------+
-             | name        |
-            -+-------------+-
-             | Art History |
-             | Studio Art  |
+             | department |
+             +------------+
+             | name       |
+            -+------------+-
+             | Studio Art |
 
              ----
              /(school?code='art').department{name}
@@ -35440,113 +35467,59 @@ tests:
       id: embedding
       tests:
       - py-include: test/code/test_embedding.py
-        stdout: 'URI: /school{code, count(program), count(department)}
-
-          school(code=u''art'', [1]=3L, [2]=1L)
-
-          school(code=u''bus'', [1]=6L, [2]=3L)
-
-          school(code=u''edu'', [1]=7L, [2]=2L)
-
-          school(code=u''eng'', [1]=8L, [2]=4L)
-
-          school(code=u''la'', [1]=9L, [2]=6L)
-
-          school(code=u''mus'', [1]=0L, [2]=4L)
-
-          school(code=u''ns'', [1]=6L, [2]=4L)
-
-          school(code=u''ph'', [1]=1L, [2]=0L)
-
-          school(code=u''sc'', [1]=0L, [2]=0L)
-
+        stdout: |
+          URI: /school{code, count(program), count(department)}
+          school(code=u'art', [1]=3L, [2]=1L)
+          school(code=u'bus', [1]=6L, [2]=3L)
+          school(code=u'edu', [1]=7L, [2]=2L)
+          school(code=u'eng', [1]=8L, [2]=4L)
+          school(code=u'la', [1]=9L, [2]=6L)
+          school(code=u'mus', [1]=0L, [2]=4L)
+          school(code=u'ns', [1]=6L, [2]=4L)
+          school(code=u'ph', [1]=1L, [2]=0L)
+          school(code=u'sc', [1]=0L, [2]=0L)
 
           URI: /school{name, count(program)}?code=$school_code
-
-          $school_code: ''bus''
-
+          $school_code: 'bus'
           School of Business: 6
-
 
           URI: /school{name, num_prog:=count(program)}?num_prog>=$min_prog&num_prog<=$max_prog
-
           $min_prog: 6
-
           $max_prog: 8
-
           School of Business: 6
-
           College of Education: 7
-
           School of Engineering: 8
-
           School of Natural Sciences: 6
 
-
           URI: /school?campus==$campus
-
           $campus: None
-
-          school(code=u''ph'', name=u''Public Honorariums'', campus=None)
-
-          school(code=u''sc'', name=u''School of Continuing Studies'', campus=None)
-
+          school(code=u'ph', name=u'Public Honorariums', campus=None)
+          school(code=u'sc', name=u'School of Continuing Studies', campus=None)
 
           URI: /school?campus=$campus
+          $campus: ['north', 'south']
+          school(code=u'bus', name=u'School of Business', campus=u'south')
+          school(code=u'eng', name=u'School of Engineering', campus=u'north')
+          school(code=u'mus', name=u'School of Music & Dance', campus=u'south')
 
-          $campus: [''north'', ''south'']
-
-          school(code=u''bus'', name=u''School of Business'', campus=u''south'')
-
-          school(code=u''eng'', name=u''School of Engineering'', campus=u''north'')
-
-          school(code=u''mus'', name=u''School of Music & Dance'', campus=u''south'')
-
-
-          URI: /{$untyped, $selector, $boolean, $integer, $float, $decimal, $date,
-          $time, $datetime}
-
-          $untyped: ''HTSQL''
-
-          $selector: [''HTTP'', ''SQL'']
-
+          URI: /{$untyped, $selector, $boolean, $integer, $float, $decimal, $date, $time, $datetime}
+          $untyped: 'HTSQL'
+          $selector: ['HTTP', 'SQL']
           $boolean: True
-
           $integer: 3571
-
           $float: -0.57721
-
-          $decimal: Decimal(''0.875'')
-
+          $decimal: Decimal('0.875')
           $date: datetime.date(2010, 4, 15)
-
           $time: datetime.time(20, 3)
-
           $datetime: datetime.datetime(2010, 4, 15, 20, 3)
-
-          Record([0]=u''HTSQL'', [1]=Record([0]=u''HTTP'', [1]=u''SQL''), [2]=True,
-          [3]=3571, [4]=-0.57721, [5]=Decimal(''0.875''), [6]=datetime.date(2010,
-          4, 15), [7]=datetime.time(20, 3), [8]=datetime.datetime(2010, 4, 15, 20,
-          3))
-
+          Record([0]=u'HTSQL', [1]=Record([0]=u'HTTP', [1]=u'SQL'), [2]=True, [3]=3571, [4]=-0.57721, [5]=Decimal('0.875'), [6]=datetime.date(2010, 4, 15), [7]=datetime.time(20, 3), [8]=datetime.datetime(2010, 4, 15, 20, 3))
 
           URI: /meta(/link?table.name=$table_name)
-
-          $table_name: ''school''
-
-          link(table_name=u''school'', name=u''department'', is_singular=False, target_name=u''department'',
-          reverse_name=u''school'')
-
-          link(table_name=u''school'', name=u''program'', is_singular=False, target_name=u''program'',
-          reverse_name=u''school'')
-
+          $table_name: 'school'
+          link(table_name=u'school', name=u'department', is_singular=False, target_name=u'department', reverse_name=u'school')
+          link(table_name=u'school', name=u'program', is_singular=False, target_name=u'program', reverse_name=u'school')
 
           URI: /school
-
-          school(code=u''art'', name=u''School of Art & Design'', campus=u''old'')
-
-          school(code=u''bus'', name=u''School of Business'', campus=u''south'')
-
-          school(code=u''edu'', name=u''College of Education'', campus=u''old'')
-
-'
+          school(code=u'art', name=u'School of Art & Design', campus=u'old')
+          school(code=u'bus', name=u'School of Business', campus=u'south')
+          school(code=u'edu', name=u'College of Education', campus=u'old')

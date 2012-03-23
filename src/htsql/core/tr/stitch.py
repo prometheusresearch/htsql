@@ -581,7 +581,14 @@ def arrange(flow, with_strong=True, with_weak=True):
     `with_weak` (Boolean)
         If set, include implicit flow ordering.
     """
-    return list(Arrange.__invoke__(flow, with_strong, with_weak))
+    order = []
+    duplicates = set()
+    for code, direction in Arrange.__invoke__(flow, with_strong, with_weak):
+        if code in duplicates:
+            continue
+        order.append((code, direction))
+        duplicates.add(code)
+    return order
 
 
 def spread(flow):

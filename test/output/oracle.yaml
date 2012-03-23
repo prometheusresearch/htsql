@@ -27112,6 +27112,41 @@ tests:
                                 ^^^^^^^^^^^^^^^^^^
       - id: known-issues
         tests:
+        - uri: /school.sort(code-).limit(10)
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | school                                        |
+             +------+-------------------------------+--------+
+             | code | name                          | campus |
+            -+------+-------------------------------+--------+-
+             | sc   | School of Continuing Studies  |        |
+             | ph   | Public Honorariums            |        |
+             | ns   | School of Natural Sciences    | old    |
+             | mus  | School of Music & Dance       | south  |
+             | la   | School of Arts and Humanities | old    |
+             | eng  | School of Engineering         | north  |
+             | edu  | College of Education          | old    |
+             | bus  | School of Business            | south  |
+             | art  | School of Art & Design        | old    |
+
+             ----
+             /school.sort(code-).limit(10)
+             SELECT "SCHOOL"."CODE",
+                    "SCHOOL"."NAME",
+                    "SCHOOL"."CAMPUS"
+             FROM (SELECT "SCHOOL"."CODE",
+                          "SCHOOL"."NAME",
+                          "SCHOOL"."CAMPUS"
+                   FROM (SELECT "SCHOOL"."CODE",
+                                "SCHOOL"."NAME",
+                                "SCHOOL"."CAMPUS"
+                         FROM "SCHOOL"
+                         ORDER BY 1 DESC) "SCHOOL"
+                   WHERE (ROWNUM < 11)) "SCHOOL"
+             ORDER BY 1 DESC
         - uri: /school.true()
           status: 200 OK
           headers:
@@ -34651,12 +34686,11 @@ tests:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | department  |
-             +-------------+
-             | name        |
-            -+-------------+-
-             | Art History |
-             | Studio Art  |
+             | department |
+             +------------+
+             | name       |
+            -+------------+-
+             | Studio Art |
 
              ----
              /(school?code='art').department{name}
