@@ -25,8 +25,8 @@ from .frame import (Clause, Frame, TableFrame, BranchFrame, NestedFrame,
                     FormulaPhrase, Anchor, LeadingAnchor)
 from .signature import (Signature, isformula, IsEqualSig, IsTotallyEqualSig,
                         IsInSig, IsNullSig, IfNullSig, NullIfSig, CompareSig,
-                        AndSig, OrSig, NotSig, SortDirectionSig, ToPredicateSig,
-                        FromPredicateSig)
+                        AndSig, OrSig, NotSig, SortDirectionSig, RowNumberSig,
+                        ToPredicateSig, FromPredicateSig)
 from .plan import Plan, Statement
 import StringIO
 import re
@@ -1962,6 +1962,21 @@ class DumpSortDirection(DumpBySignature):
         # this adapter.
         self.format("{base} {direction:switch{ASC|DESC}}", self.arguments,
                     self.signature)
+
+
+class DumpRowNumber(DumpBySignature):
+
+    adapt(RowNumberSig)
+
+    def __call__(self):
+        self.write(u"ROW_NUMBER() OVER (")
+        if self.phrase.partition:
+            self.format("PARTITION BY {partition:union{, }}", self.arguments)
+            if self.phrase.order:
+                self.write(u" ")
+        if self.phrase.order:
+            self.format("ORDER BY {order:union{, }}", self.arguments)
+        self.write(u")")
 
 
 class DumpToPredicate(DumpBySignature):

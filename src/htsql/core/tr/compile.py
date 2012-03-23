@@ -13,14 +13,15 @@ This module implements the compiling process.
 
 from ..util import maybe, listof
 from ..adapter import Adapter, adapt, adapt_many
-from ..domain import BooleanDomain
+from ..domain import BooleanDomain, IntegerDomain
 from .error import CompileError
 from .coerce import coerce
-from .signature import IsNullSig, AndSig
+from .signature import (IsNullSig, AndSig, CompareSig,
+                        SortDirectionSig, RowNumberSig)
 from .flow import (Expression, QueryExpr, SegmentCode, Code, LiteralCode,
                    FormulaCode, Flow, RootFlow, ScalarFlow, TableFlow,
-                   QuotientFlow, ComplementFlow, MonikerFlow,
-                   ForkedFlow, LinkedFlow, FilteredFlow, OrderedFlow,
+                   QuotientFlow, ComplementFlow, MonikerFlow, ForkedFlow,
+                   LinkedFlow, ClippedFlow, FilteredFlow, OrderedFlow,
                    Unit, ScalarUnit, ColumnUnit, AggregateUnit, CorrelatedUnit,
                    KernelUnit, CoveringUnit)
 from .term import (Term, ScalarTerm, TableTerm, FilterTerm, JoinTerm,
@@ -1288,7 +1289,10 @@ class CompileComplement(CompileFlow):
 class CompileCovering(CompileFlow):
 
     # The implementation is shared by these three covering flows.
-    adapt_many(MonikerFlow, ForkedFlow, LinkedFlow)
+    adapt_many(MonikerFlow,
+               ForkedFlow,
+               LinkedFlow,
+               ClippedFlow)
 
     def __call__(self):
         # Moniker, forked and linked flows are represented as a seed term
@@ -1322,6 +1326,15 @@ class CompileCovering(CompileFlow):
         # For the linked flow, it must export the linking expressions.
         if isinstance(self.flow, LinkedFlow):
             codes += [rop for lop, rop in self.flow.images]
+        # A clipped flow must order itself (but only up to the base).
+        if isinstance(self.flow, ClippedFlow):
+            order = []
+            for code, direction in arrange(self.flow.seed):
+                if all(self.flow.base.spans(unit.flow)
+                       for unit in code.units):
+                    continue
+                codes.append(code)
+                order.append((code, direction))
         # Any companion expressions must also be included.
         codes += self.flow.companions
         seed_term = self.state.inject(seed_term, codes)
@@ -1381,6 +1394,17 @@ class CompileCovering(CompileFlow):
             # Append regular joints.
             joints += tie(self.flow)
 
+        # Slice a clipped flow.
+        if isinstance(self.flow, ClippedFlow):
+            partition = []
+            if not is_regular:
+                partition += [joint.rop for joint in seed_joints]
+            partition += [joint.rop for joint in tie(self.flow.ground)]
+            if partition:
+                seed_term = self.clip(seed_term, order, partition)
+            else:
+                seed_term = self.clip_root(seed_term, order)
+
         # Populate units exported by the covering term.
         units = []
 
@@ -1429,6 +1453,52 @@ class CompileCovering(CompileFlow):
         # Join the terms.
         return JoinTerm(self.state.tag(), lkid, rkid, joints,
                         is_left, is_right, self.flow, lkid.baseline, routes)
+
+    def clip(self, term, order, partition):
+        ops = []
+        for code, direction in order:
+            op = FormulaCode(SortDirectionSig(direction=direction),
+                             code.domain, code.binding, base=code)
+            ops.append(op)
+        row_number_code = FormulaCode(RowNumberSig(), coerce(IntegerDomain()),
+                                      self.flow.binding,
+                                      partition=partition, order=ops)
+        row_number_unit = ScalarUnit(row_number_code, term.flow.base,
+                                     term.flow.binding)
+        tag = self.state.tag()
+        routes = term.routes.copy()
+        routes[row_number_unit] = tag
+        term = PermanentTerm(tag, term, term.flow, term.baseline, routes)
+        left_bound = 1
+        if self.flow.offset is not None:
+            left_bound = self.flow.offset+1
+        right_bound = left_bound+1
+        if self.flow.limit is not None:
+            right_bound = left_bound+self.flow.limit
+        left_bound_code = LiteralCode(left_bound, coerce(IntegerDomain()),
+                                      term.flow.binding)
+        right_bound_code = LiteralCode(right_bound, coerce(IntegerDomain()),
+                                       term.flow.binding)
+        left_filter = FormulaCode(CompareSig('>='), coerce(BooleanDomain()),
+                                  term.flow.binding,
+                                  lop=row_number_unit, rop=left_bound_code)
+        right_filter = FormulaCode(CompareSig('<'), coerce(BooleanDomain()),
+                                   term.flow.binding,
+                                   lop=row_number_unit, rop=right_bound_code)
+        filter = FormulaCode(AndSig(), coerce(BooleanDomain()),
+                             term.flow.binding,
+                             ops=[left_filter, right_filter])
+        return FilterTerm(self.state.tag(), term, filter,
+                          term.flow, term.baseline, term.routes.copy())
+
+
+    def clip_root(self, term, order):
+        limit = self.flow.limit
+        if limit is None:
+            limit = 1
+        offset = self.flow.offset
+        return OrderTerm(self.state.tag(), term, order, limit, offset,
+                         term.flow, term.baseline, term.routes.copy())
 
 
 class CompileFiltered(CompileFlow):

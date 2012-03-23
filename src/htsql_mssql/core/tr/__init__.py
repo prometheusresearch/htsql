@@ -3,6 +3,6 @@
 #
 
 
-from . import compile, dump, encode, reduce, signature
+from . import compile, dump, encode, reduce
 
 

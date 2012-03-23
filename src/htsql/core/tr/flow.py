@@ -1882,7 +1882,8 @@ class CoveringUnit(CompoundUnit):
         assert isinstance(flow, (ComplementFlow,
                                  MonikerFlow,
                                  ForkedFlow,
-                                 LinkedFlow))
+                                 LinkedFlow,
+                                 ClippedFlow))
         super(CoveringUnit, self).__init__(
                     code=code,
                     flow=flow,

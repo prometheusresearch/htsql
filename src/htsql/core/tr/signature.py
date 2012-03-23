@@ -444,6 +444,14 @@ class SortDirectionSig(Signature):
         return (self.direction,)
 
 
+class RowNumberSig(Signature):
+
+    slots = [
+            Slot('partition', is_mandatory=False, is_singular=False),
+            Slot('order', is_mandatory=False, is_singular=False),
+    ]
+
+
 class ToPredicateSig(UnarySig):
     pass
 

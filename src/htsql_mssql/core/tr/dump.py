@@ -26,7 +26,6 @@ from htsql.core.tr.fn.dump import (DumpRound, DumpRoundTo, DumpTrunc,
                                    DumpDateIncrement, DumpDateDecrement,
                                    DumpDateTimeIncrement,
                                    DumpDateTimeDecrement, DumpDateDifference)
-from .signature import RowNumberSig
 import math
 
 
@@ -87,15 +86,6 @@ class MSSQLDumpToPredicate(DumpToPredicate):
 
     def __call__(self):
         self.format("({op} <> 0)", self.arguments)
-
-
-class MSSQLDumpRowNumber(DumpBySignature):
-
-    adapt(RowNumberSig)
-
-    def __call__(self):
-        self.format("ROW_NUMBER() OVER (ORDER BY {ops:union{, }})",
-                    self.arguments)
 
 
 class MSSQLDumpBoolean(DumpBoolean):

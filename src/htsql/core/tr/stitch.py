@@ -17,7 +17,8 @@ from .error import CompileError
 from .syntax import IdentifierSyntax
 from .flow import (Flow, ScalarFlow, TableFlow, FiberTableFlow, QuotientFlow,
                    ComplementFlow, MonikerFlow, ForkedFlow, LinkedFlow,
-                   OrderedFlow, ColumnUnit, KernelUnit, CoveringUnit)
+                   ClippedFlow, OrderedFlow, ColumnUnit, KernelUnit,
+                   CoveringUnit)
 from .term import Joint
 
 
@@ -367,7 +368,11 @@ class TieQuotient(Tie):
 class ArrangeCovering(Arrange):
 
     # The implementation is shared by all covering flows.
-    adapt_many(ComplementFlow, MonikerFlow, ForkedFlow, LinkedFlow)
+    adapt_many(ComplementFlow,
+               MonikerFlow,
+               ForkedFlow,
+               LinkedFlow,
+               ClippedFlow)
 
     def __call__(self):
         # Start with the parent ordering.
@@ -400,7 +405,11 @@ class ArrangeCovering(Arrange):
 class SpreadCovering(Spread):
 
     # The implementation is shared by all covering flows.
-    adapt_many(ComplementFlow, MonikerFlow, ForkedFlow, LinkedFlow)
+    adapt_many(ComplementFlow,
+               MonikerFlow,
+               ForkedFlow,
+               LinkedFlow,
+               ClippedFlow)
 
     def __call__(self):
         # Native units of the complement are inherited from the seed flow.
@@ -414,7 +423,11 @@ class SpreadCovering(Spread):
 class SewCovering(Sew):
 
     # The implementation is shared by all covering flows.
-    adapt_many(ComplementFlow, MonikerFlow, LinkedFlow, ForkedFlow)
+    adapt_many(ComplementFlow,
+               MonikerFlow,
+               LinkedFlow,
+               ForkedFlow,
+               ClippedFlow)
 
     def __call__(self):
         # To sew two terms representing a covering flow, we sew all axial flows
@@ -486,6 +499,18 @@ class TieMoniker(Tie):
         else:
             joints = tie(flow.ground)
         # Wrap the ground joints.
+        for joint in joints:
+            rop = CoveringUnit(joint.rop, flow, joint.rop.binding)
+            yield joint.clone(rop=rop)
+
+
+class TieClipped(Tie):
+
+    adapt(ClippedFlow)
+
+    def __call__(self):
+        flow = self.flow.inflate()
+        joints = tie(flow.ground)
         for joint in joints:
             rop = CoveringUnit(joint.rop, flow, joint.rop.binding)
             yield joint.clone(rop=rop)

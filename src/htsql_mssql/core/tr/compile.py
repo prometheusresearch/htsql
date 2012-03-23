@@ -7,8 +7,8 @@ from htsql.core.domain import BooleanDomain, IntegerDomain
 from htsql.core.tr.term import PermanentTerm, FilterTerm
 from htsql.core.tr.flow import LiteralCode, FormulaCode, ScalarUnit
 from htsql.core.tr.coerce import coerce
-from htsql.core.tr.signature import CompareSig, AndSig, SortDirectionSig
-from .signature import RowNumberSig
+from htsql.core.tr.signature import (CompareSig, AndSig, SortDirectionSig,
+                                     RowNumberSig)
 from htsql.core.tr.compile import CompileOrdered
 from htsql.core.tr.stitch import arrange, spread
 
@@ -28,7 +28,8 @@ class MSSQLCompileOrdered(CompileOrdered):
                              code.domain, code.binding, base=code)
             ops.append(op)
         row_number_code = FormulaCode(RowNumberSig(), coerce(IntegerDomain()),
-                                      self.flow.binding, ops=ops)
+                                      self.flow.binding,
+                                      partition=[], order=ops)
         row_number_unit = ScalarUnit(row_number_code, self.flow.base,
                                      self.flow.binding)
         tag = self.state.tag()
