@@ -298,6 +298,31 @@ tests:
     - uri: /school.@school
     - uri: /@school.@department.@program.limit(1)
 
+  - title: Top
+    ifndef: [sqlite, mysql]
+    tests:
+    - uri: /school :top
+    - uri: /school :top(3)
+    - uri: /school :top(3,2)
+    - uri: /school{code, count(department)-} :top
+      skip: true
+    - uri: /school{code, count(department)-} :top(3)
+      skip: true
+    - uri: /school{code, count(department)-} :top(3,2)
+      skip: true
+    - uri: /top(school.sort(count(department)-)){code, count(department)}
+    - uri: /top(school.sort(count(department)-),3){code, count(department)}
+    - uri: /top(school.sort(count(department)-),3,2){code, count(department)}
+    - uri: /school{name, count(program),
+                   top(program){title, count(student)}}?campus='old'
+    - uri: /school{name, count(program),
+                   /top(program,3){title, count(student)}}?campus='old'
+    - uri: /school{name, count(program),
+            /top(program,3,2){title, count(student)}}?campus='old'
+    - uri: /school^campus{*, top(^)}
+    - uri: /class^{year, season}
+                {*, /top(^.sort(count(enrollment)-),3).course{title}}
+
   - title: Table Expressions
     tests:
     - uri: /(school?code='art').department
