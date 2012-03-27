@@ -954,7 +954,7 @@ class ReduceIsIn(ReduceBySignature):
         # Reduce:
         #   x={y} => x=y
         if len(rops) == 1:
-            rop = [rops]
+            [rop] = rops
             signature = IsEqualSig(self.signature.polarity)
             is_nullable = (lop.is_nullable or rop.is_nullable)
             return FormulaPhrase(signature, self.domain, is_nullable,

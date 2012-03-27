@@ -303,7 +303,7 @@ tests:
     - uri: /@school.@department.@program.limit(1)
 
   - title: Top
-    ifndef: [sqlite, mysql]
+    ifndef: [mysql]
     tests:
     - uri: /school :top
     - uri: /school :top(3)
@@ -326,6 +326,7 @@ tests:
     - uri: /school^campus{*, top(^)}
     - uri: /class^{year, season}
                 {*, /top(^.sort(count(enrollment)-),3).course{title}}
+      ifndef: sqlite    # Too slow.
 
   - title: Table Expressions
     tests:
@@ -522,6 +523,8 @@ tests:
 
 - title: Known issues
   tests:
+  # A bug in reducing IN phrase.
+  - uri: /school?code={'art','art'}
   # A bug in collapsing two frames with ORDER BY clauses.
   - uri: /school.sort(code-).limit(10)
   # Should produce a row for each record of `school`.

@@ -27430,6 +27430,26 @@ tests:
                                 ^^^^^^^^^^^^^^^^^^
       - id: known-issues
         tests:
+        - uri: /school?code={'art','art'}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | school                                 |
+             +------+------------------------+--------+
+             | code | name                   | campus |
+            -+------+------------------------+--------+-
+             | art  | School of Art & Design | old    |
+
+             ----
+             /school?code={'art','art'}
+             SELECT [school].[code],
+                    [school].[name],
+                    [school].[campus]
+             FROM [ad].[school]
+             WHERE ([school].[code] = 'art')
+             ORDER BY 1 ASC
         - uri: /school.sort(code-).limit(10)
           status: 200 OK
           headers:

@@ -22706,6 +22706,545 @@ tests:
                     CROSS JOIN "program"
                ORDER BY "school"."code" ASC, "department"."code" ASC, 1 ASC, 2 ASC
                LIMIT 1
+        - id: top
+          tests:
+          - uri: /school :top
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school:top                             |
+               +------+------------------------+--------+
+               | code | name                   | campus |
+              -+------+------------------------+--------+-
+               | art  | School of Art & Design | old    |
+
+               ----
+               /school:top
+               SELECT "school"."code",
+                      "school"."name",
+                      "school"."campus"
+               FROM (SELECT "school"."code",
+                            "school"."name",
+                            "school"."campus"
+                     FROM "school"
+                     ORDER BY 1 ASC
+                     LIMIT 1) AS "school"
+               ORDER BY 1 ASC
+          - uri: /school :top(3)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school:top(3)                          |
+               +------+------------------------+--------+
+               | code | name                   | campus |
+              -+------+------------------------+--------+-
+               | art  | School of Art & Design | old    |
+               | bus  | School of Business     | south  |
+               | edu  | College of Education   | old    |
+
+               ----
+               /school:top(3)
+               SELECT "school"."code",
+                      "school"."name",
+                      "school"."campus"
+               FROM (SELECT "school"."code",
+                            "school"."name",
+                            "school"."campus"
+                     FROM "school"
+                     ORDER BY 1 ASC
+                     LIMIT 3) AS "school"
+               ORDER BY 1 ASC
+          - uri: /school :top(3,2)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school:top(3,2)                               |
+               +------+-------------------------------+--------+
+               | code | name                          | campus |
+              -+------+-------------------------------+--------+-
+               | edu  | College of Education          | old    |
+               | eng  | School of Engineering         | north  |
+               | la   | School of Arts and Humanities | old    |
+
+               ----
+               /school:top(3,2)
+               SELECT "school"."code",
+                      "school"."name",
+                      "school"."campus"
+               FROM (SELECT "school"."code",
+                            "school"."name",
+                            "school"."campus"
+                     FROM "school"
+                     ORDER BY 1 ASC
+                     LIMIT 3
+                     OFFSET 2) AS "school"
+               ORDER BY 1 ASC
+          - uri: /top(school.sort(count(department)-)){code, count(department)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | top(school.sort(count(department)-)) |
+               +------------+-------------------------+
+               | code       | count(department)       |
+              -+------------+-------------------------+-
+               | la         |                       6 |
+
+               ----
+               /top(school.sort(count(department)-)){code,count(department)}
+               SELECT "school_1"."code",
+                      COALESCE("department"."count", 0)
+               FROM (SELECT "school"."code"
+                     FROM "school"
+                          LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                                  "department"."school_code"
+                                           FROM "department"
+                                           GROUP BY 2) AS "department"
+                                          ON ("school"."code" = "department"."school_code")
+                     ORDER BY COALESCE("department"."count", 0) DESC, 1 ASC
+                     LIMIT 1) AS "school_1"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "department"."school_code"
+                                     FROM "department"
+                                     GROUP BY 2) AS "department"
+                                    ON ("school_1"."code" = "department"."school_code")
+                    INNER JOIN (SELECT COALESCE("department"."count", 0) AS "count",
+                                       "school"."code"
+                                FROM "school"
+                                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                                             "department"."school_code"
+                                                      FROM "department"
+                                                      GROUP BY 2) AS "department"
+                                                     ON ("school"."code" = "department"."school_code")
+                                ORDER BY 1 DESC, 2 ASC
+                                LIMIT 1) AS "school_2"
+                               ON ("school_1"."code" = "school_2"."code")
+               ORDER BY "school_2"."count" DESC, 1 ASC
+          - uri: /top(school.sort(count(department)-),3){code, count(department)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | top(school.sort(count(department)-),3) |
+               +-------------+--------------------------+
+               | code        | count(department)        |
+              -+-------------+--------------------------+-
+               | la          |                        6 |
+               | eng         |                        4 |
+               | mus         |                        4 |
+
+               ----
+               /top(school.sort(count(department)-),3){code,count(department)}
+               SELECT "school_1"."code",
+                      COALESCE("department"."count", 0)
+               FROM (SELECT "school"."code"
+                     FROM "school"
+                          LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                                  "department"."school_code"
+                                           FROM "department"
+                                           GROUP BY 2) AS "department"
+                                          ON ("school"."code" = "department"."school_code")
+                     ORDER BY COALESCE("department"."count", 0) DESC, 1 ASC
+                     LIMIT 3) AS "school_1"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "department"."school_code"
+                                     FROM "department"
+                                     GROUP BY 2) AS "department"
+                                    ON ("school_1"."code" = "department"."school_code")
+                    INNER JOIN (SELECT COALESCE("department"."count", 0) AS "count",
+                                       "school"."code"
+                                FROM "school"
+                                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                                             "department"."school_code"
+                                                      FROM "department"
+                                                      GROUP BY 2) AS "department"
+                                                     ON ("school"."code" = "department"."school_code")
+                                ORDER BY 1 DESC, 2 ASC
+                                LIMIT 3) AS "school_2"
+                               ON ("school_1"."code" = "school_2"."code")
+               ORDER BY "school_2"."count" DESC, 1 ASC
+          - uri: /top(school.sort(count(department)-),3,2){code, count(department)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | top(school.sort(count(department)-),3,2) |
+               +--------------+---------------------------+
+               | code         | count(department)         |
+              -+--------------+---------------------------+-
+               | mus          |                         4 |
+               | ns           |                         4 |
+               | bus          |                         3 |
+
+               ----
+               /top(school.sort(count(department)-),3,2){code,count(department)}
+               SELECT "school_1"."code",
+                      COALESCE("department"."count", 0)
+               FROM (SELECT "school"."code"
+                     FROM "school"
+                          LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                                  "department"."school_code"
+                                           FROM "department"
+                                           GROUP BY 2) AS "department"
+                                          ON ("school"."code" = "department"."school_code")
+                     ORDER BY COALESCE("department"."count", 0) DESC, 1 ASC
+                     LIMIT 3
+                     OFFSET 2) AS "school_1"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "department"."school_code"
+                                     FROM "department"
+                                     GROUP BY 2) AS "department"
+                                    ON ("school_1"."code" = "department"."school_code")
+                    INNER JOIN (SELECT COALESCE("department"."count", 0) AS "count",
+                                       "school"."code"
+                                FROM "school"
+                                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                                             "department"."school_code"
+                                                      FROM "department"
+                                                      GROUP BY 2) AS "department"
+                                                     ON ("school"."code" = "department"."school_code")
+                                ORDER BY 1 DESC, 2 ASC
+                                LIMIT 3
+                                OFFSET 2) AS "school_2"
+                               ON ("school_1"."code" = "school_2"."code")
+               ORDER BY "school_2"."count" DESC, 1 ASC
+          - uri: /school{name, count(program), top(program){title, count(student)}}?campus='old'
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school                                                                                             |
+               +-------------------------------+----------------+---------------------------------------------------+
+               |                               |                | top(program)                                      |
+               |                               |                +----------------------------------+----------------+
+               | name                          | count(program) | title                            | count(student) |
+              -+-------------------------------+----------------+----------------------------------+----------------+-
+               | School of Art & Design        |              3 | Post Baccalaureate in Art        |             16 |
+               :                               :                : History                          :                :
+               | College of Education          |              7 | Master of Arts in Education      |             10 |
+               :                               :                : Leadership                       :                :
+               | School of Arts and Humanities |              9 | Master of Arts in English        |             13 |
+               | School of Natural Sciences    |              6 | Masters of Science in            |             13 |
+               :                               :                : Mathematics                      :                :
+
+               ----
+               /school{name,count(program),top(program){title,count(student)}}?campus='old'
+               SELECT "school"."name",
+                      COALESCE("program_1"."count", 0),
+                      "program_2"."program",
+                      "program_2"."title",
+                      "program_2"."count"
+               FROM "school"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "program"."school_code"
+                                     FROM "program"
+                                     GROUP BY 2) AS "program_1"
+                                    ON ("school"."code" = "program_1"."school_code")
+                    LEFT OUTER JOIN (SELECT 1 AS "program",
+                                            "program"."title",
+                                            COALESCE("student"."count", 0) AS "count",
+                                            "program"."school_code"
+                                     FROM "program"
+                                          LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                                                  "student"."school_code",
+                                                                  "student"."program_code"
+                                                           FROM "student"
+                                                           GROUP BY 2, 3) AS "student"
+                                                          ON (("program"."school_code" = "student"."school_code") AND ("program"."code" = "student"."program_code"))
+                                     WHERE (1 IN (SELECT (("program"."school_code" = "program_1"."school_code") AND ("program"."code" = "program_1"."code"))
+                                                  FROM "program" AS "program_1"
+                                                  WHERE ("program"."school_code" = "program_1"."school_code")
+                                                  ORDER BY "program_1"."school_code" ASC, "program_1"."code" ASC
+                                                  LIMIT 1))) AS "program_2"
+                                    ON ("school"."code" = "program_2"."school_code")
+               WHERE ("school"."campus" = 'old')
+               ORDER BY "school"."code" ASC
+          - uri: /school{name, count(program), /top(program,3){title, count(student)}}?campus='old'
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school                                                                                             |
+               +-------------------------------+----------------+---------------------------------------------------+
+               |                               |                | top(program,3)                                    |
+               |                               |                +----------------------------------+----------------+
+               | name                          | count(program) | title                            | count(student) |
+              -+-------------------------------+----------------+----------------------------------+----------------+-
+               | School of Art & Design        |              3 | Post Baccalaureate in Art        |             16 |
+               :                               :                : History                          :                :
+               :                               :                | Bachelor of Arts in Art History  |             20 |
+               :                               :                | Bachelor of Arts in Studio Art   |             26 |
+               | College of Education          |              7 | Master of Arts in Education      |             10 |
+               :                               :                : Leadership                       :                :
+               :                               :                | M.S. in Education                |             11 |
+               :                               :                | Master of Arts in Literacy       |             15 |
+               :                               :                : Education                        :                :
+               | School of Arts and Humanities |              9 | Master of Arts in English        |             13 |
+               :                               :                | Master of Arts in Modern         |             10 |
+               :                               :                : Languages                        :                :
+               :                               :                | Master of Arts in Science        |             11 |
+               :                               :                : Teaching                         :                :
+               | School of Natural Sciences    |              6 | Masters of Science in            |             13 |
+               :                               :                : Mathematics                      :                :
+               :                               :                | Doctorate of Science in          |             10 |
+               :                               :                : Mathematics                      :                :
+               :                               :                | Bachelor of Science in Astronomy |              5 |
+
+               ----
+               /school{name,count(program),/top(program,3){title,count(student)}}?campus='old'
+               SELECT "school"."name",
+                      COALESCE("program"."count", 0),
+                      "school"."code"
+               FROM "school"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "program"."school_code"
+                                     FROM "program"
+                                     GROUP BY 2) AS "program"
+                                    ON ("school"."code" = "program"."school_code")
+               WHERE ("school"."campus" = 'old')
+               ORDER BY 3 ASC
+
+                 SELECT "program"."title",
+                        COALESCE("student"."count", 0),
+                        "school"."code"
+                 FROM "school"
+                      INNER JOIN (SELECT "program"."title",
+                                         "program"."school_code",
+                                         "program"."code"
+                                  FROM "program"
+                                  WHERE (1 IN (SELECT (("program"."school_code" = "program_1"."school_code") AND ("program"."code" = "program_1"."code"))
+                                               FROM "program" AS "program_1"
+                                               WHERE ("program"."school_code" = "program_1"."school_code")
+                                               ORDER BY "program_1"."school_code" ASC, "program_1"."code" ASC
+                                               LIMIT 3))) AS "program"
+                                 ON ("school"."code" = "program"."school_code")
+                      LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                              "student"."school_code",
+                                              "student"."program_code"
+                                       FROM "student"
+                                       GROUP BY 2, 3) AS "student"
+                                      ON (("program"."school_code" = "student"."school_code") AND ("program"."code" = "student"."program_code"))
+                 WHERE ("school"."campus" = 'old')
+                 ORDER BY 3 ASC, "program"."school_code" ASC, "program"."code" ASC
+          - uri: /school{name, count(program), /top(program,3,2){title, count(student)}}?campus='old'
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school                                                                                             |
+               +-------------------------------+----------------+---------------------------------------------------+
+               |                               |                | top(program,3,2)                                  |
+               |                               |                +----------------------------------+----------------+
+               | name                          | count(program) | title                            | count(student) |
+              -+-------------------------------+----------------+----------------------------------+----------------+-
+               | School of Art & Design        |              3 | Bachelor of Arts in Studio Art   |             26 |
+               | College of Education          |              7 | Master of Arts in Literacy       |             15 |
+               :                               :                : Education                        :                :
+               :                               :                | Master of Arts in Teaching       |             13 |
+               :                               :                | Certificate in Science Teaching  |              8 |
+               | School of Arts and Humanities |              9 | Master of Arts in Science        |             11 |
+               :                               :                : Teaching                         :                :
+               :                               :                | Science Writing                  |              5 |
+               :                               :                | Bachelor of Arts in English      |              8 |
+               | School of Natural Sciences    |              6 | Bachelor of Science in Astronomy |              5 |
+               :                               :                | Bachelor of Science in Chemistry |             11 |
+               :                               :                | Bachelor of Science in           |             13 |
+               :                               :                : Mathematics                      :                :
+
+               ----
+               /school{name,count(program),/top(program,3,2){title,count(student)}}?campus='old'
+               SELECT "school"."name",
+                      COALESCE("program"."count", 0),
+                      "school"."code"
+               FROM "school"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "program"."school_code"
+                                     FROM "program"
+                                     GROUP BY 2) AS "program"
+                                    ON ("school"."code" = "program"."school_code")
+               WHERE ("school"."campus" = 'old')
+               ORDER BY 3 ASC
+
+                 SELECT "program"."title",
+                        COALESCE("student"."count", 0),
+                        "school"."code"
+                 FROM "school"
+                      INNER JOIN (SELECT "program"."title",
+                                         "program"."school_code",
+                                         "program"."code"
+                                  FROM "program"
+                                  WHERE (1 IN (SELECT (("program"."school_code" = "program_1"."school_code") AND ("program"."code" = "program_1"."code"))
+                                               FROM "program" AS "program_1"
+                                               WHERE ("program"."school_code" = "program_1"."school_code")
+                                               ORDER BY "program_1"."school_code" ASC, "program_1"."code" ASC
+                                               LIMIT 3
+                                               OFFSET 2))) AS "program"
+                                 ON ("school"."code" = "program"."school_code")
+                      LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                              "student"."school_code",
+                                              "student"."program_code"
+                                       FROM "student"
+                                       GROUP BY 2, 3) AS "student"
+                                      ON (("program"."school_code" = "student"."school_code") AND ("program"."code" = "student"."program_code"))
+                 WHERE ("school"."campus" = 'old')
+                 ORDER BY 3 ASC, "program"."school_code" ASC, "program"."code" ASC
+          - uri: /school^campus{*, top(^)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school^campus                                   |
+               +--------+----------------------------------------+
+               |        | top(^)                                 |
+               |        +------+------------------------+--------+
+               | campus | code | name                   | campus |
+              -+--------+------+------------------------+--------+-
+               | north  | eng  | School of Engineering  | north  |
+               | old    | art  | School of Art & Design | old    |
+               | south  | bus  | School of Business     | south  |
+
+               ----
+               /school^campus{*,top(^)}
+               SELECT "school_1"."campus",
+                      "school_2"."code",
+                      "school_2"."name",
+                      "school_2"."campus"
+               FROM (SELECT "school"."campus"
+                     FROM "school"
+                     WHERE ("school"."campus" IS NOT NULL)
+                     GROUP BY 1) AS "school_1"
+                    INNER JOIN (SELECT "school"."code",
+                                       "school"."name",
+                                       "school"."campus"
+                                FROM "school"
+                                WHERE ("school"."code" IN (SELECT "school_1"."code"
+                                                           FROM "school" AS "school_1"
+                                                           WHERE ("school"."campus" = "school_1"."campus")
+                                                           ORDER BY 1 ASC
+                                                           LIMIT 1))) AS "school_2"
+                               ON ("school_1"."campus" = "school_2"."campus")
+               ORDER BY 1 ASC
+          - uri: /class^{year, season} {*, /top(^.sort(count(enrollment)-),3).course{title}}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | class^{year,season}                              |
+               +------+--------+----------------------------------+
+               |      |        | course                           |
+               |      |        +----------------------------------+
+               | year | season | title                            |
+              -+------+--------+----------------------------------+-
+               | 2007 | fall   | College Algebra I                |
+               :      :        | History of Art Criticism I       |
+               :      :        | Language Basics                  |
+               | 2007 | spring | College Algebra II               |
+               :      :        | Introduction to Education        |
+               :      :        | Islam History                    |
+               | 2008 | fall   | College Algebra I                |
+               :      :        | Art in Therapy                   |
+               :      :        | History of Art Criticism I       |
+               | 2008 | spring | College Algebra II               |
+               :      :        | History of Computing             |
+               :      :        | Asian Architecture               |
+               | 2009 | fall   | Museum and Gallery Management    |
+               :      :        | Introduction to Biomedical       |
+               :      :        : Engineering                      :
+               :      :        | Bioengineering Seminar           |
+               | 2009 | spring | Introduction to Education        |
+               :      :        | Historical Perspective on the    |
+               :      :        : Constitution                     :
+               :      :        | College Algebra II               |
+               | 2010 | fall   | History of Art Criticism I       |
+               :      :        | Arts of Asia                     |
+               :      :        | Contemporary Latin American Art  |
+               | 2010 | spring | Practical Bookkeeping            |
+               :      :        | Asian Architecture               |
+               :      :        | Materials and Construction in    |
+               :      :        : European Art                     :
+
+               ----
+               /class^{year,season}{*,/top(^.sort(count(enrollment)-),3).course{title}}
+               SELECT "class"."year",
+                      "class"."season"
+               FROM "class"
+               WHERE ("class"."year" IS NOT NULL)
+                     AND ("class"."season" IS NOT NULL)
+               GROUP BY 1, 2
+               ORDER BY 1 ASC, 2 ASC
+
+                 SELECT "course"."title",
+                        "class_1"."year",
+                        "class_1"."season"
+                 FROM (SELECT "class"."year",
+                              "class"."season"
+                       FROM "class"
+                       WHERE ("class"."year" IS NOT NULL)
+                             AND ("class"."season" IS NOT NULL)
+                       GROUP BY 1, 2) AS "class_1"
+                      INNER JOIN (SELECT "class"."department_code",
+                                         "class"."course_no",
+                                         "class"."year",
+                                         "class"."season",
+                                         "class"."section"
+                                  FROM "class"
+                                       LEFT OUTER JOIN (SELECT "enrollment"."class_seq"
+                                                        FROM "enrollment"
+                                                        GROUP BY 1) AS "enrollment"
+                                                       ON ("class"."class_seq" = "enrollment"."class_seq")
+                                  WHERE (1 IN (SELECT (("class"."department_code" = "class_1"."department_code") AND ("class"."course_no" = "class_1"."course_no") AND ("class"."year" = "class_1"."year") AND ("class"."season" = "class_1"."season") AND ("class"."section" = "class_1"."section"))
+                                               FROM "class" AS "class_1"
+                                                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                                                            "enrollment"."class_seq"
+                                                                     FROM "enrollment"
+                                                                     GROUP BY 2) AS "enrollment_1"
+                                                                    ON ("class_1"."class_seq" = "enrollment_1"."class_seq")
+                                               WHERE ("class"."year" = "class_1"."year")
+                                                     AND ("class"."season" = "class_1"."season")
+                                               ORDER BY COALESCE("enrollment_1"."count", 0) DESC, "class_1"."department_code" ASC, "class_1"."course_no" ASC, "class_1"."year" ASC, "class_1"."season" ASC, "class_1"."section" ASC
+                                               LIMIT 3))) AS "class_2"
+                                 ON (("class_1"."year" = "class_2"."year") AND ("class_1"."season" = "class_2"."season"))
+                      INNER JOIN "course"
+                                 ON (("class_2"."department_code" = "course"."department_code") AND ("class_2"."course_no" = "course"."no"))
+                      INNER JOIN (SELECT COALESCE("enrollment"."count", 0) AS "count",
+                                         "class"."department_code",
+                                         "class"."course_no",
+                                         "class"."year",
+                                         "class"."season",
+                                         "class"."section"
+                                  FROM "class"
+                                       LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                                               "enrollment"."class_seq"
+                                                        FROM "enrollment"
+                                                        GROUP BY 2) AS "enrollment"
+                                                       ON ("class"."class_seq" = "enrollment"."class_seq")
+                                  WHERE (1 IN (SELECT (("class"."department_code" = "class_1"."department_code") AND ("class"."course_no" = "class_1"."course_no") AND ("class"."year" = "class_1"."year") AND ("class"."season" = "class_1"."season") AND ("class"."section" = "class_1"."section"))
+                                               FROM "class" AS "class_1"
+                                                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                                                            "enrollment"."class_seq"
+                                                                     FROM "enrollment"
+                                                                     GROUP BY 2) AS "enrollment_1"
+                                                                    ON ("class_1"."class_seq" = "enrollment_1"."class_seq")
+                                               WHERE ("class"."year" = "class_1"."year")
+                                                     AND ("class"."season" = "class_1"."season")
+                                               ORDER BY COALESCE("enrollment_1"."count", 0) DESC, "class_1"."department_code" ASC, "class_1"."course_no" ASC, "class_1"."year" ASC, "class_1"."season" ASC, "class_1"."section" ASC
+                                               LIMIT 3))) AS "class_3"
+                                 ON (("class_2"."department_code" = "class_3"."department_code") AND ("class_2"."course_no" = "class_3"."course_no") AND ("class_2"."year" = "class_3"."year") AND ("class_2"."season" = "class_3"."season") AND ("class_2"."section" = "class_3"."section"))
+                 ORDER BY 2 ASC, 3 ASC, "class_3"."count" DESC, "class_2"."department_code" ASC, "class_2"."course_no" ASC, "class_2"."year" ASC, "class_2"."season" ASC, "class_2"."section" ASC
         - id: table-expressions
           tests:
           - uri: /(school?code='art').department
@@ -26839,6 +27378,26 @@ tests:
                                 ^^^^^^^^^^^^^^^^^^
       - id: known-issues
         tests:
+        - uri: /school?code={'art','art'}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | school                                 |
+             +------+------------------------+--------+
+             | code | name                   | campus |
+            -+------+------------------------+--------+-
+             | art  | School of Art & Design | old    |
+
+             ----
+             /school?code={'art','art'}
+             SELECT "school"."code",
+                    "school"."name",
+                    "school"."campus"
+             FROM "school"
+             WHERE ("school"."code" = 'art')
+             ORDER BY 1 ASC
         - uri: /school.sort(code-).limit(10)
           status: 200 OK
           headers:

@@ -3,6 +3,6 @@
 #
 
 
-from . import bind, coerce, dump
+from . import bind, coerce, compile, dump, signature
 
 

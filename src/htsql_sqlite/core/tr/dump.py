@@ -20,7 +20,8 @@ from htsql.core.tr.fn.dump import (DumpRoundTo, DumpTrunc, DumpTruncTo,
                                    DumpExtractYear, DumpExtractMonth,
                                    DumpExtractDay, DumpExtractHour,
                                    DumpExtractMinute, DumpExtractSecond,
-                                   DumpToday, DumpNow)
+                                   DumpToday, DumpNow, DumpFunction)
+from .signature import IsAnySig
 from htsql.core.tr.error import SerializeError
 
 
@@ -262,5 +263,11 @@ class SQLiteDumpExtractMinute(DumpExtractMinute):
 class SQLiteDumpExtractSecond(DumpExtractSecond):
 
     template = "CAST(STRFTIME('%f', {op}) AS REAL)"
+
+
+class SQLiteDumpIsAny(DumpFunction):
+
+    adapt(IsAnySig)
+    template = "({lop} {polarity:not}IN {rop})"
 
 
