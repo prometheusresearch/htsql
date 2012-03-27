@@ -1252,7 +1252,9 @@ $(document).ready(function() {
     $('#more').click(clickMore);
     $('#export-html').click(function() { return clickExport('html'); });
     $('#export-json').click(function() { return clickExport('json'); });
+    $('#export-xml').click(function() { return clickExport('xml'); });
     $('#export-csv').click(function() { return clickExport('csv'); });
+    $('#export-tsv').click(function() { return clickExport('tsv'); });
     $('#show-sql').click(clickShowSql);
     $('#close-error').click(clickClose);
     $('#close-failure').click(clickClose);
