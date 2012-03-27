@@ -18522,6 +18522,101 @@ tests:
                                              FROM [ad].[course] AS [course]
                                              WHERE ([department].[code] = [course].[department_code])
                                                    AND (1 <> 0))) AS [department_2]
+          - uri: /school{code, campus, exists(department?count(course)>20), exists(program?count(student)>10)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school                                                                                  |
+               +------+--------+-------------------------------------+-----------------------------------+
+               | code | campus | exists(department?count(course)>20) | exists(program?count(student)>10) |
+              -+------+--------+-------------------------------------+-----------------------------------+-
+               | art  | old    | false                               | true                              |
+               | bus  | south  | false                               | true                              |
+               | edu  | old    | false                               | true                              |
+               | eng  | north  | true                                | true                              |
+               | la   | old    | true                                | true                              |
+               | mus  | south  | false                               | false                             |
+               | ns   | old    | true                                | true                              |
+               | ph   |        | false                               | true                              |
+               | sc   |        | false                               | false                             |
+
+               ----
+               /school{code,campus,exists(department?count(course)>20),exists(program?count(student)>10)}
+               SELECT [school].[code],
+                      [school].[campus],
+                      (CASE WHEN EXISTS(SELECT 1
+                                        FROM [ad].[department]
+                                             LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
+                                                                     [course].[department_code]
+                                                              FROM [ad].[course]
+                                                              GROUP BY [course].[department_code]) AS [course]
+                                                             ON ([department].[code] = [course].[department_code])
+                                        WHERE ([school].[code] = [department].[school_code])
+                                              AND (1 <> 0)
+                                              AND (COALESCE([course].[count], 0) > 20)) THEN 1 ELSE 0 END),
+                      (CASE WHEN EXISTS(SELECT 1
+                                        FROM [ad].[program]
+                                             LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
+                                                                     [student].[school_code],
+                                                                     [student].[program_code]
+                                                              FROM [ed].[student]
+                                                              GROUP BY [student].[school_code], [student].[program_code]) AS [student]
+                                                             ON (([program].[school_code] = [student].[school_code]) AND ([program].[code] = [student].[program_code]))
+                                        WHERE ([school].[code] = [program].[school_code])
+                                              AND (1 <> 0)
+                                              AND (COALESCE([student].[count], 0) > 10)) THEN 1 ELSE 0 END)
+               FROM [ad].[school]
+               ORDER BY 1 ASC
+          - uri: /school?exists({campus, exists(department?count(course)>20)} -> school{campus,
+              exists(program?count(student)>10)})
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school                                        |
+               +------+-------------------------------+--------+
+               | code | name                          | campus |
+              -+------+-------------------------------+--------+-
+               | bus  | School of Business            | south  |
+               | eng  | School of Engineering         | north  |
+               | la   | School of Arts and Humanities | old    |
+               | mus  | School of Music & Dance       | south  |
+               | ns   | School of Natural Sciences    | old    |
+
+               ----
+               /school?exists({campus,exists(department?count(course)>20)}->school{campus,exists(program?count(student)>10)})
+               SELECT [school].[code],
+                      [school].[name],
+                      [school].[campus]
+               FROM [ad].[school]
+               WHERE EXISTS(SELECT 1
+                            FROM [ad].[school] AS [school_1]
+                            WHERE ([school].[campus] = [school_1].[campus])
+                                  AND ((CASE WHEN EXISTS(SELECT 1
+                                                         FROM [ad].[department]
+                                                              LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
+                                                                                      [course].[department_code]
+                                                                               FROM [ad].[course]
+                                                                               GROUP BY [course].[department_code]) AS [course]
+                                                                              ON ([department].[code] = [course].[department_code])
+                                                         WHERE ([school].[code] = [department].[school_code])
+                                                               AND (1 <> 0)
+                                                               AND (COALESCE([course].[count], 0) > 20)) THEN 1 ELSE 0 END) = (CASE WHEN EXISTS(SELECT 1
+                                                                                                                                                FROM [ad].[program]
+                                                                                                                                                     LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
+                                                                                                                                                                             [student].[school_code],
+                                                                                                                                                                             [student].[program_code]
+                                                                                                                                                                      FROM [ed].[student]
+                                                                                                                                                                      GROUP BY [student].[school_code], [student].[program_code]) AS [student]
+                                                                                                                                                                     ON (([program].[school_code] = [student].[school_code]) AND ([program].[code] = [student].[program_code]))
+                                                                                                                                                WHERE ([school_1].[code] = [program].[school_code])
+                                                                                                                                                      AND (1 <> 0)
+                                                                                                                                                      AND (COALESCE([student].[count], 0) > 10)) THEN 1 ELSE 0 END))
+                                  AND (1 <> 0))
+               ORDER BY 1 ASC
           - uri: /department{code,count(course{credits=3})}
             status: 200 OK
             headers:

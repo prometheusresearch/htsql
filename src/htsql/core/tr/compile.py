@@ -16,14 +16,14 @@ from ..adapter import Adapter, adapt, adapt_many
 from ..domain import BooleanDomain, IntegerDomain
 from .error import CompileError
 from .coerce import coerce
-from .signature import (IsNullSig, AndSig, CompareSig,
+from .signature import (IsNullSig, IsEqualSig, AndSig, CompareSig,
                         SortDirectionSig, RowNumberSig)
 from .flow import (Expression, QueryExpr, SegmentCode, Code, LiteralCode,
                    FormulaCode, Flow, RootFlow, ScalarFlow, TableFlow,
                    QuotientFlow, ComplementFlow, MonikerFlow, ForkedFlow,
                    LinkedFlow, ClippedFlow, FilteredFlow, OrderedFlow,
                    Unit, ScalarUnit, ColumnUnit, AggregateUnit, CorrelatedUnit,
-                   KernelUnit, CoveringUnit)
+                   KernelUnit, CoveringUnit, CorrelationCode)
 from .term import (Term, ScalarTerm, TableTerm, FilterTerm, JoinTerm,
                    EmbeddingTerm, CorrelationTerm, ProjectionTerm, OrderTerm,
                    WrapperTerm, PermanentTerm, SegmentTerm, QueryTerm, Joint)
@@ -1884,13 +1884,33 @@ class InjectCorrelated(Inject):
         # Make sure that the unit term could export tie conditions.
         unit_term = self.inject_joints(unit_term, joints)
         # Connect the plural term to the unit term.
+        correlations = []
+        filters = []
+        for lop, rop in joints:
+            correlations.append(lop)
+            lop = CorrelationCode(lop)
+            filter = FormulaCode(IsEqualSig(+1), coerce(BooleanDomain()),
+                                 self.flow.binding, lop=lop, rop=rop)
+            filters.append(filter)
+        if len(filters) == 0:
+            filter = None
+        elif len(filters) == 1:
+            [filter] = filters
+        else:
+            filter = FormulaCode(AndSig(), coerce(BooleanDomain()),
+                                 self.flow.binding, ops=filters)
+        if filter is not None:
+            plural_term = FilterTerm(self.state.tag(), plural_term, filter,
+                                     plural_term.flow, plural_term.baseline,
+                                     plural_term.routes.copy())
         plural_term = CorrelationTerm(self.state.tag(), plural_term,
-                                      unit_term, joints, plural_term.flow,
-                                      plural_term.baseline, plural_term.routes)
+                                      plural_term.flow, plural_term.baseline,
+                                      plural_term.routes.copy())
         # Implant the correlation term into the term tree.
         routes = unit_term.routes.copy()
         routes[self.unit] = plural_term.tag
         unit_term = EmbeddingTerm(self.state.tag(), unit_term, plural_term,
+                                  correlations,
                                   unit_term.flow, unit_term.baseline, routes)
         # If we attached the unit directly to the main term, we are done.
         if is_native:

@@ -61,6 +61,10 @@ tests:
     - uri: /{count(department),count(department?exists(course))}
       ifndef: mssql # MSSQL does not allow an aggregate to contain
                     # an EXISTS subquery.
+    - uri: /school{code, campus, exists(department?count(course)>20),
+                                 exists(program?count(student)>10)}
+    - uri: /school?exists({campus, exists(department?count(course)>20)}
+                          -> school{campus, exists(program?count(student)>10)})
     - uri: /department{code,count(course{credits=3})}
     - uri: /department{code,count(course?credits=3)}
     - uri: /school{code,count(department.course{credits=3})}

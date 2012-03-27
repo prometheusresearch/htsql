@@ -1894,3 +1894,13 @@ class CoveringUnit(CompoundUnit):
         return (self.code, self.flow)
 
 
+class CorrelationCode(Code):
+
+    def __init__(self, code):
+        super(CorrelationCode, self).__init__(code.domain, code.binding)
+        self.code = code
+
+    def __basis__(self):
+        return (self.code,)
+
+

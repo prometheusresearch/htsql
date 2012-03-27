@@ -16,7 +16,8 @@ from ..adapter import Adapter, adapt, adapt_many
 from ..domain import BooleanDomain
 from .coerce import coerce
 from .flow import (Code, SegmentCode, LiteralCode, FormulaCode, CastCode,
-                   RecordCode, AnnihilatorCode, Unit, ColumnUnit, CompoundUnit)
+                   RecordCode, AnnihilatorCode, Unit, ColumnUnit, CompoundUnit,
+                   CorrelationCode)
 from .term import (PreTerm, Term, UnaryTerm, BinaryTerm, TableTerm,
                    ScalarTerm, FilterTerm, JoinTerm, CorrelationTerm,
                    EmbeddingTerm, ProjectionTerm, OrderTerm, SegmentTerm,
@@ -182,6 +183,15 @@ class AssemblingState(object):
         self.name = None
         self.segment_stack = []
         self.segment = None
+        self.correlations_stack = []
+        self.correlations = {}
+
+    def push_correlations(self, correlations):
+        self.correlations_stack.append(self.correlations)
+        self.correlations = correlations
+
+    def pop_correlations(self):
+        self.correlations = self.correlations_stack.pop()
 
     def push_name(self, name):
         assert isinstance(name, maybe(unicode))
@@ -275,6 +285,8 @@ class AssemblingState(object):
         self.claims_by_broker = None
         self.phrases_by_claim = None
         self.segment_indexes = None
+        self.correlations_stack = []
+        self.correlations = {}
 
     def push_gate(self, is_nullable=None, dispatcher=None, router=None):
         """
@@ -1046,31 +1058,8 @@ class AssembleEmbedding(Assemble):
         # Call the super `delegate()` to review and forward claims.
         super(AssembleEmbedding, self).delegate()
 
-        # An embedding term adds an embedded term (i.e. a term whose frame
-        # is not attached to the `FROM` list of its parent) to the regular
-        # term tree.  Here, `lkid` belongs to the regular tree and `rkid`
-        # is the embedded (correlation) term.  An embedded term (`rkid`)
-        # contains a join condition connecting it to its regular counterpart
-        # (`lkid`).  Now the tricky part is that `rkid` cannot assign claims
-        # to `lkid` since the latter does not belong to its subtree, and by
-        # the time the embedded frame is assembled, `lkid` is already
-        # translated, so it is too late to request any claims.  Therefore,
-        # it's the parent term which is going to request the claims on
-        # behalf of the correlation term.
-
-        # The embedded term.
-        correlation = self.term.rkid
-        # The join condition is a sequence of equalities: `lop = rop`,
-        # where `lop` is exported from `lkid` and `rop` is exported
-        # from (the child of) `rkid`.
-        for joint in correlation.joints:
-            # Assign the claims from th embedded term to its sibling term;
-            # here `correlation.link` coincides with `lkid`.
-            self.state.schedule(joint.lop, router=correlation.link)
-            # While we are on it, we also assign claims to `rkid` (or rather
-            # the child of `rkid`), although that is something `rkid` could
-            # do for itself.
-            self.state.schedule(joint.rop, dispatcher=correlation)
+        for code in self.term.correlations:
+            self.state.schedule(code, router=self.term.lkid)
 
     def assemble_include(self):
         # Assemble the `FROM` list.
@@ -1092,6 +1081,12 @@ class AssembleEmbedding(Assemble):
     def assemble_embed(self):
         # Assemble the list of embedded frames.
 
+        correlations = {}
+        for code in self.term.correlations:
+            phrase = self.state.evaluate(code, router=self.term.lkid)
+            correlations[code] = phrase
+        self.state.push_correlations(correlations)
+
         # Set up the dispatch context for the embedded term.  An embedded
         # frame is always considered nullable, although it may not be true
         # in some cases.  In practice, nullability of an embedded frame does
@@ -1101,14 +1096,12 @@ class AssembleEmbedding(Assemble):
         frame = self.state.assemble(self.term.rkid)
         # Restore the original dispatch context.
         self.state.pop_gate()
+        self.state.pop_correlations()
         # Return a list of subframes embedded to the assembled frame.
         return [frame]
 
 
 class AssembleCorrelation(Assemble):
-    """
-    Assembles a frame for a correlation term.
-    """
 
     adapt(CorrelationTerm)
 
@@ -1145,45 +1138,6 @@ class AssembleCorrelation(Assemble):
         self.state.supply(claim, export)
         # Return the `SELECT` list.
         return [phrase]
-
-    def assemble_where(self):
-        # Assemble a `WHERE` clause.
-        # The `WHERE` clause of a correlated frame is a conjunction of
-        # equalities: `lop = rop`, where `rop` belongs to the child of the
-        # correlated frame and `lop` belongs to the sibling frame.
-        # It is tricky to evaluate `lop` because the sibling frame is
-        # not a descendant of the correlated frame.
-        # List of equality phrases.
-        equalities = []
-        # Iterate over `lop = rop` expressions:
-        for joint in self.term.joints:
-            # We cannot dispatch `lop` directly because `link` is not
-            # our descendant and thus, it is not in the dispatch table.
-            # So we temporarily pop the current gate making the parent
-            # gate current -- that puts `link` to the dispatching table.
-            self.state.pop_gate()
-            # Evaluate the left operand against our sibling (`link` coincides
-            # with `lkid` of our parent term).
-            lop = self.state.evaluate(joint.lop, router=self.term.link)
-            # Restore the original dispatching context.
-            self.state.push_gate(is_nullable=True, dispatcher=self.term)
-            # Evaluate the right operand against the child frame.
-            rop = self.state.evaluate(joint.rop, router=self.term.kid)
-            # An individual condition.
-            is_nullable = (lop.is_nullable or rop.is_nullable)
-            signature = IsEqualSig(+1)
-            equality = FormulaPhrase(signature, coerce(BooleanDomain()),
-                                     is_nullable, self.term.expression,
-                                     lop=lop, rop=rop)
-            equalities.append(equality)
-        # Generate and return the clause.
-        condition = None
-        if equalities:
-            is_nullable = any(equality.is_nullable for equality in equalities)
-            condition = FormulaPhrase(AndSig(), coerce(BooleanDomain()),
-                                      is_nullable, self.term.expression,
-                                      ops=equalities)
-        return condition
 
 
 class AssembleSegment(Assemble):
@@ -1373,6 +1327,17 @@ class EvaluateAnnihilator(Evaluate):
         yield self.state.evaluate(self.code.indicator)
         for phrase in self.state.evaluate_all(self.code.code):
             yield phrase
+
+
+class EvaluateCorrelation(Evaluate):
+
+    adapt(CorrelationCode)
+
+    def __call__(self):
+        assert self.code.code in self.state.correlations
+        # FIXME: is this correct in case of nested correlated subqueries?
+        # FIXME: implement decompose?
+        yield self.state.correlations[self.code.code]
 
 
 class EvaluateFormula(Evaluate):

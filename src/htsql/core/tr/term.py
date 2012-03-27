@@ -429,12 +429,13 @@ class EmbeddingTerm(BinaryTerm):
 
     """
 
-    def __init__(self, tag, lkid, rkid, flow, baseline, routes):
+    def __init__(self, tag, lkid, rkid, correlations, flow, baseline, routes):
         # Verify that the right child is a correlation term and the left
         # child is its link term.
-        assert isinstance(rkid, CorrelationTerm) and rkid.link is lkid
+        assert isinstance(correlations, listof(Code))
         super(EmbeddingTerm, self).__init__(tag, lkid, rkid,
                                             flow, baseline, routes)
+        self.correlations = correlations
 
     def __str__(self):
         # Display:
@@ -445,42 +446,11 @@ class EmbeddingTerm(BinaryTerm):
 class CorrelationTerm(UnaryTerm):
     """
     Represents a correlation term.
-
-    A correlation term connects the child term with a *link* term using
-    the given joint condition.  Note that the link term is not a part
-    of the sub-tree under the correlation term.
-
-    A correlation term must always be embedded into the term tree with
-    a :class:`EmbeddingTerm` instance.  The left child of the embedding
-    term must coincide with the link term.
-
-    `kid` (:class:`Term`)
-        The operand of the correlation condition.
-
-    `link` (:class:`Term`)
-        The term to link to.
-
-    `joints` (a list of pairs of :class:`htsql.core.tr.flow.Code`)
-        A list of pairs `(lop, rop)` that establish join conditions
-        of the form `lop = rop`.
     """
 
-    def __init__(self, tag, kid, link, joints, flow, baseline, routes):
-        assert isinstance(link, Term)
-        assert isinstance(joints, listof(Joint))
+    def __init__(self, tag, kid, flow, baseline, routes):
         super(CorrelationTerm, self).__init__(tag, kid,
                                               flow, baseline, routes)
-        self.link = link
-        self.joints = joints
-
-    def __str__(self):
-        # Display:
-        #   (<kid> | <lop>=<rop>, ...)
-        conditions = ", ".join("%s=%s" % (joint.lop, joint.rop)
-                               for joint in self.joints)
-        if conditions:
-            conditions = " | %s" % conditions
-        return "(%s%s)" % (self.kid, conditions)
 
 
 class ProjectionTerm(UnaryTerm):
