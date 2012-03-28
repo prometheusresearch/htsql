@@ -18,7 +18,8 @@ from htsql.core.tr.fn.dump import (DumpTrunc, DumpTruncTo,
                                    DumpDateDifference, DumpExtractSecond,
                                    DumpConcatenate, DumpLike,
                                    DumpMakeDate, DumpMakeDateTime,
-                                   DumpCombineDateTime, DumpSum)
+                                   DumpCombineDateTime, DumpSum, DumpFunction)
+from .signature import UserVariableSig, UserVariableAssignmentSig, IfSig
 import math
 
 
@@ -228,5 +229,26 @@ class MySQLDumpSum(DumpSum):
             self.format("CAST(SUM({op}) AS SIGNED INTEGER)", self.arguments)
         else:
             self.format("SUM({op})", self.arguments)
+
+
+class MySQLDumpUserVariable(DumpFunction):
+
+    adapt(UserVariableSig)
+
+    template = "@{name:name}"
+
+
+class MySQLDumpUserVariableAssignment(DumpFunction):
+
+    adapt(UserVariableAssignmentSig)
+
+    template = "{lop} := {rop}"
+
+
+class MySQLDumpIf(DumpFunction):
+
+    adapt(IfSig)
+
+    template = "IF({condition}, {on_true}, {on_false})"
 
 

@@ -303,7 +303,6 @@ tests:
     - uri: /@school.@department.@program.limit(1)
 
   - title: Top
-    ifndef: [mysql]
     tests:
     - uri: /school :top
     - uri: /school :top(3)
