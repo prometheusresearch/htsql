@@ -22799,34 +22799,24 @@ tests:
 
                ----
                /top(school.sort(count(department)-)){code,count(department)}
-               SELECT "school_1"."code",
+               SELECT "school"."code",
                       COALESCE("department"."count", 0)
-               FROM (SELECT "school"."code"
+               FROM (SELECT "school"."code",
+                            COALESCE("department"."count", 0) AS "count"
                      FROM "school"
                           LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
                                                   "department"."school_code"
                                            FROM "department"
                                            GROUP BY 2) AS "department"
                                           ON ("school"."code" = "department"."school_code")
-                     ORDER BY COALESCE("department"."count", 0) DESC, 1 ASC
-                     LIMIT 1) AS "school_1"
+                     ORDER BY 2 DESC, 1 ASC
+                     LIMIT 1) AS "school"
                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
                                             "department"."school_code"
                                      FROM "department"
                                      GROUP BY 2) AS "department"
-                                    ON ("school_1"."code" = "department"."school_code")
-                    INNER JOIN (SELECT COALESCE("department"."count", 0) AS "count",
-                                       "school"."code"
-                                FROM "school"
-                                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
-                                                             "department"."school_code"
-                                                      FROM "department"
-                                                      GROUP BY 2) AS "department"
-                                                     ON ("school"."code" = "department"."school_code")
-                                ORDER BY 1 DESC, 2 ASC
-                                LIMIT 1) AS "school_2"
-                               ON ("school_1"."code" = "school_2"."code")
-               ORDER BY "school_2"."count" DESC, 1 ASC
+                                    ON ("school"."code" = "department"."school_code")
+               ORDER BY "school"."count" DESC, 1 ASC
           - uri: /top(school.sort(count(department)-),3){code, count(department)}
             status: 200 OK
             headers:
@@ -22843,34 +22833,24 @@ tests:
 
                ----
                /top(school.sort(count(department)-),3){code,count(department)}
-               SELECT "school_1"."code",
+               SELECT "school"."code",
                       COALESCE("department"."count", 0)
-               FROM (SELECT "school"."code"
+               FROM (SELECT "school"."code",
+                            COALESCE("department"."count", 0) AS "count"
                      FROM "school"
                           LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
                                                   "department"."school_code"
                                            FROM "department"
                                            GROUP BY 2) AS "department"
                                           ON ("school"."code" = "department"."school_code")
-                     ORDER BY COALESCE("department"."count", 0) DESC, 1 ASC
-                     LIMIT 3) AS "school_1"
+                     ORDER BY 2 DESC, 1 ASC
+                     LIMIT 3) AS "school"
                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
                                             "department"."school_code"
                                      FROM "department"
                                      GROUP BY 2) AS "department"
-                                    ON ("school_1"."code" = "department"."school_code")
-                    INNER JOIN (SELECT COALESCE("department"."count", 0) AS "count",
-                                       "school"."code"
-                                FROM "school"
-                                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
-                                                             "department"."school_code"
-                                                      FROM "department"
-                                                      GROUP BY 2) AS "department"
-                                                     ON ("school"."code" = "department"."school_code")
-                                ORDER BY 1 DESC, 2 ASC
-                                LIMIT 3) AS "school_2"
-                               ON ("school_1"."code" = "school_2"."code")
-               ORDER BY "school_2"."count" DESC, 1 ASC
+                                    ON ("school"."code" = "department"."school_code")
+               ORDER BY "school"."count" DESC, 1 ASC
           - uri: /top(school.sort(count(department)-),3,2){code, count(department)}
             status: 200 OK
             headers:
@@ -22887,36 +22867,25 @@ tests:
 
                ----
                /top(school.sort(count(department)-),3,2){code,count(department)}
-               SELECT "school_1"."code",
+               SELECT "school"."code",
                       COALESCE("department"."count", 0)
-               FROM (SELECT "school"."code"
+               FROM (SELECT "school"."code",
+                            COALESCE("department"."count", 0) AS "count"
                      FROM "school"
                           LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
                                                   "department"."school_code"
                                            FROM "department"
                                            GROUP BY 2) AS "department"
                                           ON ("school"."code" = "department"."school_code")
-                     ORDER BY COALESCE("department"."count", 0) DESC, 1 ASC
+                     ORDER BY 2 DESC, 1 ASC
                      LIMIT 3
-                     OFFSET 2) AS "school_1"
+                     OFFSET 2) AS "school"
                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
                                             "department"."school_code"
                                      FROM "department"
                                      GROUP BY 2) AS "department"
-                                    ON ("school_1"."code" = "department"."school_code")
-                    INNER JOIN (SELECT COALESCE("department"."count", 0) AS "count",
-                                       "school"."code"
-                                FROM "school"
-                                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
-                                                             "department"."school_code"
-                                                      FROM "department"
-                                                      GROUP BY 2) AS "department"
-                                                     ON ("school"."code" = "department"."school_code")
-                                ORDER BY 1 DESC, 2 ASC
-                                LIMIT 3
-                                OFFSET 2) AS "school_2"
-                               ON ("school_1"."code" = "school_2"."code")
-               ORDER BY "school_2"."count" DESC, 1 ASC
+                                    ON ("school"."code" = "department"."school_code")
+               ORDER BY "school"."count" DESC, 1 ASC
           - uri: /school{name, count(program), top(program){title, count(student)}}?campus='old'
             status: 200 OK
             headers:

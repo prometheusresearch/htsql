@@ -22821,34 +22821,24 @@ tests:
 
                ----
                /top(school.sort(count(department)-)){code,count(department)}
-               SELECT `school_1`.`code`,
+               SELECT `school`.`code`,
                       COALESCE(`department`.`count`, 0)
-               FROM (SELECT `school`.`code`
+               FROM (SELECT `school`.`code`,
+                            COALESCE(`department`.`count`, 0) AS `count`
                      FROM `school`
                           LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
                                                   `department`.`school_code`
                                            FROM `department`
                                            GROUP BY 2) AS `department`
                                           ON (`school`.`code` = `department`.`school_code`)
-                     ORDER BY COALESCE(`department`.`count`, 0) DESC, 1 ASC
-                     LIMIT 1) AS `school_1`
+                     ORDER BY 2 DESC, 1 ASC
+                     LIMIT 1) AS `school`
                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
                                             `department`.`school_code`
                                      FROM `department`
                                      GROUP BY 2) AS `department`
-                                    ON (`school_1`.`code` = `department`.`school_code`)
-                    INNER JOIN (SELECT COALESCE(`department`.`count`, 0) AS `count`,
-                                       `school`.`code`
-                                FROM `school`
-                                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
-                                                             `department`.`school_code`
-                                                      FROM `department`
-                                                      GROUP BY 2) AS `department`
-                                                     ON (`school`.`code` = `department`.`school_code`)
-                                ORDER BY 1 DESC, 2 ASC
-                                LIMIT 1) AS `school_2`
-                               ON (`school_1`.`code` = `school_2`.`code`)
-               ORDER BY `school_2`.`count` DESC, 1 ASC
+                                    ON (`school`.`code` = `department`.`school_code`)
+               ORDER BY `school`.`count` DESC, 1 ASC
           - uri: /top(school.sort(count(department)-),3){code, count(department)}
             status: 200 OK
             headers:
@@ -22865,34 +22855,24 @@ tests:
 
                ----
                /top(school.sort(count(department)-),3){code,count(department)}
-               SELECT `school_1`.`code`,
+               SELECT `school`.`code`,
                       COALESCE(`department`.`count`, 0)
-               FROM (SELECT `school`.`code`
+               FROM (SELECT `school`.`code`,
+                            COALESCE(`department`.`count`, 0) AS `count`
                      FROM `school`
                           LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
                                                   `department`.`school_code`
                                            FROM `department`
                                            GROUP BY 2) AS `department`
                                           ON (`school`.`code` = `department`.`school_code`)
-                     ORDER BY COALESCE(`department`.`count`, 0) DESC, 1 ASC
-                     LIMIT 3) AS `school_1`
+                     ORDER BY 2 DESC, 1 ASC
+                     LIMIT 3) AS `school`
                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
                                             `department`.`school_code`
                                      FROM `department`
                                      GROUP BY 2) AS `department`
-                                    ON (`school_1`.`code` = `department`.`school_code`)
-                    INNER JOIN (SELECT COALESCE(`department`.`count`, 0) AS `count`,
-                                       `school`.`code`
-                                FROM `school`
-                                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
-                                                             `department`.`school_code`
-                                                      FROM `department`
-                                                      GROUP BY 2) AS `department`
-                                                     ON (`school`.`code` = `department`.`school_code`)
-                                ORDER BY 1 DESC, 2 ASC
-                                LIMIT 3) AS `school_2`
-                               ON (`school_1`.`code` = `school_2`.`code`)
-               ORDER BY `school_2`.`count` DESC, 1 ASC
+                                    ON (`school`.`code` = `department`.`school_code`)
+               ORDER BY `school`.`count` DESC, 1 ASC
           - uri: /top(school.sort(count(department)-),3,2){code, count(department)}
             status: 200 OK
             headers:
@@ -22909,36 +22889,25 @@ tests:
 
                ----
                /top(school.sort(count(department)-),3,2){code,count(department)}
-               SELECT `school_1`.`code`,
+               SELECT `school`.`code`,
                       COALESCE(`department`.`count`, 0)
-               FROM (SELECT `school`.`code`
+               FROM (SELECT `school`.`code`,
+                            COALESCE(`department`.`count`, 0) AS `count`
                      FROM `school`
                           LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
                                                   `department`.`school_code`
                                            FROM `department`
                                            GROUP BY 2) AS `department`
                                           ON (`school`.`code` = `department`.`school_code`)
-                     ORDER BY COALESCE(`department`.`count`, 0) DESC, 1 ASC
+                     ORDER BY 2 DESC, 1 ASC
                      LIMIT 3
-                     OFFSET 2) AS `school_1`
+                     OFFSET 2) AS `school`
                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
                                             `department`.`school_code`
                                      FROM `department`
                                      GROUP BY 2) AS `department`
-                                    ON (`school_1`.`code` = `department`.`school_code`)
-                    INNER JOIN (SELECT COALESCE(`department`.`count`, 0) AS `count`,
-                                       `school`.`code`
-                                FROM `school`
-                                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
-                                                             `department`.`school_code`
-                                                      FROM `department`
-                                                      GROUP BY 2) AS `department`
-                                                     ON (`school`.`code` = `department`.`school_code`)
-                                ORDER BY 1 DESC, 2 ASC
-                                LIMIT 3
-                                OFFSET 2) AS `school_2`
-                               ON (`school_1`.`code` = `school_2`.`code`)
-               ORDER BY `school_2`.`count` DESC, 1 ASC
+                                    ON (`school`.`code` = `department`.`school_code`)
+               ORDER BY `school`.`count` DESC, 1 ASC
           - uri: /school{name, count(program), top(program){title, count(student)}}?campus='old'
             status: 200 OK
             headers:
@@ -23253,12 +23222,14 @@ tests:
                        WHERE (`class`.`year` IS NOT NULL)
                              AND (`class`.`season` IS NOT NULL)
                        GROUP BY 1, 2) AS `class_1`
-                      INNER JOIN (SELECT `class`.`department_code`,
+                      INNER JOIN (SELECT COALESCE(`class`.`count`, 0) AS `count`,
+                                         `class`.`department_code`,
                                          `class`.`course_no`,
                                          `class`.`year`,
                                          `class`.`season`,
                                          `class`.`section`
-                                  FROM (SELECT `class`.`department_code`,
+                                  FROM (SELECT `class`.`count`,
+                                               `class`.`department_code`,
                                                `class`.`course_no`,
                                                `class`.`year`,
                                                `class`.`season`,
@@ -23266,7 +23237,8 @@ tests:
                                                @`!htsql:15:row_number` := IF(((@`!htsql:15:partition:1` = `class`.`year`) AND (@`!htsql:15:partition:2` = `class`.`season`)), (@`!htsql:15:row_number` + 1), 1) AS `top_1`,
                                                @`!htsql:15:partition:1` := `class`.`year` AS `top_2`,
                                                @`!htsql:15:partition:2` := `class`.`season` AS `top_3`
-                                        FROM (SELECT `class`.`department_code`,
+                                        FROM (SELECT `enrollment`.`count`,
+                                                     `class`.`department_code`,
                                                      `class`.`course_no`,
                                                      `class`.`year`,
                                                      `class`.`season`,
@@ -23281,48 +23253,13 @@ tests:
                                                                FROM (SELECT @`!htsql:15:row_number` := NULL AS `top_1`,
                                                                             @`!htsql:15:partition:1` := NULL AS `top_2`,
                                                                             @`!htsql:15:partition:2` := NULL AS `top_3`) AS `!`) AS `!`
-                                              ORDER BY 3 ASC, 4 ASC, COALESCE(`enrollment`.`count`, 0) DESC, 1 ASC, 2 ASC, 5 ASC) AS `class`) AS `class`
+                                              ORDER BY 4 ASC, 5 ASC, COALESCE(`enrollment`.`count`, 0) DESC, 2 ASC, 3 ASC, 6 ASC) AS `class`) AS `class`
                                   WHERE (`class`.`top_1` >= 1)
                                         AND (`class`.`top_1` < 4)) AS `class_2`
                                  ON ((`class_1`.`year` = `class_2`.`year`) AND (`class_1`.`season` = `class_2`.`season`))
                       INNER JOIN `course`
                                  ON ((`class_2`.`department_code` = `course`.`department_code`) AND (`class_2`.`course_no` = `course`.`no`))
-                      INNER JOIN (SELECT COALESCE(`class`.`count`, 0) AS `count`,
-                                         `class`.`department_code`,
-                                         `class`.`course_no`,
-                                         `class`.`year`,
-                                         `class`.`season`,
-                                         `class`.`section`
-                                  FROM (SELECT `class`.`count`,
-                                               `class`.`department_code`,
-                                               `class`.`course_no`,
-                                               `class`.`year`,
-                                               `class`.`season`,
-                                               `class`.`section`,
-                                               @`!htsql:41:row_number` := IF(((@`!htsql:41:partition:1` = `class`.`year`) AND (@`!htsql:41:partition:2` = `class`.`season`)), (@`!htsql:41:row_number` + 1), 1) AS `top_1`,
-                                               @`!htsql:41:partition:1` := `class`.`year` AS `top_2`,
-                                               @`!htsql:41:partition:2` := `class`.`season` AS `top_3`
-                                        FROM (SELECT `enrollment`.`count`,
-                                                     `class`.`department_code`,
-                                                     `class`.`course_no`,
-                                                     `class`.`year`,
-                                                     `class`.`season`,
-                                                     `class`.`section`
-                                              FROM `class`
-                                                   LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
-                                                                           `enrollment`.`class_seq`
-                                                                    FROM `enrollment`
-                                                                    GROUP BY 2) AS `enrollment`
-                                                                   ON (`class`.`class_seq` = `enrollment`.`class_seq`)
-                                                   CROSS JOIN (SELECT TRUE AS `!`
-                                                               FROM (SELECT @`!htsql:41:row_number` := NULL AS `top_1`,
-                                                                            @`!htsql:41:partition:1` := NULL AS `top_2`,
-                                                                            @`!htsql:41:partition:2` := NULL AS `top_3`) AS `!`) AS `!`
-                                              ORDER BY 4 ASC, 5 ASC, COALESCE(`enrollment`.`count`, 0) DESC, 2 ASC, 3 ASC, 6 ASC) AS `class`) AS `class`
-                                  WHERE (`class`.`top_1` >= 1)
-                                        AND (`class`.`top_1` < 4)) AS `class_3`
-                                 ON ((`class_2`.`department_code` = `class_3`.`department_code`) AND (`class_2`.`course_no` = `class_3`.`course_no`) AND (`class_2`.`year` = `class_3`.`year`) AND (`class_2`.`season` = `class_3`.`season`) AND (`class_2`.`section` = `class_3`.`section`))
-                 ORDER BY 2 ASC, 3 ASC, `class_3`.`count` DESC, `class_2`.`department_code` ASC, `class_2`.`course_no` ASC, `class_2`.`year` ASC, `class_2`.`season` ASC, `class_2`.`section` ASC
+                 ORDER BY 2 ASC, 3 ASC, `class_2`.`count` DESC, `class_2`.`department_code` ASC, `class_2`.`course_no` ASC, `class_2`.`year` ASC, `class_2`.`season` ASC, `class_2`.`section` ASC
         - id: table-expressions
           tests:
           - uri: /(school?code='art').department

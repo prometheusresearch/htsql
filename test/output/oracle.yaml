@@ -23167,11 +23167,13 @@ tests:
 
                ----
                /top(school.sort(count(department)-)){code,count(department)}
-               SELECT "SCHOOL_1"."CODE",
+               SELECT "SCHOOL"."CODE",
                       COALESCE("DEPARTMENT"."count", 0)
                FROM (SELECT "SCHOOL"."CODE",
+                            "SCHOOL"."count",
                             ROWNUM AS "top"
-                     FROM (SELECT "SCHOOL"."CODE"
+                     FROM (SELECT "SCHOOL"."CODE",
+                                  "DEPARTMENT"."count"
                            FROM "SCHOOL"
                                 LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
                                                         "DEPARTMENT"."SCHOOL_CODE"
@@ -23179,31 +23181,14 @@ tests:
                                                  GROUP BY "DEPARTMENT"."SCHOOL_CODE") "DEPARTMENT"
                                                 ON ("SCHOOL"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
                            ORDER BY COALESCE("DEPARTMENT"."count", 0) DESC, 1 ASC) "SCHOOL"
-                     WHERE (ROWNUM < 2)) "SCHOOL_1"
+                     WHERE (ROWNUM < 2)) "SCHOOL"
                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
                                             "DEPARTMENT"."SCHOOL_CODE"
                                      FROM "DEPARTMENT"
                                      GROUP BY "DEPARTMENT"."SCHOOL_CODE") "DEPARTMENT"
-                                    ON ("SCHOOL_1"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
-                    INNER JOIN (SELECT COALESCE("SCHOOL"."count", 0) AS "count",
-                                       "SCHOOL"."CODE"
-                                FROM (SELECT "SCHOOL"."count",
-                                             "SCHOOL"."CODE",
-                                             ROWNUM AS "top"
-                                      FROM (SELECT "DEPARTMENT"."count",
-                                                   "SCHOOL"."CODE"
-                                            FROM "SCHOOL"
-                                                 LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
-                                                                         "DEPARTMENT"."SCHOOL_CODE"
-                                                                  FROM "DEPARTMENT"
-                                                                  GROUP BY "DEPARTMENT"."SCHOOL_CODE") "DEPARTMENT"
-                                                                 ON ("SCHOOL"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
-                                            ORDER BY COALESCE("DEPARTMENT"."count", 0) DESC, 2 ASC) "SCHOOL"
-                                      WHERE (ROWNUM < 2)) "SCHOOL"
-                                WHERE ("SCHOOL"."top" >= 1)) "SCHOOL_2"
-                               ON ("SCHOOL_1"."CODE" = "SCHOOL_2"."CODE")
-               WHERE ("SCHOOL_1"."top" >= 1)
-               ORDER BY "SCHOOL_2"."count" DESC, 1 ASC
+                                    ON ("SCHOOL"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
+               WHERE ("SCHOOL"."top" >= 1)
+               ORDER BY COALESCE("SCHOOL"."count", 0) DESC, 1 ASC
           - uri: /top(school.sort(count(department)-),3){code, count(department)}
             status: 200 OK
             headers:
@@ -23220,11 +23205,13 @@ tests:
 
                ----
                /top(school.sort(count(department)-),3){code,count(department)}
-               SELECT "SCHOOL_1"."CODE",
+               SELECT "SCHOOL"."CODE",
                       COALESCE("DEPARTMENT"."count", 0)
                FROM (SELECT "SCHOOL"."CODE",
+                            "SCHOOL"."count",
                             ROWNUM AS "top"
-                     FROM (SELECT "SCHOOL"."CODE"
+                     FROM (SELECT "SCHOOL"."CODE",
+                                  "DEPARTMENT"."count"
                            FROM "SCHOOL"
                                 LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
                                                         "DEPARTMENT"."SCHOOL_CODE"
@@ -23232,31 +23219,14 @@ tests:
                                                  GROUP BY "DEPARTMENT"."SCHOOL_CODE") "DEPARTMENT"
                                                 ON ("SCHOOL"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
                            ORDER BY COALESCE("DEPARTMENT"."count", 0) DESC, 1 ASC) "SCHOOL"
-                     WHERE (ROWNUM < 4)) "SCHOOL_1"
+                     WHERE (ROWNUM < 4)) "SCHOOL"
                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
                                             "DEPARTMENT"."SCHOOL_CODE"
                                      FROM "DEPARTMENT"
                                      GROUP BY "DEPARTMENT"."SCHOOL_CODE") "DEPARTMENT"
-                                    ON ("SCHOOL_1"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
-                    INNER JOIN (SELECT COALESCE("SCHOOL"."count", 0) AS "count",
-                                       "SCHOOL"."CODE"
-                                FROM (SELECT "SCHOOL"."count",
-                                             "SCHOOL"."CODE",
-                                             ROWNUM AS "top"
-                                      FROM (SELECT "DEPARTMENT"."count",
-                                                   "SCHOOL"."CODE"
-                                            FROM "SCHOOL"
-                                                 LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
-                                                                         "DEPARTMENT"."SCHOOL_CODE"
-                                                                  FROM "DEPARTMENT"
-                                                                  GROUP BY "DEPARTMENT"."SCHOOL_CODE") "DEPARTMENT"
-                                                                 ON ("SCHOOL"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
-                                            ORDER BY COALESCE("DEPARTMENT"."count", 0) DESC, 2 ASC) "SCHOOL"
-                                      WHERE (ROWNUM < 4)) "SCHOOL"
-                                WHERE ("SCHOOL"."top" >= 1)) "SCHOOL_2"
-                               ON ("SCHOOL_1"."CODE" = "SCHOOL_2"."CODE")
-               WHERE ("SCHOOL_1"."top" >= 1)
-               ORDER BY "SCHOOL_2"."count" DESC, 1 ASC
+                                    ON ("SCHOOL"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
+               WHERE ("SCHOOL"."top" >= 1)
+               ORDER BY COALESCE("SCHOOL"."count", 0) DESC, 1 ASC
           - uri: /top(school.sort(count(department)-),3,2){code, count(department)}
             status: 200 OK
             headers:
@@ -23273,11 +23243,13 @@ tests:
 
                ----
                /top(school.sort(count(department)-),3,2){code,count(department)}
-               SELECT "SCHOOL_1"."CODE",
+               SELECT "SCHOOL"."CODE",
                       COALESCE("DEPARTMENT"."count", 0)
                FROM (SELECT "SCHOOL"."CODE",
+                            "SCHOOL"."count",
                             ROWNUM AS "top"
-                     FROM (SELECT "SCHOOL"."CODE"
+                     FROM (SELECT "SCHOOL"."CODE",
+                                  "DEPARTMENT"."count"
                            FROM "SCHOOL"
                                 LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
                                                         "DEPARTMENT"."SCHOOL_CODE"
@@ -23285,31 +23257,14 @@ tests:
                                                  GROUP BY "DEPARTMENT"."SCHOOL_CODE") "DEPARTMENT"
                                                 ON ("SCHOOL"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
                            ORDER BY COALESCE("DEPARTMENT"."count", 0) DESC, 1 ASC) "SCHOOL"
-                     WHERE (ROWNUM < 6)) "SCHOOL_1"
+                     WHERE (ROWNUM < 6)) "SCHOOL"
                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
                                             "DEPARTMENT"."SCHOOL_CODE"
                                      FROM "DEPARTMENT"
                                      GROUP BY "DEPARTMENT"."SCHOOL_CODE") "DEPARTMENT"
-                                    ON ("SCHOOL_1"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
-                    INNER JOIN (SELECT COALESCE("SCHOOL"."count", 0) AS "count",
-                                       "SCHOOL"."CODE"
-                                FROM (SELECT "SCHOOL"."count",
-                                             "SCHOOL"."CODE",
-                                             ROWNUM AS "top"
-                                      FROM (SELECT "DEPARTMENT"."count",
-                                                   "SCHOOL"."CODE"
-                                            FROM "SCHOOL"
-                                                 LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
-                                                                         "DEPARTMENT"."SCHOOL_CODE"
-                                                                  FROM "DEPARTMENT"
-                                                                  GROUP BY "DEPARTMENT"."SCHOOL_CODE") "DEPARTMENT"
-                                                                 ON ("SCHOOL"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
-                                            ORDER BY COALESCE("DEPARTMENT"."count", 0) DESC, 2 ASC) "SCHOOL"
-                                      WHERE (ROWNUM < 6)) "SCHOOL"
-                                WHERE ("SCHOOL"."top" >= 3)) "SCHOOL_2"
-                               ON ("SCHOOL_1"."CODE" = "SCHOOL_2"."CODE")
-               WHERE ("SCHOOL_1"."top" >= 3)
-               ORDER BY "SCHOOL_2"."count" DESC, 1 ASC
+                                    ON ("SCHOOL"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
+               WHERE ("SCHOOL"."top" >= 3)
+               ORDER BY COALESCE("SCHOOL"."count", 0) DESC, 1 ASC
           - uri: /school{name, count(program), top(program){title, count(student)}}?campus='old'
             status: 200 OK
             headers:
@@ -23592,28 +23547,6 @@ tests:
                        WHERE ("CLASS"."YEAR" IS NOT NULL)
                              AND ("CLASS"."SEASON" IS NOT NULL)
                        GROUP BY "CLASS"."YEAR", "CLASS"."SEASON") "CLASS_1"
-                      INNER JOIN (SELECT "CLASS"."DEPARTMENT_CODE",
-                                         "CLASS"."COURSE_NO",
-                                         "CLASS"."YEAR",
-                                         "CLASS"."SEASON",
-                                         "CLASS"."SECTION"
-                                  FROM (SELECT "CLASS"."DEPARTMENT_CODE",
-                                               "CLASS"."COURSE_NO",
-                                               "CLASS"."YEAR",
-                                               "CLASS"."SEASON",
-                                               "CLASS"."SECTION",
-                                               ROW_NUMBER() OVER (PARTITION BY "CLASS"."YEAR", "CLASS"."SEASON" ORDER BY COALESCE("ENROLLMENT"."count", 0) DESC, "CLASS"."DEPARTMENT_CODE" ASC, "CLASS"."COURSE_NO" ASC, "CLASS"."YEAR" ASC, "CLASS"."SEASON" ASC, "CLASS"."SECTION" ASC) AS "top"
-                                        FROM "CLASS"
-                                             LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
-                                                                     "ENROLLMENT"."CLASS_SEQ"
-                                                              FROM "ENROLLMENT"
-                                                              GROUP BY "ENROLLMENT"."CLASS_SEQ") "ENROLLMENT"
-                                                             ON ("CLASS"."CLASS_SEQ" = "ENROLLMENT"."CLASS_SEQ")) "CLASS"
-                                  WHERE ("CLASS"."top" >= 1)
-                                        AND ("CLASS"."top" < 4)) "CLASS_2"
-                                 ON (("CLASS_1"."YEAR" = "CLASS_2"."YEAR") AND ("CLASS_1"."SEASON" = "CLASS_2"."SEASON"))
-                      INNER JOIN "COURSE"
-                                 ON (("CLASS_2"."DEPARTMENT_CODE" = "COURSE"."DEPARTMENT_CODE") AND ("CLASS_2"."COURSE_NO" = "COURSE"."NO"))
                       INNER JOIN (SELECT COALESCE("CLASS"."count", 0) AS "count",
                                          "CLASS"."DEPARTMENT_CODE",
                                          "CLASS"."COURSE_NO",
@@ -23634,9 +23567,11 @@ tests:
                                                               GROUP BY "ENROLLMENT"."CLASS_SEQ") "ENROLLMENT"
                                                              ON ("CLASS"."CLASS_SEQ" = "ENROLLMENT"."CLASS_SEQ")) "CLASS"
                                   WHERE ("CLASS"."top" >= 1)
-                                        AND ("CLASS"."top" < 4)) "CLASS_3"
-                                 ON (("CLASS_2"."DEPARTMENT_CODE" = "CLASS_3"."DEPARTMENT_CODE") AND ("CLASS_2"."COURSE_NO" = "CLASS_3"."COURSE_NO") AND ("CLASS_2"."YEAR" = "CLASS_3"."YEAR") AND ("CLASS_2"."SEASON" = "CLASS_3"."SEASON") AND ("CLASS_2"."SECTION" = "CLASS_3"."SECTION"))
-                 ORDER BY 2 ASC, 3 ASC, "CLASS_3"."count" DESC, "CLASS_2"."DEPARTMENT_CODE" ASC, "CLASS_2"."COURSE_NO" ASC, "CLASS_2"."YEAR" ASC, "CLASS_2"."SEASON" ASC, "CLASS_2"."SECTION" ASC
+                                        AND ("CLASS"."top" < 4)) "CLASS_2"
+                                 ON (("CLASS_1"."YEAR" = "CLASS_2"."YEAR") AND ("CLASS_1"."SEASON" = "CLASS_2"."SEASON"))
+                      INNER JOIN "COURSE"
+                                 ON (("CLASS_2"."DEPARTMENT_CODE" = "COURSE"."DEPARTMENT_CODE") AND ("CLASS_2"."COURSE_NO" = "COURSE"."NO"))
+                 ORDER BY 2 ASC, 3 ASC, "CLASS_2"."count" DESC, "CLASS_2"."DEPARTMENT_CODE" ASC, "CLASS_2"."COURSE_NO" ASC, "CLASS_2"."YEAR" ASC, "CLASS_2"."SEASON" ASC, "CLASS_2"."SECTION" ASC
         - id: table-expressions
           tests:
           - uri: /(school?code='art').department

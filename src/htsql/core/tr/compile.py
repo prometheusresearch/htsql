@@ -1415,8 +1415,8 @@ class CompileCovering(CompileFlow):
         # Ensure we can satisfy the joints.
         for joint in joints:
             units.append(joint.rop)
-        # Export any requested companion units.
-        for code in self.flow.companions:
+        # Export any requested companion units and other generated codes.
+        for code in codes:
             unit = CoveringUnit(code, self.backbone, code.binding)
             units.append(unit)
 
