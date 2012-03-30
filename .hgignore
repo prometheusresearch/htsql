@@ -4,6 +4,7 @@ syntax: glob
 .*.sw?
 *.egg-info
 *.env
+*.sqlite
 build
 vm-build
 external
