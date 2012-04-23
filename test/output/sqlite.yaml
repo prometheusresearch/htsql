@@ -23214,6 +23214,12 @@ tests:
                                                LIMIT 3))) AS "class_3"
                                  ON (("class_2"."department_code" = "class_3"."department_code") AND ("class_2"."course_no" = "class_3"."course_no") AND ("class_2"."year" = "class_3"."year") AND ("class_2"."season" = "class_3"."season") AND ("class_2"."section" = "class_3"."section"))
                  ORDER BY 2 ASC, 3 ASC, "class_3"."count" DESC, "class_2"."department_code" ASC, "class_2"."course_no" ASC, "class_2"."year" ASC, "class_2"."season" ASC, "class_2"."section" ASC
+          - uri: /school:top/:csv
+            status: 200 OK
+            headers:
+            - [Content-Type, text/csv; charset=UTF-8]
+            - [Content-Disposition, 'attachment; filename="school:top.csv"']
+            body: "code,name,campus\r\nart,School of Art & Design,old\r\n"
         - id: table-expressions
           tests:
           - uri: /(school?code='art').department

@@ -213,8 +213,9 @@ class SegmentParser(Parser):
                         else:
                             rbranch = FlowParser << tokens
                             rbranches.append(rbranch)
-                mark = Mark.union(lbranch, identifier, tail_token, *rbranches)
-                branch = CommandSyntax(identifier, lbranch, rbranches, mark)
+                    mark = Mark.union(lbranch, identifier, tail_token,
+                                      *rbranches)
+                    branch = CommandSyntax(identifier, lbranch, rbranches, mark)
         mark = Mark.union(head_token, branch)
         segment = SegmentSyntax(branch, mark)
         return segment
@@ -231,7 +232,7 @@ class TopParser(Parser):
         #   top         ::= flow ( direction | mapping )*
         #   direction   ::= '+' | '-'
         #   mapping     ::= ':' identifier ( flow | call )?
-        #   FOLLOW(mapping) = ['+','-',':',',',')','}']
+        #   FOLLOW(mapping) = ['+','-',':',',',')','}','/']
         top = FlowParser << tokens
         while tokens.peek(SymbolToken, [u'+', u'-', u':']):
             # Parse `direction` decorator.
@@ -270,14 +271,18 @@ class TopParser(Parser):
                 else:
                     # Determine whether the mapping has a parameter or not.
                     # If not, must be followed by one of: `:` (next mapping),
-                    # `,`, `)`, `}` (punctuation), or `+`, `-` (direction
-                    # decorators).  We skip through `+` and `-` since they
-                    # could also start a parameter as an unary prefix operator.
+                    # `,`, `)`, `}` (punctuation), `/` (command) or `+`, `-`
+                    # (direction decorators).  We skip through `+` and `-`
+                    # since they could also start a parameter as an unary
+                    # prefix operator.  For `/`, we need to distinguish between
+                    # a trailing `/`, a segment expression and a command.
                     ahead = 0
                     while tokens.peek(SymbolToken, [u'+', u'-'], ahead=ahead):
                         ahead += 1
+                    if tokens.peek(SymbolToken, [u'/'], ahead=ahead):
+                        ahead += 1
                     if not (tokens.peek(SymbolToken, [u':', u',', u')', u'}'],
-                                                     ahead=ahead) or
+                                        ahead=ahead) or
                             tokens.peek(EndToken, ahead=ahead)):
                         rbranch = FlowParser << tokens
                         rbranches.append(rbranch)
@@ -466,7 +471,9 @@ class TermParser(Parser):
         term = FactorParser << tokens
         while (tokens.peek(SymbolToken, [u'*'])
                or (tokens.peek(SymbolToken, [u'/'], ahead=0)
-                   and not tokens.peek(SymbolToken, [u':'], ahead=1))):
+                   and not (tokens.peek(EndToken, ahead=1) or
+                            tokens.peek(SymbolToken, [u':', u',', u')', u'}'],
+                                        ahead=1)))):
             symbol_token = tokens.pop(SymbolToken, [u'*', u'/'])
             symbol = symbol_token.value
             lbranch = term

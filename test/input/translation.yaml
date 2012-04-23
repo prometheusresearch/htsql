@@ -326,6 +326,8 @@ tests:
     - uri: /class^{year, season}
                 {*, /top(^.sort(count(enrollment)-),3).course{title}}
       ifndef: sqlite    # Too slow.
+    # parsing a command after an infix function call
+    - uri: /school:top/:csv
 
   - title: Table Expressions
     tests:

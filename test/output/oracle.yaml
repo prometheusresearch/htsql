@@ -23572,6 +23572,12 @@ tests:
                       INNER JOIN "COURSE"
                                  ON (("CLASS_2"."DEPARTMENT_CODE" = "COURSE"."DEPARTMENT_CODE") AND ("CLASS_2"."COURSE_NO" = "COURSE"."NO"))
                  ORDER BY 2 ASC, 3 ASC, "CLASS_2"."count" DESC, "CLASS_2"."DEPARTMENT_CODE" ASC, "CLASS_2"."COURSE_NO" ASC, "CLASS_2"."YEAR" ASC, "CLASS_2"."SEASON" ASC, "CLASS_2"."SECTION" ASC
+          - uri: /school:top/:csv
+            status: 200 OK
+            headers:
+            - [Content-Type, text/csv; charset=UTF-8]
+            - [Content-Disposition, 'attachment; filename="school:top.csv"']
+            body: "code,name,campus\r\nart,School of Art & Design,old\r\n"
         - id: table-expressions
           tests:
           - uri: /(school?code='art').department
