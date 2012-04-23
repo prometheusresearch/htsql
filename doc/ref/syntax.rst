@@ -89,8 +89,8 @@ Syntax Structure
 
 A sequence of HTSQL tokens must obey the HTSQL grammar.
 
-An HTSQL query starts with ``/`` followed by a valid HTSQL expression
-and is concluded with an optional query decorator.
+An HTSQL query starts is a segment expression optionally followed by a
+sequence of commands.
 
 The following table lists HTSQL operations in the order of precedence,
 lowest to highest.
@@ -98,6 +98,8 @@ lowest to highest.
 +----------------------+---------------------------+---------------------------+----------------------+
 | Operation            | Description               | Example Input             | Output               |
 +======================+===========================+===========================+======================+
+| `/ T`                | segment                   | ``/school``               |                      |
++----------------------+---------------------------+---------------------------+----------------------+
 | `x :fn`              | infix function call       | ``'HTSQL':length``        | ``5``                |
 +----------------------+                           +---------------------------+----------------------+
 | `x :fn y`            |                           | ``1/3 :round 2``          | ``0.33``             |
@@ -106,21 +108,21 @@ lowest to highest.
 +----------------------+---------------------------+---------------------------+----------------------+
 | `x +`, `x -`         | sorting direction         | ``program{degree+}``      |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `T ? p`              | sieving                   | ``program?degree='ms'``   |                      |
+| `T ? p`              | sieve                     | ``program?degree='ms'``   |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `T ^ x`              | projection                | ``program^degree``        |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `T {x,y,...}`        | selection                 | ``school{code,name}``     |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `p | q`              | logical *OR*              | ``true()|false()``        | ``true``             |
+| `p | q`              | logical *OR*              | ``true|false``            | ``true``             |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `p & q`              | logical *AND*             | ``true()&false()``        | ``false``            |
+| `p & q`              | logical *AND*             | ``true&false``            | ``false``            |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `\! p`               | logical *NOT*             | ``!true()``               | ``false``            |
+| `\! p`               | logical *NOT*             | ``!true``                 | ``false``            |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `x = y`, `x != y`,   | comparison                | ``2+2=4``                 | ``true``             |
 +----------------------+                           +---------------------------+----------------------+
-| `x == y`, `x !== y`  |                           | ``'HTSQL'==null()``       | ``false``            |
+| `x == y`, `x !== y`  |                           | ``'HTSQL'==null``         | ``false``            |
 +----------------------+                           +---------------------------+----------------------+
 | `x ~ y`, `x !~ y`    |                           | ``'HTSQL'~'SQL'``         | ``true``             |
 +----------------------+                           +---------------------------+----------------------+
@@ -134,15 +136,15 @@ lowest to highest.
 +----------------------+---------------------------+---------------------------+----------------------+
 | `- x`                | negation                  | ``-42``                   |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `x -> T`             | linking                   | |link-in|                 |                      |
+| `x -> T`             | attachment                | |attach-in|               |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `T := x`             | assignment                | |assign-in|               |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `S . T`              | composition               | ``school.program``        |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `@ T`                | scope reset               | ``@school``               |                      |
+| `@ T`                | detachment                | ``@school``               |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `{x,y,...}`          | list                      | ``{'bs','ms'}``           |                      |
+| `{x,y,...}`          | record                    | ``{'bs','ms'}``           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `(...)`              | grouping                  | ``(7+4)*2``               | ``22``               |
 +----------------------+---------------------------+---------------------------+----------------------+
@@ -164,11 +166,11 @@ lowest to highest.
 | `string`             |                           | ``'HTSQL'``               |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
 
-.. |link-in| replace:: ``'south' -> school{campus}``
+.. |attach-in| replace:: ``'south' -> school{campus}``
 .. |assign-in| replace:: ``num_prog := count(program)``
 
-An optional query decorator starts with ``/`` followed ``:`` and the
-decorator name.
+A command starts with ``/`` followed by a function application in infix
+notation.
 
 .. htsql:: /school/:csv
    :cut: 3
@@ -194,7 +196,7 @@ In HTSQL, identifiers are *case-insensitive*.
 Identifiers are used to refer to database entities such as tables and
 attributes, to define calculated attributes, and to call functions.
 
-.. htsql:: /school{name, count(department)}
+.. htsql:: /school{name, count(department)}/:csv
    :cut: 3
 
 In this example, four identifiers ``school``, ``name``, ``count`` and
@@ -271,12 +273,12 @@ operator precedence.
 Do not confuse a grouping operation with a function call, which also
 uses parentheses.
 
-List
-~~~~
+Record
+~~~~~~
 
 A comma-separated list of expressions enclosed in curly brackets
-(``{...}``) is called a list expression.  Many functions and operators
-accept lists as a way to specify multiple values.
+(``{...}``) is called a record expression.  Some functions and operators
+accept records as a way to specify multiple values.
 
 .. htsql:: /school?code={'eng','ns'}
 
@@ -331,6 +333,26 @@ the operators.
 
 .. htsql:: /{'h'+'t'+'t'+'p' :replace('tp', 'sql') :upper}
 
+A function which argument is a segment expression is called a command.
+
+.. htsql:: /csv(/school)
+   :cut: 3
+
+To use infix call notation with a command, prepend the ``:`` indicator
+with ``/``.
+
+.. htsql:: /school/:csv
+   :cut: 3
+
+Consider the difference between regular infix function call and
+a command application.
+
+.. htsql:: /school:top/:csv
+
+This example could be equivalently expressed as
+
+.. htsql:: /csv(/top(school))
+
 For a list and description of built-in functions, see :doc:`functions`.
 
 Operators
@@ -369,7 +391,7 @@ logical *NOT*
 In this list, the operators are sorted by the order of precedence, from
 lowest to highest.  All logical operators are left-associative.
 
-.. htsql:: /{true()|false(), true()&false(), !false()}
+.. htsql:: /{true|false, true&false, !false}
 
 Comparison Operators
 ~~~~~~~~~~~~~~~~~~~~
@@ -416,17 +438,17 @@ Flow Operators
 ~~~~~~~~~~~~~~
 HTSQL supports specialized operators to work with flow expressions:
 
-*sieving*
+*sieve*
     `T ? p`
 *projection*
     `T ^ x`
 *selection*
     `T {x,y,...}`
 
-The sieving operator (`T ? p`) produces rows of `T` satisfying
+The sieve operator (`T ? p`) produces rows of `T` satisfying
 condition `p`.
 
-.. htsql:: /school?code='art'
+.. htsql:: /school?campus='south'
 
 The projection operator (`T ^ x`) produces a flow of unique values of
 `x` as it ranges over `T`.  Do not confuse the projection operator with
@@ -435,15 +457,12 @@ a projection complement.
 .. htsql:: /program^degree
    :cut: 3
 
-The selection operator specifies output columns.  The operator admits
-two forms: with and without the selection base.
+The selection operator (`T {x,y,...}`) specifies output columns.
 
 .. htsql:: /school{code, name}
    :cut: 3
 
-.. htsql:: /{count(school), count(school?count(department)>2)}
-
-Sieving, projection and selection operators have the same precedence
+Sieve, projection and selection operators have the same precedence
 and are left-associative.
 
 .. htsql::
@@ -452,44 +471,61 @@ and are left-associative.
           ^campus
           {campus, avg(school.count(department))}
 
-Composition and Linking
-~~~~~~~~~~~~~~~~~~~~~~~
+Composition
+~~~~~~~~~~~
 
-HTSQL has two traversal operators:
+HTSQL supports a flow *composition* operator:
 
-*composition*
-    `S . T`
-*linking*
-    `x -> T`
+    `T . x`
 
-The composition operator (`S . T`) evaluates expression `T` in the
-context of flow `S`.
+The composition operator evaluates `x` for each row of the flow `T`.
+The values of `x` form the resulting flow.
 
-.. htsql:: /(school?code='art').program
+.. htsql:: /school.filter(campus='south').department
+   :cut: 3
 
 The composition operator is left-associative.
 
-The linking operator (`x -> T`) generates an ad-hoc link between the
-input flow and flow `T` by associating each row from the input flow with
-all rows from `T` such that the values of `x` evaluated against
-respective rows coincide.
+Attachment and Detachment
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. htsql:: /student{name, dob+}?count(dob -> student)>2
-   :cut: 3
+HTSQL has two operators for generating ad-hoc links:
 
-Scope Reset
-~~~~~~~~~~~
-
-The prefix `@` changes from the current scope to the initial scope:
-
+*detachment*
     `@ T`
+*attachment*
+    `x -> T`
+
+The detachment operator (`@ T`) generates an ad-hoc link to `T` by
+associating each row from the input flow with all rows from `T`.
 
 .. htsql:: /course?credits>avg(@course.credits)
    :cut: 3
 
-The precedence of the scope reset operator is higher than of any
+The precedence of the detachment operator is higher than of any
 other operator.  Therefore, to apply the operator to any expression
 other than an identifier or a function call, use parentheses.
+
+The attachment operator (`x -> T`) generates ad-hoc link to `T` by
+associating each row from the input flow with all rows from `T` such
+that values of expression `x` evaluated against respective rows
+coincide.
+
+.. htsql:: /student{name, dob+}?count(dob -> student)>2
+   :cut: 3
+
+Segment Operator
+~~~~~~~~~~~~~~~~
+
+A segment expression is a prefix operator:
+
+    `/ T`
+
+A segment expression converts a flow to a list value.
+
+.. htsql:: /school{name, /department{name}}
+   :cut: 4
+
 
 Sorting Decorators
 ~~~~~~~~~~~~~~~~~~
