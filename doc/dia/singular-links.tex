@@ -6,60 +6,92 @@
 \begin{document}
 
 \tikzset{
-    > = stealth', shorten > = 1pt, shorten < = 1pt,
-    node distance = 2.5cm and .5cm,
-    class/.style = {draw, rectangle},
-    item/.style = {fill, circle},
-    header/.style = {font=\bfseries},
+    > = stealth',
+    node distance = 0.5cm and 2cm,
+    entity/.style = {fill=black!10, circle,
+                     text width=1.5cm, minimum size=4cm,
+                     text centered, font=\small\ttfamily},
+    value/.style = {fill=black!10, rectangle,
+                    text width=4cm, minimum size=4cm,
+                    text centered, font=\small\ttfamily},
+    link/.style = {font=\ttfamily, above},
+    brace/.style = {decorate, decoration={brace,amplitude=8pt,raise=4pt},
+                    draw=blue!50},
+    brace header/.style = {below=10pt, font=\itshape\color{blue!75}}
 }
 
 \begin{tikzpicture}
 
-\node[item] (a1) {};
-\node[item] (a2) [right=of a1] {};
-\node[item] (a3) [right=of a2] {};
-\node[item] (a4) [right=of a3] {};
-\node[item] (a5) [right=of a4] {};
+\node[entity, label=above:school] (school)
+    {$\vdots$ \\ {[eng]} \\ {[la]} \\ {[ns]} \\ $\vdots$};
+\node[entity, label=above:department] (department) [right=of school]
+    {$\vdots$ \\ {[be]} \\ {[ee]} \\ {[me]} \\
+     {[hist]} \\ {[psych]} \\ {[chem]} \\ $\vdots$};
+\node[value, label=above:string] (string) [left=of school]
+    {$\vdots$ \\ {'north'} \\ {'old'} \\ {'south'} \\ $\vdots$};
 
-\node[item] (b1) [below=of a1] {};
-\node[item] (b2) [right=of b1] {};
-\node[item] (b3) [right=of b2] {};
-\node[item] (b4) [right=of b3] {};
-\node[item] (b5) [right=of b4] {};
+\coordinate (eng 1 out)
+    at ($ (school) +(15pt,9pt) $);
+\coordinate (la 1 out)
+    at ($ (school) +(15pt,-2pt) $);
+\coordinate (ns 1 out)
+    at ($ (school) +(15pt,-13pt) $);
+\coordinate (eng 2 out)
+    at ($ (school) +(-15pt,9pt) $);
+\coordinate (la 2 out)
+    at ($ (school) +(-15pt,-2pt) $);
+\coordinate (ns 2 out)
+    at ($ (school) +(-15pt,-13pt) $);
 
-\node[item] (c1) [right=2.5 of a5] {};
-\node[item] (c2) [right=of c1] {};
-\node[item] (c3) [right=of c2] {};
-\node[item] (c4) [right=of c3] {};
-\node[item] (c5) [right=of c4] {};
 
-\node[item] (d1) [below=of c1] {};
-\node[item] (d2) [right=of d1] {};
-\node[item] (d3) [right=of d2] {};
-\node[item] (d4) [right=of d3] {};
-\node[item] (d5) [right=of d4] {};
+\coordinate (be in)
+    at ($ (department) +(-15pt,26pt) $);
+\coordinate (ee in)
+    at ($ (department) +(-15pt,15pt) $);
+\coordinate (me in)
+    at ($ (department) +(-15pt,4pt) $);
+\coordinate (hist in)
+    at ($ (department) +(-20pt,-8pt) $);
+\coordinate (psych in)
+    at ($ (department) +(-20pt,-19pt) $);
+\coordinate (chem in)
+    at ($ (department) +(-20pt,-30pt) $);
 
-\node[class] (A) [fit=(a1) (a2) (a3) (a4) (a5)] {};
-\node[class] (B) [fit=(b1) (b2) (b3) (b4) (b5)] {};
-\node[class] (C) [fit=(c1) (c2) (c3) (c4) (c5)] {};
-\node[class] (D) [fit=(d1) (d2) (d3) (d4) (d5)] {};
+\coordinate (north in)
+    at ($ (string) +(20pt,9pt) $);
+\coordinate (old in)
+    at ($ (string) +(20pt,-2pt) $);
+\coordinate (south in)
+    at ($ (string) +(20pt,-13pt) $);
 
-\node[header] at (A.north) [above]
-    {Singular};
-\node[header] at (C.north) [above]
-    {Plural};
+\draw[->]
+    (eng 1 out) to node[link, above=0.5cm] {department} (be in);
+\draw[->]
+    (eng 1 out) to (ee in);
+\draw[->]
+    (eng 1 out) to (me in);
+\draw[->]
+    (la 1 out) to (hist in);
+\draw[->]
+    (la 1 out) to (psych in);
+\draw[->]
+    (ns 1 out) to (chem in);
 
-\draw[->] (a1) to (b2);
-\draw[->] (a2) to (b3);
-\draw[->] (a3) to (b3);
-\draw[->] (a5) to (b4);
+\draw[->]
+    (eng 2 out) to node[link, above=0.5cm] {campus} (north in);
+\draw[->]
+    (la 2 out) to (old in);
+\draw[->]
+    (ns 2 out) to (old in);
 
-\draw[->] (c1) to (d2);
-\draw[->] (c2) to (d2);
-\draw[->] (c2) to (d3);
-\draw[->] (c3) to (d3);
-\draw[->] (c5) to (d4);
-\draw[->] (c5) to (d5);
+\draw[brace]
+    ($ (department.south) -(5pt,0) $)
+    -- node[brace header] {a plural link}
+    ($ (school.south) +(5pt,0) $);
+\draw[brace]
+    ($ (school.south) -(5pt,0) $)
+    -- node[brace header] {a singular link}
+    ($ (string.south) +(5pt,0) $);
 
 \end{tikzpicture}
 

@@ -7,18 +7,22 @@
 
 \tikzset{
     node distance = 1.5cm,
-    class/.style = {draw, rectangle split, rectangle split parts=2,
-                    text width=4cm, text centered}
+    entity/.style = {fill=black!10, circle,
+                     text width=1.5cm, minimum size=3cm,
+                     text centered, font=\small\ttfamily},
+    value/.style = {fill=black!10, rectangle,
+                    text width=1.5cm, minimum size=3cm,
+                    text centered, font=\small\ttfamily}
 }
 
 \begin{tikzpicture}
 
-\node[class] (school)
-    {school \nodepart{second} \texttt{[eng]}, \texttt{[la]}, \texttt{[ns]}, \ldots};
-\node[class] (boolean) [right=of school]
-    {boolean \nodepart{second} \texttt{false}, \texttt{true}};
-\node[class] (integer) [right=of boolean]
-    {integer \nodepart{second} \ldots, \texttt{-1}, \texttt{0}, \texttt{1}, \ldots};
+\node[entity, label=above:school] (school)
+    {$\vdots$ \\ {[eng]} \\ {[la]} \\ {[ns]} \\ $\vdots$};
+\node[value, label=above:boolean] (boolean) [right=of school]
+    {false \\ true};
+\node[value, label=above:integer] (school) [right=of boolean]
+    {$\vdots$ \\ -1 \\ 0 \\ 1 \\ $\vdots$};
 
 \end{tikzpicture}
 

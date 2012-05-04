@@ -6,39 +6,119 @@
 \begin{document}
 
 \tikzset{
-    node distance = 0.5cm,
-    class/.style = {draw, rectangle split, rectangle split parts=2,
-                    text width=4cm, text centered}
+    > = stealth',
+    node distance = 0.5cm and 2.5cm,
+    unit/.style = {fill=black!10, star, star points=8,
+                   text width=1cm,
+                   text centered, font=\large\ttfamily},
+    entity/.style = {fill=black!10, circle,
+                     text width=1.5cm, minimum size=4cm,
+                     text centered, font=\small\ttfamily},
+    value/.style = {fill=black!10, rectangle,
+                    text width=5cm, minimum size=4cm,
+                    text centered, font=\small\ttfamily},
+    link/.style = {font=\ttfamily},
 }
 
 \begin{tikzpicture}
 
-\node[class] (department)
-    {department \nodepart{second} \texttt{[comp]}, \texttt{[ee]}, \ldots};
-\node[class] (school) [right=of department]
-    {school \nodepart{second} \texttt{[eng]}, \ldots};
-\node[class, text width=6cm] (string) [right=of school]
-    {string \nodepart{second} \ldots, \texttt{'School of Engineering'}, \ldots};
+\node[unit] (unit)
+    {{@}};
+\node[entity] (school) [right=of unit]
+    {$\vdots$ \\ {[eng]} \\ {[la]} \\ {[ns]} \\ $\vdots$};
+\node[entity] (department) [below=of school]
+    {$\vdots$ \\ {[chem]} \\ {[hist]} \\ {[psych]} \\
+     {[be]} \\ {[ee]} \\ {[me]} \\ $\vdots$};
+\node[value] (string) [left=of department]
+    {$\vdots$ \\ {'Chemistry'} \\ {'History'} \\ {'Psychology'} \\
+     {'Bioengineering'} \\ {'Electrical Engineering'} \\ {'Mechanical Engineering'} \\ $\vdots$};
 
-\coordinate (department/comp)
-    at ($ (department.south) +(-25pt,3pt) $);
-\coordinate (department/ee)
-    at ($ (department.south) +(10pt,3pt) $);
-\coordinate (school/eng/from/ee)
-    at ($ (school.south) +(-15pt,3pt) $);
-\coordinate (school/eng/from/comp)
-    at ($ (school.south) +(-10pt,3pt) $);
-\coordinate (school/eng/to/string)
-    at ($ (school.south) +(-5pt,3pt) $);
-\coordinate (string/eng)
-    at ($ (string.south) +(0pt,3pt) $);
+\coordinate (unit out)
+    at ($ (unit) +(5pt,0pt) $);
 
-\draw[->,bend right]
-    (department/comp) to (school/eng/from/comp);
-\draw[->,bend right]
-    (department/ee) to (school/eng/from/ee);
-\draw[->,bend right]
-    (school/eng/to/string) to (string/eng);
+\coordinate (eng in)
+    at ($ (school) +(-15pt,9pt) $);
+\coordinate (la in)
+    at ($ (school) +(-15pt,-2pt) $);
+\coordinate (ns in)
+    at ($ (school) +(-15pt,-13pt) $);
+\coordinate (eng out)
+    at ($ (school) +(15pt,9pt) $);
+\coordinate (la out)
+    at ($ (school) +(15pt,-2pt) $);
+\coordinate (ns out)
+    at ($ (school) +(15pt,-13pt) $);
+
+\coordinate (chem in)
+    at ($ (department) +(20pt,26pt) $);
+\coordinate (hist in)
+    at ($ (department) +(20pt,15pt) $);
+\coordinate (psych in)
+    at ($ (department) +(20pt,4pt) $);
+\coordinate (be in)
+    at ($ (department) +(15pt,-8pt) $);
+\coordinate (ee in)
+    at ($ (department) +(15pt,-19pt) $);
+\coordinate (me in)
+    at ($ (department) +(15pt,-30pt) $);
+\coordinate (chem out)
+    at ($ (department) +(-20pt,26pt) $);
+\coordinate (hist out)
+    at ($ (department) +(-20pt,15pt) $);
+\coordinate (psych out)
+    at ($ (department) +(-20pt,4pt) $);
+\coordinate (be out)
+    at ($ (department) +(-15pt,-8pt) $);
+\coordinate (ee out)
+    at ($ (department) +(-15pt,-19pt) $);
+\coordinate (me out)
+    at ($ (department) +(-15pt,-30pt) $);
+
+\coordinate (chem name)
+    at ($ (string) +(35pt,26pt) $);
+\coordinate (hist name)
+    at ($ (string) +(35pt,15pt) $);
+\coordinate (psych name)
+    at ($ (string) +(35pt,4pt) $);
+\coordinate (be name)
+    at ($ (string) +(50pt,-8pt) $);
+\coordinate (ee name)
+    at ($ (string) +(60pt,-19pt) $);
+\coordinate (me name)
+    at ($ (string) +(60pt,-30pt) $);
+
+\draw[->]
+    (unit out) to node[link, above=0.2cm] {school} (eng in);
+\draw[->]
+    (unit out) to (la in);
+\draw[->]
+    (unit out) to (ns in);
+
+\draw[->, bend left=60]
+    (eng out) to node[link, right=0.2cm] {department} (me in);
+\draw[->, bend left=60]
+    (eng out) to (ee in);
+\draw[->, bend left=60]
+    (eng out) to (be in);
+\draw[->, bend left=45]
+    (la out) to (hist in);
+\draw[->, bend left=45]
+    (la out) to (psych in);
+\draw[->, bend left=30]
+    (ns out) to (chem in);
+
+\draw[->]
+    (chem out) to node[link, above=0.2cm] {name} (chem name);
+\draw[->]
+    (hist out) to (hist name);
+\draw[->]
+    (psych out) to (psych name);
+\draw[->]
+    (be out) to (be name);
+\draw[->]
+    (ee out) to (ee name);
+\draw[->]
+    (me out) to (me name);
 
 \end{tikzpicture}
 

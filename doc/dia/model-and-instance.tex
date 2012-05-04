@@ -6,24 +6,29 @@
 \begin{document}
 
 \tikzset{
-    > = stealth',
-    class/.style = {rectangle, text width=2cm, text centered},
-    record/.style = {rectangle, text width=2cm, text centered},
+    > = stealth', shorten > = 1pt, shorten < = 1pt,
+    class/.style = {fill, circle, inner sep=0pt, minimum size=2mm},
+    record/.style = {draw, circle, inner sep=0pt, minimum size=2mm},
     link/.style = {font=\small\itshape},
     envelope/.style = {rectangle, draw=blue!50, rounded corners},
-    envelope header/.style = {font=\bfseries},
+    envelope header/.style = {font=\bfseries\color{blue!75}},
 }
 
 \begin{tikzpicture}
 
-\node[class] (school)
-    {Schools};
-\node[class] (department) [left=3 of school]
-    {Departments};
-\node[class] (program) [below=5 of school.north, anchor=south]
-    {Programs};
-\node[class] (course) [left=3 of program]
-    {Courses};
+\node[class] (school) {};
+\node[class] (department) [left=3 of school] {};
+\node[class] (program) [below=5 of school.north, anchor=south] {};
+\node[class] (course) [left=3 of program] {};
+
+\node[above] (school label) at (school.north)
+    {School};
+\node[above] (department label) at (department.north)
+    {Department};
+\node[below] (program label) at (program.south)
+    {Program};
+\node[below] (course label) at (course.south)
+    {Course};
 
 \draw[->]
     (department)
@@ -38,34 +43,54 @@
     to node[link,sloped,above] {offered by}
     (department);
 
-\node[envelope] (model) [fit=(school) (department) (program) (course)] {};
+\node[envelope] (model)
+    [fit=(school label) (department label) (program label) (course label)] {};
 
 \node[envelope header] at (model.north) [above]
     {Model};
 
-\node[record] (comp) [right=1 of school.north east, anchor=north west]
-    {Department of Computer Science};
-\node[record] (ee) [below=5 of comp.north, anchor=south]
-    {Department of Electrical Engineering};
-\node[record] (eng) [right=5 of comp.north, anchor=north]
+\node[record] (comp) [right=4 of school.east, anchor=west] {};
+\node[record] (comp 304) [below=5 of comp.north, anchor=south] {};
+\node[record] (eng) [right=5 of comp.north, anchor=north] {};
+\node[record] (ucompsci) [below=5 of eng.north, anchor=south] {};
+
+\node[record,dotted] [left=0.1 of comp.west] {};
+\node[record,dotted] [left=0.4 of comp.west] {};
+\node[record,dotted] [left=0.1 of comp 304.west] {};
+\node[record,dotted] [left=0.4 of comp 304.west] {};
+\node[record,dotted] [right=0.1 of comp 304.east] {};
+\node[record,dotted] [right=0.4 of comp 304.east] {};
+\node[record,dotted] [right=0.1 of eng.east] {};
+\node[record,dotted] [right=0.4 of eng.east] {};
+\node[record,dotted] [left=0.1 of ucompsci.west] {};
+\node[record,dotted] [left=0.4 of ucompsci.west] {};
+\node[record,dotted] [right=0.1 of ucompsci.east] {};
+\node[record,dotted] [right=0.4 of ucompsci.east] {};
+
+\node[above] (comp label) at (comp.north)
+    {Dept. of Computer Science};
+\node[below] (comp 304 label) at (comp 304.south)
+    {Database Theory};
+\node[above] (eng label) at (eng.north)
     {School of Engineering};
-\node[record] (ucompsci) [below=5 of eng.north, anchor=south]
+\node[below] (ucompsci label) at (ucompsci.south)
     {B.S. in Computer Science};
 
 \draw[->]
     (comp)
-    to node[link,above] {associated with}
+    to node[link,below] {associated with}
     (comp -| eng.west);
-\draw[->]
-    (ee)
-    to node[link,sloped,above] {associated with}
-    (eng);
 \draw[->]
     (ucompsci)
     to node[link,sloped,above] {administered by}
     (eng);
+\draw[->]
+    (comp 304)
+    to node[link,sloped,above] {offered by}
+    (comp);
 
-\node[envelope] (instance) [fit=(eng) (comp) (ee) (ucompsci)] {};
+\node[envelope] (instance)
+    [fit=(eng label) (comp label) (comp 304 label) (ucompsci label)] {};
 
 \node[envelope header] at (instance.north) [above]
     {Instance};

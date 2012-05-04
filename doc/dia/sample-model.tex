@@ -6,45 +6,106 @@
 \begin{document}
 
 \tikzset{
-    > = stealth', shorten > = 5pt, shorten < = 5pt,
-    node distance = .5cm and 2.5cm,
-    class/.style = {draw, rectangle,
-                    minimum width=2.5cm, minimum height=1cm,
-                    text height=1.5ex, text depth=.25ex},
-    link/.style = {font=\small\itshape}
+    > = stealth', shorten > = 1pt, shorten < = 1pt,
+    node distance = 3cm and 3cm,
+    unit/.style = {fill, star, star points=8, inner sep=0pt, minimum size=3mm},
+    entity/.style = {fill, circle, inner sep=0pt, minimum size=2mm},
+    value/.style = {fill, rectangle, inner sep=0pt, minimum size=2mm},
+    link/.style = {font=\small\ttfamily, above, sloped},
+    label/.style = {font=\small\color{black!70}},
+    information/.style = {rounded corners, inner sep=1ex, fill=blue!5}
 }
+
+\pgfdeclarelayer{background}
+\pgfsetlayers{background,main}
 
 \begin{tikzpicture}
 
-\node[class,ultra thick] (school)
-    {school};
-\node[class] (string) [right=of school]
-    {string};
-\node[class] (department) [above left=of school]
-    {department};
-\node[class] (program) [below left=of school]
-    {program};
+\node[unit] (unit) {};
+\node[entity] (school) [below right=3cm and 1.5cm of unit] {};
+\node[entity] (program) [right=of school] {};
+\node[entity] (department) [below left=3cm and 1.5cm of unit] {};
+\node[entity] (course) [left=of department] {};
+\node[value] (string) [below=of department] {};
 
-\draw[->,bend left]
-    (school)
-    to node[link,above] {code}
-    (string);
+\draw[->]
+    (unit)
+    to[bend left] node[link, near end] {program}
+    (program);
+\draw[->, very thick]
+    (unit)
+    to[bend left] node[link] {school}
+    (school);
+\draw[->]
+    (unit)
+    to[bend right] node[link] {department}
+    (department);
+\draw[->]
+    (unit)
+    to[bend right] node[link, near end] {course}
+    (course);
+
+\draw[->]
+    (program)
+    to[bend right] node[link] {school}
+    (school);
 \draw[->]
     (school)
-    to node[link,above] {name}
-    (string);
-\draw[->,bend right]
+    to[bend right] node[link] {program}
+    (program);
+\draw[->, very thick]
     (school)
-    to node[link,above] {campus}
+    to[bend right] node[link] {department}
+    (department);
+\draw[->]
+    (department)
+    to[bend right] node[link] {school}
+    (school);
+\draw[->]
+    (department)
+    to[bend right] node[link] {course}
+    (course);
+\draw[->]
+    (course)
+    to[bend right] node[link] {department}
+    (department);
+\draw[->]
+    (program)
+    edge[loop, min distance=2cm, in=-35, out=35] node[link] {part\_of}
+    (program);
+\draw[<-]
+    (program)
+    edge[loop, min distance=6cm, in=-60, out=60] node[link] {program\_via\_part\_of}
+    (program);
+
+\draw[->]
+    (department)
+    to[bend left] node[link] {code}
+    (string);
+\draw[->, very thick]
+    (department)
+    to node[link] {name}
     (string);
 \draw[->]
     (department)
-    to node[link,sloped,above] {school}
-    (school);
-\draw[->]
-    (program)
-    to node[link,sloped,above] {school}
-    (school);
+    to[bend right] node[link, below, rotate=180] {school\_code}
+    (string);
+
+\node[unit] (unit info) [below=2 of school] {};
+\node[entity] (entity info) [below=1ex of unit info] {};
+\node[value] (value info) [below=1ex of entity info] {};
+\node[label] (unit label) [right=.5em of unit info]
+    {unit class};
+\node[label] (entity label) [right=.5em of entity info]
+    {entity class};
+\node[label] (value label) [right=.5em of value info]
+    {value class};
+
+\begin{pgfonlayer}{background}
+    \node[information]
+        [fit=(unit info) (entity info) (value info)
+             (unit label) (entity label) (value label)] {};
+\end{pgfonlayer}
 
 \end{tikzpicture}
 

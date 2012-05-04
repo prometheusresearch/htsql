@@ -6,60 +6,111 @@
 \begin{document}
 
 \tikzset{
-    > = stealth', shorten > = 1pt, shorten < = 1pt,
-    node distance = 2.5cm and .5cm,
-    class/.style = {draw, rectangle},
-    item/.style = {fill, circle},
-    header/.style = {font=\bfseries},
+    > = stealth',
+    node distance = 0.5cm and 2cm,
+    entity/.style = {fill=black!10, circle,
+                     text width=1.5cm, minimum size=4cm,
+                     text centered, font=\small\ttfamily},
+    value/.style = {fill=black!10, rectangle,
+                    text width=4.5cm, minimum size=4cm,
+                    text centered, font=\small\ttfamily},
+    link/.style = {font=\ttfamily, above},
+    brace/.style = {decorate, decoration={brace,amplitude=8pt,raise=4pt},
+                    draw=blue!50},
+    brace header/.style = {below=10pt, font=\itshape\color{blue!75}}
 }
 
 \begin{tikzpicture}
 
-\node[item] (a1) {};
-\node[item] (a2) [right=of a1] {};
-\node[item] (a3) [right=of a2] {};
-\node[item] (a4) [right=of a3] {};
-\node[item] (a5) [right=of a4] {};
+\node[entity, label=above:school] (school)
+    {$\vdots$ \\ {[eng]} \\ {[la]} \\ {[ns]} \\ $\vdots$};
+\node[entity, label=above:department] (department) [left=of school]
+    {$\vdots$ \\ {[be]} \\ {[ee]} \\ {[me]} \\
+     {[hist]} \\ {[psych]} \\ {[chem]} \\ $\vdots$};
+\node[value, label=above:name] (name) [left=of department]
+    {$\vdots$ \\
+     {'Bioengineering'} \\ {'Electrical Engineering'} \\ {'Mechanical Engineering'} \\
+     {'History'} \\ {'Psychology'} \\ {'Chemistry'} \\ $\vdots$};
 
-\node[item] (b1) [below=of a1] {};
-\node[item] (b2) [right=of b1] {};
-\node[item] (b3) [right=of b2] {};
-\node[item] (b4) [right=of b3] {};
-\node[item] (b5) [right=of b4] {};
+\coordinate (eng in)
+    at ($ (school) +(-15pt,9pt) $);
+\coordinate (la in)
+    at ($ (school) +(-15pt,-2pt) $);
+\coordinate (ns in)
+    at ($ (school) +(-15pt,-13pt) $);
 
-\node[item] (c1) [right=2.5 of a5] {};
-\node[item] (c2) [right=of c1] {};
-\node[item] (c3) [right=of c2] {};
-\node[item] (c4) [right=of c3] {};
-\node[item] (c5) [right=of c4] {};
+\coordinate (be 1 out)
+    at ($ (department) +(15pt,26pt) $);
+\coordinate (ee 1 out)
+    at ($ (department) +(15pt,15pt) $);
+\coordinate (me 1 out)
+    at ($ (department) +(15pt,4pt) $);
+\coordinate (hist 1 out)
+    at ($ (department) +(20pt,-8pt) $);
+\coordinate (psych 1 out)
+    at ($ (department) +(20pt,-19pt) $);
+\coordinate (chem 1 out)
+    at ($ (department) +(20pt,-30pt) $);
+\coordinate (be 2 out)
+    at ($ (department) +(-15pt,26pt) $);
+\coordinate (ee 2 out)
+    at ($ (department) +(-15pt,15pt) $);
+\coordinate (me 2 out)
+    at ($ (department) +(-15pt,4pt) $);
+\coordinate (hist 2 out)
+    at ($ (department) +(-20pt,-8pt) $);
+\coordinate (psych 2 out)
+    at ($ (department) +(-20pt,-19pt) $);
+\coordinate (chem 2 out)
+    at ($ (department) +(-20pt,-30pt) $);
 
-\node[item] (d1) [below=of c1] {};
-\node[item] (d2) [right=of d1] {};
-\node[item] (d3) [right=of d2] {};
-\node[item] (d4) [right=of d3] {};
-\node[item] (d5) [right=of d4] {};
+\coordinate (be name)
+    at ($ (name) +(50pt,26pt) $);
+\coordinate (ee name)
+    at ($ (name) +(60pt,15pt) $);
+\coordinate (me name)
+    at ($ (name) +(60pt,4pt) $);
+\coordinate (hist name)
+    at ($ (name) +(35pt,-8pt) $);
+\coordinate (psych name)
+    at ($ (name) +(35pt,-19pt) $);
+\coordinate (chem name)
+    at ($ (name) +(35pt,-30pt) $);
 
-\node[class] (A) [fit=(a1) (a2) (a3) (a4) (a5)] {};
-\node[class] (B) [fit=(b1) (b2) (b3) (b4) (b5)] {};
-\node[class] (C) [fit=(c1) (c2) (c3) (c4) (c5)] {};
-\node[class] (D) [fit=(d1) (d2) (d3) (d4) (d5)] {};
+\draw[->]
+    (be 1 out) to (eng in);
+\draw[->]
+    (ee 1 out) to (eng in);
+\draw[->]
+    (me 1 out) to (eng in);
+\draw[->]
+    (hist 1 out) to (la in);
+\draw[->]
+    (psych 1 out) to (la in);
+\draw[->]
+    (chem 1 out) to (ns in);
 
-\node[header] at (A.north) [above]
-    {Unique};
-\node[header] at (C.north) [above]
-    {Non-unique};
+\draw[->]
+    (be 2 out) to (be name);
+\draw[->]
+    (ee 2 out) to (ee name);
+\draw[->]
+    (me 2 out) to (me name);
+\draw[->]
+    (hist 2 out) to (hist name);
+\draw[->]
+    (psych 2 out) to (psych name);
+\draw[->]
+    (chem 2 out) to (chem name);
 
-\draw[->] (a1) to (b2);
-\draw[->] (a2) to (b3);
-\draw[->] (a3) to (b5);
-\draw[->] (a5) to (b1);
-\draw[->] (a5) to (b4);
-
-\draw[->] (c1) to (d2);
-\draw[->] (c2) to (d3);
-\draw[->] (c3) to (d5);
-\draw[->] (c5) to (d2);
-\draw[->] (c5) to (d5);
+\draw[brace]
+    ($ (school.south) -(5pt,0) $)
+    -- node[brace header] {a non-unique link}
+    ($ (department.south) +(5pt,0) $);
+\draw[brace]
+    ($ (department.south) -(5pt,0) $)
+    -- node[brace header] {a unique link}
+    ($ (name.south) +(5pt,0) $);
 
 \end{tikzpicture}
 
