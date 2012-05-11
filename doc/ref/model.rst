@@ -52,161 +52,183 @@ Science*, which offers a *Database Theory* course, etc.:
    :align: center
 
 
-Classes and Links
-=================
+Model Graph
+===========
 
-HTSQL represents a database model in form of a directed graph; the nodes
-of the graph are called *classes* and the arcs are called *links*.
+HTSQL represents a database model as a directed graph, or a collection
+of nodes connected by arrows.
 
-We distinguish several types of classes:
+A model graph may contain several types of nodes:
 
-* A *value class* represents a scalar data type such as `boolean`,
-  `integer`, `string`, `date`.
-* An *entity class* represents a collection of homogeneous entities
-  modeled by the database.  For instance, a student enrollment database
-  may contain entity classes such as `school`, `program`, `department`,
-  `course`.
-* Each database model contains one instance of a *unit class*.  It
+* A *domain* node represents a scalar data type such as boolean,
+  integer, string, date.
+* A *class* node represents a collection of homogeneous business
+  entities.  For instance, a student enrollment database may contain
+  classes for school, program, department, and course entities.
+* Each model graph contains one instance of a *unit* node.  The unit
   serves as an origin node when we construct paths in the model graph.
 
-A link represents a relationship between two classes.
+Arrows in the model graph are categorized by the type of nodes they
+connect:
 
-* Each entity class has a link from the unit class.  This link
-  represents the set of all entities from the class.
-* A link connecting an entity class to a value class represents an
-  entity attribute.
-* A link between two entity classes denotes a relation between the
-  respective entities.
+* There is exactly one arrow connecting the unit node to each class
+  node.  We call it a *class* arrow.  It represents the set of all
+  entities of the target class.
+* An arrow connecting a class node to a domain node is called an
+  *attribute* arrow and represents an entity attribute.
+* An arrow between two class nodes denotes a relationship between
+  entities of the respective classes and is called a *link* arrow.
 
-Each link has a name, which must be unique among all links sharing the
-same origin class.  We use a dot-separated sequence of link names to
-identify a path in the model graph that starts at the unit class.
-Thus ``school.department.name`` identifies a path with three links:
-``school`` connecting the unit class to an entity class, ``department``
-connecting two entity classes and ``name`` connecting an entity class to
-a value class.
+Each arrow has a *name*.  The arrow name must be unique among all arrows
+with the same origin node.
 
-We will routinely use the dotted notation to refer to the last link or
-the target class in the path.  For example, we write ``school`` to
-indicate the `school` class, ``department.name`` to indicate link
-``name`` from `department` class to `string` class.
-
-The following diagram shows a fragment of the model graph for our
-student enrollment database (most of the value classes and attribute
-links are omitted for clarity).
+The following diagram shows a fragment of the model graph for the
+student enrollment database (most of the domain nodes and attribute
+arrows are omitted for clarity).
 
 .. diagram:: ../dia/sample-model.tex
    :align: center
 
-The marked path on the diagram represents the query:
+A *navigation* in the model graph is a path, or a sequence of arrows,
+where the first arrow starts at the unit node and the target of each
+arrow coincides with the origin of the next arrow.  We denote a
+navigation using arrow names separated by a period (``.``).  For
+example, in the diagram above, the selected navigation is denoted by
+``school.department.name``.
+
+A navigation expresses a respective HTSQL query:
 
 .. htsql:: /school.department.name
    :cut: 3
 
+.. note::
 
-Entities and Relations
-======================
+   We will routinely use the navigational notation to refer to various
+   components of the model graph.  Since there is a one-to-one
+   correspondence between class arrows and class nodes, we can use the
+   arrow name to refer to the target class; for example, we say "class
+   ``school``" referring to the target of the class arrow called
+   ``school``.  In the same manner, we will often say "link
+   ``school.department``" or "attribute ``department.name``" referring
+   to the last component of the navigation.
 
-As we focus from the database model to a specific instance, classes
-are populated with values and entities, and each link splits into
-connections between individual class elements.
 
-A value class is populated with all values of the respective type.
-Thus, `boolean` class acquires two values: ``true`` and ``false``,
-`integer` class is filled with all integer numbers, and so on.
+Instances
+=========
 
-An entity class becomes a set of homogeneous business entities; e.g.
-`school` class becomes a set of university schools, `department` a set
-of departments, etc.
+As we focus from the database model to a specific instance, nodes
+are populated with values and entities, and each arrow splits into
+connections between individual node elements.
 
-In HTSQL, individual entities are not observable, only entity attributes
-are.  When we need to refer to a specific entity in writing, we use the
-value of some entity attribute that can uniquely identify it, enclosed
-in brackets.  For example, attribute `school.code` uniquely identifies
-`school` entities, therefore we may say that ``[eng]``, ``[la]``,
-``[ns]`` are respectively entities representing schools of
-*Engineering*, of *Arts and Humanities*, and of *Natural Sciences*.
+A domain node is populated with all values of the respective type.
+Thus, boolean domain acquires two values: ``true`` and ``false``,
+integer domain is filled with all integer numbers, and so on.
 
-The unit class contains a single value, which is called *unit*
+A class node becomes a set of entities of the respective class; e.g.
+``school`` class becomes a set of university schools, ``department`` a
+set of departments, etc.
+
+The unit node contains a single value, which is called a *unit*
 and denoted by ``@``.
 
 .. diagram:: ../dia/sample-instance-1.tex
    :align: center
 
-A link between two classes splits into a binary relation between
-elements of these classes:
+.. note::
 
-* A link from the unit class to an entity class connects the unit
-  to every entity in the entity class.
-* A link between two entity classes connects each entity of the
-  origin class to all related entities from the target class.
-* A link from an entity class to a value class connects each
+   In HTSQL, we can only observe entity attributes, but not the entities
+   themselves.  When we need to refer to a specific entity in writing,
+   we enclose in brackets the value of an entity attribute which
+   uniquely identifies the entity.  For example, attribute
+   ``school.code`` uniquely identifies ``school`` entities, therefore we
+   may say that ``[eng]``, ``[ns]``, ``[sc]`` are respectively entities
+   representing schools of *Engineering*, of *Natural Sciences*, and
+   of *Continuing Studies*.
+
+An arrow between two nodes splits into a binary relation between
+elements of these nodes:
+
+* An arrow from the unit node to a class node connects the unit
+  to every entity in the target class.
+* An arrow between two class nodes connects each entity of the
+  origin class to all related entities in the target class.
+* An arrow from a class node to a domain node connects each
   entity with the respective attribute value.
 
-The following diagram demonstrates how the path
-``school.department.name`` looks for some specific database instance.
+The following diagram visualizes the navigation
+``school.department.name`` on a specific database instance.
 
 .. diagram:: ../dia/sample-instance-2.tex
    :align: center
 
 
-Link Constraints
-================
+Arrow Constraints
+=================
 
-Links may enforce constraints on connections between elements.  We
+Arrows may enforce constraints on connections between elements.  We
 recognize the following constraints: singularity, totality and
 uniqueness.
 
-Note that links constraints are defined on the database model
-and applied to all instances of the model.
+Note that arrow constraints are defined on the database model and
+applied to all instances of the model.
 
-Singular and Plural Links
--------------------------
+Singular and Plural Arrows
+--------------------------
 
-A link is called *singular* if any element of the origin class is
-connected to no more than one element of the target class.  Otherwise,
-the link is called *plural*.
+An arrow is called *singular* if any element of the origin node is
+connected to no more than one element of the target node.  Otherwise,
+the arrow is called *plural*.
 
-* All attribute links are singular.
-* Any link from the unit class to an entity class is plural.
-* A link between two entity classes may be singular or plural.  For
-  example, link ``department.school`` is singular because each
-  department may be associated with just one school, but the *reverse*
-  link ``school.department`` is plural since a school may include more
-  than one department.
+* All attribute arrows are singular.
+* All class arrows are plural.
+* A link arrow, which connects two class nodes, may be singular or
+  plural.  For example, link ``department.school`` is singular because
+  each department may be associated with just one school, but the
+  *reverse* link ``school.department`` is plural since a school may
+  include more than one department.
 
-The following diagram visualises a singular link ``school.campus`` and
-a plural link ``school.department``.
+The following diagram visualises a singular link ``program.school``
+and a plural link ``school.department``.
 
 .. diagram:: ../dia/singular-links.tex
    :align: center
 
-Total and Partial Links
------------------------
+Total and Partial Arrows
+------------------------
 
-A link is called *total* if each element of the origin class is
-connected to at least one element of the target class.  Otherwise, the
-link is called *partial*.
+An arrow is called *total* if each element of the origin node is
+connected to at least one element of the target node.  Otherwise, the
+arrow is called *partial*.
 
-For example, we require every program to be associated with some school,
-so link `program.school` is total.  At the same time, not every program
-is a part of another program, therefore link `program.part_of` is
-partial.
+* A class arrow is always partial.  It represents the fact that in some
+  database instances the class may contain no entities.
+* Links and attributes could be total or partial.  For example,
+  attribute ``school.name`` is total since each school must have a name,
+  but attribute ``school.campus`` is partial since some schools do not
+  belong to any campus.
+
+The following diagram shows a total link ``program.school`` and a
+partial attribute ``school.campus``.
 
 .. diagram:: ../dia/total-links.tex
    :align: center
 
-Unique and Non-unique Links
----------------------------
+Unique and Non-unique Arrows
+----------------------------
 
-A link is called *unique* if any element of the target class is
-connected to no more than one element of the origin class.  Otherwise,
-the link is *non-unique*.
+An arrow is called *unique* if any element of the target node is
+connected to no more than one element of the origin node.  Otherwise,
+the arrow is *non-unique*.
 
-Attribute `department.name` is unique since different department
-entities must have different names, but link `department.school` is
-non-unique as different departments are allowed to be associated with
-the same school.
+* A class arrow is non-unique since the class may contain more than one
+  entity.
+* Links and attributes could be unique and non-unique.  For example,
+  attribute ``school.name`` is unique since we require that each school
+  has a distinct name, but attribute ``school.campus`` is non-unique
+  since several schools may share the same campus.
+
+The following diagram shows a unique attribute ``department.name`` and a
+non-unique link ``department.school``.
 
 .. diagram:: ../dia/unique-links.tex
    :align: center
@@ -219,44 +241,46 @@ In this section, we explain how underlying relation database model
 is translated to HTSQL data model.
 
 For the most part, translation of relational structure to HTSQL model is
-straightforward.  SQL data types become value classes, SQL tables become
-entity classes, table columns become class attributes.  Links between
-entity classes are inferred from FOREIGN KEY constraints.
+straightforward.  SQL data types become domain nodes, SQL tables become
+class nodes, table columns become attributes.  Links between classes are
+inferred from FOREIGN KEY constraints.
 
 HTSQL allows the administrator to restrict access to specific tables and
-columns, configure additional database constraints, and rename link
-names.  In the following sections we describe how HTSQL describes
-database model in the absence of any configuration.
+columns, configure additional database constraints, and rename links.
+Here we describe how HTSQL creates a database model from the given SQL
+database in the absence of any configuration.
 
 A name in HTSQL is a sequence of letters, digits and ``_`` characters
-which doesn't start with a digit.  When an HTSQL name is generated from
+which does not start with a digit.  When an HTSQL name is generated from
 a SQL name which contains non-alphanumeric characters, those are
 replaced with an underscore (``_``).
 
-Entity Names
-------------
+Classes
+-------
 
-Each SQL table induces an entity class, which, in general, borrows its
+Each SQL table induces a class node, which, in general, borrows its
 name from the table.
 
-Some SQL database servers support a notion of *schemas*, namespaces for
-tables, which may cause a naming conflict when two or more different
-schemas have tables with the same name.  This conflict is resolved as
+Some SQL database servers support a notion of *schemas*, or collections
+of tables.  Tables in the same schema must have unique names, but two or
+more tables in different schemas may share the same name, in which case
+HTSQL cannot use the name directly.  This naming conflict is resolved as
 follows:
 
 * If one of the schemas is marked as "default" for the purposes of name
   resolution, the name of the respective table is borrowed unadorned.
-* For the remaining tables, the assigned name has the form
+* For the remaining tables, the assigned HTSQL name has the form
   ``<schema>_<name>``.
 
-Attribute Names
----------------
+Attributes
+----------
 
-Each table column induces an entity attribute with the same name.
+Each table column induces a class attribute with the same name.
 
-When the column is a ``FOREIGN KEY`` constraint, the column name is also
-used to refer to the respective entity link.  The usage is determined
-from the context; compare
+When the column has a ``FOREIGN KEY`` constraint, the column name is
+also used to refer to the respective link.  In this case, whether the
+name refers to an attribute or a link is determined from context;
+compare
 
 .. htsql:: /department.school_code
    :cut: 3
@@ -266,25 +290,26 @@ and
 .. htsql:: /department.school_code.*
    :cut: 3
 
-Entity Links
-------------
+Links
+-----
 
 Each ``FOREIGN KEY`` constraint generates two links between respective
-entity classes, one in the direction of the constraint, called
-*direct*, and the other in the opposite direction, called *reverse*.
+class nodes, one in the direction of the constraint, called *direct*,
+and the other in the opposite direction, called *reverse*.
 
 The names of the links are synthesized from the names of the tables and
 names of the columns which form the constraint.  If the name of the
 referring column ends with the name of the referred column (e.g.
-``department.school_code`` and ``school.code``), we call the beginning
-of the referring column a *prefix* (in this case, ``school``).
+``department.school_code`` refers to ``school.code``), we call the
+beginning of the referring column a *prefix* (in this case, ``school``).
+The prefix is stripped from any underscore characters.
 
 The link names are generated according to the following rules.  The
-adopted name is the first one which doesn't conflict with other link
-names with the same origin class.
+adopted name is the first one which doesn't conflict with other arrows
+with the same origin class.
 
 1. When the link is direct and the prefix exists, use the prefix.
-2. Use the name of the target table.  In case there are more than one
+2. Use the name of the target table.  When there are more than one
    link to the same target, prefer the one for which the referring
    column is a primary key.
 3. If the link is reverse and the prefix exists, use the name of the
@@ -292,18 +317,18 @@ names with the same origin class.
 4. If the link is reverse, use the name of the form
    ``<target>_via_<column>``.
 
-Link Constraints
-----------------
+Constraints
+-----------
 
 Column constraints are trivially translated to properties of the
-respective attribute links.
+respective attribute arrows.
 
-* A ``NOT NULL`` constraint on a column means, in HTSQL term, that the
+* A ``NOT NULL`` constraint on a column means, in HTSQL terms, that the
   respective attribute is total.
 * A ``UNIQUE`` constraint indicates that the attribute is unique.
 * A ``PRIMARY KEY`` constraint indicates that the attribute is both
   total and unique.  The columns that form a primary key are also used
-  for default ordering on the entity class.
+  for default ordering on the class.
 * A direct link induced by a ``FOREIGN KEY`` constraint is always
   singular.  The reverse link is plural in general, but could be
   singular when the key column is ``UNIQUE``.
@@ -378,7 +403,7 @@ Consider, for example, the following fragment of an SQL schema:
     );
 
 In this schema, four tables ``ad.school``, ``ad.department``,
-``ad.program``, ``ad.course`` generate four entity classes:
+``ad.program``, ``ad.course`` generate four classes:
 
 .. htsql:: /school
    :cut: 3

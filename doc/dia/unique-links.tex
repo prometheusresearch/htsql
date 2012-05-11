@@ -6,111 +6,102 @@
 \begin{document}
 
 \tikzset{
-    > = stealth',
-    node distance = 0.5cm and 2cm,
-    entity/.style = {fill=black!10, circle,
-                     text width=1.5cm, minimum size=4cm,
-                     text centered, font=\small\ttfamily},
-    value/.style = {fill=black!10, rectangle,
-                    text width=4.5cm, minimum size=4cm,
-                    text centered, font=\small\ttfamily},
-    link/.style = {font=\ttfamily, above},
-    brace/.style = {decorate, decoration={brace,amplitude=8pt,raise=4pt},
+    > = stealth', shorten > = 1pt, shorten < = 1pt,
+    node distance = 0.1cm,
+    domain node/.style = {fill=black!10, rectangle, minimum size=3cm,
+                          text width=4cm},
+    class node/.style = {fill=black!10, circle, minimum size=3cm},
+    node content/.style = {matrix, nodes={font=\ttfamily\footnotesize,
+                                          inner sep=.5pt,
+                                          text depth=.25ex, text height=1.5ex}},
+    node header/.style = {font=\itshape},
+    arrow/.style = {single arrow, fill=black!5, minimum height=3cm,
+                    minimum width=2.5cm, single arrow head extend=.1cm,
+                    single arrow tip angle=120},
+    arrow header/.style = {font=\ttfamily},
+    brace/.style = {decorate, decoration={brace, amplitude=8pt, raise=1.5cm},
                     draw=blue!50},
-    brace header/.style = {below=10pt, font=\itshape\color{blue!75}}
+    brace header/.style = {below=1.75cm, font=\itshape\color{blue!75}}
 }
 
 \begin{tikzpicture}
 
-\node[entity, label=above:school] (school)
-    {$\vdots$ \\ {[eng]} \\ {[la]} \\ {[ns]} \\ $\vdots$};
-\node[entity, label=above:department] (department) [left=of school]
-    {$\vdots$ \\ {[be]} \\ {[ee]} \\ {[me]} \\
-     {[hist]} \\ {[psych]} \\ {[chem]} \\ $\vdots$};
-\node[value, label=above:name] (name) [left=of department]
-    {$\vdots$ \\
-     {'Bioengineering'} \\ {'Electrical Engineering'} \\ {'Mechanical Engineering'} \\
-     {'History'} \\ {'Psychology'} \\ {'Chemistry'} \\ $\vdots$};
+\node[domain node] (string) {};
+\node[arrow, shape border rotate=180] (department to string) [right=of string] {};
+\node[class node] (department) [right=of department to string] {};
+\node[arrow] (department to school) [right=of department] {};
+\node[class node] (school) [right=of department to school] {};
 
-\coordinate (eng in)
-    at ($ (school) +(-15pt,9pt) $);
-\coordinate (la in)
-    at ($ (school) +(-15pt,-2pt) $);
-\coordinate (ns in)
-    at ($ (school) +(-15pt,-13pt) $);
+\node[node header] at (string.north) [above]
+    {string};
+\node[arrow header] at (department to string.north) [above]
+    {name};
+\node[node header] at (department.north) [above]
+    {department};
+\node[arrow header] at (department to school.north) [above]
+    {school};
+\node[node header] at (school.north) [above]
+    {school};
 
-\coordinate (be 1 out)
-    at ($ (department) +(15pt,26pt) $);
-\coordinate (ee 1 out)
-    at ($ (department) +(15pt,15pt) $);
-\coordinate (me 1 out)
-    at ($ (department) +(15pt,4pt) $);
-\coordinate (hist 1 out)
-    at ($ (department) +(20pt,-8pt) $);
-\coordinate (psych 1 out)
-    at ($ (department) +(20pt,-19pt) $);
-\coordinate (chem 1 out)
-    at ($ (department) +(20pt,-30pt) $);
-\coordinate (be 2 out)
-    at ($ (department) +(-15pt,26pt) $);
-\coordinate (ee 2 out)
-    at ($ (department) +(-15pt,15pt) $);
-\coordinate (me 2 out)
-    at ($ (department) +(-15pt,4pt) $);
-\coordinate (hist 2 out)
-    at ($ (department) +(-20pt,-8pt) $);
-\coordinate (psych 2 out)
-    at ($ (department) +(-20pt,-19pt) $);
-\coordinate (chem 2 out)
-    at ($ (department) +(-20pt,-30pt) $);
+\node[node content] at (string)
+{
+    \node[text height=2.5ex] {\vdots}; \\
+    \node (ee name) {'Electrical Engineering'}; \\
+    \node (comp name) {'Computer Science'}; \\
+    \node (chem name) {'Chemistry'}; \\
+    \node (career name) {'Career Development'}; \\
+    \node (astro name) {'Astronomy'}; \\
+    \node[text height=2.5ex] {\vdots}; \\
+};
 
-\coordinate (be name)
-    at ($ (name) +(50pt,26pt) $);
-\coordinate (ee name)
-    at ($ (name) +(60pt,15pt) $);
-\coordinate (me name)
-    at ($ (name) +(60pt,4pt) $);
-\coordinate (hist name)
-    at ($ (name) +(35pt,-8pt) $);
-\coordinate (psych name)
-    at ($ (name) +(35pt,-19pt) $);
-\coordinate (chem name)
-    at ($ (name) +(35pt,-30pt) $);
+\node[node content] at (department)
+{
+    \node[text height=2.5ex] {\vdots}; \\
+    \node (ee) {{[ee]}}; \\
+    \node (comp) {{[comp]}}; \\
+    \node (chem) {{[chem]}}; \\
+    \node (career) {{[career]}}; \\
+    \node (astro) {{[astro]}}; \\
+    \node[text height=2.5ex] {\vdots}; \\
+};
+
+\node[node content] at (school)
+{
+    \node[text height=2.5ex] {\vdots}; \\
+    \node (eng) {{[eng]}}; \\
+    \node (ns) {{[ns]}}; \\
+    \node (sc) {{[sc]}}; \\
+    \node[text height=2.5ex] {\vdots}; \\
+};
 
 \draw[->]
-    (be 1 out) to (eng in);
+    (ee.west) to (ee name.east);
 \draw[->]
-    (ee 1 out) to (eng in);
+    (comp.west) to (comp name.east);
 \draw[->]
-    (me 1 out) to (eng in);
+    (chem.west) to (chem name.east);
 \draw[->]
-    (hist 1 out) to (la in);
+    (career.west) to (career name.east);
 \draw[->]
-    (psych 1 out) to (la in);
-\draw[->]
-    (chem 1 out) to (ns in);
+    (astro.west) to (astro name.east);
 
 \draw[->]
-    (be 2 out) to (be name);
+    (ee.east) to (eng.west);
 \draw[->]
-    (ee 2 out) to (ee name);
+    (comp.east) to (eng.west);
 \draw[->]
-    (me 2 out) to (me name);
+    (chem.east) to (ns.west);
 \draw[->]
-    (hist 2 out) to (hist name);
-\draw[->]
-    (psych 2 out) to (psych name);
-\draw[->]
-    (chem 2 out) to (chem name);
+    (astro.east) to (ns.west);
 
 \draw[brace]
-    ($ (school.south) -(5pt,0) $)
+    (department.west)
+    -- node[brace header] {a unique attribute}
+    (string.east);
+\draw[brace]
+    (school.west)
     -- node[brace header] {a non-unique link}
-    ($ (department.south) +(5pt,0) $);
-\draw[brace]
-    ($ (department.south) -(5pt,0) $)
-    -- node[brace header] {a unique link}
-    ($ (name.south) +(5pt,0) $);
+    (department.east);
 
 \end{tikzpicture}
 

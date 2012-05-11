@@ -6,88 +6,95 @@
 \begin{document}
 
 \tikzset{
-    > = stealth',
-    node distance = 0.5cm and 2cm,
-    entity/.style = {fill=black!10, circle,
-                     text width=2cm, minimum size=4cm,
-                     text centered, font=\small\ttfamily},
-    value/.style = {fill=black!10, rectangle,
-                    text width=4cm, minimum size=4cm,
-                    text centered, font=\small\ttfamily},
-    link/.style = {font=\ttfamily, above},
-    brace/.style = {decorate, decoration={brace,amplitude=8pt,raise=4pt},
+    > = stealth', shorten > = 1pt, shorten < = 1pt,
+    node distance = 0.1cm,
+    domain node/.style = {fill=black!10, rectangle, minimum size=3cm},
+    class node/.style = {fill=black!10, circle, minimum size=3cm},
+    node content/.style = {matrix, nodes={font=\ttfamily\footnotesize,
+                                          inner sep=.5pt,
+                                          text depth=.25ex, text height=1.5ex}},
+    node header/.style = {font=\itshape},
+    arrow/.style = {single arrow, fill=black!5, minimum height=3cm,
+                    minimum width=2.5cm, single arrow head extend=.1cm,
+                    single arrow tip angle=120},
+    arrow header/.style = {font=\ttfamily},
+    brace/.style = {decorate, decoration={brace, amplitude=8pt, raise=1.5cm},
                     draw=blue!50},
-    brace header/.style = {below=10pt, font=\itshape\color{blue!75}}
+    brace header/.style = {below=1.75cm, font=\itshape\color{blue!75}}
 }
 
 \begin{tikzpicture}
 
-\node[entity, label=above:school] (school)
-    {$\vdots$ \\ {[eng]} \\ {[la]} \\ {[ns]} \\ $\vdots$};
-\node[entity, label=above:program] (program) [right=of school]
-    {$\vdots$ \\ {[eng.gee]} \\ {[eng.uelec]} \\ {[la.uhist]} \\
-     {[ns.pmth]} \\ {[ns.gmth]} \\ {[ns.umth]} \\ $\vdots$};
+\node[class node] (program) {};
+\node[arrow] (program to school) [right=of program] {};
+\node[class node] (school) [right=of program to school] {};
+\node[arrow] (school to string) [right=of school] {};
+\node[domain node] (string) [right=of school to string] {};
 
-\coordinate (eng in)
-    at ($ (school) +(15pt,9pt) $);
-\coordinate (la in)
-    at ($ (school) +(15pt,-2pt) $);
-\coordinate (ns in)
-    at ($ (school) +(15pt,-13pt) $);
+\node[node header] at (program.north) [above]
+    {program};
+\node[arrow header] at (program to school.north) [above]
+    {school};
+\node[node header] at (school.north) [above]
+    {school};
+\node[arrow header] at (school to string.north) [above]
+    {campus};
+\node[node header] at (string.north) [above]
+    {string};
 
-\coordinate (gee 1 out)
-    at ($ (program) +(-30pt,26pt) $);
-\coordinate (uelec 1 out)
-    at ($ (program) +(-30pt,15pt) $);
-\coordinate (uhist 1 out)
-    at ($ (program) +(-30pt,4pt) $);
-\coordinate (pmth 1 out)
-    at ($ (program) +(-25pt,-8pt) $);
-\coordinate (gmth 1 out)
-    at ($ (program) +(-25pt,-19pt) $);
-\coordinate (umth 1 out)
-    at ($ (program) +(-25pt,-30pt) $);
-\coordinate (gee 2 out)
-    at ($ (program) +(30pt,26pt) $);
-\coordinate (uelec 2 out)
-    at ($ (program) +(30pt,15pt) $);
-\coordinate (uhist 2 out)
-    at ($ (program) +(30pt,4pt) $);
-\coordinate (pmth 2 out)
-    at ($ (program) +(25pt,-8pt) $);
-\coordinate (gmth 2 out)
-    at ($ (program) +(25pt,-19pt) $);
-\coordinate (umth 2 out)
-    at ($ (program) +(25pt,-30pt) $);
+\node[node content] at (program)
+{
+    \node[text height=2.5ex] {\vdots}; \\
+    \node (gee) {{[eng.gee]}}; \\
+    \node (uelec) {{[eng.uelec]}}; \\
+    \node (pmth) {{[ns.pmth]}}; \\
+    \node (gmth) {{[ns.gmth]}}; \\
+    \node (umth) {{[ns.umth]}}; \\
+    \node[text height=2.5ex] {\vdots}; \\
+};
+
+\node[node content] at (school)
+{
+    \node[text height=2.5ex] {\vdots}; \\
+    \node (eng) {{[eng]}}; \\
+    \node (ns) {{[ns]}}; \\
+    \node (sc) {{[sc]}}; \\
+    \node[text height=2.5ex] {\vdots}; \\
+};
+
+\node[node content] at (string)
+{
+    \node[text height=2.5ex] {\vdots}; \\
+    \node (north) {'north'}; \\
+    \node (old) {'old'}; \\
+    \node (south) {'south'}; \\
+    \node[text height=2.5ex] {\vdots}; \\
+};
 
 \draw[->]
-    (gee 1 out) to node[link, above=0.5cm] {school} (eng in);
+    (gee.east) to (eng.west);
 \draw[->]
-    (uelec 1 out) to (eng in);
+    (uelec.east) to (eng.west);
 \draw[->]
-    (uhist 1 out) to (la in);
+    (pmth.east) to (ns.west);
 \draw[->]
-    (pmth 1 out) to (ns in);
+    (gmth.east) to (ns.west);
 \draw[->]
-    (gmth 1 out) to (ns in);
-\draw[->]
-    (umth 1 out) to (ns in);
+    (umth.east) to (ns.west);
 
-\draw[->, bend right=90, looseness=15]
-    (uelec 2 out) to (gee 2 out);
-\draw[->, bend right=90, looseness=15]
-    (gmth 2 out) to (pmth 2 out);
-\draw[->, bend right=90, looseness=15]
-    (umth 2 out) to (gmth 2 out);
+\draw[->]
+    (eng.east) to (north.west);
+\draw[->]
+    (ns.east) to (old.west);
 
 \draw[brace]
-    ($ (program.south) -(5pt,0) $)
+    (school.west)
     -- node[brace header] {a total link}
-    ($ (school.south) +(5pt,0) $);
+    (program.east);
 \draw[brace]
-    ($ (program.north east) +(35pt,0) $)
-    -- node[brace header, sloped, above=10pt] {a partial link}
-    ($ (program.south east) +(35pt,0) $);
+    (string.west)
+    -- node[brace header] {a partial attribute}
+    (school.east);
 
 \end{tikzpicture}
 
