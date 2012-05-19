@@ -13,13 +13,14 @@ This module implements the HTSQL parser.
 
 from ..mark import Mark
 from .scan import scan
-from .token import NameToken, StringToken, NumberToken, SymbolToken, EndToken
+from .token import (NameToken, StringToken, UnquotedStringToken, NumberToken,
+        SymbolToken, EndToken)
 from .syntax import (QuerySyntax, SegmentSyntax, CommandSyntax, SelectorSyntax,
-                     FunctionSyntax, MappingSyntax, OperatorSyntax,
-                     QuotientSyntax, SieveSyntax, LinkSyntax, HomeSyntax,
-                     AssignmentSyntax, SpecifierSyntax, GroupSyntax,
-                     IdentifierSyntax, WildcardSyntax, ComplementSyntax,
-                     ReferenceSyntax, StringSyntax, NumberSyntax)
+        FunctionSyntax, MappingSyntax, OperatorSyntax, QuotientSyntax,
+        SieveSyntax, LinkSyntax, HomeSyntax, AssignmentSyntax, SpecifierSyntax,
+        LocatorSyntax, LocationSyntax, GroupSyntax, IdentifierSyntax,
+        WildcardSyntax, ComplementSyntax, ReferenceSyntax, StringSyntax,
+        UnquotedStringSyntax, NumberSyntax)
 from .error import ParseError
 
 
@@ -125,7 +126,11 @@ class QueryParser(Parser):
         link            ::= '->' flow
         assignment      ::= ':=' top
 
-        specifier       ::= atom ( '.' atom )*
+        specifier       ::= locator ( '.' locator )*
+        locator         ::= atom ( '[' location ']' )?
+        location        ::= label ( '.' label )*
+        label           ::= STRING | '(' location ')' | '[' location ']'
+
         atom            ::= '@' atom | '*' index? | '^' | selector | group |
                             identifier call? | reference | literal
         index           ::= NUMBER | '(' NUMBER ')'
@@ -538,15 +543,84 @@ class SpecifierParser(Parser):
     @classmethod
     def process(cls, tokens):
         # Expect:
-        #   specifier   ::= atom ( '.' atom )*
-        specifier = AtomParser << tokens
+        #   specifier   ::= locator ( '.' locator )*
+        specifier = LocatorParser << tokens
         while tokens.peek(SymbolToken, [u'.']):
             tokens.pop(SymbolToken, [u'.'])
             lbranch = specifier
-            rbranch = AtomParser << tokens
+            rbranch = LocatorParser << tokens
             mark = Mark.union(lbranch, rbranch)
             specifier = SpecifierSyntax(lbranch, rbranch, mark)
         return specifier
+
+
+class LocatorParser(Parser):
+    """
+    Parses a `locator` production.
+    """
+
+    @classmethod
+    def process(cls, tokens):
+        # Expect:
+        #   locator         ::= atom ( '[' location ']' )?
+        locator = AtomParser << tokens
+        if tokens.peek(SymbolToken, [u'[']):
+            location = LocationParser << tokens
+            mark = Mark.union(locator, location)
+            locator = LocatorSyntax(locator, location, mark)
+        return locator
+
+
+class LocationParser(Parser):
+    """
+    Parses a `location` production.
+    """
+
+    @classmethod
+    def process(cls, tokens):
+        # Expect:
+        #   location        ::= label ( '.' label )*
+        open_token = tokens.pop(SymbolToken, [u'[', u'('])
+        labels = [LabelParser << tokens]
+        while tokens.peek(SymbolToken, [u'.']):
+            tokens.pop(SymbolToken, [u'.'])
+            labels.append(LabelParser << tokens)
+        if open_token.value == u'[' and not tokens.peek(SymbolToken, [u']']):
+            mark = Mark.union(open_token, *labels)
+            raise ParseError("cannot find a matching ']'", mark)
+        elif open_token.value == u'(' and not tokens.peek(SymbolToken, [u')']):
+            mark = Mark.union(open_token, *labels)
+            raise ParseError("cannot find a matching ')'", mark)
+        close_token = tokens.pop(SymbolToken, [u']', u')'])
+        mark = Mark.union(open_token, close_token)
+        location = LocationSyntax(labels, mark)
+        return location
+
+
+class LabelParser(Parser):
+    """
+    Parses a `label` production.
+    """
+
+    @classmethod
+    def process(cls, tokens):
+        # Expect:
+        #   label           ::= STRING | '(' location ')' | '[' location ']'
+        if tokens.peek(UnquotedStringToken):
+            token = tokens.pop(UnquotedStringToken)
+            return UnquotedStringSyntax(token.value, token.mark)
+        elif tokens.peek(StringToken):
+            token = tokens.pop(StringToken)
+            return StringSyntax(token.value, token.mark)
+        elif tokens.peek(SymbolToken, [u'[', u'(']):
+            label = LocationParser << tokens
+            return label
+        if tokens.peek(EndToken):
+            token = tokens.pop(EndToken)
+            raise ParseError("unexpected end of query", token.mark)
+        else:
+            token = tokens.pop()
+            raise ParseError("unexpected symbol '%s'" % token, token.mark)
 
 
 class AtomParser(Parser):
@@ -638,10 +712,11 @@ class AtomParser(Parser):
             token = tokens.pop(NumberToken)
             return NumberSyntax(token.value, token.mark)
         # Can't find anything suitable; produce an error message.
-        token = tokens.pop()
-        if token.is_end:
+        if tokens.peek(EndToken):
+            token = tokens.pop(EndToken)
             raise ParseError("unexpected end of query", token.mark)
         else:
+            token = tokens.pop()
             raise ParseError("unexpected symbol '%s'" % token, token.mark)
         # Not reachable.
         assert False

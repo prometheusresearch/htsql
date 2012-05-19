@@ -19,14 +19,14 @@ from .coerce import coerce
 from .signature import (IsNullSig, IsEqualSig, AndSig, CompareSig,
                         SortDirectionSig, RowNumberSig)
 from .flow import (Expression, QueryExpr, SegmentCode, Code, LiteralCode,
-                   FormulaCode, Flow, RootFlow, ScalarFlow, TableFlow,
-                   QuotientFlow, ComplementFlow, MonikerFlow, ForkedFlow,
-                   LinkedFlow, ClippedFlow, FilteredFlow, OrderedFlow,
-                   Unit, ScalarUnit, ColumnUnit, AggregateUnit, CorrelatedUnit,
-                   KernelUnit, CoveringUnit, CorrelationCode)
+        FormulaCode, Flow, RootFlow, ScalarFlow, TableFlow, QuotientFlow,
+        ComplementFlow, MonikerFlow, LocatorFlow, ForkedFlow, LinkedFlow,
+        ClippedFlow, FilteredFlow, OrderedFlow, Unit, ScalarUnit, ColumnUnit,
+        AggregateUnit, CorrelatedUnit, KernelUnit, CoveringUnit,
+        CorrelationCode)
 from .term import (Term, ScalarTerm, TableTerm, FilterTerm, JoinTerm,
-                   EmbeddingTerm, CorrelationTerm, ProjectionTerm, OrderTerm,
-                   WrapperTerm, PermanentTerm, SegmentTerm, QueryTerm, Joint)
+        EmbeddingTerm, CorrelationTerm, ProjectionTerm, OrderTerm, WrapperTerm,
+        PermanentTerm, SegmentTerm, QueryTerm, Joint)
 from .stitch import arrange, spread, sew, tie
 
 
@@ -1292,7 +1292,8 @@ class CompileCovering(CompileFlow):
     adapt_many(MonikerFlow,
                ForkedFlow,
                LinkedFlow,
-               ClippedFlow)
+               ClippedFlow,
+               LocatorFlow)
 
     def __call__(self):
         # Moniker, forked and linked flows are represented as a seed term
@@ -1335,9 +1336,18 @@ class CompileCovering(CompileFlow):
                     continue
                 codes.append(code)
                 order.append((code, direction))
+        if isinstance(self.flow, LocatorFlow):
+            codes.append(self.flow.filter)
         # Any companion expressions must also be included.
         codes += self.flow.companions
         seed_term = self.state.inject(seed_term, codes)
+
+        if isinstance(self.flow, LocatorFlow):
+            seed_term = FilterTerm(self.state.tag(), seed_term,
+                                   self.flow.filter,
+                                   seed_term.flow,
+                                   seed_term.baseline,
+                                   seed_term.routes.copy())
 
         # Indicates whether the seed term has a regular shape.
         is_regular = (seed_term.baseline == self.flow.ground)
@@ -1490,7 +1500,6 @@ class CompileCovering(CompileFlow):
                              ops=[left_filter, right_filter])
         return FilterTerm(self.state.tag(), term, filter,
                           term.flow, term.baseline, term.routes.copy())
-
 
     def clip_root(self, term, order):
         limit = self.flow.limit

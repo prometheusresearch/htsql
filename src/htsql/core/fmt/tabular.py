@@ -95,9 +95,9 @@ class ToCSV(Adapter):
 
     def cells(self, value):
         if value is None:
-            return [None]
+            yield [None]
         else:
-            return [self.domain.dump(value)]
+            yield [self.domain.dump(value)]
 
 
 class VoidToCSV(ToCSV):

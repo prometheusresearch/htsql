@@ -16,9 +16,8 @@ from ..classify import normalize
 from .error import CompileError
 from .syntax import IdentifierSyntax
 from .flow import (Flow, ScalarFlow, TableFlow, FiberTableFlow, QuotientFlow,
-                   ComplementFlow, MonikerFlow, ForkedFlow, LinkedFlow,
-                   ClippedFlow, OrderedFlow, ColumnUnit, KernelUnit,
-                   CoveringUnit)
+        ComplementFlow, MonikerFlow, ForkedFlow, LinkedFlow, ClippedFlow,
+        LocatorFlow, OrderedFlow, ColumnUnit, KernelUnit, CoveringUnit)
 from .term import Joint
 
 
@@ -372,7 +371,8 @@ class ArrangeCovering(Arrange):
                MonikerFlow,
                ForkedFlow,
                LinkedFlow,
-               ClippedFlow)
+               ClippedFlow,
+               LocatorFlow)
 
     def __call__(self):
         # Start with the parent ordering.
@@ -409,7 +409,8 @@ class SpreadCovering(Spread):
                MonikerFlow,
                ForkedFlow,
                LinkedFlow,
-               ClippedFlow)
+               ClippedFlow,
+               LocatorFlow)
 
     def __call__(self):
         # Native units of the complement are inherited from the seed flow.
@@ -427,7 +428,8 @@ class SewCovering(Sew):
                MonikerFlow,
                LinkedFlow,
                ForkedFlow,
-               ClippedFlow)
+               ClippedFlow,
+               LocatorFlow)
 
     def __call__(self):
         # To sew two terms representing a covering flow, we sew all axial flows
@@ -500,6 +502,17 @@ class TieMoniker(Tie):
             joints = tie(flow.ground)
         # Wrap the ground joints.
         for joint in joints:
+            rop = CoveringUnit(joint.rop, flow, joint.rop.binding)
+            yield joint.clone(rop=rop)
+
+
+class TieLocator(Tie):
+
+    adapt(LocatorFlow)
+
+    def __call__(self):
+        flow = self.flow.inflate()
+        for joint in tie(flow.ground):
             rop = CoveringUnit(joint.rop, flow, joint.rop.binding)
             yield joint.clone(rop=rop)
 

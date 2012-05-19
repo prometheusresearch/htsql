@@ -109,6 +109,23 @@ tests:
            date('2010-04-15'), time('20:13:04.5'), datetime('2010-04-15 20:13')}
           /:txt
 
+- title: Identity
+  tests:
+  - uri: /enrollment[1010.((mth.101).(2008.fall).001)]{id()}
+         /:raw
+  - uri: /enrollment[1010.((mth.101).(2008.fall).001)]{id()}
+         /:json
+  - uri: /enrollment[1010.((mth.101).(2008.fall).001)]{id()}
+         /:csv
+  - uri: /enrollment[1010.((mth.101).(2008.fall).001)]{id()}
+         /:tsv
+  - uri: /enrollment[1010.((mth.101).(2008.fall).001)]{id()}
+         /:xml
+  - uri: /enrollment[1010.((mth.101).(2008.fall).001)]{id()}
+         /:html
+  - uri: /enrollment[1010.((mth.101).(2008.fall).001)]{id()}
+         /:txt
+
 - title: No Rows
   tests:
   - uri: /school?false()/:raw

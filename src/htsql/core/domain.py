@@ -158,6 +158,146 @@ class ListDomain(Domain):
         return "/%s" % self.item_domain
 
 
+class IdentityDomain(Domain):
+
+    family = 'identity'
+
+    pattern = r"""
+        (?P<ws> \s+ ) |
+        (?P<symbol> \. | \[ | \( | \] | \) ) |
+        (?P<unquoted> [\w-]+ ) |
+        (?P<quoted> ' (?: [^'\0] | '')* ' )
+    """
+    regexp = re.compile(pattern, re.X|re.U)
+
+    def __init__(self, fields):
+        assert isinstance(fields, listof(Domain))
+        self.fields = fields
+        self.arity = 0
+        for field in fields:
+            if isinstance(field, IdentityDomain):
+                self.arity += field.arity
+            else:
+                self.arity += 1
+
+    def __basis__(self):
+        return (tuple(self.fields),)
+
+    def __str__(self):
+        return "[%s]" % ".".join(str(field) for field in self.fields)
+
+    def parse(self, data):
+        # Sanity check on the arguments.
+        assert isinstance(data, maybe(unicode))
+        # `None` represents `NULL` both in literal and native format.
+        if data is None:
+            return None
+        tokens = []
+        start = 0
+        while start < len(data):
+            match = self.regexp.match(data, start)
+            if match is None:
+                raise ValueError("unexpected character %r" % data[start])
+            start = match.end()
+            if match.group('ws'):
+                continue
+            token = match.group()
+            tokens.append(token)
+        tokens.append(None)
+        stack = []
+        value = []
+        arity = 0
+        while tokens:
+            token = tokens.pop(0)
+            while token in u'[(':
+                stack.append((value, arity, token))
+                value = []
+                arity = 0
+                token = tokens.pop(0)
+            if token is None or token in u'[(]).':
+                raise ValueError("ill-formed locator")
+            if token.startswith(u'\'') and token.endswith(u'\''):
+                token = token[1:-1].replace(u'\'\'', u'\'')
+            value.append((token, None))
+            arity += 1
+            token = tokens.pop(0)
+            while token in u'])':
+                if not stack:
+                    raise ValueError("ill-formed locator")
+                parent_value, parent_arity, parent_bracket = stack.pop()
+                if ((token == u']' and parent_bracket != u'[') or
+                    (token == u')' and parent_bracket != u'(')):
+                    raise ValueError("ill-formed locator")
+                parent_value.append((value, arity))
+                value = parent_value
+                arity += parent_arity
+                token = tokens.pop(0)
+            if (token is not None or stack) and token != u'.':
+                raise ValueError("ill-formed locator")
+        def collect(raw, arity, identity):
+            value = []
+            if arity != identity.arity:
+                raise ValueError("ill-formed locator")
+            for field in identity.fields:
+                if isinstance(field, IdentityDomain):
+                    total_arity = 0
+                    items = []
+                    while total_arity < field.arity:
+                        assert raw
+                        item, item_arity = raw.pop(0)
+                        if total_arity == 0 and item_arity == field.arity:
+                            items = item
+                            total_arity = item_arity
+                        elif item_arity is None:
+                            total_arity += 1
+                            items.append(item)
+                        else:
+                            total_arity += item_arity
+                            items.append(item)
+                    if total_arity > field.arity:
+                        raise ValueError("ill-formed locator")
+                    item = collect(items, total_arity, field)
+                    value.append(item)
+                else:
+                    if not raw:
+                        raise ValueError("ill-formed locator")
+                    item, item_arity = raw.pop(0)
+                    if item_arity is not None:
+                        raise ValueError("ill-formed locator")
+                    item = field.parse(item)
+                    assert item is not None
+                    value.append(item)
+            return tuple(value)
+        return collect(value, arity, self)
+
+    def dump(self, value):
+        assert isinstance(value, maybe(tuple))
+        if value is None:
+            return None
+        def convert(value, fields, is_flattened=True):
+            assert isinstance(value, tuple) and len(value) == len(fields)
+            chunks = []
+            is_simple = all(not isinstance(field, IdentityDomain)
+                            for field in fields[1:])
+            for item, field in zip(value, fields):
+                if isinstance(field, IdentityDomain):
+                    is_label_flattened = False
+                    if len(field.fields) == 1:
+                        is_label_flattened = True
+                    if is_simple:
+                        is_label_flattened = True
+                    chunk = convert(item, field.fields, is_label_flattened)
+                    chunks.append(chunk)
+                else:
+                    chunk = field.dump(item)
+                    chunks.append(chunk)
+            data = u".".join(chunks)
+            if not is_flattened:
+                data = u"(%s)" % data
+            return data
+        return convert(value, self.fields)
+
+
 class BooleanDomain(Domain):
     """
     Represents Boolean data type.

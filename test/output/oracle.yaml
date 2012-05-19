@@ -23578,6 +23578,355 @@ tests:
             - [Content-Type, text/csv; charset=UTF-8]
             - [Content-Disposition, 'attachment; filename="school:top.csv"']
             body: "code,name,campus\r\nart,School of Art & Design,old\r\n"
+        - id: identity
+          tests:
+          - uri: /school[ns]
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school                                     |
+               +------+----------------------------+--------+
+               | code | name                       | campus |
+              -+------+----------------------------+--------+-
+               | ns   | School of Natural Sciences | old    |
+
+               ----
+               /school[ns]
+               SELECT "SCHOOL"."CODE",
+                      "SCHOOL"."NAME",
+                      "SCHOOL"."CAMPUS"
+               FROM "SCHOOL"
+               WHERE ("SCHOOL"."CODE" = 'ns')
+               ORDER BY 1 ASC
+          - uri: /school[ns].department
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | department                        |
+               +-------+-------------+-------------+
+               | code  | name        | school_code |
+              -+-------+-------------+-------------+-
+               | astro | Astronomy   | ns          |
+               | chem  | Chemistry   | ns          |
+               | mth   | Mathematics | ns          |
+               | phys  | Physics     | ns          |
+
+               ----
+               /school[ns].department
+               SELECT "DEPARTMENT"."CODE",
+                      "DEPARTMENT"."NAME",
+                      "DEPARTMENT"."SCHOOL_CODE"
+               FROM "SCHOOL"
+                    INNER JOIN "DEPARTMENT"
+                               ON ("SCHOOL"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
+               WHERE ("SCHOOL"."CODE" = 'ns')
+               ORDER BY "SCHOOL"."CODE" ASC, 1 ASC
+          - uri: /school[ns].program
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | program                                                                         |
+               +-------------+--------+----------------------------------+--------+--------------+
+               | school_code | code   | title                            | degree | part_of_code |
+              -+-------------+--------+----------------------------------+--------+--------------+-
+               | ns          | gmth   | Masters of Science in            | ms     | pmth         |
+               :             :        : Mathematics                      :        :              :
+               | ns          | pmth   | Doctorate of Science in          | ph     |              |
+               :             :        : Mathematics                      :        :              :
+               | ns          | uastro | Bachelor of Science in Astronomy | bs     |              |
+               | ns          | uchem  | Bachelor of Science in Chemistry | bs     |              |
+               | ns          | umth   | Bachelor of Science in           | bs     | gmth         |
+               :             :        : Mathematics                      :        :              :
+               | ns          | uphys  | Bachelor of Science in Physics   | bs     |              |
+
+               ----
+               /school[ns].program
+               SELECT "PROGRAM"."SCHOOL_CODE",
+                      "PROGRAM"."CODE",
+                      "PROGRAM"."TITLE",
+                      "PROGRAM"."DEGREE",
+                      "PROGRAM"."PART_OF_CODE"
+               FROM "SCHOOL"
+                    INNER JOIN "PROGRAM"
+                               ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL_CODE")
+               WHERE ("SCHOOL"."CODE" = 'ns')
+               ORDER BY "SCHOOL"."CODE" ASC, 1 ASC, 2 ASC
+          - uri: /program?school[ns]
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | program                                                                         |
+               +-------------+--------+----------------------------------+--------+--------------+
+               | school_code | code   | title                            | degree | part_of_code |
+              -+-------------+--------+----------------------------------+--------+--------------+-
+               | ns          | gmth   | Masters of Science in            | ms     | pmth         |
+               :             :        : Mathematics                      :        :              :
+               | ns          | pmth   | Doctorate of Science in          | ph     |              |
+               :             :        : Mathematics                      :        :              :
+               | ns          | uastro | Bachelor of Science in Astronomy | bs     |              |
+               | ns          | uchem  | Bachelor of Science in Chemistry | bs     |              |
+               | ns          | umth   | Bachelor of Science in           | bs     | gmth         |
+               :             :        : Mathematics                      :        :              :
+               | ns          | uphys  | Bachelor of Science in Physics   | bs     |              |
+
+               ----
+               /program?school[ns]
+               SELECT "PROGRAM"."SCHOOL_CODE",
+                      "PROGRAM"."CODE",
+                      "PROGRAM"."TITLE",
+                      "PROGRAM"."DEGREE",
+                      "PROGRAM"."PART_OF_CODE"
+               FROM "PROGRAM"
+                    LEFT OUTER JOIN (SELECT 1 AS "!",
+                                            "SCHOOL"."CODE"
+                                     FROM "SCHOOL"
+                                     WHERE ("SCHOOL"."CODE" = 'ns')) "SCHOOL"
+                                    ON ("PROGRAM"."SCHOOL_CODE" = "SCHOOL"."CODE")
+               WHERE ("SCHOOL"."!" IS NOT NULL)
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /program[ns.uchem]
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | program                                                                        |
+               +-------------+-------+----------------------------------+--------+--------------+
+               | school_code | code  | title                            | degree | part_of_code |
+              -+-------------+-------+----------------------------------+--------+--------------+-
+               | ns          | uchem | Bachelor of Science in Chemistry | bs     |              |
+
+               ----
+               /program[ns.uchem]
+               SELECT "PROGRAM"."SCHOOL_CODE",
+                      "PROGRAM"."CODE",
+                      "PROGRAM"."TITLE",
+                      "PROGRAM"."DEGREE",
+                      "PROGRAM"."PART_OF_CODE"
+               FROM "PROGRAM"
+                    INNER JOIN "SCHOOL"
+                               ON ("PROGRAM"."SCHOOL_CODE" = "SCHOOL"."CODE")
+               WHERE ("SCHOOL"."CODE" = 'ns')
+                     AND ("PROGRAM"."CODE" = 'uchem')
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /school{id(), *}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school                                               |
+               +------+------+-------------------------------+--------+
+               | id() | code | name                          | campus |
+              -+------+------+-------------------------------+--------+-
+               | art  | art  | School of Art & Design        | old    |
+               | bus  | bus  | School of Business            | south  |
+               | edu  | edu  | College of Education          | old    |
+               | eng  | eng  | School of Engineering         | north  |
+               | la   | la   | School of Arts and Humanities | old    |
+               | mus  | mus  | School of Music & Dance       | south  |
+               | ns   | ns   | School of Natural Sciences    | old    |
+               | ph   | ph   | Public Honorariums            |        |
+               | sc   | sc   | School of Continuing Studies  |        |
+
+               ----
+               /school{id(),*}
+               SELECT "SCHOOL"."CODE",
+                      "SCHOOL"."NAME",
+                      "SCHOOL"."CAMPUS"
+               FROM "SCHOOL"
+               ORDER BY 1 ASC
+          - uri: /department{id(), school{id()}}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | department      |
+               +--------+--------+
+               |        | school |
+               |        +--------+
+               | id()   | id()   |
+              -+--------+--------+-
+               | acc    | bus    |
+               | arthis | la     |
+               | astro  | ns     |
+               | be     | eng    |
+               | bursar |        :
+               | career |        :
+               | chem   | ns     |
+               | comp   | eng    |
+               | econ   | bus    |
+               | edpol  | edu    |
+               | ee     | eng    |
+               | eng    | la     |
+               | hist   | la     |
+               | lang   | la     |
+               | me     | eng    |
+               | mm     | bus    |
+               | mth    | ns     |
+               | parent |        :
+               | phys   | ns     |
+               | pia    | mus    |
+               | poli   | la     |
+               | psych  | la     |
+               | stdart | art    |
+               | str    | mus    |
+               | tched  | edu    |
+               | voc    | mus    |
+               | win    | mus    |
+
+               ----
+               /department{id(),school{id()}}
+               SELECT "DEPARTMENT"."CODE",
+                      "SCHOOL"."id",
+                      "SCHOOL"."CODE"
+               FROM "DEPARTMENT"
+                    LEFT OUTER JOIN (SELECT 1 AS "id",
+                                            "SCHOOL"."CODE"
+                                     FROM "SCHOOL") "SCHOOL"
+                                    ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL"."CODE")
+               ORDER BY 1 ASC
+          - uri: /course[astro.105].class.id()
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | id()                          |
+              -+-------------------------------+-
+               | (astro.105).(2007.spring).001 |
+               | (astro.105).(2008.spring).001 |
+               | (astro.105).(2009.spring).001 |
+               | (astro.105).(2010.spring).001 |
+
+               ----
+               /course[astro.105].class.id()
+               SELECT "DEPARTMENT_2"."CODE",
+                      "COURSE_2"."NO",
+                      "SEMESTER"."YEAR",
+                      "SEMESTER"."SEASON",
+                      "CLASS"."SECTION"
+               FROM "COURSE" "COURSE_1"
+                    INNER JOIN "DEPARTMENT" "DEPARTMENT_1"
+                               ON ("COURSE_1"."DEPARTMENT_CODE" = "DEPARTMENT_1"."CODE")
+                    INNER JOIN "CLASS"
+                               ON (("COURSE_1"."DEPARTMENT_CODE" = "CLASS"."DEPARTMENT_CODE") AND ("COURSE_1"."NO" = "CLASS"."COURSE_NO"))
+                    INNER JOIN "COURSE" "COURSE_2"
+                               ON (("CLASS"."DEPARTMENT_CODE" = "COURSE_2"."DEPARTMENT_CODE") AND ("CLASS"."COURSE_NO" = "COURSE_2"."NO"))
+                    INNER JOIN "DEPARTMENT" "DEPARTMENT_2"
+                               ON ("COURSE_2"."DEPARTMENT_CODE" = "DEPARTMENT_2"."CODE")
+                    INNER JOIN "SEMESTER"
+                               ON (("CLASS"."YEAR" = "SEMESTER"."YEAR") AND ("CLASS"."SEASON" = "SEMESTER"."SEASON"))
+               WHERE ("DEPARTMENT_1"."CODE" = 'astro')
+                     AND ("COURSE_1"."NO" = 105)
+               ORDER BY "COURSE_1"."DEPARTMENT_CODE" ASC, "COURSE_1"."NO" ASC, "CLASS"."DEPARTMENT_CODE" ASC, "CLASS"."COURSE_NO" ASC, "CLASS"."YEAR" ASC, "CLASS"."SEASON" ASC, 5 ASC
+          - uri: /program^degree{*, /^.id()}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | program^degree        |
+               +--------+--------------+
+               | degree | id()         |
+              -+--------+--------------+-
+               | ba     | art.uhist    |
+               :        | art.ustudio  |
+               :        | bus.uecon    |
+               :        | edu.umath    |
+               :        | edu.usci     |
+               :        | la.uengl     |
+               :        | la.uhist     |
+               :        | la.upolisci  |
+               :        | la.upsych    |
+               :        | la.uspan     |
+               | bs     | bus.uacct    |
+               :        | bus.ubusad   |
+               :        | eng.ubio     |
+               :        | eng.ucompsci |
+               :        | eng.uelec    |
+               :        | eng.umech    |
+               :        | ns.uastro    |
+               :        | ns.uchem     |
+               :        | ns.umth      |
+               :        | ns.uphys     |
+               | ct     | bus.pacc     |
+               :        | bus.pbusad   |
+               :        | edu.psci     |
+               :        | la.psciwri   |
+               | ma     | bus.gecon    |
+               :        | edu.gedlead  |
+               :        | edu.glited   |
+               :        | edu.gtch     |
+               :        | la.gengl     |
+               :        | la.glang     |
+               :        | la.gscitch   |
+               | ms     | edu.gedu     |
+               :        | eng.gbe      |
+               :        | eng.gbuseng  |
+               :        | eng.gee      |
+               :        | eng.gme      |
+               :        | ns.gmth      |
+               | pb     | art.gart     |
+               | ph     | ns.pmth      |
+
+               ----
+               /program^degree{*,/^.id()}
+               SELECT "PROGRAM"."DEGREE"
+               FROM "PROGRAM"
+               WHERE ("PROGRAM"."DEGREE" IS NOT NULL)
+               GROUP BY "PROGRAM"."DEGREE"
+               ORDER BY 1 ASC NULLS FIRST
+
+                 SELECT "SCHOOL"."CODE",
+                        "PROGRAM"."CODE",
+                        "PROGRAM"."DEGREE"
+                 FROM "PROGRAM"
+                      INNER JOIN "SCHOOL"
+                                 ON ("PROGRAM"."SCHOOL_CODE" = "SCHOOL"."CODE")
+                 WHERE ("PROGRAM"."DEGREE" IS NOT NULL)
+                 ORDER BY 3 ASC NULLS FIRST, "PROGRAM"."SCHOOL_CODE" ASC, 2 ASC
+          - uri: /program[ns]
+            status: 400 Bad Request
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |
+              bind error: ill-formed locator:
+                  /program[ns]
+                          ^^^^
+          - uri: /school[ns.uchem]
+            status: 400 Bad Request
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |
+              bind error: ill-formed locator:
+                  /school[ns.uchem]
+                         ^^^^^^^^^^
+          - uri: /course[ns.uchem]
+            status: 400 Bad Request
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |
+              bind error: invalid decimal literal: uchem:
+                  /course[ns.uchem]
+                             ^^^^^
+          - uri: /program^degree{id()}
+            status: 400 Bad Request
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |
+              bind error: cannot determine identity:
+                  /program^degree{id()}
+                                  ^^^^
         - id: table-expressions
           tests:
           - uri: /(school?code='art').department
@@ -29203,6 +29552,173 @@ tests:
                     INTERVAL '20:13:04.500000' HOUR TO SECOND,
                     TIMESTAMP '2010-04-15 20:13:00'
              FROM DUAL "!"
+      - id: identity
+        tests:
+        - uri: /enrollment[1010.((mth.101).(2008.fall).001)]{id()} /:raw
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="enrollment.js"]
+          body: |
+            {
+              "meta": {
+                "domain": {
+                  "type": "list",
+                  "item": {
+                    "domain": {
+                      "type": "record",
+                      "fields": [
+                        {
+                          "domain": {
+                            "type": "identity"
+                          },
+                          "header": "id()",
+                          "syntax": "id()"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "header": "enrollment",
+                "syntax": "\/enrollment[1010.[[mth.101].[2008.fall].001]]{id()}",
+                "tag": "enrollment"
+              },
+              "data": [
+                [
+                  "1010.((mth.101).(2008.fall).001)"
+                ]
+              ]
+            }
+        - uri: /enrollment[1010.((mth.101).(2008.fall).001)]{id()} /:json
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="enrollment.js"]
+          body: |
+            {
+              "enrollment": [
+                {
+                  "0": "1010.((mth.101).(2008.fall).001)"
+                }
+              ]
+            }
+        - uri: /enrollment[1010.((mth.101).(2008.fall).001)]{id()} /:csv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/csv; charset=UTF-8]
+          - [Content-Disposition, attachment; filename="enrollment.csv"]
+          body: "id()\r\n1010.((mth.101).(2008.fall).001)\r\n"
+        - uri: /enrollment[1010.((mth.101).(2008.fall).001)]{id()} /:tsv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/tab-separated-values; charset=UTF-8]
+          - [Content-Disposition, attachment; filename="enrollment.tsv"]
+          body: "id()\r\n1010.((mth.101).(2008.fall).001)\r\n"
+        - uri: /enrollment[1010.((mth.101).(2008.fall).001)]{id()} /:xml
+          status: 200 OK
+          headers:
+          - [Content-Type, application/xml]
+          - [Content-Disposition, inline; filename="enrollment.xml"]
+          body: |
+            <?xml version="1.0" encoding="UTF-8" ?>
+            <htsql:result xmlns:htsql="http://htsql.org/2010/xml">
+              <enrollment>
+                <_1>1010.((mth.101).(2008.fall).001)</_1>
+              </enrollment>
+            </htsql:result>
+        - uri: /enrollment[1010.((mth.101).(2008.fall).001)]{id()} /:html
+          status: 200 OK
+          headers:
+          - [Content-Type, text/html; charset=UTF-8]
+          body: |
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <title>enrollment</title>
+            <style type="text/css">
+            table.htsql-output { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
+            table.htsql-output > thead { background-color: #f2f2f2; border-bottom: 1px solid #1a1a1a }
+            table.htsql-output > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align: center; vertical-align: bottom; overflow: hidden; word-wrap: break-word; border-top: 1px solid #999999; border-left: 1px solid #999999 }
+            table.htsql-output > thead > tr > th.htsql-empty-header:after { content: "\A0" }
+            table.htsql-output > tbody > tr.htsql-odd-row { background-color: #ffffff }
+            table.htsql-output > tbody > tr.htsql-even-row { background-color: #f2f2f2 }
+            table.htsql-output > tbody > tr:hover { color: #ffffff; background-color: #333333 }
+            table.htsql-output > tbody > tr > td { padding: 0.2em 0.5em; vertical-align: baseline; overflow: hidden; word-wrap: break-word; border-left: 1px solid #999999; border-right: 1px solid #999999 }
+            table.htsql-output > tbody > tr > td.htsql-integer-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-decimal-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-float-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-null-value:after { content: "\A0" }
+            table.htsql-output > tbody > tr > td.htsql-empty-value { color: #999999 }
+            table.htsql-output > tbody > tr > td.htsql-empty-value:after { content: "\2B1A" }
+            table.htsql-output > tbody > tr > td.htsql-false-value { font-style: italic }
+            table.htsql-output > tbody > tr > td.htsql-null-record-value { border-left-style: dashed; border-right-style: dashed }
+            table.htsql-output > tbody > tr > td.htsql-section { border-top: 1px dotted #999999 }
+            table.htsql-output > tbody > tr > td.htsql-index { font-size: 90%; font-weight: bold; text-align: right; width: 0; color: #999999; border-left-style: solid; border-right-color: #1a1a1a; -moz-user-select: none; -webkit-user-select: none; user-select: none }
+            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
+            div.htsql-welcome > h1 { font-size: 200%; font-weight: bold; margin: 1px 0 0 }
+            div.htsql-welcome > p { margin: 1px 0 0 }
+            </style>
+            </head>
+            <body>
+            <table class="htsql-output" summary="enrollment">
+            <thead>
+            <tr><th colspan="2">enrollment</th></tr>
+            <tr><th class="htsql-empty-header"></th><th>id()</th></tr>
+            </thead>
+            <tbody>
+            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-identity-type">1010.((mth.101).(2008.fall).001)</td></tr>
+            </tbody>
+            </table>
+            </body>
+            </html>
+        - uri: /enrollment[1010.((mth.101).(2008.fall).001)]{id()} /:txt
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | enrollment                       |
+             +----------------------------------+
+             | id()                             |
+            -+----------------------------------+-
+             | 1010.((mth.101).(2008.fall).001) |
+
+             ----
+             /enrollment[1010.[[mth.101].[2008.fall].001]]{id()}
+             SELECT "STUDENT_2"."ID",
+                    "DEPARTMENT_2"."CODE",
+                    "COURSE_2"."NO",
+                    "SEMESTER_2"."YEAR",
+                    "SEMESTER_2"."SEASON",
+                    "CLASS_2"."SECTION"
+             FROM "ENROLLMENT"
+                  INNER JOIN "STUDENT" "STUDENT_1"
+                             ON ("ENROLLMENT"."STUDENT_ID" = "STUDENT_1"."ID")
+                  INNER JOIN "CLASS" "CLASS_1"
+                             ON ("ENROLLMENT"."CLASS_SEQ" = "CLASS_1"."CLASS_SEQ")
+                  INNER JOIN "COURSE" "COURSE_1"
+                             ON (("CLASS_1"."DEPARTMENT_CODE" = "COURSE_1"."DEPARTMENT_CODE") AND ("CLASS_1"."COURSE_NO" = "COURSE_1"."NO"))
+                  INNER JOIN "DEPARTMENT" "DEPARTMENT_1"
+                             ON ("COURSE_1"."DEPARTMENT_CODE" = "DEPARTMENT_1"."CODE")
+                  INNER JOIN "SEMESTER" "SEMESTER_1"
+                             ON (("CLASS_1"."YEAR" = "SEMESTER_1"."YEAR") AND ("CLASS_1"."SEASON" = "SEMESTER_1"."SEASON"))
+                  INNER JOIN "STUDENT" "STUDENT_2"
+                             ON ("ENROLLMENT"."STUDENT_ID" = "STUDENT_2"."ID")
+                  INNER JOIN "CLASS" "CLASS_2"
+                             ON ("ENROLLMENT"."CLASS_SEQ" = "CLASS_2"."CLASS_SEQ")
+                  INNER JOIN "COURSE" "COURSE_2"
+                             ON (("CLASS_2"."DEPARTMENT_CODE" = "COURSE_2"."DEPARTMENT_CODE") AND ("CLASS_2"."COURSE_NO" = "COURSE_2"."NO"))
+                  INNER JOIN "DEPARTMENT" "DEPARTMENT_2"
+                             ON ("COURSE_2"."DEPARTMENT_CODE" = "DEPARTMENT_2"."CODE")
+                  INNER JOIN "SEMESTER" "SEMESTER_2"
+                             ON (("CLASS_2"."YEAR" = "SEMESTER_2"."YEAR") AND ("CLASS_2"."SEASON" = "SEMESTER_2"."SEASON"))
+             WHERE ("STUDENT_1"."ID" = 1010)
+                   AND ("DEPARTMENT_1"."CODE" = 'mth')
+                   AND ("COURSE_1"."NO" = 101)
+                   AND ("SEMESTER_1"."YEAR" = 2008)
+                   AND ("SEMESTER_1"."SEASON" = 'fall')
+                   AND ("CLASS_1"."SECTION" = '001')
+             ORDER BY "ENROLLMENT"."STUDENT_ID" ASC, "ENROLLMENT"."CLASS_SEQ" ASC
       - id: no-rows
         tests:
         - uri: /school?false()/:raw
@@ -34762,6 +35278,7 @@ tests:
             bind error: unrecognized attribute 'id' in scope of 'student':
                 /student.id
                          ^^
+            (did you mean: a function 'id')
         - uri: /(student{name, dob}?date(start_date)>curr_date).limit(10)
           status: 200 OK
           headers:

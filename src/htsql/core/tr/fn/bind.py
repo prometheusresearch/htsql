@@ -31,7 +31,7 @@ from ..bind import BindByName, BindingState
 from ..error import BindError
 from ..coerce import coerce
 from ..decorate import decorate
-from ..lookup import direct, expand, guess_tag, lookup_command
+from ..lookup import direct, expand, identify, guess_tag, lookup_command
 from ..signature import (Signature, NullarySig, UnarySig, BinarySig,
                          CompareSig, IsEqualSig, IsTotallyEqualSig, IsInSig,
                          IsNullSig, IfNullSig, NullIfSig, AndSig, OrSig,
@@ -873,6 +873,18 @@ class BindWhere(BindMacro):
             binding = DefinitionBinding(binding, name, is_reference, arity,
                                         recipe, self.syntax)
         return self.state.bind(lop, scope=binding)
+
+
+class BindId(BindMacro):
+
+    call('id')
+    signature = NullarySig
+
+    def expand(self):
+        recipe = identify(self.state.scope)
+        if recipe is None:
+            raise BindError("cannot determine identity", self.syntax.mark)
+        return self.state.use(recipe, self.syntax)
 
 
 class BindCast(BindFunction):

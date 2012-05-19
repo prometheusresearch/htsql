@@ -16,8 +16,8 @@ from ..adapter import Adapter, adapt, adapt_many
 from ..domain import BooleanDomain
 from .coerce import coerce
 from .flow import (Code, SegmentCode, LiteralCode, FormulaCode, CastCode,
-                   RecordCode, AnnihilatorCode, Unit, ColumnUnit, CompoundUnit,
-                   CorrelationCode)
+                   RecordCode, IdentityCode, AnnihilatorCode, CorrelationCode,
+                   Unit, ColumnUnit, CompoundUnit)
 from .term import (PreTerm, Term, UnaryTerm, BinaryTerm, TableTerm,
                    ScalarTerm, FilterTerm, JoinTerm, CorrelationTerm,
                    EmbeddingTerm, ProjectionTerm, OrderTerm, SegmentTerm,
@@ -1311,7 +1311,8 @@ class EvaluateCast(Evaluate):
 
 class EvaluateRecord(Evaluate):
 
-    adapt(RecordCode)
+    adapt_many(RecordCode,
+               IdentityCode)
 
     def __call__(self):
         for field in self.code.fields:
@@ -1586,6 +1587,21 @@ class DecomposeRecord(Decompose):
             return record_class(*[compose_field(row, stream)
                                   for compose_field in compose_fields])
         return compose_record
+
+
+class DecomposeIdentity(Decompose):
+
+    adapt(IdentityCode)
+
+    def __call__(self):
+        compose_fields = []
+        for field in self.code.fields:
+            compose_field = self.state.decompose(field)
+            compose_fields.append(compose_field)
+        def compose_identity(row, stream, compose_fields=compose_fields):
+            return tuple(compose_field(row, stream)
+                         for compose_field in compose_fields)
+        return compose_identity
 
 
 class DecomposeAnnihilator(Decompose):

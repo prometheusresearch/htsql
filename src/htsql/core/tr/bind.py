@@ -14,34 +14,31 @@ This module implements the binding process.
 from ..util import maybe, listof, tupleof, similar
 from ..adapter import Adapter, Protocol, adapt, adapt_many
 from ..domain import (Domain, BooleanDomain, IntegerDomain, DecimalDomain,
-                      FloatDomain, UntypedDomain, EntityDomain, RecordDomain,
-                      ListDomain, VoidDomain)
+        FloatDomain, UntypedDomain, EntityDomain, RecordDomain, ListDomain,
+        IdentityDomain, VoidDomain)
 from ..classify import normalize
 from .error import BindError
 from .syntax import (Syntax, QuerySyntax, SegmentSyntax, SelectorSyntax,
-                     ApplicationSyntax, FunctionSyntax, MappingSyntax,
-                     OperatorSyntax, QuotientSyntax, SieveSyntax, LinkSyntax,
-                     HomeSyntax, AssignmentSyntax, SpecifierSyntax, GroupSyntax,
-                     IdentifierSyntax, WildcardSyntax, ReferenceSyntax,
-                     ComplementSyntax, StringSyntax, NumberSyntax)
+        ApplicationSyntax, FunctionSyntax, MappingSyntax, OperatorSyntax,
+        QuotientSyntax, SieveSyntax, LinkSyntax, HomeSyntax, AssignmentSyntax,
+        SpecifierSyntax, LocatorSyntax, LocationSyntax, GroupSyntax,
+        IdentifierSyntax, WildcardSyntax, ReferenceSyntax, ComplementSyntax,
+        StringSyntax, NumberSyntax)
 from .binding import (Binding, WrappingBinding, QueryBinding, SegmentBinding,
-                      RootBinding, HomeBinding, FreeTableBinding,
-                      AttachedTableBinding, ColumnBinding, QuotientBinding,
-                      KernelBinding, ComplementBinding, LinkBinding,
-                      SieveBinding, SortBinding, CastBinding,
-                      ImplicitCastBinding, RescopingBinding,
-                      AssignmentBinding, DefinitionBinding, SelectionBinding,
-                      WildSelectionBinding, RerouteBinding,
-                      ReferenceRerouteBinding, AliasBinding,
-                      LiteralBinding, VoidBinding,
-                      Recipe, LiteralRecipe, SelectionRecipe,
-                      FreeTableRecipe, AttachedTableRecipe,
-                      ColumnRecipe, KernelRecipe, ComplementRecipe,
-                      SubstitutionRecipe, BindingRecipe, ClosedRecipe,
-                      PinnedRecipe, AmbiguousRecipe)
+        RootBinding, HomeBinding, FreeTableBinding, AttachedTableBinding,
+        ColumnBinding, QuotientBinding, KernelBinding, ComplementBinding,
+        LinkBinding, LocatorBinding, SieveBinding, SortBinding, CastBinding,
+        IdentityBinding, ImplicitCastBinding, RescopingBinding,
+        AssignmentBinding, DefinitionBinding, SelectionBinding,
+        WildSelectionBinding, RerouteBinding, ReferenceRerouteBinding,
+        AliasBinding, LiteralBinding, VoidBinding, Recipe, LiteralRecipe,
+        SelectionRecipe, FreeTableRecipe, AttachedTableRecipe, ColumnRecipe,
+        KernelRecipe, ComplementRecipe, IdentityRecipe, ChainRecipe,
+        SubstitutionRecipe, BindingRecipe, ClosedRecipe, PinnedRecipe,
+        AmbiguousRecipe)
 from .lookup import (lookup_attribute, lookup_reference, lookup_complement,
-                     lookup_attribute_set, lookup_reference_set,
-                     expand, direct, guess_tag, lookup_command)
+        lookup_attribute_set, lookup_reference_set, expand, direct, guess_tag,
+        lookup_command, identify)
 from .coerce import coerce
 from .decorate import decorate
 
@@ -357,6 +354,14 @@ class SelectList(Select):
         return self.binding
 
 
+class SelectIdentity(Select):
+
+    adapt(IdentityDomain)
+
+    def __call__(self):
+        return self.binding
+
+
 class BindSelector(Bind):
 
     adapt(SelectorSyntax)
@@ -652,6 +657,61 @@ class BindSpecifier(Bind):
         scope = self.state.bind(self.syntax.lbranch)
         binding = self.state.bind(self.syntax.rbranch, scope=scope)
         return binding
+
+
+
+class BindLocator(Bind):
+
+    adapt(LocatorSyntax)
+
+    def __call__(self):
+        seed = self.state.bind(self.syntax.lbranch)
+        recipe = identify(seed)
+        if recipe is None:
+            raise BindError("cannot determine identity", seed.mark)
+        identity = self.state.use(recipe, self.syntax.rbranch, scope=seed)
+        if identity.domain.arity != self.syntax.rbranch.arity:
+            raise BindError("ill-formed locator", self.syntax.rbranch.mark)
+        def convert(identity, branches):
+            value = []
+            for field in identity.fields:
+                if isinstance(field, IdentityDomain):
+                    total_arity = 0
+                    items = []
+                    while total_arity < field.arity:
+                        assert branches
+                        branch = branches.pop(0)
+                        if (total_arity == 0 and
+                                isinstance(branch, LocationSyntax) and
+                                branch.arity == field.arity):
+                            items = branch.branches[:]
+                            total_arity = branch.arity
+                        elif isinstance(branch, LocationSyntax):
+                            items.append(branch)
+                            total_arity += branch.arity
+                        else:
+                            items.append(branch)
+                            total_arity += 1
+                    if total_arity > field.arity:
+                        raise BindError("ill-formed locator",
+                                        self.syntax.rbranch.mark)
+                    item = convert(field, items)
+                    value.append(item)
+                else:
+                    assert branches
+                    branch = branches.pop(0)
+                    if not isinstance(branch, StringSyntax):
+                        raise BindError("ill-formed locator",
+                                        self.syntax.lbranch.mark)
+                    try:
+                        item = field.parse(branch.value)
+                    except ValueError, exc:
+                        raise BindError(str(exc), branch.mark)
+                    value.append(item)
+            return tuple(value)
+        value = convert(identity.domain, self.syntax.rbranch.branches[:])
+        return LocatorBinding(self.state.scope, seed, identity, value,
+                              self.syntax)
 
 
 class BindGroup(Bind):
@@ -1118,6 +1178,16 @@ class BindByComplement(BindByRecipe):
                                  self.recipe.quotient, self.syntax)
 
 
+class BindByIdentity(BindByRecipe):
+
+    adapt(IdentityRecipe)
+
+    def __call__(self):
+        elements = [self.state.use(recipe, self.syntax)
+                    for recipe in self.recipe.elements]
+        return IdentityBinding(self.state.scope, elements, self.syntax)
+
+
 class BindBySubstitution(BindByRecipe):
 
     adapt(SubstitutionRecipe)
@@ -1198,6 +1268,17 @@ class BindByClosed(BindByRecipe):
         binding = self.state.use(self.recipe.recipe, self.syntax)
         # Force the current syntax node to the binding.
         return AliasBinding(binding, self.syntax)
+
+
+class BindByChain(BindByRecipe):
+
+    adapt(ChainRecipe)
+
+    def __call__(self):
+        binding = self.state.scope
+        for recipe in self.recipe.recipes:
+            binding = self.state.use(recipe, self.syntax, scope=binding)
+        return binding
 
 
 class BindByPinned(BindByRecipe):

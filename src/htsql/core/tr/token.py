@@ -23,20 +23,7 @@ class Token(Printable):
     subclass of :class:`Token` and override the following class attributes:
 
     `name` (a string)
-        The name of the token category.  Must be a valid identifier since
-        it is used by the scanner as the name of the pattern group.
-
-    `pattern` (a string)
-        The regular expression to match the token (in the verbose format).
-
-    `is_ws` (Boolean)
-        If set, indicates that the token is to be discarded.
-
-    `is_end` (Boolean)
-        If set, forces the scanner to stop the processing.
-
-    When adding a subclass of :class:`Token`, you may also want to override
-    methods :meth:`unquote` and :meth:`quote`.
+        The name of the token category.
 
     The constructor of :class:`Token` accepts the following parameters:
 
@@ -48,23 +35,6 @@ class Token(Printable):
     """
 
     name = None
-    pattern = None
-    is_ws = False
-    is_end = False
-
-    @classmethod
-    def unquote(cls, value):
-        """
-        Converts a raw string that matches the token pattern to a token value.
-        """
-        return value
-
-    @classmethod
-    def quote(cls, value):
-        """
-        Reverses :meth:`unquote`.
-        """
-        return value
 
     def __init__(self, value, mark):
         assert isinstance(value, unicode)
@@ -80,23 +50,6 @@ class Token(Printable):
         return self.value.encode('utf-8')
 
 
-class SpaceToken(Token):
-    """
-    Represents a whitespace token.
-
-    In HTSQL, whitespace characters are space, tab, LF, CR, FF, VT and
-    those Unicode characters that are classified as space.
-
-    Whitespace tokens are discarded by the scanner without passing them
-    to the parser.
-    """
-
-    name = 'whitespace'
-    pattern = r""" \s+ """
-    # Do not pass the token to the parser.
-    is_ws = True
-
-
 class NameToken(Token):
     """
     Represents a name token.
@@ -108,7 +61,6 @@ class NameToken(Token):
     """
 
     name = 'name'
-    pattern = r""" (?! \d) \w+ """
 
 
 class StringToken(Token):
@@ -121,19 +73,10 @@ class StringToken(Token):
     """
 
     name = 'string'
-    # Note: we do not permit `NUL` characters in a string literal.
-    pattern = r""" ' (?: [^'\0] | '')* ' """
 
-    @classmethod
-    def unquote(cls, value):
-        # Strip leading and trailing quotes and replace `''` with `'`.
-        return value[1:-1].replace(u'\'\'', u'\'')
 
-    @classmethod
-    def quote(cls, value):
-        # Replace all occurences of `'` with `''`, enclose the string
-        # in the quotes.
-        return u'\'%s\'' % value.replace(u'\'', u'\'\'')
+class UnquotedStringToken(StringToken):
+    pass
 
 
 class NumberToken(Token):
@@ -144,7 +87,6 @@ class NumberToken(Token):
     """
 
     name = 'number'
-    pattern = r""" (?: \d* \.)? \d+ [eE] [+-]? \d+ | \d* \. \d+ | \d+ \.? """
 
 
 class SymbolToken(Token):
@@ -172,11 +114,6 @@ class SymbolToken(Token):
     """
 
     name = 'symbol'
-    pattern = r"""
-        ~ | !~ | <= | < | >= | > | == | = | !== | != | ! |
-        & | \| | -> | \. | , | \? | \^ | / | \* | \+ | - |
-        \( | \) | \{ | \} | \[ | \] | := | : | \$ | @
-    """
 
 
 class EndToken(Token):
@@ -188,7 +125,5 @@ class EndToken(Token):
     """
 
     name = 'end'
-    pattern = r""" $ """
-    is_end = True
 
 

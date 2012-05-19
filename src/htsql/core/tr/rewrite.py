@@ -16,12 +16,11 @@ from ..domain import BooleanDomain
 from .error import EncodeError
 from .coerce import coerce
 from .flow import (Expression, QueryExpr, SegmentCode, Flow, RootFlow,
-                   QuotientFlow, ComplementFlow, MonikerFlow, ForkedFlow,
-                   LinkedFlow, ClippedFlow, FilteredFlow, OrderedFlow,
-                   Code, LiteralCode, CastCode, RecordCode,
-                   AnnihilatorCode, FormulaCode, Unit,
-                   CompoundUnit, ScalarUnit, AggregateUnitBase, AggregateUnit,
-                   KernelUnit, CoveringUnit)
+        QuotientFlow, ComplementFlow, MonikerFlow, ForkedFlow, LinkedFlow,
+        ClippedFlow, LocatorFlow, FilteredFlow, OrderedFlow, Code, LiteralCode,
+        CastCode, RecordCode, IdentityCode, AnnihilatorCode, FormulaCode, Unit,
+        CompoundUnit, ScalarUnit, AggregateUnitBase, AggregateUnit, KernelUnit,
+        CoveringUnit)
 from .signature import Signature, OrSig, AndSig
 # FIXME: move `IfSig` and `SwitchSig` to `htsql.core.tr.signature`.
 from .fn.signature import IfSig
@@ -821,6 +820,46 @@ class ReplaceMoniker(Replace):
         return self.flow.clone(base=base, seed=seed)
 
 
+class RewriteLocator(RewriteFlow):
+
+    adapt(LocatorFlow)
+
+    def __call__(self):
+        # Apply the adapter to all child nodes.
+        base = self.state.rewrite(self.flow.base)
+        seed = self.state.rewrite(self.flow.seed)
+        filter = self.state.rewrite(self.flow.filter)
+        return self.flow.clone(base=base, seed=seed, filter=filter)
+
+
+class UnmaskLocator(UnmaskFlow):
+
+    adapt(LocatorFlow)
+
+    def __call__(self):
+        # Unmask the seed flow against the parent flow.
+        seed = self.state.unmask(self.flow.seed, mask=self.flow.base)
+        # Unmask the parent flow against the current mask.
+        base = self.state.unmask(self.flow.base)
+        filter = self.state.unmask(self.flow.filter, mask=self.flow.seed)
+        return self.flow.clone(base=base, seed=seed, filter=filter)
+
+
+class ReplaceLocator(Replace):
+
+    adapt(LocatorFlow)
+
+    def __call__(self):
+        base = self.state.replace(self.flow.base)
+        substate = self.state.spawn()
+        substate.collect(self.flow.seed)
+        substate.collect(self.flow.filter)
+        substate.recombine()
+        seed = substate.replace(self.flow.seed)
+        filter = substate.replace(self.flow.filter)
+        return self.flow.clone(base=base, seed=seed, filter=filter)
+
+
 class RewriteForked(RewriteFlow):
 
     adapt(ForkedFlow)
@@ -1232,7 +1271,8 @@ class RewriteBySignature(Adapter):
 
 class RewriteRecord(Rewrite):
 
-    adapt(RecordCode)
+    adapt_many(RecordCode,
+               IdentityCode)
 
     def __call__(self):
         fields = [self.state.rewrite(field)
@@ -1242,7 +1282,8 @@ class RewriteRecord(Rewrite):
 
 class UnmaskRecord(Unmask):
 
-    adapt(RecordCode)
+    adapt_many(RecordCode,
+               IdentityCode)
 
     def __call__(self):
         fields = [self.state.unmask(field)
@@ -1252,7 +1293,8 @@ class UnmaskRecord(Unmask):
 
 class CollectRecord(Collect):
 
-    adapt(RecordCode)
+    adapt_many(RecordCode,
+               IdentityCode)
 
     def __call__(self):
         for field in self.code.fields:
@@ -1261,7 +1303,8 @@ class CollectRecord(Collect):
 
 class ReplaceRecord(Replace):
 
-    adapt(RecordCode)
+    adapt_many(RecordCode,
+               IdentityCode)
 
     def __call__(self):
         fields = [self.state.replace(field)

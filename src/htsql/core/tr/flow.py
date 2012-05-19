@@ -14,7 +14,7 @@ This module declares flow and code nodes.
 from ..util import (maybe, listof, tupleof, Clonable, Comparable, Printable,
                     cachedproperty)
 from ..entity import TableEntity, ColumnEntity, Join
-from ..domain import Domain, BooleanDomain, ListDomain
+from ..domain import Domain, BooleanDomain, ListDomain, IdentityDomain
 from .binding import Binding, QueryBinding, SegmentBinding
 from .signature import Signature, Bag, Formula
 
@@ -1231,6 +1231,46 @@ class ClippedFlow(Flow):
                    self.limit if self.limit is not None else 1)
 
 
+class LocatorFlow(Flow):
+
+    is_axis = True
+
+    def __init__(self, base, seed, filter, binding, companions=[]):
+        assert isinstance(base, Flow)
+        assert isinstance(seed, Flow)
+        assert (isinstance(filter, Code) and
+                isinstance(filter.domain, BooleanDomain))
+        assert seed.spans(base)
+        # We don't need `seed` to be plural or even axial against `base`.
+        #assert not base.spans(seed)
+        assert isinstance(companions, listof(Code))
+        # Determine an axial ancestor of `seed` spanned by `base`
+        # (could be `seed` itself).
+        ground = seed
+        while not ground.is_axis:
+            ground = ground.base
+        if not base.spans(ground):
+            while not base.spans(ground.base):
+                ground = ground.base
+        axis = seed
+        while not axis.is_axis:
+            axis = axis.base
+        is_contracting = (axis.base is None or base.spans(axis.base))
+        super(LocatorFlow, self).__init__(
+                    base=base,
+                    family=seed.family,
+                    is_contracting=is_contracting,
+                    is_expanding=False,
+                    binding=binding)
+        self.seed = seed
+        self.filter = filter
+        self.ground = ground
+        self.companions = companions
+
+    def __basis__(self):
+        return (self.base, self.seed, self.filter)
+
+
 class FilteredFlow(Flow):
     """
     Represents a filtering operation.
@@ -1499,6 +1539,26 @@ class RecordCode(Code):
         for field in self.fields:
             segments.extend(field.segments)
         return segments
+
+
+class IdentityCode(Code):
+
+    def __init__(self, fields, binding):
+        assert isinstance(fields, listof(Code))
+        domain = IdentityDomain([field.domain for field in fields])
+        super(IdentityCode, self).__init__(
+                domain=domain,
+                binding=binding)
+        self.fields = fields
+
+    def __basis__(self):
+        return (tuple(self.fields),)
+
+    def get_units(self):
+        units = []
+        for field in self.fields:
+            units.extend(field.units)
+        return units
 
 
 class AnnihilatorCode(Code):
@@ -1883,7 +1943,8 @@ class CoveringUnit(CompoundUnit):
                                  MonikerFlow,
                                  ForkedFlow,
                                  LinkedFlow,
-                                 ClippedFlow))
+                                 ClippedFlow,
+                                 LocatorFlow))
         super(CoveringUnit, self).__init__(
                     code=code,
                     flow=flow,

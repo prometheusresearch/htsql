@@ -13,26 +13,24 @@ This module implements the encoding process.
 
 from ..adapter import Adapter, adapt, adapt_many
 from ..domain import (Domain, UntypedDomain, EntityDomain, RecordDomain,
-                      BooleanDomain, NumberDomain, IntegerDomain,
-                      DecimalDomain, FloatDomain, StringDomain, EnumDomain,
-                      DateDomain, TimeDomain, DateTimeDomain, OpaqueDomain)
+        BooleanDomain, NumberDomain, IntegerDomain, DecimalDomain, FloatDomain,
+        StringDomain, EnumDomain, DateDomain, TimeDomain, DateTimeDomain,
+        OpaqueDomain)
 from .error import EncodeError
 from .coerce import coerce
 from .binding import (Binding, QueryBinding, SegmentBinding, WrappingBinding,
-                      SelectionBinding, HomeBinding, RootBinding,
-                      FreeTableBinding, AttachedTableBinding, ColumnBinding,
-                      QuotientBinding, KernelBinding, ComplementBinding,
-                      CoverBinding, ForkBinding, LinkBinding, ClipBinding,
-                      SieveBinding, SortBinding, CastBinding, RescopingBinding,
-                      LiteralBinding, FormulaBinding)
+        SelectionBinding, HomeBinding, RootBinding, FreeTableBinding,
+        AttachedTableBinding, ColumnBinding, QuotientBinding, KernelBinding,
+        ComplementBinding, IdentityBinding, LocatorBinding, CoverBinding,
+        ForkBinding, LinkBinding, ClipBinding, SieveBinding, SortBinding,
+        CastBinding, RescopingBinding, LiteralBinding, FormulaBinding)
 from .lookup import direct
 from .flow import (RootFlow, ScalarFlow, DirectTableFlow, FiberTableFlow,
-                   QuotientFlow, ComplementFlow, MonikerFlow, ForkedFlow,
-                   LinkedFlow, ClippedFlow, FilteredFlow, OrderedFlow,
-                   QueryExpr, SegmentCode, LiteralCode, FormulaCode,
-                   CastCode, RecordCode, AnnihilatorCode,
-                   ColumnUnit, ScalarUnit, KernelUnit)
-from .signature import Signature, IsNullSig, NullIfSig
+        QuotientFlow, ComplementFlow, MonikerFlow, LocatorFlow, ForkedFlow,
+        LinkedFlow, ClippedFlow, FilteredFlow, OrderedFlow, QueryExpr,
+        SegmentCode, LiteralCode, FormulaCode, CastCode, RecordCode,
+        AnnihilatorCode, IdentityCode, ColumnUnit, ScalarUnit, KernelUnit)
+from .signature import Signature, IsNullSig, NullIfSig, IsEqualSig, AndSig
 import decimal
 
 
@@ -425,6 +423,36 @@ class RelateClip(Relate):
         seed = self.state.relate(self.binding.seed)
         return ClippedFlow(base, seed, self.binding.limit,
                            self.binding.offset, self.binding)
+
+
+class RelateLocator(Relate):
+
+    adapt(LocatorBinding)
+
+    def __call__(self):
+        base = self.state.relate(self.binding.base)
+        seed = self.state.relate(self.binding.seed)
+        def convert(identity, items):
+            filters = []
+            for element, item in zip(identity.elements, items):
+                if isinstance(element, IdentityBinding):
+                    filter = convert(element, item)
+                else:
+                    element = self.state.encode(element)
+                    literal = LiteralCode(item, element.domain,
+                                          self.binding)
+                    filter = FormulaCode(IsEqualSig(+1),
+                                         coerce(BooleanDomain()),
+                                         self.binding,
+                                         lop=element, rop=literal)
+                filters.append(filter)
+            if len(filters) == 1:
+                return filters[0]
+            else:
+                return FormulaCode(AndSig(), coerce(BooleanDomain()),
+                                   self.binding, ops=filters)
+        filter = convert(self.binding.identity, self.binding.value)
+        return LocatorFlow(base, seed, filter, self.binding)
 
 
 class EncodeColumn(Encode):
@@ -938,6 +966,21 @@ class RelateSelection(Relate):
 
     def __call__(self):
         return self.state.relate(self.binding.base)
+
+
+class EncodeIdentity(Encode):
+
+    adapt(IdentityBinding)
+
+    def __call__(self):
+        flow = self.state.relate(self.binding.base)
+        fields = [self.state.encode(element)
+                  for element in self.binding.elements]
+        code = IdentityCode(fields, self.binding)
+        unit = ScalarUnit(code, flow, self.binding)
+        indicator = LiteralCode(True, coerce(BooleanDomain()), self.binding)
+        indicator = ScalarUnit(indicator, flow, self.binding)
+        return AnnihilatorCode(unit, indicator, self.binding)
 
 
 class EncodeWrapping(Encode):

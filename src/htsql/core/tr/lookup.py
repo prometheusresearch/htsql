@@ -13,23 +13,22 @@ This module implements name resolution adapters.
 
 from ..util import Clonable, Printable, maybe
 from ..adapter import Adapter, adapt, adapt_many
+from ..entity import DirectJoin
 from ..model import (HomeNode, TableNode, Arc, TableArc, ChainArc, ColumnArc,
-                     SyntaxArc, InvalidArc, AmbiguousArc)
+        SyntaxArc, InvalidArc, AmbiguousArc)
 from ..classify import classify, relabel, normalize
 from .syntax import IdentifierSyntax
-from .binding import (Binding, ScopingBinding, ChainingBinding, WrappingBinding,
-                      SegmentBinding, HomeBinding, RootBinding, TableBinding,
-                      FreeTableBinding, AttachedTableBinding,
-                      ColumnBinding, QuotientBinding, ComplementBinding,
-                      CoverBinding, ForkBinding, LinkBinding, ClipBinding,
-                      RescopingBinding, DefinitionBinding, SelectionBinding,
-                      WildSelectionBinding, DirectionBinding, RerouteBinding,
-                      ReferenceRerouteBinding, TitleBinding, AliasBinding,
-                      CommandBinding, ImplicitCastBinding,
-                      FreeTableRecipe, AttachedTableRecipe, ColumnRecipe,
-                      ComplementRecipe, KernelRecipe, BindingRecipe,
-                      SubstitutionRecipe, ClosedRecipe, InvalidRecipe,
-                      AmbiguousRecipe)
+from .binding import (Binding, ScopingBinding, ChainingBinding,
+        WrappingBinding, SegmentBinding, HomeBinding, RootBinding,
+        TableBinding, FreeTableBinding, AttachedTableBinding, ColumnBinding,
+        QuotientBinding, ComplementBinding, CoverBinding, ForkBinding,
+        LinkBinding, ClipBinding, LocatorBinding, RescopingBinding,
+        DefinitionBinding, SelectionBinding, WildSelectionBinding,
+        DirectionBinding, RerouteBinding, ReferenceRerouteBinding,
+        TitleBinding, AliasBinding, CommandBinding, ImplicitCastBinding,
+        FreeTableRecipe, AttachedTableRecipe, ColumnRecipe, ComplementRecipe,
+        KernelRecipe, BindingRecipe, IdentityRecipe, ChainRecipe,
+        SubstitutionRecipe, ClosedRecipe, InvalidRecipe, AmbiguousRecipe)
 
 
 class Probe(Clonable, Printable):
@@ -161,6 +160,10 @@ class ExpansionProbe(Probe):
         #    symbols.append("**")
         #return "?<%s>" % "|".join(symbols)
         return "?<*>"
+
+
+class IdentityProbe(Probe):
+    pass
 
 
 class GuessNameProbe(Probe):
@@ -414,6 +417,7 @@ class LookupInChaining(Lookup):
                (ChainingBinding, ReferenceSetProbe),
                (ChainingBinding, ComplementProbe),
                (ChainingBinding, ExpansionProbe),
+               (ChainingBinding, IdentityProbe),
                (ChainingBinding, GuessTitleProbe),
                (ChainingBinding, DirectionProbe))
 
@@ -666,6 +670,48 @@ class ExpandTable(Lookup):
             yield (identifier, recipe)
 
 
+class IdentifyTable(Lookup):
+
+    adapt(TableBinding, IdentityProbe)
+
+    def __call__(self):
+        unique_key = self.binding.table.primary_key
+        if unique_key is None:
+            for key in self.binding.table.unique_keys:
+                if key.is_partial:
+                    continue
+                if all(not column.is_nullable for column in key.origin_columns):
+                    unique_key = key
+                    break
+        if unique_key is None:
+            return None
+        columns = unique_key.origin_columns[:]
+        recipes = []
+        while columns:
+            for foreign_key in self.binding.table.foreign_keys:
+                if foreign_key.is_partial:
+                    continue
+                width = len(foreign_key.origin_columns)
+                if foreign_key.origin_columns == columns[:width]:
+                    join = DirectJoin(foreign_key)
+                    chain = [AttachedTableRecipe([join])]
+                    binding = AttachedTableBinding(self.binding, join,
+                                                   self.binding.syntax)
+                    recipe = lookup(binding, self.probe)
+                    if recipe is None:
+                        return None
+                    chain.append(recipe)
+                    recipe = ChainRecipe(chain)
+                    recipes.append(recipe)
+                    columns = columns[width:]
+                    break
+            else:
+                column = columns.pop(0)
+                recipe = ColumnRecipe(column)
+                recipes.append(recipe)
+        return IdentityRecipe(recipes)
+
+
 class GuessPathForFreeTable(Lookup):
 
     adapt(FreeTableBinding, GuessPathProbe)
@@ -824,7 +870,8 @@ class LookupAttributeInComplement(Lookup):
 
     adapt_many((ComplementBinding, AttributeProbe),
                (ComplementBinding, AttributeSetProbe),
-               (ComplementBinding, ComplementProbe))
+               (ComplementBinding, ComplementProbe),
+               (ComplementBinding, IdentityProbe))
 
     def __call__(self):
         # Delegate all lookup probes to the seed scope.
@@ -847,16 +894,21 @@ class ExpandComplement(Lookup):
         return lookup(self.binding.quotient.seed, probe)
 
 
-
 class LookupAttributeInCover(Lookup):
     # Find an attribute in a cover scope.
 
     adapt_many((CoverBinding, AttributeProbe),
                (CoverBinding, AttributeSetProbe),
                (CoverBinding, ComplementProbe),
+               (CoverBinding, IdentityProbe),
                (ClipBinding, AttributeProbe),
                (ClipBinding, AttributeSetProbe),
-               (ClipBinding, ComplementProbe))
+               (ClipBinding, ComplementProbe),
+               (ClipBinding, IdentityProbe),
+               (LocatorBinding, AttributeProbe),
+               (LocatorBinding, AttributeSetProbe),
+               (LocatorBinding, ComplementProbe),
+               (LocatorBinding, IdentityProbe))
 
     def __call__(self):
         # Delegate all lookup requests to the seed flow.
@@ -867,7 +919,8 @@ class ExpandCover(Lookup):
     # Expand public columns from a cover scope.
 
     adapt_many((CoverBinding, ExpansionProbe),
-               (ClipBinding, ExpansionProbe))
+               (ClipBinding, ExpansionProbe),
+               (LocatorBinding, ExpansionProbe))
 
     def __call__(self):
         # Ignore pure selector expansion probes.
@@ -882,12 +935,22 @@ class ExpandCover(Lookup):
         return lookup(self.binding.seed, probe)
 
 
+class GuessTagAndHeaderFromLocator(Lookup):
+
+    adapt_many((LocatorBinding, GuessTagProbe),
+               (LocatorBinding, GuessHeaderProbe))
+
+    def __call__(self):
+        return lookup(self.binding.seed, self.probe)
+
+
 class LookupAttributeInFork(Lookup):
     # Find an attribute or a complement link in a fork scope.
 
     adapt_many((ForkBinding, AttributeProbe),
                (ForkBinding, AttributeSetProbe),
-               (ForkBinding, ComplementProbe))
+               (ForkBinding, ComplementProbe),
+               (ForkBinding, IdentityProbe))
 
     def __call__(self):
         # Delegate all lookup probes to the parent binding.
@@ -912,7 +975,8 @@ class LookupAttributeInLink(Lookup):
 
     adapt_many((LinkBinding, AttributeProbe),
                (LinkBinding, AttributeSetProbe),
-               (LinkBinding, ComplementProbe))
+               (LinkBinding, ComplementProbe),
+               (LinkBinding, IdentityProbe))
 
     def __call__(self):
         # Delegate all lookup probes to the seed scope.
@@ -1281,6 +1345,11 @@ def expand(binding, with_syntax=False, with_wild=False,
     if recipes is not None:
         recipes = list(recipes)
     return recipes
+
+
+def identify(binding):
+    probe = IdentityProbe()
+    return lookup(binding, probe)
 
 
 #def guess_name(binding):

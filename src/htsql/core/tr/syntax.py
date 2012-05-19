@@ -12,7 +12,7 @@ This module defines syntax nodes for the HTSQL grammar.
 
 
 from ..mark import Mark, EmptyMark
-from ..util import maybe, listof, Printable, Clonable, Comparable
+from ..util import maybe, listof, oneof, Printable, Clonable, Comparable
 import re
 
 
@@ -432,6 +432,43 @@ class SpecifierSyntax(OperatorSyntax):
         super(SpecifierSyntax, self).__init__(u'.', lbranch, rbranch, mark)
 
 
+class LocatorSyntax(Syntax):
+
+    def __init__(self, lbranch, rbranch, mark):
+        assert isinstance(lbranch, Syntax)
+        assert isinstance(rbranch, LocationSyntax)
+        super(LocatorSyntax, self).__init__(mark)
+        self.lbranch = lbranch
+        self.rbranch = rbranch
+
+    def __basis__(self):
+        return (self.lbranch, self.rbranch)
+
+    def __unicode__(self):
+        return u"%s%s" % (self.lbranch, self.rbranch)
+
+
+class LocationSyntax(Syntax):
+
+    def __init__(self, branches, mark):
+        assert isinstance(branches, listof(oneof(LocationSyntax,
+                                                 StringSyntax)))
+        super(LocationSyntax, self).__init__(mark)
+        self.branches = branches
+        self.arity = 0
+        for branch in self.branches:
+            if isinstance(branch, LocationSyntax):
+                self.arity += branch.arity
+            else:
+                self.arity += 1
+
+    def __basis__(self):
+        return (tuple(self.branches),)
+
+    def __unicode__(self):
+        return u"[%s]" % u".".join(str(branch) for branch in self.branches)
+
+
 class GroupSyntax(Syntax):
     """
     Represents an expression in parentheses.
@@ -579,6 +616,12 @@ class StringSyntax(LiteralSyntax):
         value = u'\'%s\'' % self.value.replace(u'\'', u'\'\'')
         value = self.escape_regexp.sub(self.escape_replace, value)
         return value
+
+
+class UnquotedStringSyntax(StringSyntax):
+
+    def __unicode__(self):
+        return self.escape_regexp.sub(self.escape_replace, self.value)
 
 
 class NumberSyntax(LiteralSyntax):

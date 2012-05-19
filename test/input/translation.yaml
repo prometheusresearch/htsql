@@ -329,6 +329,26 @@ tests:
     # parsing a command after an infix function call
     - uri: /school:top/:csv
 
+  - title: Identity
+    tests:
+    - uri: /school[ns]
+    - uri: /school[ns].department
+    - uri: /school[ns].program
+    - uri: /program?school[ns]
+    - uri: /program[ns.uchem]
+    - uri: /school{id(), *}
+    - uri: /department{id(), school{id()}}
+    - uri: /course[astro.105].class.id()
+    - uri: /program^degree{*, /^.id()}
+    - uri: /program[ns]
+      expect: 400
+    - uri: /school[ns.uchem]
+      expect: 400
+    - uri: /course[ns.uchem]
+      expect: 400
+    - uri: /program^degree{id()}
+      expect: 400
+
   - title: Table Expressions
     tests:
     - uri: /(school?code='art').department
