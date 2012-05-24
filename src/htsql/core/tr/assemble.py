@@ -1598,9 +1598,13 @@ class DecomposeIdentity(Decompose):
         for field in self.code.fields:
             compose_field = self.state.decompose(field)
             compose_fields.append(compose_field)
-        def compose_identity(row, stream, compose_fields=compose_fields):
-            return tuple(compose_field(row, stream)
-                         for compose_field in compose_fields)
+        # FIXME: a reference leak?
+        record_class = Record.make(None, [None]*len(self.code.fields),
+                                   self.code.domain.dump)
+        def compose_identity(row, stream, compose_fields=compose_fields,
+                             record_class=record_class):
+            return record_class(*[compose_field(row, stream)
+                                  for compose_field in compose_fields])
         return compose_identity
 
 

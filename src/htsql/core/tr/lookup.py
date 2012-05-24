@@ -16,7 +16,7 @@ from ..adapter import Adapter, adapt, adapt_many
 from ..entity import DirectJoin
 from ..model import (HomeNode, TableNode, Arc, TableArc, ChainArc, ColumnArc,
         SyntaxArc, InvalidArc, AmbiguousArc)
-from ..classify import classify, relabel, normalize
+from ..classify import classify, relabel, localize, normalize
 from .syntax import IdentifierSyntax
 from .binding import (Binding, ScopingBinding, ChainingBinding,
         WrappingBinding, SegmentBinding, HomeBinding, RootBinding,
@@ -675,41 +675,19 @@ class IdentifyTable(Lookup):
     adapt(TableBinding, IdentityProbe)
 
     def __call__(self):
-        unique_key = self.binding.table.primary_key
-        if unique_key is None:
-            for key in self.binding.table.unique_keys:
-                if key.is_partial:
-                    continue
-                if all(not column.is_nullable for column in key.origin_columns):
-                    unique_key = key
-                    break
-        if unique_key is None:
-            return None
-        columns = unique_key.origin_columns[:]
-        recipes = []
-        while columns:
-            for foreign_key in self.binding.table.foreign_keys:
-                if foreign_key.is_partial:
-                    continue
-                width = len(foreign_key.origin_columns)
-                if foreign_key.origin_columns == columns[:width]:
-                    join = DirectJoin(foreign_key)
-                    chain = [AttachedTableRecipe([join])]
-                    binding = AttachedTableBinding(self.binding, join,
-                                                   self.binding.syntax)
-                    recipe = lookup(binding, self.probe)
-                    if recipe is None:
-                        return None
-                    chain.append(recipe)
-                    recipe = ChainRecipe(chain)
-                    recipes.append(recipe)
-                    columns = columns[width:]
-                    break
-            else:
-                column = columns.pop(0)
-                recipe = ColumnRecipe(column)
+        def chain(node):
+            labels = localize(node)
+            if labels is None:
+                return None
+            recipes = []
+            for label in labels:
+                recipe = prescribe(label.arc, self.binding)
+                target_chain = chain(label.target)
+                if target_chain is not None:
+                    recipe = ChainRecipe([recipe, target_chain])
                 recipes.append(recipe)
-        return IdentityRecipe(recipes)
+            return IdentityRecipe(recipes)
+        return chain(TableNode(self.binding.table))
 
 
 class GuessPathForFreeTable(Lookup):
@@ -762,7 +740,8 @@ class LookupAttributeInColumn(Lookup):
     # with the column; if there is no associated link, the request
     # fails.
 
-    adapt(ColumnBinding, AttributeProbe)
+    adapt_many((ColumnBinding, AttributeProbe),
+               (ColumnBinding, IdentityProbe))
 
     def __call__(self):
         # If there is an associated link node, delegate the request to it.

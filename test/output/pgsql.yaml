@@ -793,56 +793,56 @@ tests:
              +------------+-----------+--------+-------+
              | student_id | class_seq | status | grade |
             -+------------+-----------+--------+-------+-
-             |       1001 |      1070 | ngr    |       |
-             |       1001 |      1088 | enr    |  2.60 |
-             |       1001 |      1096 | inc    |  2.90 |
-             |       1001 |      1098 | ngr    |  2.80 |
-             |       1001 |      1117 | ngr    |  4.00 |
              |       1001 |      1121 | inc    |  2.30 |
+             |       1001 |      1117 | ngr    |  4.00 |
+             |       1001 |      1096 | inc    |  2.90 |
+             |       1001 |      1070 | ngr    |       |
+             |       1001 |      1098 | ngr    |  2.80 |
+             |       1001 |      1088 | enr    |  2.60 |
              |       1001 |      1301 | enr    |  0.40 |
              |       1001 |      1397 | inc    |  1.50 |
-             |       1001 |      1430 | enr    |  3.50 |
              |       1001 |      1442 | enr    |  2.30 |
+             |       1001 |      1430 | enr    |  3.50 |
              |       1001 |      1516 | ngr    |  4.00 |
              |       1001 |      1551 | ngr    |  0.20 |
              |       1001 |      1576 | inc    |  4.00 |
              |       1001 |      1586 | enr    |  1.10 |
              |       1001 |      1666 | enr    |       |
-             |       1001 |      1672 | enr    |  3.00 |
+             |       1001 |      1738 | ngr    |  1.20 |
              |       1001 |      1679 | inc    |  2.70 |
              |       1001 |      1687 | ngr    |  1.90 |
-             |       1001 |      1715 | inc    |  2.80 |
              |       1001 |      1723 | inc    |  4.00 |
-             |       1001 |      1738 | ngr    |  1.20 |
+             |       1001 |      1672 | enr    |  3.00 |
+             |       1001 |      1715 | inc    |  2.80 |
              |       1001 |      1741 | enr    |  1.90 |
-             |       1001 |      1766 | ngr    |  1.40 |
              |       1001 |      1770 | inc    |  3.50 |
+             |       1001 |      1766 | ngr    |  1.40 |
              |       1001 |      1785 | ngr    |  0.70 |
-             |       1001 |      1795 | inc    |  3.40 |
              |       1001 |      1821 | enr    |  2.60 |
-             |       1001 |      1857 | ngr    |  2.90 |
-             |       1001 |      1873 | ngr    |  2.60 |
+             |       1001 |      1795 | inc    |  3.40 |
              |       1001 |      1881 | enr    |  1.70 |
-             |       1001 |      1911 | inc    |  0.60 |
              |       1001 |      1928 | ngr    |  1.80 |
+             |       1001 |      1873 | ngr    |  2.60 |
+             |       1001 |      1857 | ngr    |  2.90 |
+             |       1001 |      1911 | inc    |  0.60 |
              |       1001 |      2135 | ngr    |  2.30 |
-             |       1001 |      2158 | enr    |  1.40 |
              |       1001 |      2194 | enr    |  2.40 |
              |       1001 |      2198 | enr    |  3.20 |
+             |       1001 |      2158 | enr    |  1.40 |
              |       1001 |      2252 | enr    |  2.90 |
-             |       1001 |      2280 | enr    |  2.00 |
-             |       1001 |      2287 | enr    |       |
              |       1001 |      2318 | enr    |  1.70 |
+             |       1001 |      2287 | enr    |       |
+             |       1001 |      2280 | enr    |  2.00 |
              |       1001 |      2382 | inc    |  3.20 |
              |       1001 |      2393 | enr    |  1.50 |
-             |       1001 |      2443 | ngr    |  0.90 |
+             |       1001 |      2462 | ngr    |  3.40 |
              |       1001 |      2448 | ngr    |  4.00 |
              |       1001 |      2457 | enr    |  1.70 |
-             |       1001 |      2462 | ngr    |  3.40 |
              |       1001 |      2473 | ngr    |  2.60 |
+             |       1001 |      2443 | ngr    |  0.90 |
+             |       1001 |      2544 | ngr    |  3.10 |
              |       1001 |      2492 | ngr    |  2.90 |
              |       1001 |      2502 | ngr    |  2.30 |
-             |       1001 |      2544 | ngr    |  3.10 |
 
              ----
              /enrollment.limit(50)
@@ -851,7 +851,9 @@ tests:
                     "enrollment"."status",
                     "enrollment"."grade"
              FROM "ed"."enrollment"
-             ORDER BY 1 ASC, 2 ASC
+                  INNER JOIN "cd"."class"
+                             ON ("enrollment"."class_seq" = "class"."class_seq")
+             ORDER BY 1 ASC, "class"."department_code" ASC, "class"."course_no" ASC, "class"."year" ASC, "class"."season" ASC, "class"."section" ASC
              LIMIT 50
         - uri: /prerequisite.limit(50)
           status: 200 OK
@@ -1503,7 +1505,7 @@ tests:
 
              ----
              /(program?school_code='la'&code='uengl').school
-             SELECT "school"."code",
+             SELECT "program"."school_code",
                     "school"."name",
                     "school"."campus"
              FROM "ad"."program"
@@ -1511,7 +1513,7 @@ tests:
                              ON ("program"."school_code" = "school"."code")
              WHERE ("program"."school_code" = 'la')
                    AND ("program"."code" = 'uengl')
-             ORDER BY "program"."school_code" ASC, "program"."code" ASC
+             ORDER BY 1 ASC, "program"."code" ASC
         - uri: /(program?school_code='la'&code='uengl').program
           status: 400 Bad Request
           headers:
@@ -1664,7 +1666,7 @@ tests:
 
              ----
              /(course?department_code='lang'&no=345).department
-             SELECT "department"."code",
+             SELECT "course"."department_code",
                     "department"."name",
                     "department"."school_code"
              FROM "ad"."course"
@@ -1672,7 +1674,7 @@ tests:
                              ON ("course"."department_code" = "department"."code")
              WHERE ("course"."department_code" = 'lang')
                    AND ("course"."no" = 345)
-             ORDER BY "course"."department_code" ASC, "course"."no" ASC
+             ORDER BY 1 ASC, "course"."no" ASC
         - uri: /(course?department_code='lang'&no=345).class
           status: 200 OK
           headers:
@@ -1875,7 +1877,7 @@ tests:
 
              ----
              /(confidential?instructor_code='bdoyle').instructor
-             SELECT "instructor"."code",
+             SELECT "confidential"."instructor_code",
                     "instructor"."title",
                     "instructor"."full_name",
                     "instructor"."phone",
@@ -1884,7 +1886,7 @@ tests:
                   INNER JOIN "id"."instructor"
                              ON ("confidential"."instructor_code" = "instructor"."code")
              WHERE ("confidential"."instructor_code" = 'bdoyle')
-             ORDER BY "confidential"."instructor_code" ASC
+             ORDER BY 1 ASC
         - uri: /(appointment?department_code='be' &instructor_code='bdoyle').department
           status: 200 OK
           headers:
@@ -1899,7 +1901,7 @@ tests:
 
              ----
              /(appointment?department_code='be'&instructor_code='bdoyle').department
-             SELECT "department"."code",
+             SELECT "appointment"."department_code",
                     "department"."name",
                     "department"."school_code"
              FROM "id"."appointment"
@@ -1907,7 +1909,7 @@ tests:
                              ON ("appointment"."department_code" = "department"."code")
              WHERE ("appointment"."department_code" = 'be')
                    AND ("appointment"."instructor_code" = 'bdoyle')
-             ORDER BY "appointment"."department_code" ASC, "appointment"."instructor_code" ASC
+             ORDER BY 1 ASC, "appointment"."instructor_code" ASC
         - uri: /(appointment?department_code='be' &instructor_code='bdoyle').instructor
           status: 200 OK
           headers:
@@ -1922,7 +1924,7 @@ tests:
 
              ----
              /(appointment?department_code='be'&instructor_code='bdoyle').instructor
-             SELECT "instructor"."code",
+             SELECT "appointment"."instructor_code",
                     "instructor"."title",
                     "instructor"."full_name",
                     "instructor"."phone",
@@ -1932,7 +1934,7 @@ tests:
                              ON ("appointment"."instructor_code" = "instructor"."code")
              WHERE ("appointment"."department_code" = 'be')
                    AND ("appointment"."instructor_code" = 'bdoyle')
-             ORDER BY "appointment"."department_code" ASC, "appointment"."instructor_code" ASC
+             ORDER BY "appointment"."department_code" ASC, 1 ASC
         - uri: /(semester?year=2010&season='fall').class.limit(50)
           status: 200 OK
           headers:
@@ -2024,8 +2026,8 @@ tests:
 
              ----
              /(class?class_seq=1055).course
-             SELECT "course"."department_code",
-                    "course"."no",
+             SELECT "class"."department_code",
+                    "class"."course_no",
                     "course"."title",
                     "course"."credits",
                     "course"."description"
@@ -2033,7 +2035,7 @@ tests:
                   INNER JOIN "ad"."course"
                              ON (("class"."department_code" = "course"."department_code") AND ("class"."course_no" = "course"."no"))
              WHERE ("class"."class_seq" = 1055)
-             ORDER BY "class"."department_code" ASC, "class"."course_no" ASC, "class"."year" ASC, "class"."season" ASC, "class"."section" ASC
+             ORDER BY 1 ASC, 2 ASC, "class"."year" ASC, "class"."season" ASC, "class"."section" ASC
         - uri: /(class?class_seq=1055).semester
           status: 200 OK
           headers:
@@ -2048,15 +2050,15 @@ tests:
 
              ----
              /(class?class_seq=1055).semester
-             SELECT "semester"."year",
-                    "semester"."season",
+             SELECT "class"."year",
+                    "class"."season",
                     "semester"."begin_date",
                     "semester"."end_date"
              FROM "cd"."class"
                   INNER JOIN "cd"."semester"
                              ON (("class"."year" = "semester"."year") AND ("class"."season" = "semester"."season"))
              WHERE ("class"."class_seq" = 1055)
-             ORDER BY "class"."department_code" ASC, "class"."course_no" ASC, "class"."year" ASC, "class"."season" ASC, "class"."section" ASC
+             ORDER BY "class"."department_code" ASC, "class"."course_no" ASC, 1 ASC, 2 ASC, "class"."section" ASC
         - uri: /(class?class_seq=1055).instructor
           status: 200 OK
           headers:
@@ -2109,11 +2111,13 @@ tests:
                     "enrollment"."class_seq",
                     "enrollment"."status",
                     "enrollment"."grade"
-             FROM "cd"."class"
+             FROM "cd"."class" AS "class_1"
                   INNER JOIN "ed"."enrollment"
-                             ON ("class"."class_seq" = "enrollment"."class_seq")
-             WHERE ("class"."class_seq" = 1055)
-             ORDER BY "class"."department_code" ASC, "class"."course_no" ASC, "class"."year" ASC, "class"."season" ASC, "class"."section" ASC, 1 ASC, 2 ASC
+                             ON ("class_1"."class_seq" = "enrollment"."class_seq")
+                  INNER JOIN "cd"."class" AS "class_2"
+                             ON ("enrollment"."class_seq" = "class_2"."class_seq")
+             WHERE ("class_1"."class_seq" = 1055)
+             ORDER BY "class_1"."department_code" ASC, "class_1"."course_no" ASC, "class_1"."year" ASC, "class_1"."season" ASC, "class_1"."section" ASC, 1 ASC, "class_2"."department_code" ASC, "class_2"."course_no" ASC, "class_2"."year" ASC, "class_2"."season" ASC, "class_2"."section" ASC
         - uri: /(student?id=1010).program
           status: 200 OK
           headers:
@@ -2149,52 +2153,52 @@ tests:
              | student_id | class_seq | status | grade |
             -+------------+-----------+--------+-------+-
              |       1010 |      1041 | inc    |  4.00 |
-             |       1010 |      1066 | enr    |  2.20 |
-             |       1010 |      1071 | inc    |  3.70 |
+             |       1010 |      1122 | inc    |  3.80 |
              |       1010 |      1082 | enr    |  0.20 |
+             |       1010 |      1066 | enr    |  2.20 |
+             |       1010 |      1123 | inc    |  0.00 |
+             |       1010 |      1071 | inc    |  3.70 |
+             |       1010 |      1097 | enr    |  4.00 |
              |       1010 |      1085 | enr    |  3.10 |
              |       1010 |      1089 | ngr    |       |
-             |       1010 |      1097 | enr    |  4.00 |
-             |       1010 |      1122 | inc    |  3.80 |
-             |       1010 |      1123 | inc    |  0.00 |
-             |       1010 |      1213 | enr    |  2.40 |
              |       1010 |      1220 | ngr    |  3.00 |
+             |       1010 |      1213 | enr    |  2.40 |
              |       1010 |      1409 | ngr    |  3.30 |
              |       1010 |      1429 | enr    |  1.90 |
-             |       1010 |      1509 | inc    |  1.60 |
              |       1010 |      1514 | enr    |  2.10 |
+             |       1010 |      1509 | inc    |  1.60 |
              |       1010 |      1544 | ngr    |  0.40 |
              |       1010 |      1590 | inc    |  2.20 |
              |       1010 |      1658 | ngr    |  3.70 |
+             |       1010 |      1746 | ngr    |  1.00 |
              |       1010 |      1666 | enr    |  2.60 |
              |       1010 |      1713 | inc    |  3.30 |
-             |       1010 |      1719 | enr    |  0.40 |
              |       1010 |      1729 | ngr    |  3.30 |
+             |       1010 |      1719 | enr    |  0.40 |
              |       1010 |      1742 | ngr    |  2.50 |
-             |       1010 |      1746 | ngr    |  1.00 |
              |       1010 |      1752 | enr    |  1.20 |
-             |       1010 |      1785 | inc    |  3.10 |
-             |       1010 |      1804 | ngr    |  2.40 |
-             |       1010 |      1812 | ngr    |  3.70 |
-             |       1010 |      1817 | inc    |  4.00 |
              |       1010 |      1825 | enr    |  3.00 |
              |       1010 |      1829 | inc    |  2.00 |
-             |       1010 |      1844 | ngr    |  4.00 |
-             |       1010 |      1847 | inc    |  2.70 |
-             |       1010 |      1852 | ngr    |  3.60 |
-             |       1010 |      1854 | inc    |  3.80 |
-             |       1010 |      1895 | ngr    |  4.00 |
+             |       1010 |      1812 | ngr    |  3.70 |
+             |       1010 |      1785 | inc    |  3.10 |
+             |       1010 |      1804 | ngr    |  2.40 |
+             |       1010 |      1817 | inc    |  4.00 |
              |       1010 |      1896 | ngr    |  3.90 |
-             |       1010 |      2101 | ngr    |  2.50 |
+             |       1010 |      1895 | ngr    |  4.00 |
+             |       1010 |      1847 | inc    |  2.70 |
+             |       1010 |      1854 | inc    |  3.80 |
+             |       1010 |      1844 | ngr    |  4.00 |
+             |       1010 |      1852 | ngr    |  3.60 |
              |       1010 |      2105 | ngr    |  3.10 |
+             |       1010 |      2101 | ngr    |  2.50 |
              |       1010 |      2109 | enr    |  4.00 |
              |       1010 |      2121 | ngr    |       |
              |       1010 |      2192 | ngr    |  2.90 |
-             |       1010 |      2256 | ngr    |  0.50 |
              |       1010 |      2272 | enr    |  4.00 |
+             |       1010 |      2256 | ngr    |  0.50 |
+             |       1010 |      2315 | ngr    |  2.40 |
              |       1010 |      2276 | enr    |  2.10 |
              |       1010 |      2311 | enr    |  1.50 |
-             |       1010 |      2315 | ngr    |  2.40 |
              |       1010 |      2393 | enr    |  4.00 |
              |       1010 |      2447 | ngr    |  4.00 |
              |       1010 |      2471 | enr    |  1.70 |
@@ -2208,8 +2212,10 @@ tests:
              FROM "ed"."student"
                   INNER JOIN "ed"."enrollment"
                              ON ("student"."id" = "enrollment"."student_id")
+                  INNER JOIN "cd"."class"
+                             ON ("enrollment"."class_seq" = "class"."class_seq")
              WHERE ("student"."id" = 1010)
-             ORDER BY "student"."id" ASC, 1 ASC, 2 ASC
+             ORDER BY "student"."id" ASC, 1 ASC, "class"."department_code" ASC, "class"."course_no" ASC, "class"."year" ASC, "class"."season" ASC, "class"."section" ASC
              LIMIT 50
         - uri: /(enrollment?student_id=1100&class_seq=1110).student
           status: 200 OK
@@ -2225,7 +2231,7 @@ tests:
 
              ----
              /(enrollment?student_id=1100&class_seq=1110).student
-             SELECT "student"."id",
+             SELECT "enrollment"."student_id",
                     "student"."name",
                     "student"."gender",
                     "student"."dob",
@@ -2236,9 +2242,11 @@ tests:
              FROM "ed"."enrollment"
                   INNER JOIN "ed"."student"
                              ON ("enrollment"."student_id" = "student"."id")
+                  INNER JOIN "cd"."class"
+                             ON ("enrollment"."class_seq" = "class"."class_seq")
              WHERE ("enrollment"."student_id" = 1100)
                    AND ("enrollment"."class_seq" = 1110)
-             ORDER BY "enrollment"."student_id" ASC, "enrollment"."class_seq" ASC
+             ORDER BY 1 ASC, "class"."department_code" ASC, "class"."course_no" ASC, "class"."year" ASC, "class"."season" ASC, "class"."section" ASC
         - uri: /(enrollment?student_id=1100&class_seq=1110).class
           status: 200 OK
           headers:
@@ -2259,13 +2267,13 @@ tests:
                     "class"."season",
                     "class"."section",
                     "class"."instructor_code",
-                    "class"."class_seq"
+                    "enrollment"."class_seq"
              FROM "ed"."enrollment"
                   INNER JOIN "cd"."class"
                              ON ("enrollment"."class_seq" = "class"."class_seq")
              WHERE ("enrollment"."student_id" = 1100)
                    AND ("enrollment"."class_seq" = 1110)
-             ORDER BY "enrollment"."student_id" ASC, "enrollment"."class_seq" ASC
+             ORDER BY "enrollment"."student_id" ASC, 1 ASC, 2 ASC, 3 ASC, 4 ASC, 5 ASC
         - uri: /(prerequisite?of_department_code='astro'&of_course_no=230 &on_department_code='phys'&on_course_no=130).course
           status: 400 Bad Request
           headers:
@@ -2292,8 +2300,8 @@ tests:
 
              ----
              /(prerequisite?of_department_code='astro'&of_course_no=230&on_department_code='phys'&on_course_no=130).of_course
-             SELECT "course"."department_code",
-                    "course"."no",
+             SELECT "prerequisite"."of_department_code",
+                    "prerequisite"."of_course_no",
                     "course"."title",
                     "course"."credits",
                     "course"."description"
@@ -2304,7 +2312,7 @@ tests:
                    AND ("prerequisite"."of_course_no" = 230)
                    AND ("prerequisite"."on_department_code" = 'phys')
                    AND ("prerequisite"."on_course_no" = 130)
-             ORDER BY "prerequisite"."of_department_code" ASC, "prerequisite"."of_course_no" ASC, "prerequisite"."on_department_code" ASC, "prerequisite"."on_course_no" ASC
+             ORDER BY 1 ASC, 2 ASC, "prerequisite"."on_department_code" ASC, "prerequisite"."on_course_no" ASC
         - uri: /(prerequisite?of_department_code='astro'&of_course_no=230 &on_department_code='phys'&on_course_no=130).on_course
           status: 200 OK
           headers:
@@ -2323,8 +2331,8 @@ tests:
 
              ----
              /(prerequisite?of_department_code='astro'&of_course_no=230&on_department_code='phys'&on_course_no=130).on_course
-             SELECT "course"."department_code",
-                    "course"."no",
+             SELECT "prerequisite"."on_department_code",
+                    "prerequisite"."on_course_no",
                     "course"."title",
                     "course"."credits",
                     "course"."description"
@@ -2335,7 +2343,7 @@ tests:
                    AND ("prerequisite"."of_course_no" = 230)
                    AND ("prerequisite"."on_department_code" = 'phys')
                    AND ("prerequisite"."on_course_no" = 130)
-             ORDER BY "prerequisite"."of_department_code" ASC, "prerequisite"."of_course_no" ASC, "prerequisite"."on_department_code" ASC, "prerequisite"."on_course_no" ASC
+             ORDER BY "prerequisite"."of_department_code" ASC, "prerequisite"."of_course_no" ASC, 1 ASC, 2 ASC
         - uri: /(classification?code='math').classification
           status: 400 Bad Request
           headers:
@@ -2485,8 +2493,8 @@ tests:
 
              ----
              /(course_classification?department_code='astro'&course_no=110&classification_code='astrotheory').course
-             SELECT "course"."department_code",
-                    "course"."no",
+             SELECT "course_classification"."department_code",
+                    "course_classification"."course_no",
                     "course"."title",
                     "course"."credits",
                     "course"."description"
@@ -2496,7 +2504,7 @@ tests:
              WHERE ("course_classification"."department_code" = 'astro')
                    AND ("course_classification"."course_no" = 110)
                    AND ("course_classification"."classification_code" = 'astrotheory')
-             ORDER BY "course_classification"."department_code" ASC, "course_classification"."course_no" ASC, "course_classification"."classification_code" ASC
+             ORDER BY 1 ASC, 2 ASC, "course_classification"."classification_code" ASC
         - uri: /(course_classification?department_code='astro'&course_no=110 &classification_code='astrotheory').classification
           status: 200 OK
           headers:
@@ -2511,7 +2519,7 @@ tests:
 
              ----
              /(course_classification?department_code='astro'&course_no=110&classification_code='astrotheory').classification
-             SELECT "classification"."code",
+             SELECT "course_classification"."classification_code",
                     "classification"."type",
                     "classification"."title",
                     "classification"."description",
@@ -2522,7 +2530,7 @@ tests:
              WHERE ("course_classification"."department_code" = 'astro')
                    AND ("course_classification"."course_no" = 110)
                    AND ("course_classification"."classification_code" = 'astrotheory')
-             ORDER BY "course_classification"."department_code" ASC, "course_classification"."course_no" ASC, "course_classification"."classification_code" ASC
+             ORDER BY "course_classification"."department_code" ASC, "course_classification"."course_no" ASC, 1 ASC
         - uri: /(program_requirement?school_code='bus'&program_code='uacct' &classification_code='accounting').program
           status: 200 OK
           headers:
@@ -2537,8 +2545,8 @@ tests:
 
              ----
              /(program_requirement?school_code='bus'&program_code='uacct'&classification_code='accounting').program
-             SELECT "program"."school_code",
-                    "program"."code",
+             SELECT "program_requirement"."school_code",
+                    "program_requirement"."program_code",
                     "program"."title",
                     "program"."degree",
                     "program"."part_of_code"
@@ -2548,7 +2556,7 @@ tests:
              WHERE ("program_requirement"."school_code" = 'bus')
                    AND ("program_requirement"."program_code" = 'uacct')
                    AND ("program_requirement"."classification_code" = 'accounting')
-             ORDER BY "program_requirement"."school_code" ASC, "program_requirement"."program_code" ASC, "program_requirement"."classification_code" ASC
+             ORDER BY 1 ASC, 2 ASC, "program_requirement"."classification_code" ASC
         - uri: /(program_requirement?school_code='bus'&program_code='uacct' &classification_code='accounting').classification
           status: 200 OK
           headers:
@@ -2563,7 +2571,7 @@ tests:
 
              ----
              /(program_requirement?school_code='bus'&program_code='uacct'&classification_code='accounting').classification
-             SELECT "classification"."code",
+             SELECT "program_requirement"."classification_code",
                     "classification"."type",
                     "classification"."title",
                     "classification"."description",
@@ -2574,7 +2582,7 @@ tests:
              WHERE ("program_requirement"."school_code" = 'bus')
                    AND ("program_requirement"."program_code" = 'uacct')
                    AND ("program_requirement"."classification_code" = 'accounting')
-             ORDER BY "program_requirement"."school_code" ASC, "program_requirement"."program_code" ASC, "program_requirement"."classification_code" ASC
+             ORDER BY "program_requirement"."school_code" ASC, "program_requirement"."program_code" ASC, 1 ASC
   - include: test/input/tutorial.yaml
     output:
       id: tutorial
@@ -3887,9 +3895,7 @@ tests:
                     "program"."degree",
                     "program"."part_of_code"
              FROM "ad"."program"
-                  INNER JOIN "ad"."school"
-                             ON ("program"."school_code" = "school"."code")
-             WHERE ("school"."code" = 'bus')
+             WHERE ("program"."school_code" = 'bus')
                    AND ("program"."degree" <> 'bs')
              ORDER BY 1 ASC, 2 ASC
         - uri: /course{department_code, no, title} ?credits<3&department.school.code='ns'
@@ -15717,13 +15723,13 @@ tests:
 
              ----
              /program.school
-             SELECT "school"."code",
+             SELECT "program"."school_code",
                     "school"."name",
                     "school"."campus"
              FROM "ad"."program"
                   INNER JOIN "ad"."school"
                              ON ("program"."school_code" = "school"."code")
-             ORDER BY "program"."school_code" ASC, "program"."code" ASC
+             ORDER BY 1 ASC, "program"."code" ASC
         - uri: /department
           status: 200 OK
           headers:
@@ -16049,7 +16055,7 @@ tests:
 
              ----
              /confidential.instructor
-             SELECT "instructor"."code",
+             SELECT "confidential"."instructor_code",
                     "instructor"."title",
                     "instructor"."full_name",
                     "instructor"."phone",
@@ -16057,7 +16063,7 @@ tests:
              FROM "id"."confidential"
                   INNER JOIN "id"."instructor"
                              ON ("confidential"."instructor_code" = "instructor"."code")
-             ORDER BY "confidential"."instructor_code" ASC
+             ORDER BY 1 ASC
         - uri: /school.({} -> school)
           status: 200 OK
           headers:
@@ -17816,9 +17822,7 @@ tests:
                       "program"."degree",
                       "program"."part_of_code"
                FROM "ad"."program"
-                    INNER JOIN "ad"."school"
-                               ON ("program"."school_code" = "school"."code")
-               WHERE ("school"."code" = 'ns')
+               WHERE ("program"."school_code" = 'ns')
                      AND ("program"."code" = 'uchem')
                ORDER BY 1 ASC, 2 ASC
           - uri: /course?credits=5
@@ -18044,7 +18048,7 @@ tests:
                FROM "ad"."program"
                     INNER JOIN "ad"."school"
                                ON ("program"."school_code" = "school"."code")
-               WHERE ("school"."code" = 'art')
+               WHERE ("program"."school_code" = 'art')
                ORDER BY "program"."school_code" ASC, "program"."code" ASC
           - uri: /school.filter(code='ns')
             status: 200 OK
@@ -19528,7 +19532,7 @@ tests:
                ----
                /define(course_0:=course,course_1:=course_0?credits=3,course_2:=course_1?department.code='econ',course_3:=course_2?count(class)>4){count(course_1),count(course_3)}
                SELECT COUNT(TRUE),
-                      COUNT((CASE WHEN ((COALESCE("class"."count", 0) > 4) AND ("department"."code" = 'econ')) THEN TRUE END))
+                      COUNT((CASE WHEN ((COALESCE("class"."count", 0) > 4) AND ("course"."department_code" = 'econ')) THEN TRUE END))
                FROM "ad"."course"
                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
                                             "class"."department_code",
@@ -19536,8 +19540,6 @@ tests:
                                      FROM "cd"."class"
                                      GROUP BY 2, 3) AS "class"
                                     ON (("course"."department_code" = "class"."department_code") AND ("course"."no" = "class"."course_no"))
-                    INNER JOIN "ad"."department"
-                               ON ("course"."department_code" = "department"."code")
                WHERE ("course"."credits" = 3)
           - uri: /define(course_0 := course, course_1 := course_0?credits=3, course_2
               := course_1?department.code='econ', course_3 := course_2?count(class)>4)
@@ -19555,11 +19557,9 @@ tests:
                /define(course_0:=course,course_1:=course_0?credits=3,course_2:=course_1?department.code='econ',course_3:=course_2?count(class)>4){count(course_0),count(course_1),count(course_2),count(course_3)}
                SELECT COUNT(TRUE),
                       COUNT((CASE WHEN ("course"."credits" = 3) THEN TRUE END)),
-                      COUNT((CASE WHEN (("department"."code" = 'econ') AND ("course"."credits" = 3)) THEN TRUE END)),
-                      COUNT((CASE WHEN ((COALESCE("class"."count", 0) > 4) AND ("department"."code" = 'econ') AND ("course"."credits" = 3)) THEN TRUE END))
+                      COUNT((CASE WHEN (("course"."department_code" = 'econ') AND ("course"."credits" = 3)) THEN TRUE END)),
+                      COUNT((CASE WHEN ((COALESCE("class"."count", 0) > 4) AND ("course"."department_code" = 'econ') AND ("course"."credits" = 3)) THEN TRUE END))
                FROM "ad"."course"
-                    INNER JOIN "ad"."department"
-                               ON ("course"."department_code" = "department"."code")
                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
                                             "class"."department_code",
                                             "class"."course_no"
@@ -19582,11 +19582,9 @@ tests:
                /define(course_0:=course,course_1:=course?credits=3,course_2:=course?department.code='econ',course_3:=course?count(class)>4){count(course_0),count(course_1),count(course_2),count(course_3)}
                SELECT COUNT(TRUE),
                       COUNT((CASE WHEN ("course"."credits" = 3) THEN TRUE END)),
-                      COUNT((CASE WHEN ("department"."code" = 'econ') THEN TRUE END)),
+                      COUNT((CASE WHEN ("course"."department_code" = 'econ') THEN TRUE END)),
                       COUNT((CASE WHEN (COALESCE("class"."count", 0) > 4) THEN TRUE END))
                FROM "ad"."course"
-                    INNER JOIN "ad"."department"
-                               ON ("course"."department_code" = "department"."code")
                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
                                             "class"."department_code",
                                             "class"."course_no"
@@ -19608,18 +19606,16 @@ tests:
                ----
                /define(course_1:=course?credits=3,course_2:=course?department.code='econ',course_3:=course?count(class)>4){count(course_1),count(course_2),count(course_3)}
                SELECT COUNT((CASE WHEN ("course"."credits" = 3) THEN TRUE END)),
-                      COUNT((CASE WHEN ("department"."code" = 'econ') THEN TRUE END)),
+                      COUNT((CASE WHEN ("course"."department_code" = 'econ') THEN TRUE END)),
                       COUNT((CASE WHEN (COALESCE("class"."count", 0) > 4) THEN TRUE END))
                FROM "ad"."course"
-                    INNER JOIN "ad"."department"
-                               ON ("course"."department_code" = "department"."code")
                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
                                             "class"."department_code",
                                             "class"."course_no"
                                      FROM "cd"."class"
                                      GROUP BY 2, 3) AS "class"
                                     ON (("course"."department_code" = "class"."department_code") AND ("course"."no" = "class"."course_no"))
-               WHERE (("course"."credits" = 3) OR ("department"."code" = 'econ') OR (COALESCE("class"."count", 0) > 4))
+               WHERE (("course"."credits" = 3) OR ("course"."department_code" = 'econ') OR (COALESCE("class"."count", 0) > 4))
           - uri: /{avg(department{count(course?credits=3)}?code!='econ') :round(2),
               avg(department{count(course?credits=5)}?code!='mth') :round(2)}
             status: 200 OK
@@ -19979,14 +19975,14 @@ tests:
 
                ----
                /(program?school.code='art').school.limit(1)
-               SELECT "school"."code",
+               SELECT "program"."school_code",
                       "school"."name",
                       "school"."campus"
                FROM "ad"."program"
                     INNER JOIN "ad"."school"
                                ON ("program"."school_code" = "school"."code")
-               WHERE ("school"."code" = 'art')
-               ORDER BY "program"."school_code" ASC, "program"."code" ASC
+               WHERE ("program"."school_code" = 'art')
+               ORDER BY 1 ASC, "program"."code" ASC
                LIMIT 1
           - uri: /department.define($avg_credits := avg(course.credits), course :=
               course?credits>$avg_credits, course_level := course^integer(no/100)).limit(3)
@@ -20731,17 +20727,13 @@ tests:
                       "program_2"."degree"
                FROM (SELECT "program"."degree"
                      FROM "ad"."program"
-                          INNER JOIN "ad"."school"
-                                     ON ("program"."school_code" = "school"."code")
                      WHERE ("program"."degree" IS NOT NULL)
-                           AND ("school"."code" = 'art')
+                           AND ("program"."school_code" = 'art')
                      GROUP BY 1) AS "program_1"
                     CROSS JOIN (SELECT "program"."degree"
                                 FROM "ad"."program"
-                                     INNER JOIN "ad"."school"
-                                                ON ("program"."school_code" = "school"."code")
                                 WHERE ("program"."degree" IS NOT NULL)
-                                      AND ("school"."code" = 'la')
+                                      AND ("program"."school_code" = 'la')
                                 GROUP BY 1) AS "program_2"
                ORDER BY 1 ASC NULLS FIRST, 2 ASC NULLS FIRST
           - uri: /school{code,count(department)} ?count(department)>avg(home().school.count(department))
@@ -21630,17 +21622,15 @@ tests:
 
                ----
                /course{department.code,no,credits}?credits=max(({}->course).credits)
-               SELECT "department"."code",
+               SELECT "course_1"."department_code",
                       "course_1"."no",
                       "course_1"."credits"
                FROM "ad"."course" AS "course_1"
                     LEFT OUTER JOIN (SELECT MAX("course"."credits") AS "max"
                                      FROM "ad"."course") AS "course_2"
                                     ON TRUE
-                    INNER JOIN "ad"."department"
-                               ON ("course_1"."department_code" = "department"."code")
                WHERE ("course_1"."credits" = "course_2"."max")
-               ORDER BY "course_1"."department_code" ASC, 2 ASC
+               ORDER BY 1 ASC, 2 ASC
           - uri: /course{department.code,no,credits,count(class)} ?credits=max((count(class)
               -> course).credits)
             status: 200 OK
@@ -21674,7 +21664,7 @@ tests:
 
                ----
                /course{department.code,no,credits,count(class)}?credits=max((count(class)->course).credits)
-               SELECT "department"."code",
+               SELECT "course_1"."department_code",
                       "course_1"."no",
                       "course_1"."credits",
                       COALESCE("class"."count", 0)
@@ -21696,10 +21686,8 @@ tests:
                                                           ON (("course"."department_code" = "class"."department_code") AND ("course"."no" = "class"."course_no"))
                                      GROUP BY 2) AS "course_2"
                                     ON (COALESCE("class"."count", 0) = "course_2"."count")
-                    INNER JOIN "ad"."department"
-                               ON ("course_1"."department_code" = "department"."code")
                WHERE ("course_1"."credits" = "course_2"."max")
-               ORDER BY "course_1"."department_code" ASC, 2 ASC
+               ORDER BY 1 ASC, 2 ASC
           - uri: /program{school.code, code, degree, num_parts := count({school_code,code}
               -> program{school_code,part_of_code})} ?num_parts=max(fork().num_parts)
             status: 200 OK
@@ -21721,7 +21709,7 @@ tests:
 
                ----
                /program{school.code,code,degree,num_parts:=count({school_code,code}->program{school_code,part_of_code})}?num_parts=max(fork().num_parts)
-               SELECT "school"."code",
+               SELECT "program_1"."school_code",
                       "program_1"."code",
                       "program_1"."degree",
                       COALESCE("program_2"."count", 0)
@@ -21741,10 +21729,8 @@ tests:
                                                            GROUP BY 2, 3) AS "program_2"
                                                           ON (("program_1"."school_code" = "program_2"."school_code") AND ("program_1"."code" = "program_2"."part_of_code"))) AS "program_3"
                                     ON TRUE
-                    INNER JOIN "ad"."school"
-                               ON ("program_1"."school_code" = "school"."code")
                WHERE (COALESCE("program_2"."count", 0) = "program_3"."max")
-               ORDER BY "program_1"."school_code" ASC, 2 ASC
+               ORDER BY 1 ASC, 2 ASC
           - uri: /'art'->school{code}
             status: 200 OK
             headers:
@@ -21783,17 +21769,15 @@ tests:
 
                ----
                /course{department.code,no,credits}?credits=max(fork().credits)
-               SELECT "department"."code",
+               SELECT "course_1"."department_code",
                       "course_1"."no",
                       "course_1"."credits"
                FROM "ad"."course" AS "course_1"
                     LEFT OUTER JOIN (SELECT MAX("course"."credits") AS "max"
                                      FROM "ad"."course") AS "course_2"
                                     ON TRUE
-                    INNER JOIN "ad"."department"
-                               ON ("course_1"."department_code" = "department"."code")
                WHERE ("course_1"."credits" = "course_2"."max")
-               ORDER BY "course_1"."department_code" ASC, 2 ASC
+               ORDER BY 1 ASC, 2 ASC
           - uri: /course{department.code,no,credits}?credits=max(fork(department_code).credits)
             status: 200 OK
             headers:
@@ -21859,7 +21843,7 @@ tests:
 
                ----
                /course{department.code,no,credits}?credits=max(fork(department_code).credits)
-               SELECT "department"."code",
+               SELECT "course_1"."department_code",
                       "course_1"."no",
                       "course_1"."credits"
                FROM "ad"."course" AS "course_1"
@@ -21868,10 +21852,8 @@ tests:
                                      FROM "ad"."course"
                                      GROUP BY 2) AS "course_2"
                                     ON ("course_1"."department_code" = "course_2"."department_code")
-                    INNER JOIN "ad"."department"
-                               ON ("course_1"."department_code" = "department"."code")
                WHERE ("course_1"."credits" = "course_2"."max")
-               ORDER BY "course_1"."department_code" ASC, 2 ASC
+               ORDER BY 1 ASC, 2 ASC
           - uri: /department.course{department.code,no,credits}?credits=max(fork().credits)
             status: 200 OK
             headers:
@@ -21937,21 +21919,19 @@ tests:
 
                ----
                /department.course{department.code,no,credits}?credits=max(fork().credits)
-               SELECT "department_2"."code",
+               SELECT "course_1"."department_code",
                       "course_1"."no",
                       "course_1"."credits"
-               FROM "ad"."department" AS "department_1"
+               FROM "ad"."department"
                     INNER JOIN "ad"."course" AS "course_1"
-                               ON ("department_1"."code" = "course_1"."department_code")
+                               ON ("department"."code" = "course_1"."department_code")
                     LEFT OUTER JOIN (SELECT MAX("course"."credits") AS "max",
                                             "course"."department_code"
                                      FROM "ad"."course"
                                      GROUP BY 2) AS "course_2"
                                     ON ("course_1"."department_code" = "course_2"."department_code")
-                    INNER JOIN "ad"."department" AS "department_2"
-                               ON ("course_1"."department_code" = "department_2"."code")
                WHERE ("course_1"."credits" = "course_2"."max")
-               ORDER BY "department_1"."code" ASC, "course_1"."department_code" ASC, 2 ASC
+               ORDER BY "department"."code" ASC, 1 ASC, 2 ASC
           - uri: /course{department.code,no,credits,count(class)}?credits=max(fork(exists(class)).credits)
             status: 200 OK
             headers:
@@ -21967,7 +21947,7 @@ tests:
 
                ----
                /course{department.code,no,credits,count(class)}?credits=max(fork(exists(class)).credits)
-               SELECT "department"."code",
+               SELECT "course_1"."department_code",
                       "course_1"."no",
                       "course_1"."credits",
                       COALESCE("class"."count", 0)
@@ -21983,8 +21963,6 @@ tests:
                                                FROM "cd"."class" AS "class_1"
                                                WHERE ("course_1"."department_code" = "class_1"."department_code")
                                                      AND ("course_1"."no" = "class_1"."course_no")) = "course_2"."exists")
-                    INNER JOIN "ad"."department"
-                               ON ("course_1"."department_code" = "department"."code")
                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
                                             "class"."department_code",
                                             "class"."course_no"
@@ -21992,7 +21970,7 @@ tests:
                                      GROUP BY 2, 3) AS "class"
                                     ON (("course_1"."department_code" = "class"."department_code") AND ("course_1"."no" = "class"."course_no"))
                WHERE ("course_1"."credits" = "course_2"."max")
-               ORDER BY "course_1"."department_code" ASC, 2 ASC
+               ORDER BY 1 ASC, 2 ASC
           - uri: /course{department.code,no,credits,count(class)}?credits=max(fork(count(class)).credits)
             status: 200 OK
             headers:
@@ -22025,7 +22003,7 @@ tests:
 
                ----
                /course{department.code,no,credits,count(class)}?credits=max(fork(count(class)).credits)
-               SELECT "department"."code",
+               SELECT "course_1"."department_code",
                       "course_1"."no",
                       "course_1"."credits",
                       COALESCE("class"."count", 0)
@@ -22047,10 +22025,8 @@ tests:
                                                           ON (("course"."department_code" = "class"."department_code") AND ("course"."no" = "class"."course_no"))
                                      GROUP BY 2) AS "course_2"
                                     ON (COALESCE("class"."count", 0) = "course_2"."count")
-                    INNER JOIN "ad"."department"
-                               ON ("course_1"."department_code" = "department"."code")
                WHERE ("course_1"."credits" = "course_2"."max")
-               ORDER BY "course_1"."department_code" ASC, 2 ASC
+               ORDER BY 1 ASC, 2 ASC
           - uri: /program{school_code,code,count(student)}?count(student)>avg(fork().count(student))
             status: 200 OK
             headers:
@@ -22372,30 +22348,25 @@ tests:
                ----
                /program.fork(part_of_code){root().program{school.code,code,part_of_code},school.code,code,part_of_code}
                SELECT "program_3"."!",
-                      "program_3"."code_1",
-                      "program_3"."code_2",
+                      "program_3"."school_code",
+                      "program_3"."code",
                       "program_3"."part_of_code",
-                      "school"."code",
+                      "program_2"."school_code",
                       "program_2"."code",
                       "program_2"."part_of_code"
                FROM "ad"."program" AS "program_1"
-                    INNER JOIN (SELECT "program"."code",
-                                       "program"."part_of_code",
-                                       "program"."school_code"
+                    INNER JOIN (SELECT "program"."school_code",
+                                       "program"."code",
+                                       "program"."part_of_code"
                                 FROM "ad"."program") AS "program_2"
                                ON ("program_1"."part_of_code" = "program_2"."part_of_code")
                     INNER JOIN (SELECT TRUE AS "!",
-                                       "school"."code" AS "code_1",
-                                       "program"."code" AS "code_2",
-                                       "program"."part_of_code",
-                                       "program"."school_code"
-                                FROM "ad"."program"
-                                     INNER JOIN "ad"."school"
-                                                ON ("program"."school_code" = "school"."code")) AS "program_3"
-                               ON (("program_1"."school_code" = "program_3"."school_code") AND ("program_1"."code" = "program_3"."code_2"))
-                    INNER JOIN "ad"."school"
-                               ON ("program_2"."school_code" = "school"."code")
-               ORDER BY "program_1"."school_code" ASC, "program_1"."code" ASC, "program_2"."school_code" ASC, 6 ASC
+                                       "program"."school_code",
+                                       "program"."code",
+                                       "program"."part_of_code"
+                                FROM "ad"."program") AS "program_3"
+                               ON (("program_1"."school_code" = "program_3"."school_code") AND ("program_1"."code" = "program_3"."code"))
+               ORDER BY "program_1"."school_code" ASC, "program_1"."code" ASC, 5 ASC, 6 ASC
           - uri: /school.fork().fork().fork().limit(1)
             status: 200 OK
             headers:
@@ -22438,17 +22409,15 @@ tests:
 
                ----
                /course{department.code,no,credits}?credits=max(@course.credits)
-               SELECT "department"."code",
+               SELECT "course_1"."department_code",
                       "course_1"."no",
                       "course_1"."credits"
                FROM "ad"."course" AS "course_1"
                     LEFT OUTER JOIN (SELECT MAX("course"."credits") AS "max"
                                      FROM "ad"."course") AS "course_2"
                                     ON TRUE
-                    INNER JOIN "ad"."department"
-                               ON ("course_1"."department_code" = "department"."code")
                WHERE ("course_1"."credits" = "course_2"."max")
-               ORDER BY "course_1"."department_code" ASC, 2 ASC
+               ORDER BY 1 ASC, 2 ASC
           - uri: /course{department.code,no,credits}?credits=@max(course.credits)
             status: 200 OK
             headers:
@@ -22463,17 +22432,15 @@ tests:
 
                ----
                /course{department.code,no,credits}?credits=@max(course.credits)
-               SELECT "department"."code",
+               SELECT "course_1"."department_code",
                       "course_1"."no",
                       "course_1"."credits"
                FROM "ad"."course" AS "course_1"
                     LEFT OUTER JOIN (SELECT MAX("course"."credits") AS "max"
                                      FROM "ad"."course") AS "course_2"
                                     ON TRUE
-                    INNER JOIN "ad"."department"
-                               ON ("course_1"."department_code" = "department"."code")
                WHERE ("course_1"."credits" = "course_2"."max")
-               ORDER BY "course_1"."department_code" ASC, 2 ASC
+               ORDER BY 1 ASC, 2 ASC
           - uri: /program{school_code,code,count(student)}?count(student)>avg(@program.count(student))
             status: 200 OK
             headers:
@@ -23357,10 +23324,18 @@ tests:
                       "program"."part_of_code"
                FROM "ad"."program"
                     LEFT OUTER JOIN (SELECT TRUE AS "!",
-                                            "school"."code"
-                                     FROM "ad"."school"
-                                     WHERE ("school"."code" = 'ns')) AS "school"
-                                    ON ("program"."school_code" = "school"."code")
+                                            "program"."school_code",
+                                            "program"."code"
+                                     FROM "ad"."program"
+                                          INNER JOIN (SELECT "program"."school_code",
+                                                             "program"."code" AS "code_1",
+                                                             "school"."code" AS "code_2"
+                                                      FROM "ad"."program"
+                                                           INNER JOIN "ad"."school"
+                                                                      ON ("program"."school_code" = "school"."code")
+                                                      WHERE ("program"."school_code" = 'ns')) AS "school"
+                                                     ON (("program"."school_code" = "school"."school_code") AND ("program"."code" = "school"."code_1") AND ("program"."school_code" = "school"."code_2"))) AS "school"
+                                    ON (("program"."school_code" = "school"."school_code") AND ("program"."code" = "school"."code"))
                WHERE ("school"."!" IS NOT NULL)
                ORDER BY 1 ASC, 2 ASC
           - uri: /program[ns.uchem]
@@ -23383,9 +23358,7 @@ tests:
                       "program"."degree",
                       "program"."part_of_code"
                FROM "ad"."program"
-                    INNER JOIN "ad"."school"
-                               ON ("program"."school_code" = "school"."code")
-               WHERE ("school"."code" = 'ns')
+               WHERE ("program"."school_code" = 'ns')
                      AND ("program"."code" = 'uchem')
                ORDER BY 1 ASC, 2 ASC
           - uri: /school{id(), *}
@@ -23481,25 +23454,17 @@ tests:
 
                ----
                /course[astro.105].class.id()
-               SELECT "department_2"."code",
-                      "course_2"."no",
-                      "semester"."year",
-                      "semester"."season",
+               SELECT "class"."department_code",
+                      "class"."course_no",
+                      "class"."year",
+                      "class"."season",
                       "class"."section"
-               FROM "ad"."course" AS "course_1"
-                    INNER JOIN "ad"."department" AS "department_1"
-                               ON ("course_1"."department_code" = "department_1"."code")
+               FROM "ad"."course"
                     INNER JOIN "cd"."class"
-                               ON (("course_1"."department_code" = "class"."department_code") AND ("course_1"."no" = "class"."course_no"))
-                    INNER JOIN "ad"."course" AS "course_2"
-                               ON (("class"."department_code" = "course_2"."department_code") AND ("class"."course_no" = "course_2"."no"))
-                    INNER JOIN "ad"."department" AS "department_2"
-                               ON ("course_2"."department_code" = "department_2"."code")
-                    INNER JOIN "cd"."semester"
-                               ON (("class"."year" = "semester"."year") AND ("class"."season" = "semester"."season"))
-               WHERE ("department_1"."code" = 'astro')
-                     AND ("course_1"."no" = 105)
-               ORDER BY "course_1"."department_code" ASC, "course_1"."no" ASC, "class"."department_code" ASC, "class"."course_no" ASC, "class"."year" ASC, "class"."season" ASC, 5 ASC
+                               ON (("course"."department_code" = "class"."department_code") AND ("course"."no" = "class"."course_no"))
+               WHERE ("course"."department_code" = 'astro')
+                     AND ("course"."no" = 105)
+               ORDER BY "course"."department_code" ASC, "course"."no" ASC, 1 ASC, 2 ASC, 3 ASC, 4 ASC, 5 ASC
           - uri: /program^degree{*, /^.id()}
             status: 200 OK
             headers:
@@ -23558,14 +23523,12 @@ tests:
                GROUP BY 1
                ORDER BY 1 ASC NULLS FIRST
 
-                 SELECT "school"."code",
+                 SELECT "program"."school_code",
                         "program"."code",
                         "program"."degree"
                  FROM "ad"."program"
-                      INNER JOIN "ad"."school"
-                                 ON ("program"."school_code" = "school"."code")
                  WHERE ("program"."degree" IS NOT NULL)
-                 ORDER BY 3 ASC NULLS FIRST, "program"."school_code" ASC, 2 ASC
+                 ORDER BY 3 ASC NULLS FIRST, 1 ASC, 2 ASC
           - uri: /program[ns]
             status: 400 Bad Request
             headers:
@@ -23800,8 +23763,6 @@ tests:
                SELECT "program"."code",
                       COALESCE("student"."count", 0)
                FROM "ad"."program"
-                    INNER JOIN "ad"."school"
-                               ON ("program"."school_code" = "school"."code")
                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
                                             "student"."school_code",
                                             "student"."program_code"
@@ -23809,7 +23770,7 @@ tests:
                                      WHERE "student"."is_active"
                                      GROUP BY 2, 3) AS "student"
                                     ON (("program"."school_code" = "student"."school_code") AND ("program"."code" = "student"."program_code"))
-               WHERE ("school"."code" = 'bus')
+               WHERE ("program"."school_code" = 'bus')
                ORDER BY "program"."school_code" ASC, 1 ASC
           - uri: /define(school.program.student:=student?is_active) .count((school?code='bus').program.student)
             status: 200 OK
@@ -23856,21 +23817,19 @@ tests:
 
                ----
                /define(school.department.course:=course?credits>2,school.department.course:=course?credits<5,school.department:=department?code='acc').school.department.course{department.code,no,title,credits}
-               SELECT "department_2"."code",
+               SELECT "course"."department_code",
                       "course"."no",
                       "course"."title",
                       "course"."credits"
                FROM "ad"."school"
-                    INNER JOIN "ad"."department" AS "department_1"
-                               ON ("school"."code" = "department_1"."school_code")
+                    INNER JOIN "ad"."department"
+                               ON ("school"."code" = "department"."school_code")
                     INNER JOIN "ad"."course"
-                               ON ("department_1"."code" = "course"."department_code")
-                    INNER JOIN "ad"."department" AS "department_2"
-                               ON ("course"."department_code" = "department_2"."code")
+                               ON ("department"."code" = "course"."department_code")
                WHERE ("course"."credits" < 5)
                      AND ("course"."credits" > 2)
-                     AND ("department_1"."code" = 'acc')
-               ORDER BY "school"."code" ASC, "department_1"."code" ASC, "course"."department_code" ASC, 2 ASC
+                     AND ("department"."code" = 'acc')
+               ORDER BY "school"."code" ASC, "department"."code" ASC, 1 ASC, 2 ASC
           - uri: /define(double(x):=x*2){double(1),double(2),double(3)}
             status: 200 OK
             headers:
@@ -26311,19 +26270,15 @@ tests:
                FROM (SELECT "program"."degree",
                             COUNT(TRUE) AS "count"
                      FROM "ad"."program"
-                          INNER JOIN "ad"."school"
-                                     ON ("program"."school_code" = "school"."code")
                      WHERE ("program"."degree" IS NOT NULL)
-                           AND ("school"."code" IN ('art', 'la'))
+                           AND ("program"."school_code" IN ('art', 'la'))
                      GROUP BY 1) AS "program"
                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
                                             "program"."degree"
                                      FROM "ad"."program"
-                                          INNER JOIN "ad"."school"
-                                                     ON ("program"."school_code" = "school"."code")
                                           INNER JOIN "ed"."student"
                                                      ON (("program"."school_code" = "student"."school_code") AND ("program"."code" = "student"."program_code"))
-                                     WHERE ("school"."code" IN ('art', 'la'))
+                                     WHERE ("program"."school_code" IN ('art', 'la'))
                                      GROUP BY 2) AS "student"
                                     ON ("program"."degree" = "student"."degree")
                ORDER BY 1 ASC NULLS FIRST
@@ -26444,10 +26399,8 @@ tests:
                       "program"."degree",
                       "program"."part_of_code"
                FROM "ad"."program"
-                    INNER JOIN "ad"."school"
-                               ON ("program"."school_code" = "school"."code")
                WHERE ("program"."degree" IS NOT NULL)
-                     AND ("school"."code" IN ('art', 'la'))
+                     AND ("program"."school_code" IN ('art', 'la'))
                ORDER BY 4 ASC NULLS FIRST, 1 ASC, 2 ASC
           - uri: /{(school^campus).campus}
             status: 400 Bad Request
@@ -29344,40 +29297,24 @@ tests:
 
              ----
              /enrollment[1010.[[mth.101].[2008.fall].001]]{id()}
-             SELECT "student_2"."id",
-                    "department_2"."code",
-                    "course_2"."no",
-                    "semester_2"."year",
-                    "semester_2"."season",
+             SELECT "enrollment"."student_id",
+                    "class_2"."department_code",
+                    "class_2"."course_no",
+                    "class_2"."year",
+                    "class_2"."season",
                     "class_2"."section"
              FROM "ed"."enrollment"
-                  INNER JOIN "ed"."student" AS "student_1"
-                             ON ("enrollment"."student_id" = "student_1"."id")
                   INNER JOIN "cd"."class" AS "class_1"
                              ON ("enrollment"."class_seq" = "class_1"."class_seq")
-                  INNER JOIN "ad"."course" AS "course_1"
-                             ON (("class_1"."department_code" = "course_1"."department_code") AND ("class_1"."course_no" = "course_1"."no"))
-                  INNER JOIN "ad"."department" AS "department_1"
-                             ON ("course_1"."department_code" = "department_1"."code")
-                  INNER JOIN "cd"."semester" AS "semester_1"
-                             ON (("class_1"."year" = "semester_1"."year") AND ("class_1"."season" = "semester_1"."season"))
-                  INNER JOIN "ed"."student" AS "student_2"
-                             ON ("enrollment"."student_id" = "student_2"."id")
                   INNER JOIN "cd"."class" AS "class_2"
                              ON ("enrollment"."class_seq" = "class_2"."class_seq")
-                  INNER JOIN "ad"."course" AS "course_2"
-                             ON (("class_2"."department_code" = "course_2"."department_code") AND ("class_2"."course_no" = "course_2"."no"))
-                  INNER JOIN "ad"."department" AS "department_2"
-                             ON ("course_2"."department_code" = "department_2"."code")
-                  INNER JOIN "cd"."semester" AS "semester_2"
-                             ON (("class_2"."year" = "semester_2"."year") AND ("class_2"."season" = "semester_2"."season"))
-             WHERE ("student_1"."id" = 1010)
-                   AND ("department_1"."code" = 'mth')
-                   AND ("course_1"."no" = 101)
-                   AND ("semester_1"."year" = 2008::NUMERIC)
-                   AND ("semester_1"."season" = 'fall')
+             WHERE ("enrollment"."student_id" = 1010)
+                   AND ("class_1"."department_code" = 'mth')
+                   AND ("class_1"."course_no" = 101)
+                   AND ("class_1"."year" = 2008::NUMERIC)
+                   AND ("class_1"."season" = 'fall')
                    AND ("class_1"."section" = '001')
-             ORDER BY "enrollment"."student_id" ASC, "enrollment"."class_seq" ASC
+             ORDER BY 1 ASC, "class_1"."department_code" ASC, "class_1"."course_no" ASC, "class_1"."year" ASC, "class_1"."season" ASC, "class_1"."section" ASC
       - id: no-rows
         tests:
         - uri: /school?false()/:raw
@@ -32204,13 +32141,13 @@ tests:
 
              ----
              /program.limit(2,3).school
-             SELECT "school"."code",
+             SELECT "program"."school_code",
                     "school"."name",
                     "school"."campus"
              FROM "ad"."program"
                   INNER JOIN "ad"."school"
                              ON ("program"."school_code" = "school"."code")
-             ORDER BY "program"."school_code" ASC, "program"."code" ASC
+             ORDER BY 1 ASC, "program"."code" ASC
              LIMIT 2
              OFFSET 3
         - uri: /program.limit(2,3).student
@@ -32444,13 +32381,13 @@ tests:
 
              ----
              /program.limit(2,3).school
-             SELECT "school"."code",
+             SELECT "program"."school_code",
                     "school"."name",
                     "school"."campus"
              FROM "ad"."program"
                   INNER JOIN "ad"."school"
                              ON ("program"."school_code" = "school"."code")
-             ORDER BY "program"."school_code" ASC, "program"."code" ASC
+             ORDER BY 1 ASC, "program"."code" ASC
              LIMIT 2
              OFFSET 3
         - uri: /program.limit(2,3).student
@@ -33294,12 +33231,12 @@ tests:
 
              ----
              /(field?table_name='school').table
-             SELECT "table"."name"
+             SELECT "field"."table_name"
              FROM "field"
                   INNER JOIN "table"
                              ON ("field"."table_name" = "table"."name")
              WHERE ("field"."table_name" = 'school')
-             ORDER BY "field"."table_name" ASC, "field"."name" ASC
+             ORDER BY 1 ASC, "field"."name" ASC
         - uri: /(field?table_name='school').column/:meta
           status: 200 OK
           headers:
@@ -33368,12 +33305,12 @@ tests:
 
              ----
              /(column?table_name='program').table
-             SELECT "table"."name"
+             SELECT "column"."table_name"
              FROM "column"
                   INNER JOIN "table"
                              ON ("column"."table_name" = "table"."name")
              WHERE ("column"."table_name" = 'program')
-             ORDER BY "column"."table_name" ASC, "column"."name" ASC
+             ORDER BY 1 ASC, "column"."name" ASC
         - uri: /(column?table_name='program').field/:meta
           status: 200 OK
           headers:
@@ -33392,15 +33329,15 @@ tests:
 
              ----
              /(column?table_name='program').field
-             SELECT "field"."table_name",
-                    "field"."name",
+             SELECT "column"."table_name",
+                    "column"."name",
                     "field"."kind",
                     "field"."sort"
              FROM "column"
                   INNER JOIN "field"
                              ON (("column"."table_name" = "field"."table_name") AND ("column"."name" = "field"."name"))
              WHERE ("column"."table_name" = 'program')
-             ORDER BY "column"."table_name" ASC, "column"."name" ASC
+             ORDER BY 1 ASC, 2 ASC
         - uri: /(link?table_name='student').table/:meta
           status: 200 OK
           headers:
@@ -33416,12 +33353,12 @@ tests:
 
              ----
              /(link?table_name='student').table
-             SELECT "table"."name"
+             SELECT "link"."table_name"
              FROM "link"
                   INNER JOIN "table"
                              ON ("link"."table_name" = "table"."name")
              WHERE ("link"."table_name" = 'student')
-             ORDER BY "link"."table_name" ASC, "link"."name" ASC
+             ORDER BY 1 ASC, "link"."name" ASC
         - uri: /(link?table_name='student').target/:meta
           status: 200 OK
           headers:
@@ -33437,7 +33374,7 @@ tests:
 
              ----
              /(link?table_name='student').target
-             SELECT "table"."name"
+             SELECT "link"."target_name"
              FROM "link"
                   INNER JOIN "table"
                              ON ("link"."target_name" = "table"."name")
@@ -33458,15 +33395,15 @@ tests:
 
              ----
              /(link?table_name='student').field
-             SELECT "field"."table_name",
-                    "field"."name",
+             SELECT "link"."table_name",
+                    "link"."name",
                     "field"."kind",
                     "field"."sort"
              FROM "link"
                   INNER JOIN "field"
                              ON (("link"."table_name" = "field"."table_name") AND ("link"."name" = "field"."name"))
              WHERE ("link"."table_name" = 'student')
-             ORDER BY "link"."table_name" ASC, "link"."name" ASC
+             ORDER BY 1 ASC, 2 ASC
         - uri: /(link?table_name='student').reverse/:meta
           status: 200 OK
           headers:
@@ -33581,7 +33518,7 @@ tests:
 
              ----
              /field?table_name='school'{table{name},name,kind,column{domain},link{is_singular}}
-             SELECT "table"."name",
+             SELECT "field"."table_name",
                     "field"."name",
                     "field"."kind",
                     "column"."!",
@@ -33589,8 +33526,6 @@ tests:
                     "link"."!",
                     "link"."is_singular"
              FROM "field"
-                  INNER JOIN "table"
-                             ON ("field"."table_name" = "table"."name")
                   LEFT OUTER JOIN (SELECT 1 AS "!",
                                           "column"."domain",
                                           "column"."table_name",
@@ -33604,7 +33539,7 @@ tests:
                                    FROM "link") AS "link"
                                   ON (("field"."table_name" = "link"."table_name") AND ("field"."name" = "link"."name"))
              WHERE ("field"."table_name" = 'school')
-             ORDER BY "field"."table_name" ASC, 2 ASC
+             ORDER BY 1 ASC, 2 ASC
         - uri: /column?table_name='program' {table{name}, field{name, sort}} /:meta
           status: 200 OK
           headers:
@@ -33625,16 +33560,14 @@ tests:
 
              ----
              /column?table_name='program'{table{name},field{name,sort}}
-             SELECT "table"."name",
-                    "field"."name",
+             SELECT "column"."table_name",
+                    "column"."name",
                     "field"."sort"
              FROM "column"
-                  INNER JOIN "table"
-                             ON ("column"."table_name" = "table"."name")
                   INNER JOIN "field"
                              ON (("column"."table_name" = "field"."table_name") AND ("column"."name" = "field"."name"))
              WHERE ("column"."table_name" = 'program')
-             ORDER BY "column"."table_name" ASC, "column"."name" ASC
+             ORDER BY 1 ASC, 2 ASC
         - uri: /link?table_name='student' {table{name}, target{name}, field{name},
             reverse{name}, link_via_reverse{name}} /:meta
           status: 200 OK
@@ -33653,20 +33586,14 @@ tests:
 
              ----
              /link?table_name='student'{table{name},target{name},field{name},reverse{name},link_via_reverse{name}}
-             SELECT "table_1"."name",
-                    "table_2"."name",
-                    "field"."name",
+             SELECT "link_1"."table_name",
+                    "link_1"."target_name",
+                    "link_1"."name",
                     "link_2"."!",
                     "link_2"."name",
                     "link_3"."!",
                     "link_3"."name"
              FROM "link" AS "link_1"
-                  INNER JOIN "table" AS "table_1"
-                             ON ("link_1"."table_name" = "table_1"."name")
-                  INNER JOIN "table" AS "table_2"
-                             ON ("link_1"."target_name" = "table_2"."name")
-                  INNER JOIN "field"
-                             ON (("link_1"."table_name" = "field"."table_name") AND ("link_1"."name" = "field"."name"))
                   LEFT OUTER JOIN (SELECT 1 AS "!",
                                           "link"."name",
                                           "link"."table_name"
@@ -33679,7 +33606,7 @@ tests:
                                    FROM "link") AS "link_3"
                                   ON (("link_1"."table_name" = "link_3"."target_name") AND ("link_1"."name" = "link_3"."reverse_name"))
              WHERE ("link_1"."table_name" = 'student')
-             ORDER BY "link_1"."table_name" ASC, "link_1"."name" ASC
+             ORDER BY 1 ASC, 3 ASC
         - uri: /count(table)/:meta
           status: 200 OK
           headers:
@@ -33928,11 +33855,9 @@ tests:
             | _\u043D\u0430\u0444_\u043D\u0430\u0444_     | string   | false        |\n\n
             ----\n /column.sort(table.name,field.sort)\n SELECT \"column\".\"table_name\",\n
             \       \"column\".\"name\",\n        \"column\".\"domain\",\n        \"column\".\"is_mandatory\"\n
-            FROM \"column\"\n      INNER JOIN \"table\"\n                 ON (\"column\".\"table_name\"
-            = \"table\".\"name\")\n      INNER JOIN \"field\"\n                 ON
-            ((\"column\".\"table_name\" = \"field\".\"table_name\") AND (\"column\".\"name\"
-            = \"field\".\"name\"))\n ORDER BY \"table\".\"name\" ASC, \"field\".\"sort\"
-            ASC, 1 ASC, 2 ASC\n"
+            FROM \"column\"\n      INNER JOIN \"field\"\n                 ON ((\"column\".\"table_name\"
+            = \"field\".\"table_name\") AND (\"column\".\"name\" = \"field\".\"name\"))\n
+            ORDER BY 1 ASC, \"field\".\"sort\" ASC, 2 ASC\n"
       - id: tweak.override
         tests:
         - ctl: [ext, tweak.override]
@@ -34207,16 +34132,12 @@ tests:
              /student{name,dob,school.code,program.code,exists(instructor)}.limit(1)
              SELECT "student"."name",
                     "student"."dob",
-                    "school"."code",
-                    "program"."code",
+                    "student"."school_code",
+                    "student"."program_code",
                     EXISTS(SELECT TRUE
                            FROM "id"."instructor"
                            WHERE ("student"."name" = "instructor"."full_name"))
              FROM "ed"."student"
-                  INNER JOIN "ad"."school"
-                             ON ("student"."school_code" = "school"."code")
-                  INNER JOIN "ad"."program"
-                             ON (("student"."school_code" = "program"."school_code") AND ("student"."program_code" = "program"."code"))
              ORDER BY 1 ASC, 2 ASC
              LIMIT 1
         - uri: /count(c14n)

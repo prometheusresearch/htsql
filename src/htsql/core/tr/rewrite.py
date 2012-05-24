@@ -16,11 +16,11 @@ from ..domain import BooleanDomain
 from .error import EncodeError
 from .coerce import coerce
 from .flow import (Expression, QueryExpr, SegmentCode, Flow, RootFlow,
-        QuotientFlow, ComplementFlow, MonikerFlow, ForkedFlow, LinkedFlow,
-        ClippedFlow, LocatorFlow, FilteredFlow, OrderedFlow, Code, LiteralCode,
-        CastCode, RecordCode, IdentityCode, AnnihilatorCode, FormulaCode, Unit,
-        CompoundUnit, ScalarUnit, AggregateUnitBase, AggregateUnit, KernelUnit,
-        CoveringUnit)
+        FiberTableFlow, QuotientFlow, ComplementFlow, MonikerFlow, ForkedFlow,
+        LinkedFlow, ClippedFlow, LocatorFlow, FilteredFlow, OrderedFlow, Code,
+        LiteralCode, CastCode, RecordCode, IdentityCode, AnnihilatorCode,
+        FormulaCode, Unit, ColumnUnit, CompoundUnit, ScalarUnit,
+        AggregateUnitBase, AggregateUnit, KernelUnit, CoveringUnit)
 from .signature import Signature, OrSig, AndSig
 # FIXME: move `IfSig` and `SwitchSig` to `htsql.core.tr.signature`.
 from .fn.signature import IfSig
@@ -825,7 +825,10 @@ class RewriteLocator(RewriteFlow):
     adapt(LocatorFlow)
 
     def __call__(self):
-        # Apply the adapter to all child nodes.
+        #if self.flow.base.dominates(self.flow.seed):
+        #    flow = FilteredFlow(self.flow.seed, self.flow.filter,
+        #                        self.flow.binding)
+        #    return self.state.rewrite(flow)
         base = self.state.rewrite(self.flow.base)
         seed = self.state.rewrite(self.flow.seed)
         filter = self.state.rewrite(self.flow.filter)
@@ -1415,6 +1418,26 @@ class ReplaceUnit(ReplaceCode):
         substate.recombine()
         flow = substate.replace(self.unit.flow)
         return self.unit.clone(flow=flow)
+
+
+class UnmaskColumn(UnmaskUnit):
+
+    adapt(ColumnUnit)
+
+    def __call__(self):
+        flow = self.state.unmask(self.unit.flow)
+        column = self.unit.column
+        while (isinstance(flow, FiberTableFlow) and flow.join.is_direct and
+               flow.is_expanding and flow.is_contracting):
+            for origin_column, target_column in zip(flow.join.origin_columns,
+                                                    flow.join.target_columns):
+                if column is target_column:
+                    flow = flow.base
+                    column = origin_column
+                    break
+            else:
+                break
+        return self.unit.clone(flow=flow, column=column)
 
 
 class RewriteCompound(RewriteUnit):

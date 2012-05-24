@@ -12,7 +12,8 @@ This module implements stitching utilities over flow nodes.
 
 
 from ..adapter import Adapter, adapt, adapt_many
-from ..classify import normalize
+from ..model import TableNode, ColumnArc, ChainArc
+from ..classify import normalize, localize
 from .error import CompileError
 from .syntax import IdentifierSyntax
 from .flow import (Flow, ScalarFlow, TableFlow, FiberTableFlow, QuotientFlow,
@@ -187,7 +188,56 @@ class ArrangeTable(Arrange):
         if self.with_weak:
             # Augment the parent ordering with ordering by the primary key
             # of the table (but only if the cardinality of the flow grows).
+
+            # FIXME: the binding tree should pass the ordering information
+            # to the flow tree.
+            def chain(flow):
+                node = TableNode(flow.family.table)
+                labels = localize(node)
+                if labels is None:
+                    return None
+                units = []
+                for label in labels:
+                    if isinstance(label.arc, ColumnArc):
+                        identifier = IdentifierSyntax(label.name, flow.mark)
+                        binding = self.flow.binding.clone(syntax=identifier)
+                        code = ColumnUnit(label.arc.column, flow, binding)
+                        units.append(code)
+                    elif isinstance(label.arc, ChainArc):
+                        identifier = IdentifierSyntax(label.name, flow.mark)
+                        binding = self.flow.binding.clone(syntax=identifier)
+                        subflow = flow
+                        for join in label.arc.joins:
+                            subflow = FiberTableFlow(subflow, join,
+                                                     binding)
+                        subunits = chain(subflow)
+                        assert subunits is not None
+                        units.extend(subunits)
+                    else:
+                        assert False, label.arc
+                return units
             if not self.flow.is_contracting:
+                flow = self.flow.inflate()
+                units = chain(flow)
+                if units is not None:
+                    for unit in units:
+                        flow = unit.flow
+                        column = unit.column
+                        while (isinstance(flow, FiberTableFlow) and
+                               flow.join.is_direct and
+                               flow.is_expanding and flow.is_contracting):
+                            for origin_column, target_column in \
+                                    zip(flow.join.origin_columns,
+                                        flow.join.target_columns):
+                                if column is target_column:
+                                    flow = flow.base
+                                    column = origin_column
+                                    break
+                            else:
+                                break
+                        unit = unit.clone(flow=flow, column=column)
+                        yield (unit, +1)
+                    return
                 # List of columns which provide the default table ordering.
                 columns = []
                 # When possible, we take the columns from the primary key

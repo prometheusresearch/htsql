@@ -21,7 +21,7 @@ class GeneralCache(object):
         except KeyError:
             with self.cache_lock:
                 if service not in self.locks:
-                    self.locks[service] = threading.Lock()
+                    self.locks[service] = threading.RLock()
             return self.locks[service]
 
     def set(self, key, value):

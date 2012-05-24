@@ -623,9 +623,10 @@ class Record(tuple):
 
     __slots__ = ()
     __fields__ = ()
+    __dump__ = None
 
     @classmethod
-    def make(cls, name, fields):
+    def make(cls, name, fields, dump=None):
         assert isinstance(name, maybe(oneof(str, unicode)))
         assert isinstance(fields, listof(maybe(oneof(str, unicode))))
         if isinstance(name, unicode):
@@ -661,6 +662,8 @@ class Record(tuple):
             if field is None:
                 continue
             attributes[field] = property(operator.itemgetter(idx))
+        if dump is not None:
+            attributes['__dump__'] = dump
         return type(name, bases, attributes)
 
     def __new__(cls, *args, **kwds):
@@ -688,6 +691,11 @@ class Record(tuple):
 
     def __getnewargs__(self):
         return tuple(self)
+
+    def __str__(self):
+        if self.__class__.__dump__ is None:
+            return repr(self)
+        return self.__class__.__dump__(self)
 
     def __repr__(self):
         return ("%s(%s)"

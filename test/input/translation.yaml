@@ -334,7 +334,7 @@ tests:
     - uri: /school[ns]
     - uri: /school[ns].department
     - uri: /school[ns].program
-    - uri: /program?school[ns]
+    - uri: /program?school[ns]  # FIXME: improve SQL serialization
     - uri: /program[ns.uchem]
     - uri: /school{id(), *}
     - uri: /department{id(), school{id()}}

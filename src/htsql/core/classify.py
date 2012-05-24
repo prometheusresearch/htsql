@@ -306,6 +306,65 @@ class OrderTable(Order):
                 for label in self.labels]
 
 
+class Localize(Adapter):
+
+    adapt(Node)
+
+    def __init__(self, node):
+        self.node = node
+
+    def __call__(self):
+        return None
+
+
+class LocalizeTable(Localize):
+
+    adapt(TableNode)
+
+    def __call__(self):
+        label_by_column = {}
+        label_by_join = {}
+        for label in classify(self.node):
+            if (isinstance(label.arc, ColumnArc) and
+                    label.arc.column not in label_by_column):
+                label_by_column[label.arc.column] = label
+            if (isinstance(label.arc, ChainArc) and
+                    len(label.arc.joins) == 1 and
+                    label.arc.joins[0] not in label_by_join):
+                label_by_join[label.arc.joins[0]] = label
+        table = self.node.table
+        for key in [table.primary_key]+table.unique_keys:
+            if key.is_partial:
+                continue
+            if not all(not column.is_nullable for column in key.origin_columns):
+                continue
+            columns = key.origin_columns[:]
+            identity = []
+            while columns:
+                for foreign_key in self.node.table.foreign_keys:
+                    if foreign_key.is_partial:
+                        continue
+                    width = len(foreign_key.origin_columns)
+                    if foreign_key.origin_columns == columns[:width]:
+                        join = DirectJoin(foreign_key)
+                        if join not in label_by_join:
+                            continue
+                        label = label_by_join[join]
+                        if localize(label.target) is None:
+                            continue
+                        identity.append(label)
+                        columns = columns[width:]
+                        break
+                else:
+                    column = columns[0]
+                    if column not in label_by_column:
+                        break
+                    columns.pop(0)
+                    identity.append(label_by_column[column])
+            if not columns:
+                return identity
+
+
 @once
 def classify(node):
     assert isinstance(node, Node)
@@ -335,5 +394,11 @@ def relabel(arc):
         if key not in cache.values:
             cache.set(key, value)
     return labels_by_arc[arcs[0]]
+
+
+@once
+def localize(node):
+    assert isinstance(node, Node)
+    return Localize.__invoke__(node)
 
 
