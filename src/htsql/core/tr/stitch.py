@@ -193,28 +193,24 @@ class ArrangeTable(Arrange):
             # to the flow tree.
             def chain(flow):
                 node = TableNode(flow.family.table)
-                labels = localize(node)
-                if labels is None:
+                arcs = localize(node)
+                if arcs is None:
                     return None
                 units = []
-                for label in labels:
-                    if isinstance(label.arc, ColumnArc):
-                        identifier = IdentifierSyntax(label.name, flow.mark)
-                        binding = self.flow.binding.clone(syntax=identifier)
-                        code = ColumnUnit(label.arc.column, flow, binding)
+                for arc in arcs:
+                    if isinstance(arc, ColumnArc):
+                        code = ColumnUnit(arc.column, flow, flow.binding)
                         units.append(code)
-                    elif isinstance(label.arc, ChainArc):
-                        identifier = IdentifierSyntax(label.name, flow.mark)
-                        binding = self.flow.binding.clone(syntax=identifier)
+                    elif isinstance(arc, ChainArc):
                         subflow = flow
-                        for join in label.arc.joins:
+                        for join in arc.joins:
                             subflow = FiberTableFlow(subflow, join,
-                                                     binding)
+                                                     flow.binding)
                         subunits = chain(subflow)
                         assert subunits is not None
                         units.extend(subunits)
                     else:
-                        assert False, label.arc
+                        assert False, arc
                 return units
             if not self.flow.is_contracting:
                 flow = self.flow.inflate()

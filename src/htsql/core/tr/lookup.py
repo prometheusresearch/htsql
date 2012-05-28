@@ -676,13 +676,13 @@ class IdentifyTable(Lookup):
 
     def __call__(self):
         def chain(node):
-            labels = localize(node)
-            if labels is None:
+            arcs = localize(node)
+            if arcs is None:
                 return None
             recipes = []
-            for label in labels:
-                recipe = prescribe(label.arc, self.binding)
-                target_chain = chain(label.target)
+            for arc in arcs:
+                recipe = prescribe(arc, self.binding)
+                target_chain = chain(arc.target)
                 if target_chain is not None:
                     recipe = ChainRecipe([recipe, target_chain])
                 recipes.append(recipe)
