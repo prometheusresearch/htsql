@@ -37,6 +37,8 @@ class DjangoIntrospect(Introspect):
         column_by_field = {}
         for model in all_models:
             meta = model._meta
+            if meta.proxy:
+                continue
             name = meta.db_table
             if is_upper:
                 name = name.upper()
