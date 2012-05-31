@@ -83,7 +83,9 @@ class EncodingState(object):
         # result.
         if self.with_cache:
             if binding not in self.binding_to_code:
-                code = encode(binding, self)
+                #FIXME: reduce recursion depth
+                #code = encode(binding, self)
+                code = Encode.__prepare__(binding, self)()
                 self.binding_to_code[binding] = code
             return self.binding_to_code[binding]
         # Caching is disabled; return a new instance every time.
@@ -103,7 +105,9 @@ class EncodingState(object):
         # result.
         if self.with_cache:
             if binding not in self.binding_to_flow:
-                flow = relate(binding, self)
+                #FIXME: reduce recursion depth
+                #flow = relate(binding, self)
+                flow = Relate.__prepare__(binding, self)()
                 self.binding_to_flow[binding] = flow
             return self.binding_to_flow[binding]
         # Caching is disabled; return a new instance every time.
@@ -508,7 +512,7 @@ class EncodeCast(Encode):
 
     def __call__(self):
         # Delegate it to the `Convert` adapter.
-        return Convert.__invoke__(self.binding, self.state)
+        return Convert.__prepare__(self.binding, self.state)()
 
 
 class Convert(Adapter):
@@ -844,7 +848,7 @@ class EncodeFormula(Encode):
 
     def __call__(self):
         # Delegate the translation to the `EncodeBySignature` adapter.
-        return EncodeBySignature.__invoke__(self.binding, self.state)
+        return EncodeBySignature.__prepare__(self.binding, self.state)()
 
 
 class RelateFormula(Relate):
@@ -853,7 +857,7 @@ class RelateFormula(Relate):
 
     def __call__(self):
         # Delegate the translation to the `RelateBySignature` adapter.
-        return RelateBySignature.__invoke__(self.binding, self.state)
+        return RelateBySignature.__prepare__(self.binding, self.state)()
 
 
 class EncodeBySignatureBase(Adapter):

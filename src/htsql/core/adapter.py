@@ -247,9 +247,23 @@ class Component(object):
         return None
 
     @classmethod
+    def __prepare__(interface, *args, **kwds):
+        """
+        Instantiates the interface to the given arguments.
+        """
+        # Extract polymorphic parameters.
+        dispatch_key = interface.__dispatch__(*args, **kwds)
+        # Realize the interface.
+        realization = interface.__realize__(dispatch_key)
+        # Instantiate and return the realization.
+        return realization(*args, **kwds)
+
+    @classmethod
     def __invoke__(interface, *args, **kwds):
         """
         Realizes and applies the interface to the given arguments.
+
+        Use ``__prepare__()()`` instead when traversing a deeply nested tree.
         """
         # Extract polymorphic parameters.
         dispatch_key = interface.__dispatch__(*args, **kwds)
