@@ -336,6 +336,8 @@ class LocalizeTable(Localize):
                 arcs.add(arc)
         table = self.node.table
         for key in [table.primary_key]+table.unique_keys:
+            if key is None:
+                continue
             if key.is_partial:
                 continue
             if not all(not column.is_nullable for column in key.origin_columns):
