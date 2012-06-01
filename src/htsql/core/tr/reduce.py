@@ -1142,10 +1142,10 @@ class ReduceAnd(ReduceBySignature):
                         rops.append(op.rop)
                         duplicates.add(op.rop)
                 elif isformula(op, IsInSig):
-                    for rop in ops.rops:
+                    for rop in op.rops:
                         if rop not in duplicates:
-                            rops.append(op.rop)
-                            duplicates.add(op.rop)
+                            rops.append(rop)
+                            duplicates.add(rop)
             if len(rops) > 1:
                 is_nullable = (lop.is_nullable or any(rop.is_nullable
                                                       for rop in rops))
@@ -1233,10 +1233,10 @@ class ReduceOr(ReduceBySignature):
                         rops.append(op.rop)
                         duplicates.add(op.rop)
                 elif isformula(op, IsInSig):
-                    for rop in ops.rops:
+                    for rop in op.rops:
                         if rop not in duplicates:
-                            rops.append(op.rop)
-                            duplicates.add(op.rop)
+                            rops.append(rop)
+                            duplicates.add(rop)
             if len(rops) > 1:
                 is_nullable = (lop.is_nullable or any(rop.is_nullable
                                                       for rop in rops))
