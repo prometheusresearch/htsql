@@ -125,3 +125,15 @@ variables:
     HTSQL
     pymssql
 
+---
+code: htsql-django
+files:
+  README: README-DJANGO
+variables:
+  name: HTSQL-DJANGO
+  description: A Database Query Language (Django gateway)
+  packages: |
+    htsql_django
+  install-requires: |
+    HTSQL
+

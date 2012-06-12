@@ -1,0 +1,82 @@
+*******************************************
+  HTSQL-DJANGO -- Django gateway to HTSQL
+*******************************************
+
+HTSQL is a comprehensive navigational query language for relational
+databases.  This package contains a Django application that provides
+a gateway to HTSQL service.
+
+This is an experimental package.  The usage, API, and security
+assumptions may change in future releases.
+
+For more information on HTSQL, please see:
+
+    http://htsql.org/
+        The HTSQL homepage
+
+    http://pypi.python.org/pypi/HTSQL/
+        The source package for HTSQL
+
+
+Installation and Usage
+======================
+
+This package allows you to use HTSQL in your Django projects.  To
+install it, run::
+
+    # pip install HTSQL-DJANGO
+
+This command installs HTSQL itself and a Django gateway.  Out of the
+box, HTSQL works with SQLite databases.  To run HTSQL on top of other
+database servers, install additional database backends::
+
+    # pip install HTSQL-PGSQL
+    # pip install HTSQL-MYSQL
+
+To use HTSQL in your Django project, open ``settings.py`` and add
+``'htsql_django'`` to the list of installed applications::
+
+    INSTALLED_APPS = (
+        # ...
+        'htsql_django',
+    )
+
+When used in a Django project, HTSQL service is automatically
+configured to serve on the default Django database.  You could provide
+additional configuration options using parameter ``HTSQL_CONFIG``.
+For instance, a reasonable configuration could be::
+
+    HTSQL_CONFIG = {
+        # Set query timeout in seconds (currently, PostgreSQL only).
+        'tweak.timeout': { 'timeout': 600 },
+        # Set the maximum number of output rows.
+        'tweak.autolimit': { 'limit': 10000 },
+        # Enable the web-based query editor.
+        'tweak.shell.default': {},
+        # Enable meta-data queries.
+        'tweak.meta': {},
+    }
+
+Next, add the gateway to the URL dispatcher.  Open ``urls.py`` and
+add the following line::
+
+    urlpatterns = patterns('',
+        # ...
+        url(r'^htsql/', include('htsql_django.urls')),
+    )
+
+This will forward HTTP requests starting from ``/htsql/`` to the HTSQL
+service.  The gateway is available only to authenticated users.
+
+You could also make HTSQL queries from Python code.  For example, to
+calculate the total number of votes per poll in the Django tutorial
+project, run::
+
+    >>> from htsql_django import produce
+    >>>
+    >>> query = "/polls_poll{question, total:=sum(polls_choice.votes)}"
+    >>> for row in produce(query):
+    ...     print "%s: %s" % (row.question, row.total)
+    ...
+    What's up?: 6
+
