@@ -2,6 +2,26 @@ List of Changes
 ===============
 
 
+2.3.1 (2012-06-XX)
+------------------
+
+* Added record and list data types, support for nested records and
+  segments, hierarchical output.
+* Added support for entity identifiers (locators): `id()` retrieves the
+  locator, `[]` syntax finds an entity by locator.
+* `top()`: retrieves the first element of the given flow.
+* Added and updated output formats: `raw`, `json`, `xml`; updated style
+  for HTML output.
+* `HTSQL-DJANGO`: a Django gateway to HTSQL.
+* Moved all cache and configuration files to `~/.htsql/`.  Added
+  `~/.htsqlrc` with default configuration parameters for `htsql-ctl shell`
+  and `htsql-ctl serve`.
+* Removed `htsql-ctl get` and `htsql-ctl post` routines; added
+  `htsql-ctl ui`, an experimental visual HTSQL browser.
+* Removed support for Python 2.5.  Currently supported are 2.6 and 2.7.
+* Many other fixes and documentation updates.
+
+
 2.3.0 (2012-03-07)
 ------------------
 
