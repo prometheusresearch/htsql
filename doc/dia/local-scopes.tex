@@ -1,0 +1,88 @@
+
+\documentclass{article}
+
+\include{prelude}
+
+\begin{document}
+
+\tikzset{
+    > = stealth', shorten > = 1pt, shorten < = 1pt,
+    node distance = 3cm and 3cm,
+    unit node/.style = {fill, star, star points=8, inner sep=0pt, minimum size=3mm},
+    class node/.style = {fill, circle, inner sep=0pt, minimum size=2mm},
+    domain node/.style = {fill, rectangle, inner sep=0pt, minimum size=2mm},
+    node header/.style = {font=\itshape},
+    arrow/.style = {font=\small\ttfamily, above, sloped},
+    brace/.style = {decorate, decoration={brace, amplitude=8pt, raise=1cm},
+                    draw=blue!50},
+    brace header/.style = {above=1.25cm, font=\itshape\color{blue!75}}
+}
+
+\begin{tikzpicture}
+
+\node[unit node] (unit) {};
+\node[class node] (department 1) [left=of unit] {};
+\node[class node] (course 1) [below=of department 1] {};
+\node[class node] (school 1) [right=of unit] {};
+\node[class node] (program 1) [below=of school 1] {};
+\node[class node] (department 2) [right=of school 1] {};
+\node[class node] (school 2) [right=of department 2] {};
+\node[class node] (program 2) [right=of school 2] {};
+\node[domain node] (string) [below=of school 2] {};
+
+\node[node header] at (unit.north) [above]
+    {unit};
+\node[node header] at (school 2.north) [above]
+    {school};
+
+\draw[->]
+    (unit)
+    to node[arrow] {department}
+    (department 1);
+\draw[->]
+    (unit)
+    to node[arrow] {course}
+    (course 1);
+\draw[->]
+    (unit)
+    to node[arrow] {program}
+    (program 1);
+\draw[->]
+    (unit)
+    to node[arrow] {school}
+    (school 1);
+\draw[->]
+    (school 2)
+    to node[arrow] {department}
+    (department 2);
+\draw[->]
+    (school 2)
+    to node[arrow] {program}
+    (program 2);
+\draw[->]
+    (school 2)
+    to[bend left] node[arrow] {code}
+    (string);
+\draw[->, very thick]
+    (school 2)
+    to node[arrow] {name}
+    (string);
+\draw[->]
+    (school 2)
+    to[bend right] node[arrow, below, rotate=180] {campus}
+    (string);
+
+\draw[brace]
+    (department 1.west)
+    -- node[brace header] {a unit scope}
+    (school 1.east);
+\draw[brace]
+    (department 2.west)
+    -- node[brace header] {a class scope}
+    (program 2.east);
+
+
+\end{tikzpicture}
+
+\end{document}
+

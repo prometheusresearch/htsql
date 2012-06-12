@@ -44,10 +44,11 @@ class attributes ``school.name`` and ``school.campus``, and a constant
 Function Calls
 --------------
 
-An identifier is said to be in a *function* form when it is a part of
-a function call expression.  HTSQL supports two notations for function
-calls: prefix (``F(x,y,...)``) and infix (``x :F (y,...)``).  The choice
-of calling notation has no effect on name resolution.
+An identifier is said to be in a *functional* form (or just a
+*function*) when it is a part of a function call expression.  HTSQL
+supports two notations for function calls: prefix (``F(x,y,...)``) and
+infix (``x :F (y,...)``); the choice of calling notation has no effect
+on name resolution.
 
 It is convenient to treat unary and binary operators as functions with
 one or two arguments.  In HTSQL, operators use the same mechanism for
@@ -55,10 +56,15 @@ name resolution as regular functions.
 
 .. htsql:: /school{name, count(department) :as '# of Depts'}?campus='south'/:csv
 
-This query contains two functions with one argument: ``count()`` and
-``csv()``, a function with two arguments: ``as()``, and two binary
-operators: ``?`` and ``=``.  This query could be rewritten to use only
-prefix function calls:
+This query contains:
+
+* ``count()``, ``csv()``: functions with one argument;
+* ``as()``: a function with two arguments;
+* ``/``: an unary operator (two occurrences);
+* ``?``, ``=``: binary operators.
+
+The query uses both prefix and infix call notation.  Rewritten to use
+the prefix notation only, the query takes the form:
 
 .. htsql:: /csv(/school{name, as(count(department), '# of Depts')}?campus='north')
    :hide:
@@ -77,8 +83,8 @@ expressions.
    /define($avg_credits := avg(course.credits))
     .course?credits>$avg_credits
 
-This query uses a reference ``$avg_credits`` to produce courses with the
-number of credits larger than the average.
+Here, reference ``$avg_credits`` denotes the average number of credits
+across all courses.
 
 .. htsql::
    :cut: 3
@@ -87,25 +93,15 @@ number of credits larger than the average.
               {name, count(course_with_credits(2)),
                      count(course_with_credits(3))}
 
-This query uses reference ``$c`` as a parameter of a predefined
+In this query, reference ``$c`` is a parameter of a predefined
 expression ``course_with_credits()``.
 
 
 Scopes
 ======
 
-A *naming scope* is a mapping of names to associated objects.  Each
-position in an HTSQL query is associated with a *naming context*, or a
-collection of naming scopes.  HTSQL resolves an identifier by seeking
-through available scopes in the current context to find a name that
-matches the identifier and fetches the object associated with this name.
-
-HTSQL distinguishes two types of scopes: global and local.  The global
-scopes is shared by every 
-
-Each naming context contains a global scope, and a sequence of local
-scopes.
-
+A *naming scope* is a mapping of names to associated objects.  HTSQL
+distinguishes two types of scopes: global and local.
 
 Global Scope
 ------------
@@ -120,154 +116,237 @@ In this query, functions ``count()`` and ``csv()``, operators ``?`` and
 Local Scope
 -----------
 
-Each node in the model graph together with all outgoing arrows forms a
-*local* scope.  A unit node induces a *unit* scope, which contains all
-the classes in the model.  A class node induces a *class* scope with
-associated attributes and links.  A domain node induces a *domain*
-scope, which is, in general, empty because domain nodes have no outgoing
-arrows.
+In the model graph, each node together with all outgoing arrows forms a
+*local* scope.
 
-.. htsql:: /department{name}?school.campus='old'
+A unit node induces a *unit scope*.  This scope contains the names of
+all classes in the database model.
+
+.. htsql:: /{count(school), count(department)}
+
+In this example, identifiers ``school`` and ``department`` are found in
+the unit scope.
+
+A class node induces a *class scope*.  A class scope contains names of
+all class attributes and links.
+
+.. htsql:: /school{name, count(department)}?exists(program)
+   :cut: 4
+
+In this example, identifiers ``name``, ``department`` and ``program``
+are from the scope of class ``school``.
+
+A domain node induces a *domain scope*, which is generally empty because
+domain nodes have no outgoing arrows.
+
+This following diagram demonstrates local scopes associated with the
+unit node and class node ``school``.
+
+.. diagram:: ../dia/local-scopes.tex
+   :align: center
+
+Quotient Scope
+--------------
+
+The *quotient class* is a special type of a node in the model graph
+formed by the projection operator (``^``).  The quotient class is a
+*derived node*, that is, a node which does not come from the original
+database model, but is constructed dynamically.
+
+The projection operator has the form ``T ^ x``, where ``T`` is called
+the *base* of the projection and ``x`` is called the *kernel* of the
+projection.  The quotient class consists of all unique values of ``x``
+as it runs over ``T``.
+
+Each quotient class ``T ^ x`` has a natural link back to the base node
+``T``; it relates each kernel value to all entities of the base class
+that produced this value.  This link is called a *complement* link.
+Attributes of the quotient class are values of the kernel expression.
+
+.. diagram:: ../dia/quotient-class.tex
+   :align: center
+
+*Quotient scope* is a local scope associated with a quotient class.
+HTSQL processor assigns the name of the base class to the complement
+link.  In cases when HTSQL is unable to deduce the link name, one may
+use a *complement* indicator ``^``.
+
+Thus the following two queries produce identical results.  The first
+query uses explicit attribute and link names while the second one uses a
+wildcard (``*``) and complement (``^``) indicators to refer to the same
+objects:
+
+.. htsql:: /program^degree {degree, count(program)}
    :cut: 3
 
-In this query, ``department`` is a class name which found in the unit scope,
-``name`` and ``school`` are respectively an attribute and a link in the
-scope of class ``department``, and ``campus`` is an attribute in the
-scope of class ``school``.
+.. htsql:: /program^degree {*, count(^)}
+   :hide:
+
+.. **
 
 
-----
-
-Each expression in an HTSQL query has an
-associated sequence of nested scopes
-
-
-Resolution
-==========
-
-Let's deconstruct name resolution in the following example:
-
-.. htsql:: /school.filter(code='eng').department{name}
-
-`/`
-    The query starts in a unit scope, which contains all the classes in
-    the model.
-`school.filter(code='eng')`
-     By choosing ``school``, we changed the scope to ``school`` class.
-     This scope contains all attributes of school entities (``code``,
-     ``name``, ``campus``) and outgoing links (``program``,
-     ``department``).
-
-
-
-Resolving Plain Identifiers
----------------------------
-
-Resolving Function Calls
-------------------------
-
-Resolving References
---------------------
-
-
-Scope and Syntax
+Resolution Rules
 ================
 
-Some binary operators evaluate the right operand in the scope of the
-left operand.  These operators include:
+In an HTSQL query, each expression is associated with a collection of
+naming scopes, or a *naming context*.  A naming context consists of the
+global scope and a stack of local scopes.  When HTSQL processor resolves
+identifiers in an expression, it seeks for the matching name and the
+corresponding object in the naming context of the expression.
+
+The naming context of the query itself consists of just one local scope:
+the unit scope.  Some functions and operators modify the naming scope by
+adding a new local scope to the stack or augmenting the top local scope.
+
+Context-Altering Operators
+--------------------------
+
+Some operators alter the naming context before evaluating the right
+operand.  The following operators evaluate and add the left operand to
+the naming context before evaluating the right operand:
 
 * sieve (``T ? p``);
 * projection (``T ^ x``);
 * selection (``T {x,y,...}``);
 * composition (``T . S``).
 
-Some operators evaluate their operand in the unit scope:
+The following operators adds the unit scope to the naming context before
+evaluating the right operand:
 
 * attachment (``x -> T``);
 * detachment (``@ T``).
 
+Scope-Augmenting Functions
+--------------------------
 
-----
+Functions ``define()`` and ``where()`` allows you to add new names to
+the current scope.
 
-Root Scope
-==========
-
-The root scope is the top level scope in the scope stack -- it is the
-scope where the query is evaluated.  This scope contains the names of
-all classes (tables) in the database.
-
-.. htsql:: /{count(school), count(department)}
-
-In this example, identifiers ``school`` and ``department`` belong to the
-root scope and are associated with the respective classes.
-
-
-Class Scope
-===========
-
-The class scope is associated with some class (table) of the database.
-The scope contains names of all class attributes and links to other
-classes.
-
-.. htsql:: /school{code, count(department)}?exists(program)
-   :cut: 4
-
-In this example, ``school`` belongs to the root scope while identifiers
-``code``, ``department`` and ``program`` belong to the scope of `school`
-class.  ``school.code`` is the attribute of `school`,
-``school.department`` and ``school.program`` are links to the respective
-classes.
-
-
-Projection Scope
-================
-
-The projection scope is associated with a projection expression.
-
-Projection is an example of a derived class: its records are composed
-from unique values of the kernel as it runs over the base class.  A
-projection class has a natural link back to the base class: it relates
-the value of the kernel to every record of the base class that produced
-this value.
-
-(diagram)
-
-This link is called a *complement* link.  HTSQL assigns the name for the
-link that coincides with the name of the base class.  In cases when
-HTSQL is unable to deduce a link name, one may use a special
-*complement* expression: `^`.
-
-Attributes of the projection class are values of the kernel expression.
-When possible, HTSQL automatically assigns names for attributes,
-otherwise, the user may define custom attribute names.
-
-.. htsql:: /(school^campus){campus, count(school)}
-
-In this example, the projection scope ``(school^campus)`` has two names:
-the attribute name ``campus`` and the kernel link ``school``.
+Function ``define()`` takes one or more assignment and adds the names
+and associated expressions to the top local scope.
 
 .. htsql::
+   :cut: 3
 
-    /(school^{num_dept := count(department)})
-        {num_dept, count(school)}
+   /school.define(num_prog := count(program))
+          {name, num_prog}
 
-In this example, we assign the name ``num_dept`` to the projection
-attribute.
+In this example, we add a calculated attribute ``num_prog`` to the scope
+of ``school``.
+
+Function ``define()`` could also be used to add functions and
+references to the top local scope:
+
+.. htsql::
+   :cut: 3
+
+   /department.define(course_by_credits($c) := course?credits=$c)
+              {name, count(course_by_credits(2))}
+
+.. htsql::
+   :cut: 3
+
+   /define($avg_credits := avg(course.credits))
+    .course?credits>$avg_credits
+
+Function ``where()`` takes an expression as the first parameter, a list
+of assignments as subsequent parameters and evaluates the expression in
+an augmented scope.  Function ``where()`` is typically used in infix
+notation:
+
+.. htsql::
+   :cut: 3
+
+   /department{name, count(course?credits>$avg_credits)
+                     :where $avg_credits := avg(course.credits)}
+
+Resolving Plain Identifiers
+---------------------------
+
+When HTSQL processor translates a plain identifier, it uses the
+following rules to find the corresponding object.
+
+1. Search the top local scope for a matching name; done if found.
+2. Search the global scope for a matching name; done if found.
+3. Otherwise, report an error.
+
+Note that only the top scope in the local scope stack is consulted, the
+other scopes are completely shadowed.
+
+.. htsql:: /school{name}?campus==null
+
+The following table summarizes naming contexts used in the query above.
+
++----------------------+--------------------------------+
+| Scope                | Content                        |
++======================+================================+
+| *global*             | ``true``, ``false``, `null`    |
++----------------------+--------------------------------+
+| *unit*               | `school`, ``department``,      |
+|                      | ``program``, ``course``        |
++----------------------+--------------------------------+
+| scope of ``school``  | ``code``, `name`, `campus`,    |
+|                      | ``program``, ``department``    |
++----------------------+--------------------------------+
+
+The next query shows that attribute ``campus`` from the scope of
+``school`` is not available when ``school`` is shadowed by another
+scope.
+
+.. htsql:: /school[ns].department{name, campus}
+   :error:
 
 
-Modifying Scope
-===============
+Resolving Function Calls
+------------------------
 
-HTSQL allows adding new attributes to an existing scope, see
-functions ``define()`` and ``where()``.
+Rules for resolving identifiers in functional form mostly coincide with
+rules for plain identifiers.  The only difference is that both the name
+and the number of arguments must coincide.
+
+Compare the following three queries.  The first and the third queries
+match functions ``date()`` with 1 and 3 arguments respectively.  Note
+that those are different functions even though they share the same name,
+they are distinguished by the number of arguments.
+
+.. htsql:: /date('2010-04-15')
+
+.. htsql:: /date(2010, 4)
+   :error:
+
+.. htsql:: /date(2010, 4, 15)
+
+In the example above, function ``date()`` was found in the global scope.
+You can use function ``define()`` to add a function to the top local
+scope.
+
+.. htsql::
+   :cut: 3
+
+   /school.define(num_prog_by_degree($d) := count(program?degree=$d))
+          {name, num_prog_by_degree('ba'), num_prog_by_degree('bs')}
 
 
-References
-==========
+Resolving References
+--------------------
 
-Traversing a link changes the scope; any names defined in the previous
-scope are no longer available.  To pass values between different scopes,
-use references.
+The following rules are used for resolving references:
+
+1. Search for the matching name in every scope in the stack of local
+   scopes; done if found.
+2. Otherwise, report an error.
+
+Note that as opposed to plain identifiers, reference lookup uses all
+local scopes in the current naming context.
+
+.. htsql::
+   :cut: 3
+
+   /department.define($avg_credits := avg(course.credits))
+              {name, count(course?credits>$avg_credits)}
+
+In this example, reference ``$avg_credits`` is defined in the scope of
+``department``, but used in a nested scope of ``course``.
 
 
 .. vim: set spell spelllang=en textwidth=72:

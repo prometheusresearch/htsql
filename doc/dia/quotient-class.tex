@@ -1,0 +1,93 @@
+
+\documentclass{article}
+
+\include{prelude}
+
+\begin{document}
+
+\tikzset{
+    > = stealth', shorten > = 1pt, shorten < = 1pt,
+    node distance = 0.1cm,
+    domain node/.style = {fill=black!10, rectangle, minimum size=3cm,
+                          rounded corners},
+    class node/.style = {fill=black!10, circle, minimum size=3cm},
+    node content/.style = {matrix, nodes={font=\ttfamily\footnotesize,
+                                          inner sep=.5pt,
+                                          text depth=.25ex, text height=1.5ex}},
+    node header/.style = {font=\itshape},
+    arrow/.style = {single arrow, fill=black!5, minimum height=3cm,
+                    minimum width=2.5cm, single arrow head extend=.1cm,
+                    single arrow tip angle=120},
+    arrow header/.style = {font=\ttfamily}
+}
+
+\begin{tikzpicture}
+
+\node[class node] (program) {};
+\node[arrow, shape border rotate=180] (quotient to program) [right=of program] {};
+\node[class node] (quotient) [right=of quotient to program] {};
+\node[arrow] (quotient to string) [right=of quotient] {};
+\node[domain node] (string) [right=of quotient to string] {};
+
+\node[node header] at (program.north) [above]
+    {program};
+\node[arrow header] at (quotient to program.north) [above]
+    {program};
+\node[node header] at (quotient.north) [above]
+    {program\textasciicircum degree};
+\node[arrow header] at (quotient to string.north) [above]
+    {degree};
+\node[node header] at (string.north) [above]
+    {string};
+
+\node[node content] at (program)
+{
+    \node[text height=2.5ex] {\vdots}; \\
+    \node (gee) {{[eng.gee]}}; \\
+    \node (uelec) {{[eng.uelec]}}; \\
+    \node (pmth) {{[ns.pmth]}}; \\
+    \node (gmth) {{[ns.gmth]}}; \\
+    \node (umth) {{[ns.umth]}}; \\
+    \node[text height=2.5ex] {\vdots}; \\
+};
+
+\node[node content] at (quotient)
+{
+    \node[text height=2.5ex] {\vdots}; \\
+    \node (ph) {{[ph]}}; \\
+    \node (ms) {{[ms]}}; \\
+    \node (bs) {{[bs]}}; \\
+    \node[text height=2.5ex] {\vdots}; \\
+};
+
+\node[node content] at (string)
+{
+    \node[text height=2.5ex] {\vdots}; \\
+    \node (ph value) {'ph'}; \\
+    \node (ms value) {'ms'}; \\
+    \node (bs value) {'bs'}; \\
+    \node[text height=2.5ex] {\vdots}; \\
+};
+
+\draw[->]
+    (ph.west) to (pmth.east);
+\draw[->]
+    (ms.west) to (gee.east);
+\draw[->]
+    (ms.west) to (gmth.east);
+\draw[->]
+    (bs.west) to (uelec.east);
+\draw[->]
+    (bs.west) to (umth.east);
+
+\draw[->]
+    (ph.east) to (ph value.west);
+\draw[->]
+    (ms.east) to (ms value.west);
+\draw[->]
+    (bs.east) to (bs value.west);
+
+\end{tikzpicture}
+
+\end{document}
+
