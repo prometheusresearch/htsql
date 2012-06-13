@@ -142,6 +142,8 @@ lowest to highest.
 +----------------------+---------------------------+---------------------------+----------------------+
 | `S . T`              | composition               | ``school.program``        |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
+| `T [id]`             | locator                   | ``course[comp.304]``      |                      |
++----------------------+---------------------------+---------------------------+----------------------+
 | `@ T`                | detachment                | ``@school``               |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `{x,y,...}`          | record                    | ``{'bs','ms'}``           |                      |
@@ -485,6 +487,26 @@ The values of `x` form the resulting flow.
    :cut: 3
 
 The composition operator is left-associative.
+
+Locator
+~~~~~~~
+
+The *locator* operation selects an individual entity by its *identity*:
+
+    `T [id]`
+
+The identity is a sequence of attributes and links which uniquely
+identify an entity.  Values of separate attributes are separated by a
+period (``.``).  An individual value could be left unquoted when it
+consists of digits, alphabetical characters or dash (``-``).  Values
+could be grouped using pairs of brackets (``[]``) or parentheses
+(``()``).
+
+.. htsql:: /department[comp]
+
+.. htsql:: /course[comp.515]
+
+.. htsql:: /class[(comp.515).(2010.spring).001]
 
 Attachment and Detachment
 ~~~~~~~~~~~~~~~~~~~~~~~~~
