@@ -32,8 +32,17 @@ class HtsqlLexer(RegexLexer):
             (r'\'(?:[^\']|\'\')*\'', String),
             (r'~|!~|<=|<|>=|>|==|=|!==|!=|!|'
              r'&|\||->|\?|\^|/|\*|\+|-', Operator),
-            (r'\.|,|\(|\)|\{|\}|\[|\]|:=|:|\$|@', Punctuation),
-        ]
+            (r'\.|,|\(|\)|\{|\}|:=|:|\$|@', Punctuation),
+            (r'\[', Punctuation, 'locator'),
+        ],
+        'locator': [
+            (r'\s+', Text),
+            (r'\(|\[', Punctuation, '#push'),
+            (r'\)|\]', Punctuation, '#pop'),
+            (r'[\w-]+', String),
+            (r'\'(?:[^\']|\'\')*\'', String),
+            (r'\.', Punctuation),
+        ],
     }
 
     def get_tokens_unprocessed(self, text):
