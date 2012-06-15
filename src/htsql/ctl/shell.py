@@ -438,7 +438,8 @@ class GetPostBaseCmd(Cmd):
     pattern = r"""
     ~ | < | > | = | ! | & | \| | -> | \. | , | \? | \^ |
     / | \* | \+ | - | \( | \) | \{ | \} | := | : | \$ | @ |
-    ' (?: [^'] | '')* ' | \d+ [.eE]? |
+    \[ | \] |
+    ' (?: [^'] | '')* ' | \d+ [.eE]?|
     (?! \d) \w+
     """
     letter_pattern = r"""(?! \d) \w"""
@@ -457,6 +458,12 @@ class GetPostBaseCmd(Cmd):
             token = tokens[idx]
             prev_token = tokens[idx-1]
             next_token = tokens[idx+1]
+            if state.indicator == '[':
+                if token == '[' or token == '(':
+                    state.push('[', [])
+                elif token == ']' or token == ')':
+                    state.drop('[')
+                continue
             if cls.letter_regexp.match(token) is not None:
                 if not (prev_token == ':' or prev_token == '$'
                         or next_token == '('):
@@ -495,8 +502,12 @@ class GetPostBaseCmd(Cmd):
                 state.drop_all('_?^')
             elif token == '$':
                 state.push('_', [])
+            elif token == '[':
+                state.push('[', [])
             else:
                 state.drop_all('_')
+        if state.indicator == '[':
+            return []
         identifiers = state.identifiers
         chain = NodeChain(routine.state.app)
         chain.push(HomeNode())
