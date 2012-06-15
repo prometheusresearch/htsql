@@ -1,8 +1,32 @@
 
 CodeMirror.defineMode("htsql", function(conf) {
     return {
+        startState: function() {
+            return { locator: 0 };
+        },
         token: function(stream, state) {
             if (stream.eatSpace()) {
+                return null;
+            }
+            if (state.locator) {
+                if (stream.match(/^(\[|\()/)) {
+                    state.locator += 1;
+                    return 'htsql-punctuation';
+                }
+                if (stream.match(/^(\]|\))/)) {
+                    state.locator -= 1;
+                    return 'htsql-punctuation';
+                }
+                if (stream.match(/^\./)) {
+                    return 'htsql-punctuation';
+                }
+                if (stream.match(/^\'([^\']|\'\')*\'/)) {
+                    return 'htsql-string';
+                }
+                if (stream.match(/^[0-9a-zA-Z_-]+/)) {
+                    return 'htsql-string';
+                }
+                stream.next();
                 return null;
             }
             if (stream.match(/^:\s*[a-zA-Z_][0-9a-zA-Z_]*/)) {
@@ -20,10 +44,14 @@ CodeMirror.defineMode("htsql", function(conf) {
             if (stream.match(/^\'([^\']|\'\')*\'/)) {
                 return 'htsql-string';
             }
-            if (stream.match(/~|!~|<=|<|>=|>|==|=|!==|!=|!|&|\||->|\?|\^|\/|\*|\+|-/)) {
+            if (stream.match(/^(~|!~|<=|<|>=|>|==|=|!==|!=|!|&|\||->|\?|\^|\/|\*|\+|-)/)) {
                 return 'htsql-operator';
             }
-            if (stream.match(/\.|,|\(|\)|\{|\}|\[|\]|:=|:|\$|@/)) {
+            if (stream.match(/^(\.|,|\(|\)|\{|\}|:=|:|\$|@)/)) {
+                return 'htsql-punctuation';
+            }
+            if (stream.match(/^\[/)) {
+                state.locator += 1;
                 return 'htsql-punctuation';
             }
             stream.next();

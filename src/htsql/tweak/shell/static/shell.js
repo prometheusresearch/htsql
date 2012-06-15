@@ -979,6 +979,7 @@ $(document).ready(function() {
         }
         var query = editor.getRange({line: 0, ch: 0}, {line: line, ch: start});
         var names = scanQuery(query);
+        if (!names) return;
         var completions = state.completions;
         for (var k = 0; k < names.length; k ++) {
             if (completions && completions.hasOwnProperty(names[k]))
@@ -1151,7 +1152,7 @@ $(document).ready(function() {
     }
 
     function scanQuery(query) {
-        var regexp = /->|:=|[~<>=!&|.,?(){}:$@^/*+-]|'(?:[^']|'')*'|\d+[.eE]?|(?!\d)[_0-9a-zA-Z\u0080-\uFFFF]+/g;
+        var regexp = /->|:=|\[|\]|[~<>=!&|.,?(){}:$@^/*+-]|'(?:[^']|'')*'|\d+[.eE]?|(?!\d)[_0-9a-zA-Z\u0080-\uFFFF]+/g;
         var tokens = [];
         var match;
         while ((match = regexp.exec(query))) {
@@ -1162,6 +1163,15 @@ $(document).ready(function() {
             var token = tokens[i];
             var prev_token = (i > 0) ? tokens[i-1] : '';
             var next_token = (i < tokens.length-1) ? tokens[i+1] : '';
+            if (state.indicator == '[') {
+                if (token == '[' || token == '(') {
+                    state.push('[', []);
+                }
+                else if (token == ']' || token == ')') {
+                    state.drop(/[[]/);
+                }
+                continue;
+            }
             if (/^(?![0-9])[_0-9a-zA-Z\u0080-\uFFFF]+$/.test(token)) {
                 if (!/[:$]/.test(prev_token) && !/[(]/.test(next_token)) {
                     state.push('_', state.identifiers.concat([token]));
@@ -1210,9 +1220,15 @@ $(document).ready(function() {
             else if (token == '$') {
                 state.push('_', []);
             }
+            else if (token == '[') {
+                state.push('[', []);
+            }
             else {
                 state.drop_all(/[_]/);
             }
+        }
+        if (state.indicator == '[') {
+            return null;
         }
         return state.identifiers;
     }
