@@ -7,7 +7,7 @@
    :local:
 
 HTSQL was created in 2005 to provide an *XPath*-like HTTP interface to
-*PostgreSQL* for client-side *XSLT* screens and reports.  HTSQL found 
+*PostgreSQL* for client-side *XSLT* screens and reports.  HTSQL found
 its audience when analysts and researchers bypassed the user interface
 and started to use URLs directly.  The language has evolved since then.
 
@@ -35,7 +35,7 @@ HTSQL is a Web Service
 HTSQL is a query language for the web.  Queries are URLs that can be
 directly typed into a browser; the output could be returned in a variety
 of formats including HTML, CSV, JSON, etc.  HTSQL can be used as the basis
-for dashboarding tools and other browser-based applications.  In this way, 
+for dashboarding tools and other browser-based applications.  In this way,
 database queries can be shared, tweaked, and used in any number of ways.
 
 HTSQL is a Relational Database Gateway
@@ -58,9 +58,9 @@ HTSQL is a Relational Database Gateway
 
 HTSQL wraps your existing existing relational database, transparently
 handling SQL complexities for you.  The current version of HTSQL supports
-*SQLite*, *PostgreSQL*, *MySQL*, *Oracle*, and *Microsoft SQL Server*.  
-We've taken care to abstract differences between these SQL dialects 
-so that a given HTSQL query has consistent semantics across database 
+*SQLite*, *PostgreSQL*, *MySQL*, *Oracle*, and *Microsoft SQL Server*.
+We've taken care to abstract differences between these SQL dialects
+so that a given HTSQL query has consistent semantics across database
 server implementations.
 
 HTSQL is an Advanced Query Language
@@ -97,7 +97,7 @@ HTSQL is a Communication Tool
 
    .. sourcecode:: html
 
-      Show me schools, and, for each school, 
+      Show me schools, and, for each school,
       - its name, its location,
       - number of programs and departments,
       - and the average number of courses
@@ -106,8 +106,8 @@ HTSQL is a Communication Tool
    .. htsql::
       :hide:
 
-      /school{name, campus, 
-              count(program), 
+      /school{name, campus,
+              count(program),
               count(department),
               avg(department.
                   count(course))}
@@ -130,21 +130,21 @@ HTSQL is a Python Library
       from htsql import HTSQL
       demo = HTSQL("pgsql:///htsql_demo")
       rows = demo.produce("/school")
-      for row in rows: 
+      for row in rows:
           print row
 
    .. sourcecode:: python
 
-      school(code=u'art', 
-             name=u'School of Art & Design', 
+      school(code=u'art',
+             name=u'School of Art & Design',
              campus=u'old')
-      school(code=u'bus', 
-             name=u'School of Business', 
+      school(code=u'bus',
+             name=u'School of Business',
              campus=u'south')
       ...
 
-HTSQL can be embedded into any Python application to provide an 
-intuitive object based query engine for complex reporting.  It 
+HTSQL can be embedded into any Python application to provide an
+intuitive object based query engine for complex reporting.  It
 works out of the box with Jinja and other tools.  We provide
 meta-data adapters for Django and SQLAlchemy.
 
@@ -172,12 +172,12 @@ problem solving with a small learning curve.
 Transparent
 -----------
 
-We think aesthetics matter.  When a data analyst is focusing on a domain 
+We think aesthetics matter.  When a data analyst is focusing on a domain
 specific problem, the HTSQL query language should do the heavy lifting
-but otherwise stay in the background.  Translation of a business inquiry 
-into the HTSQL query language must be natural and obvious.  Initial query 
-authoring is just the beginning.  A database query is often the only human 
-readable expression of a business rule, so each and every query must be a 
+but otherwise stay in the background.  Translation of a business inquiry
+into the HTSQL query language must be natural and obvious.  Initial query
+authoring is just the beginning.  A database query is often the only human
+readable expression of a business rule, so each and every query must be a
 pleasure to review, share and maintain.
 
 Rigorous
@@ -288,6 +288,11 @@ Title decorator defines the title of an output column:
 .. htsql:: /school{name, count(department) :as '# of Dept'}
    :cut: 4
 
+Output records could nest:
+
+.. htsql:: /department{name, school{name, campus}}
+   :cut: 4
+
 Calculated attributes factor out repeating expressions:
 
 .. htsql::
@@ -302,6 +307,47 @@ References carry over values across nested scopes:
 
    /define($avg_credits := avg(course.credits))
     .course{title, credits}?credits>$avg_credits
+
+Locators
+--------
+
+Locator operator picks a single record by ID:
+
+.. htsql:: /department[comp]
+
+A composite ID consists of labels separated by a period:
+
+.. htsql:: /course[comp.515]
+
+Function ``id()`` returns the record ID:
+
+.. htsql:: /department[comp].course.id()
+   :cut: 3
+
+Nested Segments
+---------------
+
+The segment (``/``) operator embeds a result of a correlated query as a
+nested list.  For instance, a list of schools could include associated
+departments:
+
+.. htsql:: /school{*, /department}
+   :cut: 7
+.. **
+
+Nesting can be arbitrarily deep:
+
+.. htsql::
+   :cut: 35
+
+   /school{name+,
+           /department{name,
+                       /course{title}}}
+
+A query may have adjacent nested segments:
+
+.. htsql:: /school{name, /department{name}, /program{title}}
+   :cut: 12
 
 Aggregation
 -----------
@@ -329,7 +375,7 @@ Various aggregation operations:
 Projection
 ----------
 
-Projection (``^``) returns distinct values.  This example 
+Projection (``^``) returns distinct values.  This example
 returns distinct ``campus`` values from the ``school`` table:
 
 .. htsql:: /school^campus
@@ -337,14 +383,14 @@ returns distinct ``campus`` values from the ``school`` table:
 In the scope of the projection, ``school`` refers to all records from
 ``school`` table having the same value of ``campus`` attribute:
 
-.. htsql:: /school^campus {campus, count(school)}
+.. htsql:: /school^campus {campus, count(school), /school}
+   :cut: 5
 
-Projections combine with other language features in a natural way.
-The next example displays the number of distinct program degrees
-offered by each school:
+Projections combine with other language features in a natural way.  The
+next example displays distinct program degrees offered by each school:
 
-.. htsql:: /school{name, count(program^degree)}
-   :cut: 4
+.. htsql:: /school{name, count(program^degree), /program^degree}
+   :cut: 6
 
 Linking
 -------
@@ -359,13 +405,32 @@ key constraints.  Unlink (``@``) permits arbitrary, non-relative linking.
           ?count(department)>avg(@school.count(department))
 
 The query above returns schools with the number of departments above
-average among all schools. 
+average among all schools.
+
+Output
+------
+
+HTSQL can output the result in a variery of formats.  JSON:
+
+.. htsql:: /school{code, name}/:json
+   :cut: 10
+
+XML:
+
+.. htsql:: /school{code, name}/:xml
+   :cut: 10
+
+CSV:
+
+.. htsql:: /school{code, name}/:csv
+   :cut: 3
+
 
 Why not SQL?
 ============
 
-Relational algebra is frequently inadequate for encoding business 
-inquiries --- elementary set operations do not correspond to 
+Relational algebra is frequently inadequate for encoding business
+inquiries --- elementary set operations do not correspond to
 meaningful data transformations.  The SQL language itself is tedious,
 verbose, and provides poor means of abstraction.  Yet, the relational
 database is an excellent tool for data modeling, storage and retrieval.
