@@ -187,10 +187,18 @@ def visit_htsql_block(self, node):
         linenos = node['linenos']
     def warner(msg):
         self.builder.warn(msg, (self.builder.current_docname, node.line))
-    self.highlighter.formatter.nowrap = True
-    highlighted = self.highlighter.highlight_block(
-        node.rawsource, lang, warn=warner, linenos=linenos,
-        **highlight_args)
+    if hasattr(self.highlighter, 'formatter'):
+        self.highlighter.formatter.nowrap = True
+        highlighted = self.highlighter.highlight_block(
+            node.rawsource, lang, warn=warner, linenos=linenos,
+            **highlight_args)
+    else:
+        self.highlighter.fmter[False].nowrap = True
+        self.highlighter.fmter[True].nowrap = True
+        highlighted = self.highlighter.highlight_block(
+            node.rawsource, lang, linenos, warn=warner)
+        self.highlighter.fmter[False].nowrap = False
+        self.highlighter.fmter[True].nowrap = False
     if highlighted.startswith('<pre>') and highlighted.endswith('</pre>\n'):
         # may happen if the language is not detected correctly
         highlighted = highlighted[5:-7]
