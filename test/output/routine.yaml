@@ -36,7 +36,7 @@ tests:
     exit: 0
   - ctl: [--version]
     stdout: |+
-      HTSQL 2.3.1.dev
+      HTSQL 2.3.1
       Copyright (c) 2006-2012, Prometheus Research, LLC
 
       This is free software: you are free to change and redistribute it.
@@ -101,7 +101,7 @@ tests:
     exit: 0
   - ctl: [version]
     stdout: |+
-      HTSQL 2.3.1.dev
+      HTSQL 2.3.1
       Copyright (c) 2006-2012, Prometheus Research, LLC
 
       This is free software: you are free to change and redistribute it.
@@ -263,7 +263,7 @@ tests:
       license information.
 
       version
-      HTSQL 2.3.1.dev
+      HTSQL 2.3.1
       Copyright (c) 2006-2012, Prometheus Research, LLC
 
       This is free software: you are free to change and redistribute it.
