@@ -28,7 +28,7 @@ UBUNTU_ISO_URLS = [
 ]
 
 UBUNTU_LTS_ISO_URLS = [
-    "http://releases.ubuntu.com/lucid/ubuntu-10.04.4-server-i386.iso",
+    "http://releases.ubuntu.com/precise/ubuntu-12.04-server-i386.iso",
 ]
 
 CENTOS_ISO_URLS = [
