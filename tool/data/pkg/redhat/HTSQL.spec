@@ -47,6 +47,8 @@ ${FILES}
 %{python_sitelib}/*
 
 %changelog
+* Thu Jun 28 2012 Kirill Simonov <xi@resolvent.net> - 2.3.1-1
+- Upstream release
 * Tue Mar 06 2012 Clark C. Evans <cce@clarkevans.com> - 2.3.0-1
 - Upstream release
 * Thu Dec 15 2011 Clark C. Evans <cce@clarkevans.com> - 2.2.1-1
