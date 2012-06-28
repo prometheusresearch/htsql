@@ -2,14 +2,14 @@ List of Changes
 ===============
 
 
-2.3.1 (2012-06-XX)
+2.3.1 (2012-06-28)
 ------------------
 
 * Added record and list data types, support for nested records and
   segments, hierarchical output.
-* Added support for entity identifiers (locators): `id()` retrieves the
-  locator, `[]` syntax finds an entity by locator.
-* `top()`: retrieves the first element of the given flow.
+* Added support for locators: single record access using an array-like
+  syntax.
+* `top()`: retrieves the first value of a plural argument.
 * Added and updated output formats: `raw`, `json`, `xml`; updated style
   for HTML output.
 * `HTSQL-DJANGO`: a Django gateway to HTSQL.
