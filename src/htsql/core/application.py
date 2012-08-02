@@ -20,6 +20,46 @@ from .cmd.command import UniversalCmd
 from .cmd.act import produce
 
 
+class EnvironmentGuard(object):
+
+    def __init__(self, env, updates):
+        self.env = env
+        self.updates = updates
+
+    def __enter__(self):
+        self.env.push(**self.updates)
+
+    def __exit__(self):
+        self.env.pop()
+
+
+class Environment(object):
+    """
+    Implements a per-request HTSQL state.
+    """
+
+    def __init__(self, **variables):
+        self.updates_stack = []
+        self.__dict__.update(variables)
+
+    def push(self, **updates):
+        reverse_updates = {}
+        for name in sorted(updates):
+            assert hasattr(self, name), name
+            reverse_updates[name] = getattr(self, name)
+            setattr(self, name, updates[name])
+        self.updates_stack.append(reverse_updates)
+
+    def pop(self):
+        assert self.updates_stack
+        updates = self.updates_stack.pop()
+        for name in updates:
+            setattr(self, name, updates[name])
+
+    def __call__(self, **updates):
+        return EnvironmentGuard(self, updates)
+
+
 class Application(object):
     """
     Implements an HTSQL application.
@@ -129,6 +169,13 @@ class Application(object):
                 addon_instance_by_name[addon_name] = addon_instance
         for addon_name in sorted(addon_instance_by_name):
             self.addons.append(addon_instance_by_name[addon_name])
+        self.variables = {}
+        for addon in self.addons:
+            for variable in addon.variables:
+                if variable.attribute in self.variables:
+                    raise ImportError("duplicate HTSQL environment variable %r"
+                                      % variable.attribute)
+                self.variables[variable.attribute] = variable.default
         self.component_registry = ComponentRegistry(self.addons)
         with self:
             for addon in self.addons:
@@ -142,7 +189,8 @@ class Application(object):
         """
         Activates the application in the current thread.
         """
-        context.push(self)
+        env = Environment(**self.variables)
+        context.push(self, env)
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         """

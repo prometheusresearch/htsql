@@ -21,21 +21,23 @@ import threading
 
 class ThreadContext(threading.local):
     """
-    Keeps the active HTSQL application.
+    Keeps the active HTSQL application and environment.
     """
 
     def __init__(self):
         self.active_app = None
-        self.app_stack = []
+        self.active_env = None
+        self.stack = []
 
-    def push(self, app):
-        self.app_stack.append(self.active_app)
+    def push(self, app, env):
+        self.stack.append((self.active_app, self.active_env))
         self.active_app = app
+        self.active_env = env
 
     def pop(self, app):
         assert app is self.active_app
-        assert self.app_stack
-        self.active_app = self.app_stack.pop()
+        assert self.stack
+        self.active_app, self.active_env = self.stack.pop()
 
     @property
     def app(self):
@@ -48,6 +50,12 @@ class ThreadContext(threading.local):
         if self.active_app is None:
             raise RuntimeError("HTSQL application is not activated")
         return self.active_app
+
+    @property
+    def env(self):
+        if self.active_env is None:
+            raise RuntimeError("HTSQL environment is not activated")
+        return self.active_env
 
 
 context = ThreadContext()

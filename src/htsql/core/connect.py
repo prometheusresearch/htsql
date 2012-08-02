@@ -14,6 +14,7 @@ This module declares the database connection adapter.
 from .util import Record
 from .adapter import Adapter, Utility, adapt
 from .domain import Domain
+from .error import EngineError
 from .context import context
 
 
@@ -328,6 +329,49 @@ class NormalizeError(Utility):
 
     def __call__(self):
         return None
+
+
+class TransactionGuard(object):
+
+    def __init__(self):
+        self.connection = context.env.connection
+
+    def __enter__(self):
+        if self.connection is None:
+            try:
+                connection = connect()
+            except DBError, exc:
+                raise EngineError("failed to open a database connection: %s"
+                                  % exc)
+            context.env.push(connection=connection)
+            return connection
+        return self.connection
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        if self.connection is None:
+            connection = context.env.connection
+            context.env.pop()
+            if exc_type is None:
+                connection.commit()
+            else:
+                connection.rollback()
+                connection.invalidate()
+            connection.release()
+            if exc_type is not None and issubclass(exc_type, DBError):
+                if isinstance(exc_value, Exception):
+                    exception = exc_value
+                elif exc_value is None:
+                    exception = exc_type()
+                elif isinstance(exc_value, tuple):
+                    exception = exc_type(*exc_value)
+                else:
+                    exception = exc_type(exc_value)
+                raise EngineError("failed to execute a database query: %s"
+                                  % exception)
+
+
+def transaction():
+    return TransactionGuard()
 
 
 connect = Connect.__invoke__

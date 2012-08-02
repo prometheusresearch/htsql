@@ -5,6 +5,7 @@
 
 from ..adapter import adapt, Utility
 from ..util import Record, listof
+from ..context import context
 from ..domain import ListDomain, RecordDomain, Profile
 from .command import RetrieveCmd, SQLCmd
 from .act import (analyze, Act, ProduceAction, SafeProduceAction,
@@ -17,8 +18,8 @@ from ..tr.assemble import assemble
 from ..tr.reduce import reduce
 from ..tr.dump import serialize
 from ..tr.plan import Statement
-from ..connect import DBError, connect, normalize
-from ..error import EngineError
+from ..connect import transaction, normalize
+from ..error import PermissionError
 
 
 class Product(object):
@@ -109,6 +110,9 @@ class ProduceRetrieve(Act):
 
     def __call__(self):
         binding = self.command.binding
+        if not context.env.can_read:
+            raise PermissionError("not enough permissions"
+                                  " to execute the query")
         expression = encode(binding)
         # FIXME: abstract it out.
         if isinstance(self.action, SafeProduceAction):
@@ -123,20 +127,9 @@ class ProduceRetrieve(Act):
         data = None
         if plan.statement:
             stream = None
-            connection = None
-            try:
-                connection = connect()
+            with transaction() as connection:
                 cursor = connection.cursor()
                 stream = RowStream.open(plan.statement, cursor)
-                connection.commit()
-                connection.release()
-            except DBError, exc:
-                raise EngineError("failed to execute a database query: %s"
-                                  % exc)
-            except:
-                if connection is not None:
-                    connection.invalidate()
-                raise
             data = plan.compose(None, stream)
             stream.close()
         return Product(meta, data)
