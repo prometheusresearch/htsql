@@ -110,9 +110,6 @@ class ProduceRetrieve(Act):
 
     def __call__(self):
         binding = self.command.binding
-        if not context.env.can_read:
-            raise PermissionError("not enough permissions"
-                                  " to execute the query")
         expression = encode(binding)
         # FIXME: abstract it out.
         if isinstance(self.action, SafeProduceAction):
@@ -126,6 +123,9 @@ class ProduceRetrieve(Act):
         meta = plan.profile.clone(plan=plan)
         data = None
         if plan.statement:
+            if not context.env.can_read:
+                raise PermissionError("not enough permissions"
+                                      " to execute the query")
             stream = None
             with transaction() as connection:
                 cursor = connection.cursor()

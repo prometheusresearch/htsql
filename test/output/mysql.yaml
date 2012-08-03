@@ -32574,6 +32574,115 @@ tests:
                     `school`.`campus`
              FROM `school`
              ORDER BY 1 ASC
+      - id: tweak.csrf
+        tests:
+        - ctl: [ext, tweak.csrf]
+          stdout: |+
+            TWEAK.CSRF - Cross-Site Request Forgery (CSRF) protection
+
+            This addon provides protection against cross-site request
+            forgery (CSRF) attacks.
+
+            A CSRF attack tricks the user to visit the attacker's website,
+            which then submits database queries to the HTSQL service from
+            the user's account.  Even though the browser would not permit
+            the malicious website to read the output of the queries, this
+            form of attack can be used for denial of service or changing
+            the data in the database.  For background on CSRF, see
+            http://en.wikipedia.org/wiki/Cross-site_request_forgery.
+
+            This addon requires all HTSQL requests to submit a secret
+            token in two forms:
+
+            * as a cookie `htsql-csrf-token`;
+            * as HTTP header `X-HTSQL-CSRF-Token`.
+
+            If the token is not submitted, the addon prevents the request
+            from reading or updating any data in the database.
+
+            If the `allow_cs_read` parameter is set, a request is permitted
+            to read data from the database even when the secret token is
+            not provided.
+
+            If the `allow_cs_write` parameter is set, a request is permitted
+            to update data in the database even if the secret token is
+            not provided.
+
+            Parameters:
+              allow-cs-read=ALLOW-CS-READ : permit cross-site read requests
+              allow-cs-write=ALLOW-CS-WRITE : permit cross-site write requests
+
+          exit: 0
+        - uri: /
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          - [Set-Cookie, htsql-csrf-token=7a0d9e90a6f0d007fefc9d5b5241a770; Path=/]
+          body: ''
+        - uri: /school
+          status: 403 Forbidden
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Set-Cookie, htsql-csrf-token=6e88eb02286204ff35023cf8f1dd8514; Path=/]
+          body: |
+            not enough permissions: not enough permissions to execute the query
+        - py: pass-csrf-token
+          stdout: |+
+            200 OK
+            Content-Type: text/plain; charset=UTF-8
+            Vary: Accept
+
+             | school                                        |
+             +------+-------------------------------+--------+
+             | code | name                          | campus |
+            -+------+-------------------------------+--------+-
+             | art  | School of Art & Design        | old    |
+             | bus  | School of Business            | south  |
+             | edu  | College of Education          | old    |
+             | eng  | School of Engineering         | north  |
+             | la   | School of Arts and Humanities | old    |
+             | mus  | School of Music & Dance       | south  |
+             | ns   | School of Natural Sciences    | old    |
+             | ph   | Public Honorariums            |        |
+             | sc   | School of Continuing Studies  |        |
+
+             ----
+             /school
+             SELECT `school`.`code`,
+                    `school`.`name`,
+                    `school`.`campus`
+             FROM `school`
+             ORDER BY 1 ASC
+
+        - uri: /school
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          - [Set-Cookie, htsql-csrf-token=9e8c737db949ebfb91c9f8d2fd53dbd8; Path=/]
+          body: |2
+             | school                                        |
+             +------+-------------------------------+--------+
+             | code | name                          | campus |
+            -+------+-------------------------------+--------+-
+             | art  | School of Art & Design        | old    |
+             | bus  | School of Business            | south  |
+             | edu  | College of Education          | old    |
+             | eng  | School of Engineering         | north  |
+             | la   | School of Arts and Humanities | old    |
+             | mus  | School of Music & Dance       | south  |
+             | ns   | School of Natural Sciences    | old    |
+             | ph   | Public Honorariums            |        |
+             | sc   | School of Continuing Studies  |        |
+
+             ----
+             /school
+             SELECT `school`.`code`,
+                    `school`.`name`,
+                    `school`.`campus`
+             FROM `school`
+             ORDER BY 1 ASC
       - py: has-django
         stdout: ''
       - id: tweak.django
@@ -33726,6 +33835,13 @@ tests:
             FROM \"column\"\n      INNER JOIN \"field\"\n                 ON ((\"column\".\"table_name\"
             = \"field\".\"table_name\") AND (\"column\".\"name\" = \"field\".\"name\"))\n
             ORDER BY 1 ASC, \"field\".\"sort\" ASC, 2 ASC\n"
+        - uri: /meta(/table)
+          status: 403 Forbidden
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Set-Cookie, htsql-csrf-token=5dd2913f905c4f99e19d77dfdfcba8d9; Path=/]
+          body: |
+            not enough permissions: not enough permissions to execute the query
       - id: tweak.override
         tests:
         - ctl: [ext, tweak.override]

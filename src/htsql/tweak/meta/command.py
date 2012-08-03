@@ -51,14 +51,18 @@ class ProduceMeta(Act):
     adapt(MetaCmd, ProduceAction)
 
     def __call__(self):
+        can_read = context.env.can_read
+        can_write = context.env.can_write
         slave_app = get_slave_app()
         with slave_app:
-            binding = bind(self.command.syntax,
-                           environment=self.command.environment)
-            command = lookup_command(binding)
-            if command is None:
-                command = DefaultCmd(binding)
-            product = act(command, self.action)
+            with context.env(can_read=context.env.can_read and can_read,
+                             can_write=context.env.can_write and can_write):
+                binding = bind(self.command.syntax,
+                               environment=self.command.environment)
+                command = lookup_command(binding)
+                if command is None:
+                    command = DefaultCmd(binding)
+                product = act(command, self.action)
         return product
 
 

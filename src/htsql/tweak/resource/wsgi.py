@@ -22,7 +22,7 @@ class ResourceWSGI(WSGI):
         if method not in ['HEAD', 'GET']:
             self.start_response('400 Bad Request',
                                 [('Content-Type', 'text/plain')])
-            return ["Expected a %r request, got %r.\n" % method]
+            return ["Expected a GET request, got %r.\n" % method]
         path = path[len(indicator)+1:]
         resource = None
         if not (path.endswith('/') or '/.' in path or '\\' in path):
