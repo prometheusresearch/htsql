@@ -354,7 +354,12 @@ class TransactionGuard(object):
             if exc_type is None:
                 connection.commit()
             else:
-                connection.rollback()
+                # FIXME: ?
+                # To avoid issues with pymssql driver, we do not issue
+                # rollback manually, but instead let it rollback the
+                # transaction automatically when the connection is garbage
+                # collected.
+                #connection.rollback()
                 connection.invalidate()
             connection.release()
             if exc_type is not None and issubclass(exc_type, DBError):
