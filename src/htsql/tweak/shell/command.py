@@ -6,24 +6,27 @@
 from ... import __version__, __legal__
 from ...core.util import maybe, listof
 from ...core.context import context
-from ...core.adapter import Adapter, adapt, call
-from ...core.error import HTTPError
+from ...core.adapter import Adapter, adapt, adapt_many, call
+from ...core.error import HTTPError, PermissionError
 from ...core.domain import (Domain, BooleanDomain, NumberDomain, DateTimeDomain,
                             ListDomain, RecordDomain)
-from ...core.cmd.command import UniversalCmd, Command
-from ...core.cmd.act import (Act, RenderAction, UnsupportedActionError,
-                             produce, safe_produce, analyze)
+from ...core.cmd.command import UniversalCmd, Command, DefaultCmd
+from ...core.cmd.act import (Act, Action, RenderAction, UnsupportedActionError,
+                             act, produce, safe_produce, analyze)
 from ...core.model import HomeNode, InvalidNode, InvalidArc
 from ...core.classify import classify, normalize
 from ...core.tr.error import TranslateError
+from ...core.tr.lookup import lookup_command
 from ...core.tr.syntax import (StringSyntax, NumberSyntax, SegmentSyntax,
-                               IdentifierSyntax)
+                               IdentifierSyntax, QuerySyntax)
+from ...core.tr.bind import bind
 from ...core.tr.binding import CommandBinding
 from ...core.tr.signature import Signature, Slot
 from ...core.tr.error import BindError
 from ...core.tr.fn.bind import BindCommand
 from ...core.fmt.json import (escape_json, dump_json, JS_SEQ, JS_MAP, JS_END,
                               to_raw, profile_to_raw)
+from ...core.fmt.html import Template
 from ..resource.locate import locate
 import re
 import cgi
@@ -46,15 +49,33 @@ class CompleteCmd(Command):
         self.names = names
 
 
-class EvaluateCmd(Command):
+class ProduceCmd(Command):
 
-    def __init__(self, query, action=None, page=None):
+    def __init__(self, query, page=None):
         assert isinstance(query, unicode)
-        assert isinstance(action, maybe(unicode))
         assert isinstance(page, maybe(int))
+        if page is None:
+            page = 1
         self.query = query
-        self.action = action
         self.page = page
+
+
+class AnalyzeCmd(Command):
+
+    def __init__(self, query):
+        assert isinstance(query, unicode)
+        self.query = query
+
+
+class WithPermissionsCmd(Command):
+
+    def __init__(self, command, can_read, can_write):
+        assert isinstance(command, Command)
+        assert isinstance(can_read, bool)
+        assert isinstance(can_write, bool)
+        self.command = command
+        self.can_read = can_read
+        self.can_write = can_write
 
 
 class ShellSig(Signature):
@@ -71,12 +92,27 @@ class CompleteSig(Signature):
     ]
 
 
-class EvaluateSig(Signature):
+class ProduceSig(Signature):
 
     slots = [
             Slot('query'),
-            Slot('action', is_mandatory=False),
             Slot('page', is_mandatory=False),
+    ]
+
+
+class AnalyzeSig(Signature):
+
+    slots = [
+            Slot('query'),
+    ]
+
+
+class WithPermissionsSig(Signature):
+
+    slots = [
+            Slot('query'),
+            Slot('can_read'),
+            Slot('can_write'),
     ]
 
 
@@ -113,27 +149,64 @@ class BindComplete(BindCommand):
         return CommandBinding(self.state.scope, command, self.syntax)
 
 
-class BindEvaluate(BindCommand):
+class BindProduce(BindCommand):
 
-    call('evaluate')
-    signature = EvaluateSig
+    call('produce')
+    signature = ProduceSig
 
-    def expand(self, query, action, page):
+    def expand(self, query, page=None):
         if not isinstance(query, StringSyntax):
             raise BindError("a string literal is required", query.mark)
         query = query.value
-        if action is not None:
-            if not isinstance(action, StringSyntax):
-                raise BindError("a string literal is required", action.mark)
-            if action.value not in [u'produce', u'analyze']:
-                raise BindError("'produce' or 'analyze' is expected",
-                                action.mark)
-            action = action.value
         if page is not None:
             if not isinstance(page, NumberSyntax) and page.is_integer:
                 raise BindError("an integer literal is required", page.mark)
             page = int(page.value)
-        command = EvaluateCmd(query, action, page)
+        command = ProduceCmd(query, page)
+        return CommandBinding(self.state.scope, command, self.syntax)
+
+
+class BindAnalyze(BindCommand):
+
+    call('analyze')
+    signature = AnalyzeSig
+
+    def expand(self, query):
+        if not isinstance(query, StringSyntax):
+            raise BindError("a string literal is required", query.mark)
+        query = query.value
+        command = AnalyzeCmd(query)
+        return CommandBinding(self.state.scope, command, self.syntax)
+
+
+class BindWithPermissions(BindCommand):
+
+    call('with_permissions')
+    signature = WithPermissionsSig
+
+    def expand(self, query, can_read, can_write):
+        if not isinstance(query, SegmentSyntax):
+            raise BindError("a segment is required", query.mark)
+        query = QuerySyntax(query, query.mark)
+        literals = [can_read, can_write]
+        values = []
+        domain = BooleanDomain()
+        for literal in literals:
+            if not isinstance(literal, StringSyntax):
+                raise BindError("a string literal is required", literal.mark)
+            try:
+                value = domain.parse(literal.value)
+            except ValueError, exc:
+                raise BindError(str(exc), literal.mark)
+            values.append(value)
+        can_read, can_write = values
+        with context.env(can_read=context.env.can_read and can_read,
+                         can_write=context.env.can_write and can_write):
+            binding = bind(query)
+            command = lookup_command(binding)
+            if command is None:
+                command = DefaultCmd(binding)
+        command = WithPermissionsCmd(command, can_read, can_write)
         return CommandBinding(self.state.scope, command, self.syntax)
 
 
@@ -143,39 +216,43 @@ class RenderShell(Act):
 
     def __call__(self):
         query = self.command.query
-        if query is not None:
-            query = query.encode('utf-8')
         resource = locate('/shell/index.html')
         assert resource is not None
-        database_name = context.app.htsql.db.database
-        htsql_version = __version__
-        htsql_legal = __legal__
+        database_name = context.app.htsql.db.database.decode('utf-8', 'replace')
+        htsql_version = __version__.decode('ascii')
+        htsql_legal = __legal__.decode('ascii')
         server_root = context.app.tweak.shell.server_root
         if server_root is None:
             server_root = wsgiref.util.application_uri(self.action.environ)
         if server_root.endswith('/'):
             server_root = server_root[:-1]
+        server_root = server_root.decode('utf-8')
         resource_root = (server_root + '/%s/shell/'
                          % context.app.tweak.resource.indicator)
-        if query is not None and query not in ['', '/']:
+        resource_root = resource_root.decode('utf-8')
+        if query is not None and query not in [u'', u'/']:
             query_on_start = query
-            evaluate_on_start = 'true'
+            evaluate_on_start = u'true'
         else:
-            query_on_start = '/'
-            evaluate_on_start = 'false'
-        implicit = str(self.command.is_implicit).lower()
-        data = resource.data
-        data = self.patch(data, 'base href', resource_root)
-        data = self.patch(data, 'data-database-name', database_name)
-        data = self.patch(data, 'data-htsql-version', htsql_version)
-        data = self.patch(data, 'data-htsql-legal', htsql_legal)
-        data = self.patch(data, 'data-server-root', server_root)
-        data = self.patch(data, 'data-query-on-start', query_on_start)
-        data = self.patch(data, 'data-evaluate-on-start', evaluate_on_start)
-        data = self.patch(data, 'data-implicit-shell', implicit)
+            query_on_start = u'/'
+            evaluate_on_start = u'false'
+        can_read_on_start = unicode(context.env.can_read).lower()
+        can_write_on_start = unicode(context.env.can_write).lower()
+        implicit_shell = unicode(self.command.is_implicit).lower()
         status = '200 OK'
         headers = [('Content-Type', 'text/html; charset=UTF-8')]
-        body = [data]
+        template = Template(resource.data)
+        body = template(resource_root=cgi.escape(resource_root, True),
+                        database_name=cgi.escape(database_name, True),
+                        htsql_version=cgi.escape(htsql_version, True),
+                        htsql_legal=cgi.escape(htsql_legal, True),
+                        server_root=cgi.escape(server_root, True),
+                        query_on_start=cgi.escape(query_on_start, True),
+                        evaluate_on_start=cgi.escape(evaluate_on_start, True),
+                        can_read_on_start=cgi.escape(can_read_on_start, True),
+                        can_write_on_start=cgi.escape(can_write_on_start, True),
+                        implicit_shell=cgi.escape(implicit_shell, True))
+        body = (chunk.encode('utf-8') for chunk in body)
         return (status, headers, body)
 
     def patch(self, data, prefix, value):
@@ -243,9 +320,10 @@ class RenderComplete(Act):
         yield JS_END
 
 
-class RenderEvaluate(Act):
+class RenderProduceAnalyze(Act):
 
-    adapt(EvaluateCmd, RenderAction)
+    adapt_many((ProduceCmd, RenderAction),
+               (AnalyzeCmd, RenderAction))
 
     def __call__(self):
         addon = context.app.tweak.shell
@@ -254,7 +332,7 @@ class RenderEvaluate(Act):
         command = UniversalCmd(self.command.query.encode('utf-8'))
         limit = None
         try:
-            if self.command.action == 'analyze':
+            if isinstance(self.command, AnalyzeCmd):
                 plan = analyze(command)
             else:
                 page = self.command.page
@@ -266,10 +344,12 @@ class RenderEvaluate(Act):
                     product = produce(command)
         except UnsupportedActionError, exc:
             body = self.render_unsupported(exc)
+        except PermissionError, exc:
+            body = self.render_permissions(exc)
         except HTTPError, exc:
             body = self.render_error(exc)
         else:
-            if self.command.action == 'analyze':
+            if isinstance(self.command, AnalyzeCmd):
                 body = self.render_sql(plan)
             else:
                 if product:
@@ -283,6 +363,15 @@ class RenderEvaluate(Act):
         yield JS_MAP
         yield u"type"
         yield u"unsupported"
+        yield JS_END
+
+    def render_permissions(self, exc):
+        detail = exc.detail.decode('utf-8')
+        yield JS_MAP
+        yield u"type"
+        yield u"permissions"
+        yield u"detail"
+        yield detail
         yield JS_END
 
     def render_error(self, exc):
@@ -363,5 +452,16 @@ class RenderEvaluate(Act):
         yield u"sql"
         yield sql
         yield JS_END
+
+
+class ActWithPermissions(Act):
+
+    adapt(WithPermissionsCmd, Action)
+
+    def __call__(self):
+        can_read = context.env.can_read and self.command.can_read
+        can_write = context.env.can_write and self.command.can_write
+        with context.env(can_read=can_read, can_write=can_write):
+            return act(self.command.command, self.action)
 
 

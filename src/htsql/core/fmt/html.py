@@ -187,7 +187,10 @@ class Template(object):
         self.case = case
 
     def scan(self, stream):
-        input = stream.read()
+        if isinstance(stream, (str, unicode)):
+            input = stream
+        else:
+            input = stream.read()
         if isinstance(input, str):
             try:
                 input = input.decode('utf-8')
