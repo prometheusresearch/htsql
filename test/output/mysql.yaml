@@ -24146,6 +24146,76 @@ tests:
               bind error: qualified definition is not allowed for an in-selector assignment:
                   /school{code, program.num_stud := count(student)}
                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+          - uri: /sch:=school{code, name}?exists(department)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | sch                                  |
+               +------+-------------------------------+
+               | code | name                          |
+              -+------+-------------------------------+-
+               | art  | School of Art & Design        |
+               | bus  | School of Business            |
+               | edu  | College of Education          |
+               | eng  | School of Engineering         |
+               | la   | School of Arts and Humanities |
+               | mus  | School of Music & Dance       |
+               | ns   | School of Natural Sciences    |
+
+               ----
+               /sch:=school{code,name}?exists(department)
+               SELECT `school`.`code`,
+                      `school`.`name`
+               FROM `school`
+               WHERE EXISTS(SELECT TRUE
+                            FROM `department`
+                            WHERE (`school`.`code` = `department`.`school_code`))
+               ORDER BY 1 ASC
+          - uri: /$sch:=school{code, name}?exists(department)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | $sch                                 |
+               +------+-------------------------------+
+               | code | name                          |
+              -+------+-------------------------------+-
+               | art  | School of Art & Design        |
+               | bus  | School of Business            |
+               | edu  | College of Education          |
+               | eng  | School of Engineering         |
+               | la   | School of Arts and Humanities |
+               | mus  | School of Music & Dance       |
+               | ns   | School of Natural Sciences    |
+
+               ----
+               /$sch:=school{code,name}?exists(department)
+               SELECT `school`.`code`,
+                      `school`.`name`
+               FROM `school`
+               WHERE EXISTS(SELECT TRUE
+                            FROM `department`
+                            WHERE (`school`.`code` = `department`.`school_code`))
+               ORDER BY 1 ASC
+          - uri: /ad.school:=school{code, name}?exists(department)
+            status: 400 Bad Request
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |
+              bind error: qualified definition is not allowed for an in-segment assignment:
+                  /ad.school:=school{code, name}?exists(department)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+          - uri: /school():=school{code, name}?exists(department)
+            status: 400 Bad Request
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |
+              bind error: parameterized definition is not allowed for an in-segment assignment:
+                  /school():=school{code, name}?exists(department)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - id: projections
           tests:
           - uri: /distinct(program{degree})

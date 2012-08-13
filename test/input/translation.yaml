@@ -402,6 +402,12 @@ tests:
     - uri: /school{code, $num_dept := count(department)}?$num_dept>3
     - uri: /school{code, program.num_stud := count(student)}
       expect: 400
+    - uri: /sch:=school{code, name}?exists(department)
+    - uri: /$sch:=school{code, name}?exists(department)
+    - uri: /ad.school:=school{code, name}?exists(department)
+      expect: 400
+    - uri: /school():=school{code, name}?exists(department)
+      expect: 400
     - uri: /school.define(match($code) := filter(code=$code))
             {*, count(department)}.match('art'){*4}
       skip: true

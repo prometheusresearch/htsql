@@ -291,6 +291,26 @@ class BindSegment(Bind):
         # Bind the segment expression.
         if self.syntax.branch is not None:
             seed = self.state.bind(self.syntax.branch)
+            if isinstance(seed, AssignmentBinding):
+                if len(seed.terms) != 1:
+                    raise BindError("qualified definition is not allowed"
+                                    " for an in-segment assignment",
+                                    seed.mark)
+                if seed.parameters is not None:
+                    raise BindError("parameterized definition is not allowed"
+                                    " for an in-segment assignment",
+                                    seed.mark)
+                name, is_reference = seed.terms[0]
+                if is_reference:
+                    recipe = BindingRecipe(self.state.bind(seed.body))
+                else:
+                    recipe = SubstitutionRecipe(self.state.scope, [],
+                                                None, seed.body)
+                recipe = ClosedRecipe(recipe)
+                syntax = seed.syntax
+                if isinstance(syntax, AssignmentSyntax):
+                    syntax = syntax.lbranch
+                seed = self.state.use(recipe, syntax)
         else:
             seed = self.state.scope
         if lookup_command(seed) is not None:
