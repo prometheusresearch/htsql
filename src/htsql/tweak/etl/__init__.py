@@ -4,6 +4,7 @@
 
 
 from ...core.addon import Addon, addon_registry
+from . import cmd, tr
 
 
 class TweakETLAddon(Addon):
@@ -11,6 +12,7 @@ class TweakETLAddon(Addon):
     name = 'tweak.etl'
     hint = """ETL (extract-transform-load) operations"""
     help = None
+    packages = ['.', '.cmd', '.tr']
 
     @classmethod
     def get_extension(cls, app, attributes):
