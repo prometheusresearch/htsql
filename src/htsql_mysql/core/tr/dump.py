@@ -6,7 +6,7 @@
 from htsql.core.adapter import adapt
 from htsql.core.domain import (BooleanDomain, NumberDomain, IntegerDomain,
                                StringDomain)
-from htsql.core.tr.dump import (FormatName, FormatLiteral,
+from htsql.core.tr.dump import (FormatName, FormatLiteral, FormatPlaceholder,
                                 DumpDecimal, DumpFloat, DumpDate,
                                 DumpTime, DumpDateTime,
                                 DumpToDomain, DumpToInteger, DumpToFloat,
@@ -36,6 +36,12 @@ class MySQLFormatLiteral(FormatLiteral):
                                               .replace(u"'", ur"\'")
                                               .replace(u"\n", ur"\n")
                                               .replace(u"\r", ur"\r"))
+
+
+class MySQLFormatPlaceholder(FormatPlaceholder):
+
+    def __call__(self):
+        self.stream.write(u"%s")
 
 
 class MySQLDumpFloat(DumpFloat):

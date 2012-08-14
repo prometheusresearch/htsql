@@ -9,7 +9,8 @@ from htsql.core.domain import (BooleanDomain, StringDomain, IntegerDomain,
                                DateTimeDomain)
 from htsql.core.tr.error import SerializeError
 from htsql.core.tr.frame import ColumnPhrase, ReferencePhrase, LiteralPhrase
-from htsql.core.tr.dump import (FormatName, DumpBranch, DumpBySignature,
+from htsql.core.tr.dump import (FormatName, FormatPlaceholder,
+                                DumpBranch, DumpBySignature,
                                 DumpFromPredicate, DumpToPredicate,
                                 DumpIsTotallyEqual, DumpBoolean, DumpInteger,
                                 DumpDecimal, DumpFloat, DumpDate, DumpTime,
@@ -33,6 +34,12 @@ class MSSQLFormatName(FormatName):
 
     def __call__(self):
         self.stream.write(u"[%s]" % self.value.replace(u"]", u"]]"))
+
+
+class MSSQLFormatPlaceholder(FormatPlaceholder):
+
+    def __call__(self):
+        self.stream.write(u"%s")
 
 
 class MSSQLDumpBranch(DumpBranch):

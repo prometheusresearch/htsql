@@ -805,6 +805,28 @@ class FormatSwitch(Format):
             self.stream.write(negative)
 
 
+class FormatPlaceholder(Format):
+    """
+    Dumps a placeholder indicator.
+
+    Usage::
+
+        {field:placeholder}
+
+    Field is an index or a name of the placeholder.
+    """
+
+    call('placeholder')
+
+    def __init__(self, kind, value, modifier, state):
+        assert isinstance(value, (int, str))
+        assert modifier is None
+        super(FormatPlaceholder, self).__init__(kind, value, modifier, state)
+
+    def __call__(self):
+        self.stream.write(u"?")
+
+
 class FormatPass(Format):
     """
     Dumps the given string.

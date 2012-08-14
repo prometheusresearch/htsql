@@ -3,6 +3,6 @@
 #
 
 
-from . import command
+from . import command, insert
 
 

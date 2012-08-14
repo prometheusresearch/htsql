@@ -3,10 +3,10 @@
 #
 
 
-from ....core.cmd.command import Command
+from ....core.cmd.command import Command, ProducerCmd
 
 
-class ETLCmd(Command):
+class ETLCmd(ProducerCmd):
 
     def __init__(self, feed):
         assert isinstance(feed, Command)

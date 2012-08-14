@@ -7,7 +7,8 @@ from htsql.core.adapter import adapt
 from htsql.core.domain import (BooleanDomain, StringDomain, DateDomain,
                                TimeDomain, DateTimeDomain)
 from htsql.core.tr.frame import ScalarFrame, TableFrame
-from htsql.core.tr.dump import (SerializeSegment, Dump, DumpBranch, DumpAnchor,
+from htsql.core.tr.dump import (SerializeSegment, FormatPlaceholder,
+                                Dump, DumpBranch, DumpAnchor,
                                 DumpLeadingAnchor, DumpFromPredicate,
                                 DumpToPredicate, DumpBoolean, DumpInteger,
                                 DumpFloat, DumpTime, DumpDateTime,
@@ -26,6 +27,12 @@ import math
 class OracleSerializeSegment(SerializeSegment):
 
     max_alias_length = 30
+
+
+class OracleFormatPlaceholder(FormatPlaceholder):
+
+    def __call__(self):
+        self.stream.write(u":%s" % self.value)
 
 
 class OracleDumpScalar(Dump):

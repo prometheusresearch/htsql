@@ -4,7 +4,8 @@
 
 
 from htsql.core.domain import IntegerDomain
-from htsql.core.tr.dump import (FormatLiteral, DumpFloat, DumpDecimal, DumpDate,
+from htsql.core.tr.dump import (FormatLiteral, FormatPlaceholder,
+                                DumpFloat, DumpDecimal, DumpDate,
                                 DumpTime, DumpDateTime, DumpToDecimal,
                                 DumpToFloat, DumpToString, DumpSortDirection)
 from htsql.core.tr.fn.dump import (DumpLike, DumpDateIncrement,
@@ -23,6 +24,12 @@ class PGSQLFormatLiteral(FormatLiteral):
             self.stream.write(u"E'%s'" % value)
         else:
             self.stream.write(u"'%s'" % value)
+
+
+class PGSQLFormatPlaceholder(FormatPlaceholder):
+
+    def __call__(self):
+        self.stream.write(u"%s")
 
 
 class PGSQLDumpSortDirection(DumpSortDirection):
