@@ -7,7 +7,7 @@ from . import (adapter, addon, application, cache, cmd, connect, context,
                domain, entity, error, introspect, mark, split_sql,
                tr, util, validator, wsgi)
 from .validator import DBVal, StrVal, BoolVal
-from .addon import Addon, Parameter, addon_registry
+from .addon import Addon, Parameter, Variable, addon_registry
 from .connect import connect, DBError
 from .introspect import introspect
 from .cache import GeneralCache
@@ -45,6 +45,12 @@ class HTSQLAddon(Addon):
                       hint="""override the password"""),
             Parameter('debug', BoolVal(), default=False,
                       hint="""dump debug information""")
+    ]
+
+    variables = [
+            Variable('connection'),
+            Variable('can_read', True),
+            Variable('can_write', True),
     ]
 
     packages = ['.', '.cmd', '.fmt', '.tr', '.tr.fn']

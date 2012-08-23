@@ -27,6 +27,8 @@ $(document).ready(function() {
             serverRoot: $body.attr('data-server-root') || "",
             queryOnStart: $body.attr('data-query-on-start') || "/",
             evaluateOnStart: ($body.attr('data-evaluate-on-start') == 'true'),
+            canReadOnStart: ($body.attr('data-can-read-on-start') == 'true'),
+            canWriteOnStart: ($body.attr('data-can-write-on-start') == 'true'),
             implicitShell: ($body.attr('data-implicit-shell') == 'true')
         };
     }
@@ -259,13 +261,18 @@ $(document).ready(function() {
                 query = "/shell('" + query.replace(/'/g,"''") + "')";
         }
         var url = config.serverRoot+encodeURI(query).replace(/#/, '%23');
-        if (replace)
-            history.replaceState(data, title, url);
-        else
-            history.pushState(data, title, url);
+        try {
+            if (replace)
+                history.replaceState(data, title, url);
+            else
+                history.pushState(data, title, url);
+        }
+        catch (e) {
+            log(e);
+        }
     }
 
-    function run(query, action, page) {
+    function run(query, action, page, with_permissions) {
         if (!query)
             return;
         if (!config.serverRoot)
@@ -279,18 +286,28 @@ $(document).ready(function() {
         state.lastQuery = query;
         state.lastAction = action;
         state.lastPage = page;
+        var success = handleSuccess;
+        var failure = handleFailure;
         if (!action)
             action = 'produce';
-        if (!page)
-            page = 1;
-        query = "/evaluate('" + query.replace(/'/g,"''") + "'"
-                + ",'" + action + "'" + "," + page + ")";
+        if (page) {
+            query = "/" + action + "('" + query.replace(/'/g,"''") + "',"
+                    + page + ")";
+        }
+        else {
+            query = "/" + action + "('" + query.replace(/'/g,"''") + "')";
+        }
+        if (with_permissions && (!config.canReadOnStart || !config.canWriteOnStart)) {
+            query = "/with_permissions(" + query + ",'" + config.canReadOnStart
+                    + "','" + config.canWriteOnStart + "')";
+            success = handleSuccessWithPermissions;
+        }
         var url = config.serverRoot+encodeURI(query).replace(/#/, '%23');
         $.ajax({
             url: url,
             dataType: 'json',
-            success: handleSuccess,
-            error: handleFailure,
+            success: success,
+            error: failure,
         });
         state.waiting = true;
         setTimeout(showWaiting, 1000);
@@ -319,9 +336,19 @@ $(document).ready(function() {
             case "error":
                 handleError(output);
                 break;
+            case "permissions":
+                handleError(output);
+                break;
             case "unsupported":
                 handleUnsupported(output);
         }
+    }
+
+    function handleSuccessWithPermissions(output) {
+        if (output.type == "permissions") {
+            output.type = "empty";
+        }
+        handleSuccess(output);
     }
 
     function handleError(output) {
@@ -1233,6 +1260,24 @@ $(document).ready(function() {
         return state.identifiers;
     }
 
+    function ajaxSend(evt, xhr, settings) {
+        var name = 'htsql-csrf-token';
+        var token = null;
+        if (document.cookie && document.cookie != '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = $.trim(cookies[i]);
+                if (cookie.substring(0, name.length+1) == (name+'=')) {
+                    token = decodeURIComponent(cookie.substring(name.length+1));
+                    break;
+                }
+            }
+        }
+        if (token) {
+            xhr.setRequestHeader('X-HTSQL-CSRF-Token', token);
+        }
+    }
+
     var config = makeConfig();
     var environ = makeEnviron();
     var state = makeState();
@@ -1282,6 +1327,8 @@ $(document).ready(function() {
     $(window).bind('popstate', popstateWindow);
     $('#help-popup').click(function (e) { e.stopPropagation(); });
 
+    $(document).ajaxSend(ajaxSend);
+
     $('#schema').hide();
     $('#close-sql').hide();
 
@@ -1290,7 +1337,7 @@ $(document).ready(function() {
 
     pushHistory(config.queryOnStart, true);
     if (config.evaluateOnStart) {
-        run(config.queryOnStart);
+        run(config.queryOnStart, null, null, true);
     }
 
 });

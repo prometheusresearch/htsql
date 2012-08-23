@@ -86,6 +86,71 @@ tests:
       tweak.cors: { origin: null }
   - uri: /school
 
+# TWEAK.CSRF - cross-site request forgery protection
+- title: tweak.csrf
+  tests:
+  # Addon description
+  - ctl: [ext, tweak.csrf]
+
+  # Test with both unprotected read and write disabled
+  - load: demo
+    extensions:
+      tweak.csrf: {}
+  - uri: /
+    ignore-headers: true
+  - uri: /school
+    ignore-headers: true
+    expect: 403
+
+  # Passing CSRF token back to the server
+  - py: pass-csrf-token
+    code: |
+      import wsgiref.util
+      class response:
+          status = None
+          headers = None
+          body = None
+      def start_response(status, headers, exc=None):
+          response.status = status
+          response.headers = headers
+      def request(environ):
+          wsgiref.util.setup_testing_defaults(environ)
+          response.status = None
+          response.headers = None
+          response.body = ''.join(state.app(environ, start_response))
+          return (response.status, response.headers, response.body)
+      status, headers, body = request({'PATH_INFO': "/"})
+      token = None
+      for header, value in headers:
+          if header.lower() == 'set-cookie':
+              if ';' in value:
+                  value = value.split(';', 1)[0]
+              if '=' in value:
+                  name, value = value.split('=', 1)
+                  if name == 'htsql-csrf-token':
+                      token = value
+      assert token is not None
+      environ = {
+          'PATH_INFO': "/school",
+          'HTTP_COOKIE': "htsql-csrf-token=%s" % token,
+          'HTTP_X_HTSQL_CSRF_TOKEN': token,
+      }
+      status, headers, body = request(environ)
+      assert status == "200 OK"
+      print status
+      for header, value in headers:
+          print "%s: %s" % (header, value)
+      print
+      print body
+
+  # Test with unprotected read enabled
+  - load: demo
+    extensions:
+      tweak.csrf:
+        allow_cs_read: true
+  - uri: /school
+    ignore-headers: true
+
 # TWEAK.DJANGO - adapt to Django
 - py: has-django
   ifdef: [sqlite, pgsql, mysql, oracle]
@@ -250,6 +315,15 @@ tests:
     extensions:
       tweak.meta: {}
   - uri: /meta(/column.sort(table.name, field.sort))
+
+  # Respect `can_read`
+  - load: demo
+    extensions:
+      tweak.csrf: {}
+      tweak.meta: {}
+  - uri: /meta(/table)
+    ignore-headers: true
+    expect: 403
 
 # TWEAK.OVERRIDE - adjust database metadata
 - title: tweak.override

@@ -52,6 +52,7 @@ def get_addons():
         'tweak = htsql.tweak:TweakAddon',
         'tweak.autolimit = htsql.tweak.autolimit:TweakAutolimitAddon',
         'tweak.cors = htsql.tweak.cors:TweakCORSAddon',
+        'tweak.csrf = htsql.tweak.csrf:TweakCSRFAddon',
         'tweak.hello = htsql.tweak.hello:TweakHelloAddon',
         'tweak.django = htsql.tweak.django:TweakDjangoAddon',
         'tweak.inet = htsql.tweak.inet:TweakINetAddon',

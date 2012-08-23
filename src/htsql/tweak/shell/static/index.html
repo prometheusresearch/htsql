@@ -3,7 +3,7 @@
 <html>
 
   <head>
-    <base href="./">
+    <base href="{{ resource_root }}">
     <title>HTSQL</title>
     <script type="text/javascript" src="external/jquery/jquery-1.6.4.min.js"></script>
     <link rel="stylesheet" href="external/codemirror/lib/codemirror.css">
@@ -15,13 +15,15 @@
     <script type="text/javascript" src="shell.js"></script>
   </head>
 
-  <body data-database-name="HTSQL"
-        data-htsql-version="2.0"
-        data-htsql-legal="Copyright (c) 2006-2012, Prometheus Research, LLC"
-        data-server-root="http://localhost:8080"
-        data-query-on-start="/"
-        data-evaluate-on-start="false"
-        data-implicit-shell="false">
+  <body data-database-name="{{ database_name }}"
+        data-htsql-version="{{ htsql_version }}"
+        data-htsql-legal="{{ htsql_legal }}"
+        data-server-root="{{ server_root }}"
+        data-query-on-start="{{ query_on_start }}"
+        data-evaluate-on-start="{{ evaluate_on_start }}"
+        data-can-read-on-start="{{ can_read_on_start }}"
+        data-can-write-on-start="{{ can_write_on_start }}"
+        data-implicit-shell="{{ implicit_shell }}">
 
     <div id="viewport">
       <div class="heading-area">

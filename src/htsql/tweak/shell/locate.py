@@ -25,8 +25,8 @@ class LocateJQuery(LocateRemote):
 class LocateCodeMirror(LocateRemote):
 
     call('/shell/external/codemirror/')
-    url = 'https://nodeload.github.com/marijnh/CodeMirror2/zipball/v2.13'
-    md5 = 'ba0a4838ecb469ed40dfc43ce042fe67'
+    url = 'https://nodeload.github.com/marijnh/CodeMirror/zipball/v2.13'
+    md5 = 'b2a4f989ba45f1778b183603f78cf883'
     cache = 'codemirror-2.13'
     is_zip = True
 

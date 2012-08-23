@@ -99,6 +99,15 @@ class Parameter(object):
         return "%s=%s" % (attribute, value_name)
 
 
+class Variable(object):
+
+    def __init__(self, attribute, default=None):
+        assert isinstance(attribute, str)
+        assert re.match(r'^[a-zA-Z_][0-9a-zA-Z_]*$', attribute)
+        self.attribute = attribute
+        self.default = default
+
+
 class Addon(object):
     """
     Implements an addon for HTSQL applications.
@@ -109,6 +118,7 @@ class Addon(object):
 
     name = None
     parameters = []
+    variables = []
     hint = None
     help = None
 

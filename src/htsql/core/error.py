@@ -126,24 +126,13 @@ class NotImplementedError(HTTPError):
 #
 
 
-class InvalidSyntaxError(BadRequestError):
-    """
-    Represents an invalid syntax error.
-
-    This exception is raised by the scanner when it cannot tokenize the query,
-    or by the parser when it finds an unexpected token.
-    """
-
-    kind = "invalid syntax"
-
-
-class InvalidArgumentError(BadRequestError):
-
-    kind = "invalid argument"
-
-
 class EngineError(ConflictError):
 
     kind = "engine failure"
+
+
+class PermissionError(ForbiddenError):
+
+    kind = "not enough permissions"
 
 

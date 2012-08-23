@@ -1390,6 +1390,8 @@ class QueryTestCase(RunAndCompareTestCase):
                       hint="""the HTTP status code to expect"""),
                 Field('ignore', BoolVal(), False,
                       hint="""ignore the response body"""),
+                Field('ignore_headers', BoolVal(), False,
+                      hint="""ignore the response headers"""),
         ] + SkipTestCase.Input.fields
 
         def init_attributes(self):
@@ -1455,8 +1457,9 @@ class QueryTestCase(RunAndCompareTestCase):
             return True
         if old_output.status != new_output.status:
             return True
-        if old_output.headers != new_output.headers:
-            return True
+        if not self.input.ignore_headers:
+            if old_output.headers != new_output.headers:
+                return True
         if not self.input.ignore:
             if old_output.body != new_output.body:
                 return True
