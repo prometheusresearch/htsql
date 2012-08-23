@@ -23125,6 +23125,14 @@ tests:
                                       AND ([school].[top] < 2)) AS [school_2]
                                ON ([school_1].[campus] = [school_2].[campus])
                ORDER BY 1 ASC
+          - uri: /department.top(school)
+            status: 400 Bad Request
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |
+              encode error: a plural expression is expected:
+                  /department.top(school)
+                                  ^^^^^^
           - uri: /class^{year, season} {*, /top(^.sort(count(enrollment)-),3).course{title}}
             status: 200 OK
             headers:
