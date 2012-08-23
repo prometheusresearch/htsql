@@ -449,7 +449,7 @@ The query above returns schools that have above average number of
 departments.  This could also be written with the link function
 ``fork()`` which generates the current graph node to itself:
 
-.. htsql:: /school?count(department)>avg(@school.count(department))
+.. htsql:: /school?count(department)>avg(fork().count(department))
    :cut: 3
 
 
