@@ -425,6 +425,9 @@ class RelateClip(Relate):
     def __call__(self):
         base = self.state.relate(self.binding.base)
         seed = self.state.relate(self.binding.seed)
+        if not (seed.spans(base) and not base.spans(seed)):
+            raise EncodeError("a plural expression is expected",
+                              self.binding.seed.mark)
         return ClippedFlow(base, seed, self.binding.limit,
                            self.binding.offset, self.binding)
 
