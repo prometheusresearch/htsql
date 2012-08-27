@@ -26,7 +26,7 @@ from .frame import (Clause, Frame, TableFrame, BranchFrame, NestedFrame,
 from .signature import (Signature, isformula, IsEqualSig, IsTotallyEqualSig,
                         IsInSig, IsNullSig, IfNullSig, NullIfSig, CompareSig,
                         AndSig, OrSig, NotSig, SortDirectionSig, RowNumberSig,
-                        ToPredicateSig, FromPredicateSig)
+                        ToPredicateSig, FromPredicateSig, PlaceholderSig)
 from .plan import Plan, Statement
 import StringIO
 import re
@@ -2015,6 +2015,14 @@ class DumpFromPredicate(DumpBySignature):
 
     def __call__(self):
         return self.state.dump(self.phrase.op)
+
+
+class DumpPlaceholder(DumpBySignature):
+
+    adapt(PlaceholderSig)
+
+    def __call__(self):
+        self.format("{index:placeholder}", self.signature)
 
 
 def serialize(clause, state=None):

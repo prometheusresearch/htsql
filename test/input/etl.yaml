@@ -19,7 +19,11 @@ tests:
         /:insert
 - uri: /manufacturer:={code:='AAPL', name:='Apple'}
         /:insert
+  headers:
+    Accept: application/json
 - uri: /manufacturer:={code:='6702', name:='Fujitsu'}
         /:insert
+  headers:
+    Accept: x-htsql/raw
 - uri: /manufacturer{id(), *}
 

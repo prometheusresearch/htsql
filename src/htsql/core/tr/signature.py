@@ -460,3 +460,13 @@ class FromPredicateSig(UnarySig):
     pass
 
 
+class PlaceholderSig(NullarySig):
+
+    def __init__(self, index):
+        assert isinstance(index, (str, int))
+        self.index = index
+
+    def __basis__(self):
+        return (self.index,)
+
+

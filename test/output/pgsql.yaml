@@ -36812,43 +36812,87 @@ tests:
         headers:
         - [Content-Type, text/plain; charset=UTF-8]
         - [Vary, Accept]
-        body: ''
+        body: |2+
+           | manufacturer |
+          -+--------------+-
+           | ACID         |
+
       - uri: /manufacturer:={code:='DELL', name:='Dell'} /:insert
         status: 200 OK
         headers:
         - [Content-Type, text/plain; charset=UTF-8]
         - [Vary, Accept]
-        body: ''
+        body: |2+
+           | manufacturer |
+          -+--------------+-
+           | DELL         |
+
       - uri: /manufacturer:={code:='TOSH', name:='Toshiba'} /:insert
         status: 200 OK
         headers:
         - [Content-Type, text/plain; charset=UTF-8]
         - [Vary, Accept]
-        body: ''
+        body: |2+
+           | manufacturer |
+          -+--------------+-
+           | TOSH         |
+
       - uri: /manufacturer:={code:='0992', name:='Lenovo'} /:insert
         status: 200 OK
         headers:
         - [Content-Type, text/plain; charset=UTF-8]
         - [Vary, Accept]
-        body: ''
+        body: |2+
+           | manufacturer |
+          -+--------------+-
+           | 0992         |
+
       - uri: /manufacturer:={code:='2376', name:='Gigabyte'} /:insert
         status: 200 OK
         headers:
         - [Content-Type, text/plain; charset=UTF-8]
         - [Vary, Accept]
-        body: ''
+        body: |2+
+           | manufacturer |
+          -+--------------+-
+           | 2376         |
+
       - uri: /manufacturer:={code:='AAPL', name:='Apple'} /:insert
         status: 200 OK
         headers:
-        - [Content-Type, text/plain; charset=UTF-8]
+        - [Content-Type, application/javascript]
+        - [Content-Disposition, inline; filename="manufacturer.js"]
         - [Vary, Accept]
-        body: ''
+        body: |
+          {
+            "manufacturer": [
+              "AAPL"
+            ]
+          }
       - uri: /manufacturer:={code:='6702', name:='Fujitsu'} /:insert
         status: 200 OK
         headers:
-        - [Content-Type, text/plain; charset=UTF-8]
+        - [Content-Type, application/javascript]
+        - [Content-Disposition, inline; filename="manufacturer.js"]
         - [Vary, Accept]
-        body: ''
+        body: |
+          {
+            "meta": {
+              "domain": {
+                "type": "list",
+                "item": {
+                  "domain": {
+                    "type": "identity"
+                  }
+                }
+              },
+              "header": "manufacturer",
+              "tag": "manufacturer"
+            },
+            "data": [
+              "6702"
+            ]
+          }
       - uri: /manufacturer{id(), *}
         status: 200 OK
         headers:

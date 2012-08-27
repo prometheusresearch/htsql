@@ -679,7 +679,6 @@ class BindSpecifier(Bind):
         return binding
 
 
-
 class BindLocator(Bind):
 
     adapt(LocatorSyntax)
