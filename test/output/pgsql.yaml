@@ -36803,3 +36803,73 @@ tests:
           school(code=u'art', name=u'School of Art & Design', campus=u'old')
           school(code=u'bus', name=u'School of Business', campus=u'south')
           school(code=u'edu', name=u'College of Education', campus=u'old')
+  - include: test/input/etl.yaml
+    output:
+      id: etl
+      tests:
+      - uri: /manufacturer:={code:='ACID', name:='Acer'} /:insert
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: ''
+      - uri: /manufacturer:={code:='DELL', name:='Dell'} /:insert
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: ''
+      - uri: /manufacturer:={code:='TOSH', name:='Toshiba'} /:insert
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: ''
+      - uri: /manufacturer:={code:='0992', name:='Lenovo'} /:insert
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: ''
+      - uri: /manufacturer:={code:='2376', name:='Gigabyte'} /:insert
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: ''
+      - uri: /manufacturer:={code:='AAPL', name:='Apple'} /:insert
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: ''
+      - uri: /manufacturer:={code:='6702', name:='Fujitsu'} /:insert
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: ''
+      - uri: /manufacturer{id(), *}
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: |2
+           | manufacturer           |
+           +------+------+----------+
+           | id() | code | name     |
+          -+------+------+----------+-
+           | 0992 | 0992 | Lenovo   |
+           | 2376 | 2376 | Gigabyte |
+           | 6702 | 6702 | Fujitsu  |
+           | AAPL | AAPL | Apple    |
+           | ACID | ACID | Acer     |
+           | DELL | DELL | Dell     |
+           | TOSH | TOSH | Toshiba  |
+
+           ----
+           /manufacturer{id(),*}
+           SELECT "manufacturer"."code",
+                  "manufacturer"."name"
+           FROM "manufacturer"
+           ORDER BY 1 ASC

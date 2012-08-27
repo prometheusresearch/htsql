@@ -28,15 +28,14 @@ CREATE TABLE product_line (
       REFERENCES manufacturer(code)
 );
 
-
 CREATE TABLE product (
-    sku  CHAR(8) NOT NULL,
-    manufacturer_code VARCHAR(16) NOT NULL, 
-    product_line_code VARCHAR(16),
-    title             VARCHAR(64) NOT NULL,
-    is_available      BOOLEAN NOT NULL DEFAULT TRUE,
-    description       TEXT,
-    list_price        DECIMAL(8,2),
+    sku                 CHAR(8) NOT NULL,
+    manufacturer_code   VARCHAR(16) NOT NULL,
+    product_line_code   VARCHAR(16),
+    title               VARCHAR(64) NOT NULL,
+    is_available        BOOLEAN NOT NULL DEFAULT TRUE,
+    description         TEXT,
+    list_price          DECIMAL(8,2),
     CONSTRAINT product_pk
       PRIMARY KEY (sku),
     CONSTRAINT product_manufacturer_fk
@@ -48,21 +47,21 @@ CREATE TABLE product (
 );
 
 CREATE TABLE category (
-    id SERIAL NOT NULL,
-    label TEXT NOT NULL,
-    parent_id INTEGER,
+    id                  SERIAL NOT NULL,
+    label               TEXT NOT NULL,
+    parent_id           INTEGER,
     CONSTRAINT category_pk
-       PRIMARY KEY (id),
+      PRIMARY KEY (id),
     CONSTRAINT category_uk
-       UNIQUE (label),
+      UNIQUE (label),
     CONSTRAINT category_parent_fk
       FOREIGN KEY (parent_id)
       REFERENCES category(id)
 );
 
 CREATE TABLE product_category (
-    product_sku CHAR(8) NOT NULL,
-    category_id INTEGER NOT NULL,
+    product_sku         CHAR(8) NOT NULL,
+    category_id         INTEGER NOT NULL,
     CONSTRAINT product_category_pk
       PRIMARY KEY (product_sku, category_id),
     CONSTRAINT product_category_product_fk
@@ -71,12 +70,11 @@ CREATE TABLE product_category (
     CONSTRAINT product_category_category_fk
       FOREIGN KEY (category_id)
       REFERENCES category(id)
-); 
-
+);
 
 CREATE TABLE customer (
-    guid    CHAR(36) NOT NULL,    -- 128-bit as 32 hex with 4 hyphens
-    handle  VARCHAR(16) NOT NULL, -- USER PROVIDED PRIMARY KEY
+    handle              VARCHAR(16) NOT NULL, -- User-provided identifier
+    guid                CHAR(36) NOT NULL,    -- 128-bit as 32 hex with 4 hyphens
     CONSTRAINT customer_pk
       PRIMARY KEY (handle),
     CONSTRAINT customer_uk
@@ -84,10 +82,10 @@ CREATE TABLE customer (
 );
 
 CREATE TABLE customer_info (
-    customer_guid CHAR(36) NOT NULL,
-    email_address VARCHAR(128) NOT NULL,
-    given_name    VARCHAR(32),
-    family_name   VARCHAR(32),
+    customer_guid       CHAR(36) NOT NULL,
+    email_address       VARCHAR(128) NOT NULL,
+    given_name          VARCHAR(32),
+    family_name         VARCHAR(32),
     CONSTRAINT customer_info_pk
       PRIMARY KEY (customer_guid),
     CONSTRAINT customer_info_customer_fk
@@ -96,24 +94,24 @@ CREATE TABLE customer_info (
 );
 
 CREATE TABLE "order" (
-    id  SERIAL NOT NULL,
-    customer_guid CHAR(36) NOT NULL,
-    "date" DATE NOT NULL DEFAULT CURRENT_DATE,
+    id                  SERIAL NOT NULL,
+    customer_guid       CHAR(36) NOT NULL,
+    "date"              DATE NOT NULL DEFAULT CURRENT_DATE,
     CONSTRAINT order_pk
       PRIMARY KEY (id),
     CONSTRAINT order_customer_fk
       FOREIGN KEY (customer_guid)
       REFERENCES customer(guid)
 );
-   
+
 CREATE TABLE order_line (
-    order_id    INTEGER NOT NULL,
-    no          INTEGER NOT NULL,
-    product_sku CHAR(8) NOT NULL,
-    unit_price  DECIMAL(8,2) NOT NULL,
-    quantity    INTEGER NOT NULL,
+    order_id            INTEGER NOT NULL,
+    no                  INTEGER NOT NULL,
+    product_sku         CHAR(8) NOT NULL,
+    unit_price          DECIMAL(8,2) NOT NULL,
+    quantity            INTEGER NOT NULL,
     CONSTRAINT order_line_pk
-      PRIMARY KEY (ordeR_id, no),
+      PRIMARY KEY (order_id, no),
     CONSTRAINT order_line_order_fk
       FOREIGN KEY (order_id)
       REFERENCES "order"(id),
@@ -122,14 +120,14 @@ CREATE TABLE order_line (
       REFERENCES product(sku)
 );
 
-CREATE TYPE order_status_code_t AS 
+CREATE TYPE order_status_code_t AS
    ENUM ('pending', 'charged', 'shipped', 'challenged');
 
 CREATE TABLE order_status (
-    order_id    INTEGER NOT NULL,
-    "update"    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    status_code order_status_code_t NOT NULL,
-    comments    TEXT,
+    order_id            INTEGER NOT NULL,
+    "update"            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    status_code         order_status_code_t NOT NULL,
+    comments            TEXT,
     CONSTRAINT order_status_pk
       PRIMARY KEY (order_id, "update"),
     CONSTRAINT order_status_order_fk

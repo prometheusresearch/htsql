@@ -22,6 +22,8 @@ tests:
         DROP ROLE IF EXISTS "htsql_demo";
         DROP DATABASE IF EXISTS "htsql_edge";
         DROP ROLE IF EXISTS "htsql_edge";
+        DROP DATABASE IF EXISTS "htsql_etl";
+        DROP ROLE IF EXISTS "htsql_etl";
         DROP DATABASE IF EXISTS "htsql_sandbox";
         DROP ROLE IF EXISTS "htsql_sandbox";
     autocommit: true
@@ -61,6 +63,21 @@ tests:
       host: ${PGSQL_HOST}
       port: ${PGSQL_PORT}
     sql-include: test/sql/edge-pgsql.sql
+  # Create the `etl` database
+  - connect: *admin-connect
+    sql: |
+        CREATE DATABASE "htsql_etl" WITH ENCODING = 'UTF-8';
+        CREATE ROLE "htsql_etl" WITH LOGIN PASSWORD 'secret';
+        ALTER DATABASE "htsql_etl" OWNER TO "htsql_etl";
+    autocommit: true
+  - connect: &connect-etl
+      engine: pgsql
+      database: htsql_etl
+      username: htsql_etl
+      password: secret
+      host: ${PGSQL_HOST}
+      port: ${PGSQL_PORT}
+    sql-include: test/sql/etl-pgsql.sql
   # Create the `sandbox` database
   - connect: *admin-connect
     sql: |
@@ -92,6 +109,12 @@ tests:
       htsql: {debug: true}
       tweak.pool: {}
     save: edge
+  - db: *connect-etl
+    extensions:
+      htsql: {debug: true}
+      tweak.etl: {}
+      tweak.pool: {}
+    save: etl
   - db: *connect-demo
     extensions:
       htsql: {debug: true}
@@ -113,4 +136,6 @@ tests:
   - include: test/input/error.yaml
   # Embedding HTSQL
   - include: test/input/embedding.yaml
+  # ETL/CRUD
+  - include: test/input/etl.yaml
 

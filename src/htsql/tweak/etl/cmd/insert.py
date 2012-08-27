@@ -80,7 +80,20 @@ class ProduceInsert(Act):
                                              field.domain.family))
                 slice.append(idx)
                 columns.append(column)
-            sql = serialize_insert(table, columns)
+            returning_columns = []
+            if table.primary_key is not None:
+                returning_columns = table.primary_key.origin_columns
+            else:
+                for key in table.unique_keys:
+                    if key.is_partial:
+                        continue
+                    if all(not column.is_nullable
+                           for column in key.origin_columns):
+                        returning_columns = key.origin_columns
+                        break
+            if not returning_columns:
+                raise BadRequestError("table does not have a primary key")
+            sql = serialize_insert(table, columns, returning_columns)
             sql = sql.encode('utf-8')
             if product.data is not None:
                 cursor = connection.cursor()
@@ -89,6 +102,10 @@ class ProduceInsert(Act):
                         continue
                     values = tuple(record[idx] for idx in slice)
                     cursor.execute(sql, values)
+                    returning_values = cursor.fetchall()
+                    if len(returning_values) != 1:
+                        raise BadRequestError("unable to locate inserted row")
+                    [returning_values] = returning_values
         meta = decorate(VoidBinding())
         data = None
         return Product(meta, data)

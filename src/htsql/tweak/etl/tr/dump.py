@@ -4,18 +4,20 @@
 
 
 from ....core.adapter import Utility
-from ....core.util import listof
+from ....core.util import listof, maybe
 from ....core.entity import TableEntity, ColumnEntity
 from ....core.tr.dump import SerializingState, DumpBase
 
 
 class SerializeInsert(Utility, DumpBase):
 
-    def __init__(self, table, columns):
+    def __init__(self, table, columns, returning_columns):
         assert isinstance(table, TableEntity)
         assert isinstance(columns, listof(ColumnEntity))
+        assert isinstance(returning_columns, maybe(listof(ColumnEntity)))
         self.table = table
         self.columns = columns
+        self.returning_columns = returning_columns
         self.state = SerializingState()
         self.stream = self.state.stream
 
@@ -27,6 +29,8 @@ class SerializeInsert(Utility, DumpBase):
         else:
             self.dump_no_columns()
             self.dump_no_values()
+        if self.returning_columns:
+            self.dump_returning()
         return self.stream.flush()
 
     def dump_insert(self):
@@ -62,8 +66,16 @@ class SerializeInsert(Utility, DumpBase):
     def dump_no_values(self):
         self.write(u"DEFAULT VALUES")
 
+    def dump_returning(self):
+        self.newline()
+        self.write(u"RETURNING ")
+        for idx, column in enumerate(self.returning_columns):
+            self.format("{column:name}", column=column.name)
+            if idx < len(self.returning_columns)-1:
+                self.write(u", ")
 
-def serialize_insert(table, columns):
-    return SerializeInsert.__invoke__(table, columns)
+
+def serialize_insert(table, columns, returning_columns):
+    return SerializeInsert.__invoke__(table, columns, returning_columns)
 
 

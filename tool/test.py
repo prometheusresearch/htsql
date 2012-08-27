@@ -53,7 +53,7 @@ def validate_engine(engine):
 
 def validate_database(database):
     # Check if `database` parameter is valid.
-    valid_databases = ['demo', 'edge', 'sandbox']
+    valid_databases = ['demo', 'edge', 'etl', 'sandbox']
     if database not in valid_databases:
         raise fatal("invalid database name: expected one of %s; got %s"
                     % (", ".join(valid_databases), database))
@@ -253,6 +253,7 @@ def createdb(engine):
     Regression databases:
       demo                     : student enrollment database
       edge                     : edge cases collection
+      etl                      : CRUD/ETL database
       sandbox                  : empty database
     """
     db = make_db(engine, 'demo')

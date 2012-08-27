@@ -1,0 +1,25 @@
+#
+# Copyright (c) 2006-2012, Prometheus Research, LLC
+#
+
+title: ETL/CRUD
+id: etl
+ifdef: pgsql
+tests:
+- load: etl
+- uri: /manufacturer:={code:='ACID', name:='Acer'}
+        /:insert
+- uri: /manufacturer:={code:='DELL', name:='Dell'}
+        /:insert
+- uri: /manufacturer:={code:='TOSH', name:='Toshiba'}
+        /:insert
+- uri: /manufacturer:={code:='0992', name:='Lenovo'}
+        /:insert
+- uri: /manufacturer:={code:='2376', name:='Gigabyte'}
+        /:insert
+- uri: /manufacturer:={code:='AAPL', name:='Apple'}
+        /:insert
+- uri: /manufacturer:={code:='6702', name:='Fujitsu'}
+        /:insert
+- uri: /manufacturer{id(), *}
+
