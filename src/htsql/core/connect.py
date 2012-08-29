@@ -81,7 +81,7 @@ class ErrorGuard(object):
             exception = exc_type(exc_value)
 
         # Convert the exception.
-        error = normalize_error(exception)
+        error = unscramble_error(exception)
 
         # If we got a new exception, raise it.
         if error is not None:
@@ -306,7 +306,7 @@ class Connect(Utility):
         raise NotImplementedError()
 
 
-class Normalize(Adapter):
+class Scramble(Adapter):
 
     adapt(Domain)
 
@@ -321,7 +321,22 @@ class Normalize(Adapter):
         return self.convert
 
 
-class NormalizeError(Utility):
+class Unscramble(Adapter):
+
+    adapt(Domain)
+
+    @staticmethod
+    def convert(value):
+        return value
+
+    def __init__(self, domain):
+        self.domain = domain
+
+    def __call__(self):
+        return self.convert
+
+
+class UnscrambleError(Utility):
 
     def __init__(self, error):
         assert isinstance(error, Exception)
@@ -380,7 +395,8 @@ def transaction():
 
 
 connect = Connect.__invoke__
-normalize = Normalize.__invoke__
-normalize_error = NormalizeError.__invoke__
+scramble = Scramble.__invoke__
+unscramble = Unscramble.__invoke__
+unscramble_error = UnscrambleError.__invoke__
 
 

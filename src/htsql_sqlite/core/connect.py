@@ -3,11 +3,12 @@
 #
 
 
-from htsql.core.connect import Connect, Normalize, NormalizeError, DBError
+from htsql.core.connect import (Connect, Scramble, Unscramble, UnscrambleError,
+        DBError)
 from htsql.core.adapter import adapt
 from htsql.core.context import context
 from htsql.core.domain import (BooleanDomain, StringDomain, DateDomain,
-                               TimeDomain, DateTimeDomain)
+        TimeDomain, DateTimeDomain)
 import sqlite3
 import datetime
 import os.path
@@ -51,7 +52,7 @@ class ConnectSQLite(Connect):
         connection.create_function('POWER', 2, sqlite3_power)
 
 
-class NormalizeSQLiteError(NormalizeError):
+class UnscrambleSQLiteError(UnscrambleError):
 
     def __call__(self):
         # If we got a DBAPI exception, generate our error out of it.
@@ -60,13 +61,13 @@ class NormalizeSQLiteError(NormalizeError):
             error = SQLiteError(message)
             return error
         # Otherwise, let the superclass return `None`.
-        return super(NormalizeSQLiteError, self).__call__()
+        return super(UnscrambleSQLiteError, self).__call__()
 
 
 # FIXME: validate numeric values.
 
 
-class NormalizeSQLiteBoolean(Normalize):
+class UnscrambleSQLiteBoolean(Unscramble):
 
     adapt(BooleanDomain)
 
@@ -81,7 +82,7 @@ class NormalizeSQLiteBoolean(Normalize):
         return (value != 0)
 
 
-class NormalizeSQLiteString(Normalize):
+class UnscrambleSQLiteString(Unscramble):
 
     adapt(StringDomain)
 
@@ -96,7 +97,7 @@ class NormalizeSQLiteString(Normalize):
         return value
 
 
-class NormalizeSQLiteDate(Normalize):
+class UnscrambleSQLiteDate(Unscramble):
 
     adapt(DateDomain)
 
@@ -113,7 +114,7 @@ class NormalizeSQLiteDate(Normalize):
         return value
 
 
-class NormalizeSQLiteTime(Normalize):
+class UnscrambleSQLiteTime(Unscramble):
 
     adapt(TimeDomain)
 
@@ -140,7 +141,7 @@ class NormalizeSQLiteTime(Normalize):
         return value
 
 
-class NormalizeSQLiteDateTime(Normalize):
+class UnscrambleSQLiteDateTime(Unscramble):
 
     adapt(DateTimeDomain)
 

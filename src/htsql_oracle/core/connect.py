@@ -3,11 +3,12 @@
 #
 
 
-from htsql.core.connect import Connect, Normalize, NormalizeError, DBError
+from htsql.core.connect import (Connect, Scramble, Unscramble, UnscrambleError,
+        DBError)
 from htsql.core.adapter import adapt
 from htsql.core.context import context
 from htsql.core.domain import (BooleanDomain, DecimalDomain, StringDomain,
-                               DateDomain, TimeDomain)
+        DateDomain, TimeDomain)
 import datetime
 import decimal
 import cx_Oracle
@@ -65,7 +66,7 @@ class ConnectOracle(Connect):
         return connection
 
 
-class NormalizeOracleError(NormalizeError):
+class UnscrambleOracleError(UnscrambleError):
 
     def __call__(self):
         # If we got a DBAPI exception, generate our error out of it.
@@ -75,10 +76,10 @@ class NormalizeOracleError(NormalizeError):
             return error
 
         # Otherwise, let the superclass return `None`.
-        return super(NormalizeOracleError, self).__call__()
+        return super(UnscrambleOracleError, self).__call__()
 
 
-class NormalizeOracleBoolean(Normalize):
+class UnscrambleOracleBoolean(Unscramble):
 
     adapt(BooleanDomain)
 
@@ -89,7 +90,7 @@ class NormalizeOracleBoolean(Normalize):
         return (value != 0)
 
 
-class NormalizeOracleDecimal(Normalize):
+class UnscrambleOracleDecimal(Unscramble):
 
     adapt(DecimalDomain)
 
@@ -100,7 +101,7 @@ class NormalizeOracleDecimal(Normalize):
         return decimal.Decimal(value)
 
 
-class NormalizeOracleString(Normalize):
+class UnscrambleOracleString(Unscramble):
 
     adapt(StringDomain)
 
@@ -117,7 +118,7 @@ class NormalizeOracleString(Normalize):
         return value
 
 
-class NormalizeOracleDate(Normalize):
+class UnscrambleOracleDate(Unscramble):
 
     adapt(DateDomain)
 
@@ -129,7 +130,7 @@ class NormalizeOracleDate(Normalize):
         return value
 
 
-class NormalizeOracleTime(Normalize):
+class UnscrambleOracleTime(Unscramble):
 
     adapt(TimeDomain)
 

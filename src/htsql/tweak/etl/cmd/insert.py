@@ -5,8 +5,7 @@
 
 from ....core.adapter import adapt
 from ....core.error import BadRequestError
-from ....core.connect import transaction
-from ....core.connect import normalize as normalize_domain
+from ....core.connect import transaction, scramble, unscramble
 from ....core.mark import EmptyMark
 from ....core.domain import ListDomain, RecordDomain, BooleanDomain
 from ....core.classify import normalize, classify, relabel
@@ -41,14 +40,16 @@ class ProduceInsert(Act):
         with transaction() as connection:
             product = produce(self.command.feed)
             table, columns, slice = self.introspect_feed(product.meta)
+            converts = [unscramble(column.domain) for column in columns]
+            reconverts = [scramble(column.domain) for column in columns]
             returning_columns = self.find_unique_key(table)
             sql = serialize_insert(table, columns, returning_columns)
             sql = sql.encode('utf-8')
             identity_plan = self.make_identity_statement(table,
                                                     returning_columns)
             identity_sql = identity_plan.statement.sql.encode('utf-8')
-            normalizers = [normalize_domain(domain)
-                           for domain in identity_plan.statement.domains]
+            identity_converts = [unscramble(domain)
+                        for domain in identity_plan.statement.domains]
             meta = identity_plan.profile
             data = []
             if product.data is not None:
@@ -57,6 +58,10 @@ class ProduceInsert(Act):
                     if record is None:
                         continue
                     values = tuple(record[idx] for idx in slice)
+                    values = [convert(value)
+                              for value, convert in zip(values, converts)]
+                    values = [reconvert(value)
+                              for value, reconvert in zip(values, reconverts)]
                     cursor.execute(sql, values)
                     returning_values = cursor.fetchall()
                     if len(returning_values) != 1:
@@ -65,8 +70,9 @@ class ProduceInsert(Act):
                     cursor.execute(identity_sql, returning_values)
                     rows = []
                     for row in cursor:
-                        row = tuple(normalizer(item)
-                                for item, normalizer in zip(row, normalizers))
+                        row = tuple(convert(item)
+                                    for item, convert in zip(row,
+                                                    identity_converts))
                         rows.append(row)
                     stream = RowStream(rows, [])
                     ids = identity_plan.compose(None, stream)

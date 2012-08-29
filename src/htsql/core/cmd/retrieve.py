@@ -18,7 +18,7 @@ from ..tr.assemble import assemble
 from ..tr.reduce import reduce
 from ..tr.dump import serialize
 from ..tr.plan import Statement
-from ..connect import transaction, normalize
+from ..connect import transaction, unscramble
 from ..error import PermissionError
 
 
@@ -43,13 +43,13 @@ class RowStream(object):
 
     @classmethod
     def open(cls, statement, cursor):
-        normalizers = [normalize(domain)
-                       for domain in statement.domains]
+        converts = [unscramble(domain)
+                    for domain in statement.domains]
         cursor.execute(statement.sql.encode('utf-8'))
         rows = []
         for row in cursor:
-            row = tuple(normalizer(item)
-                    for item, normalizer in zip(row, normalizers))
+            row = tuple(convert(item)
+                        for item, convert in zip(row, converts))
             rows.append(row)
         substreams = [cls.open(substatement, cursor)
                       for substatement in statement.substatements]

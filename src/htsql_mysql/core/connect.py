@@ -3,11 +3,12 @@
 #
 
 
-from htsql.core.connect import Connect, Normalize, NormalizeError, DBError
+from htsql.core.connect import (Connect, Scramble, Unscramble, UnscrambleError,
+        DBError)
 from htsql.core.adapter import adapt
 from htsql.core.context import context
 from htsql.core.domain import (BooleanDomain, StringDomain, EnumDomain,
-                               TimeDomain)
+        TimeDomain)
 import MySQLdb, MySQLdb.connections
 import datetime
 
@@ -47,7 +48,7 @@ class ConnectMySQL(Connect):
         return connection
 
 
-class NormalizeMySQLError(NormalizeError):
+class UnscrambleMySQLError(UnscrambleError):
 
     def __call__(self):
         # If we got a DBAPI exception, generate our error out of it.
@@ -57,10 +58,10 @@ class NormalizeMySQLError(NormalizeError):
             return error
 
         # Otherwise, let the superclass return `None`.
-        return super(NormalizeMySQLError, self).__call__()
+        return super(UnscrambleMySQLError, self).__call__()
 
 
-class NormalizeMySQLBoolean(Normalize):
+class UnscrambleMySQLBoolean(Unscramble):
 
     adapt(BooleanDomain)
 
@@ -71,7 +72,7 @@ class NormalizeMySQLBoolean(Normalize):
         return (value != 0)
 
 
-class NormalizeMySQLString(Normalize):
+class UnscrambleMySQLString(Unscramble):
 
     adapt(StringDomain)
 
@@ -82,7 +83,7 @@ class NormalizeMySQLString(Normalize):
         return value
 
 
-class NormalizeMySQLEnum(Normalize):
+class UnscrambleMySQLEnum(Unscramble):
 
     adapt(EnumDomain)
 
@@ -94,7 +95,7 @@ class NormalizeMySQLEnum(Normalize):
         return value
 
 
-class NormalizeMySQLTime(Normalize):
+class UnscrambleMySQLTime(Unscramble):
 
     adapt(TimeDomain)
 

@@ -5,7 +5,8 @@
 
 from htsql.core.adapter import adapt
 from htsql.core.domain import StringDomain, EnumDomain
-from htsql.core.connect import Connect, DBError, NormalizeError, Normalize
+from htsql.core.connect import (Connect, DBError, UnscrambleError, Unscramble,
+        Scramble)
 from htsql.core.context import context
 import psycopg2, psycopg2.extensions
 
@@ -56,7 +57,7 @@ class ConnectPGSQL(Connect):
         return connection
 
 
-class NormalizePGSQLError(NormalizeError):
+class UnscramblePGSQLError(UnscrambleError):
 
     def __call__(self):
         # If we got a DBAPI exception, generate our own error.
@@ -66,10 +67,10 @@ class NormalizePGSQLError(NormalizeError):
             return error
 
         # Otherwise, let the superclass return `None`.
-        return super(NormalizePGSQLError, self).__call__()
+        return super(UnscramblePGSQLError, self).__call__()
 
 
-class NormalizePGSQLString(Normalize):
+class UnscramblePGSQLString(Unscramble):
 
     adapt(StringDomain)
 
@@ -80,7 +81,7 @@ class NormalizePGSQLString(Normalize):
         return value
 
 
-class NormalizePGSQLEnum(Normalize):
+class UnscramblePGSQLEnum(Unscramble):
 
     adapt(EnumDomain)
 

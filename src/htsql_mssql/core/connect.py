@@ -3,11 +3,12 @@
 #
 
 
-from htsql.core.connect import Connect, Normalize, NormalizeError, DBError
+from htsql.core.connect import (Connect, Scramble, Unscramble, UnscrambleError,
+        DBError)
 from htsql.core.adapter import adapt
 from htsql.core.context import context
 from htsql.core.domain import (BooleanDomain, StringDomain, DateDomain,
-                               TimeDomain)
+        TimeDomain)
 import datetime
 import pymssql
 
@@ -42,7 +43,7 @@ class ConnectMSSQL(Connect):
         return connection
 
 
-class NormalizeMSSQLError(NormalizeError):
+class UnscrambleMSSQLError(UnscrambleError):
 
     def __call__(self):
         # If we got a DBAPI exception, generate our error out of it.
@@ -52,10 +53,10 @@ class NormalizeMSSQLError(NormalizeError):
             return error
 
         # Otherwise, let the superclass return `None`.
-        return super(NormalizeMSSQLError, self).__call__()
+        return super(UnscrambleMSSQLError, self).__call__()
 
 
-class NormalizeMSSQLBoolean(Normalize):
+class UnscrambleMSSQLBoolean(Unscramble):
 
     adapt(BooleanDomain)
 
@@ -66,7 +67,7 @@ class NormalizeMSSQLBoolean(Normalize):
         return (value != 0)
 
 
-class NormalizeMSSQLString(Normalize):
+class UnscrambleMSSQLString(Unscramble):
 
     adapt(StringDomain)
 
@@ -77,7 +78,7 @@ class NormalizeMSSQLString(Normalize):
         return value
 
 
-class NormalizeMSSQLDate(Normalize):
+class UnscrambleMSSQLDate(Unscramble):
 
     adapt(DateDomain)
 
@@ -89,7 +90,7 @@ class NormalizeMSSQLDate(Normalize):
         return value
 
 
-class NormalizeMSSQLTime(Normalize):
+class UnscrambleMSSQLTime(Unscramble):
 
     adapt(TimeDomain)
 
