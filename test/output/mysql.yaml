@@ -10125,9 +10125,7 @@ tests:
              ----
              /{true(),false(),null(),''}
              SELECT TRUE,
-                    FALSE,
-                    NULL,
-                    ''
+                    FALSE
         - uri: /department{code, name}?is_null(school_code)
           status: 200 OK
           headers:
@@ -12351,21 +12349,14 @@ tests:
       tests:
       - id: literals
         tests:
-        - uri: /{null(), '', 'HTSQL'}
+        - uri: /{null(), '', 'HTSQL', '%ce%bb%cf%8c%ce%b3%ce%bf%cf%82'}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
-          body: |2
-             | null() | '' | 'HTSQL' |
-            -+--------+----+---------+-
-             |        | "" | HTSQL   |
-
-             ----
-             /{null(),'','HTSQL'}
-             SELECT NULL,
-                    '',
-                    'HTSQL'
+          body: " | null() | '' | 'HTSQL' | '\u03BB\u03CC\u03B3\u03BF\u03C2' |\n-+--------+----+---------+---------+-\n
+            |        | \"\" | HTSQL   | \u03BB\u03CC\u03B3\u03BF\u03C2   |\n\n ----\n
+            /{null(),'','HTSQL','\u03BB\u03CC\u03B3\u03BF\u03C2'}\n SELECT TRUE\n"
         - uri: /{true(), false()}
           status: 200 OK
           headers:
@@ -12410,19 +12401,20 @@ tests:
             encode error: invalid Boolean literal: expected 'true' or 'false'; got 'yes':
                 /boolean('yes')
                  ^^^^^^^^^^^^^^
-        - uri: /{'', 'HTSQL', 'O''Reilly', '%ce%bb%cf%8c%ce%b3%ce%bf%cf%82', '$-b
-            \pm \sqrt{b^2 - 4ac} \over 2a$'}
+        - uri: /{string(''), string('HTSQL'), string('O''Reilly'), string('%ce%bb%cf%8c%ce%b3%ce%bf%cf%82'),
+            string('$-b \pm \sqrt{b^2 - 4ac} \over 2a$')}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
-          body: " | '' | 'HTSQL' | 'O''Reilly' | '\u03BB\u03CC\u03B3\u03BF\u03C2'
-            | '$-b \\pm \\sqrt{b^2 - 4ac} \\over 2a$' |\n-+----+---------+-------------+---------+--------------------------------------+-\n
-            | \"\" | HTSQL   | O'Reilly    | \u03BB\u03CC\u03B3\u03BF\u03C2   | $-b
-            \\pm \\sqrt{b^2 - 4ac} \\over 2a$   |\n\n ----\n /{'','HTSQL','O''Reilly','\u03BB\u03CC\u03B3\u03BF\u03C2','$-b
-            \\pm \\sqrt{b^2 - 4ac} \\over 2a$'}\n SELECT '',\n        'HTSQL',\n        'O\\'Reilly',\n
-            \       '\u03BB\u03CC\u03B3\u03BF\u03C2',\n        '$-b \\\\pm \\\\sqrt{b^2
-            - 4ac} \\\\over 2a$'\n"
+          body: " | string('') | string('HTSQL') | string('O''Reilly') | string('\u03BB\u03CC\u03B3\u03BF\u03C2')
+            | string('$-b \\pm \\sqrt{b^2 - 4ac} \\over 2a$') |\n-+------------+-----------------+---------------------+-----------------+----------------------------------------------+-\n
+            | \"\"         | HTSQL           | O'Reilly            | \u03BB\u03CC\u03B3\u03BF\u03C2
+            \          | $-b \\pm \\sqrt{b^2 - 4ac} \\over 2a$           |\n\n ----\n
+            /{string(''),string('HTSQL'),string('O''Reilly'),string('\u03BB\u03CC\u03B3\u03BF\u03C2'),string('$-b
+            \\pm \\sqrt{b^2 - 4ac} \\over 2a$')}\n SELECT '',\n        'HTSQL',\n
+            \       'O\\'Reilly',\n        '\u03BB\u03CC\u03B3\u03BF\u03C2',\n        '$-b
+            \\\\pm \\\\sqrt{b^2 - 4ac} \\\\over 2a$'\n"
         - uri: /{string('832040')}
           status: 200 OK
           headers:
@@ -29002,8 +28994,9 @@ tests:
              ORDER BY `school`.`code` ASC
       - id: data-types
         tests:
-        - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL', date('2010-04-15'),
-            time('20:13:04.5'), datetime('2010-04-15 20:13')} /:raw
+        - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5, string(null()),
+            string(''), string('OMGWTFBBQ'), date('2010-04-15'), time('20:13:04.5'),
+            datetime('2010-04-15 20:13')} /:raw
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
@@ -29019,10 +29012,17 @@ tests:
                       "fields": [
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "untyped"
                           },
                           "header": "null()",
                           "syntax": "null()"
+                        },
+                        {
+                          "domain": {
+                            "type": "untyped"
+                          },
+                          "header": "'HTSQL'",
+                          "syntax": "'HTSQL'"
                         },
                         {
                           "domain": {
@@ -29063,8 +29063,22 @@ tests:
                           "domain": {
                             "type": "string"
                           },
-                          "header": "'HTSQL'",
-                          "syntax": "'HTSQL'"
+                          "header": "string(null())",
+                          "syntax": "string(null())"
+                        },
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "string('')",
+                          "syntax": "string('')"
+                        },
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "string('OMGWTFBBQ')",
+                          "syntax": "string('OMGWTFBBQ')"
                         },
                         {
                           "domain": {
@@ -29092,25 +29106,29 @@ tests:
                   }
                 },
                 "path": "",
-                "syntax": "\/{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15'),time('20:13:04.5'),datetime('2010-04-15 20:13')}"
+                "syntax": "\/{null(),'HTSQL',true(),false(),60,2.125,271828e-5,string(null()),string(''),string('OMGWTFBBQ'),date('2010-04-15'),time('20:13:04.5'),datetime('2010-04-15 20:13')}"
               },
               "data": [
                 [
                   null,
+                  "HTSQL",
                   true,
                   false,
                   60,
                   2.125,
                   2.71828,
-                  "HTSQL",
+                  null,
+                  "",
+                  "OMGWTFBBQ",
                   "2010-04-15",
                   "20:13:04.500000",
                   "2010-04-15 20:13:00"
                 ]
               ]
             }
-        - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL', date('2010-04-15'),
-            time('20:13:04.5'), datetime('2010-04-15 20:13')} /:json
+        - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5, string(null()),
+            string(''), string('OMGWTFBBQ'), date('2010-04-15'), time('20:13:04.5'),
+            datetime('2010-04-15 20:13')} /:json
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
@@ -29119,38 +29137,43 @@ tests:
             {
               "0": [
                 {
-                  "1": true,
-                  "2": false,
-                  "3": 60,
-                  "4": 2.125,
-                  "5": 2.71828,
-                  "6": "HTSQL",
-                  "7": "2010-04-15",
-                  "8": "20:13:04.500000",
-                  "9": "2010-04-15 20:13:00"
+                  "1": "HTSQL",
+                  "2": true,
+                  "3": false,
+                  "4": 60,
+                  "5": 2.125,
+                  "6": 2.71828,
+                  "8": "",
+                  "9": "OMGWTFBBQ",
+                  "10": "2010-04-15",
+                  "11": "20:13:04.500000",
+                  "12": "2010-04-15 20:13:00"
                 }
               ]
             }
-        - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL', date('2010-04-15'),
-            time('20:13:04.5'), datetime('2010-04-15 20:13')} /:csv
+        - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5, string(null()),
+            string(''), string('OMGWTFBBQ'), date('2010-04-15'), time('20:13:04.5'),
+            datetime('2010-04-15 20:13')} /:csv
           status: 200 OK
           headers:
           - [Content-Type, text/csv; charset=UTF-8]
           - [Content-Disposition, attachment; filename="_.csv"]
-          body: "null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15'),time('20:13:04.5'),datetime('2010-04-15
-            20:13')\r\n,1,0,60,2.125,2.71828,HTSQL,2010-04-15,20:13:04.500000,2010-04-15
+          body: "null(),'HTSQL',true(),false(),60,2.125,271828e-5,string(null()),string(''),string('OMGWTFBBQ'),date('2010-04-15'),time('20:13:04.5'),datetime('2010-04-15
+            20:13')\r\n,HTSQL,1,0,60,2.125,2.71828,,,OMGWTFBBQ,2010-04-15,20:13:04.500000,2010-04-15
             20:13:00\r\n"
-        - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL', date('2010-04-15'),
-            time('20:13:04.5'), datetime('2010-04-15 20:13')} /:tsv
+        - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5, string(null()),
+            string(''), string('OMGWTFBBQ'), date('2010-04-15'), time('20:13:04.5'),
+            datetime('2010-04-15 20:13')} /:tsv
           status: 200 OK
           headers:
           - [Content-Type, text/tab-separated-values; charset=UTF-8]
           - [Content-Disposition, attachment; filename="_.tsv"]
-          body: "null()\ttrue()\tfalse()\t60\t2.125\t271828e-5\t'HTSQL'\tdate('2010-04-15')\ttime('20:13:04.5')\tdatetime('2010-04-15
-            20:13')\r\n\t1\t0\t60\t2.125\t2.71828\tHTSQL\t2010-04-15\t20:13:04.500000\t2010-04-15
+          body: "null()\t'HTSQL'\ttrue()\tfalse()\t60\t2.125\t271828e-5\tstring(null())\tstring('')\tstring('OMGWTFBBQ')\tdate('2010-04-15')\ttime('20:13:04.5')\tdatetime('2010-04-15
+            20:13')\r\n\tHTSQL\t1\t0\t60\t2.125\t2.71828\t\t\tOMGWTFBBQ\t2010-04-15\t20:13:04.500000\t2010-04-15
             20:13:00\r\n"
-        - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL', date('2010-04-15'),
-            time('20:13:04.5'), datetime('2010-04-15 20:13')} /:xml
+        - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5, string(null()),
+            string(''), string('OMGWTFBBQ'), date('2010-04-15'), time('20:13:04.5'),
+            datetime('2010-04-15 20:13')} /:xml
           status: 200 OK
           headers:
           - [Content-Type, application/xml]
@@ -29159,19 +29182,22 @@ tests:
             <?xml version="1.0" encoding="UTF-8" ?>
             <htsql:result xmlns:htsql="http://htsql.org/2010/xml">
               <_>
-                <_2>true</_2>
-                <_3>false</_3>
-                <_4>60</_4>
-                <_5>2.125</_5>
-                <_6>2.71828</_6>
-                <_7>HTSQL</_7>
-                <_8>2010-04-15</_8>
-                <_9>20:13:04.500000</_9>
-                <_10>2010-04-15 20:13:00</_10>
+                <_2>HTSQL</_2>
+                <_3>true</_3>
+                <_4>false</_4>
+                <_5>60</_5>
+                <_6>2.125</_6>
+                <_7>2.71828</_7>
+                <_9></_9>
+                <_10>OMGWTFBBQ</_10>
+                <_11>2010-04-15</_11>
+                <_12>20:13:04.500000</_12>
+                <_13>2010-04-15 20:13:00</_13>
               </_>
             </htsql:result>
-        - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL', date('2010-04-15'),
-            time('20:13:04.5'), datetime('2010-04-15 20:13')} /:html
+        - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5, string(null()),
+            string(''), string('OMGWTFBBQ'), date('2010-04-15'), time('20:13:04.5'),
+            datetime('2010-04-15 20:13')} /:html
           status: 200 OK
           headers:
           - [Content-Type, text/html; charset=UTF-8]
@@ -29208,33 +29234,35 @@ tests:
             <body>
             <table class="htsql-output" summary="">
             <thead>
-            <tr><th class="htsql-empty-header"></th><th>null()</th><th>true()</th><th>false()</th><th>60</th><th>2.125</th><th>271828e-5</th><th>'HTSQL'</th><th>date('2010-04-15')</th><th>time('20:13:04.5')</th><th>datetime('2010-04-15 20:13')</th></tr>
+            <tr><th class="htsql-empty-header"></th><th>null()</th><th>'HTSQL'</th><th>true()</th><th>false()</th><th>60</th><th>2.125</th><th>271828e-5</th><th>string(null())</th><th>string('')</th><th>string('OMGWTFBBQ')</th><th>date('2010-04-15')</th><th>time('20:13:04.5')</th><th>datetime('2010-04-15 20:13')</th></tr>
             </thead>
             <tbody>
-            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-string-type htsql-null-value"></td><td class="htsql-boolean-type htsql-true-value">true</td><td class="htsql-boolean-type htsql-false-value">false</td><td class="htsql-integer-type">60</td><td class="htsql-decimal-type">2.125</td><td class="htsql-float-type">2.71828</td><td class="htsql-string-type">HTSQL</td><td class="htsql-date-type">2010-04-15</td><td class="htsql-time-type">20:13:04.500000</td><td class="htsql-datetime-type">2010-04-15 20:13:00</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-untyped-type htsql-null-value"></td><td class="htsql-untyped-type">HTSQL</td><td class="htsql-boolean-type htsql-true-value">true</td><td class="htsql-boolean-type htsql-false-value">false</td><td class="htsql-integer-type">60</td><td class="htsql-decimal-type">2.125</td><td class="htsql-float-type">2.71828</td><td class="htsql-string-type htsql-null-value"></td><td class="htsql-string-type htsql-empty-value"></td><td class="htsql-string-type">OMGWTFBBQ</td><td class="htsql-date-type">2010-04-15</td><td class="htsql-time-type">20:13:04.500000</td><td class="htsql-datetime-type">2010-04-15 20:13:00</td></tr>
             </tbody>
             </table>
             </body>
             </html>
-        - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL', date('2010-04-15'),
-            time('20:13:04.5'), datetime('2010-04-15 20:13')} /:txt
+        - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5, string(null()),
+            string(''), string('OMGWTFBBQ'), date('2010-04-15'), time('20:13:04.5'),
+            datetime('2010-04-15 20:13')} /:txt
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | null() | true() | false() | 60 | 2.125 | 271828e-5 | 'HTSQL' | date('2010-04-15') | time('20:13:04.5') | datetime('2010-04-15 20:13') |
-            -+--------+--------+---------+----+-------+-----------+---------+--------------------+--------------------+------------------------------+-
-             |        | true   | false   | 60 | 2.125 |   2.71828 | HTSQL   | 2010-04-15         | 20:13:04.500000    | 2010-04-15 20:13:00          |
+             | null() | 'HTSQL' | true() | false() | 60 | 2.125 | 271828e-5 | string(null()) | string('') | string('OMGWTFBBQ') | date('2010-04-15') | time('20:13:04.5') | datetime('2010-04-15 20:13') |
+            -+--------+---------+--------+---------+----+-------+-----------+----------------+------------+---------------------+--------------------+--------------------+------------------------------+-
+             |        | HTSQL   | true   | false   | 60 | 2.125 |   2.71828 |                | ""         | OMGWTFBBQ           | 2010-04-15         | 20:13:04.500000    | 2010-04-15 20:13:00          |
 
              ----
-             /{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15'),time('20:13:04.5'),datetime('2010-04-15 20:13')}
-             SELECT NULL,
-                    TRUE,
+             /{null(),'HTSQL',true(),false(),60,2.125,271828e-5,string(null()),string(''),string('OMGWTFBBQ'),date('2010-04-15'),time('20:13:04.5'),datetime('2010-04-15 20:13')}
+             SELECT TRUE,
                     FALSE,
                     60,
                     2.125,
                     2.71828e0,
-                    'HTSQL',
+                    NULL,
+                    '',
+                    'OMGWTFBBQ',
                     DATE('2010-04-15'),
                     TIME('20:13:04.500000'),
                     TIMESTAMP('2010-04-15 20:13:00')
@@ -30056,19 +30084,19 @@ tests:
           body: "{\n  \"meta\": {\n    \"domain\": {\n      \"type\": \"list\",\n
             \     \"item\": {\n        \"domain\": {\n          \"type\": \"record\",\n
             \         \"fields\": [\n            {\n              \"domain\": {\n
-            \               \"type\": \"string\"\n              },\n              \"header\":
+            \               \"type\": \"untyped\"\n              },\n              \"header\":
             \"'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10'\",\n              \"syntax\":
             \"'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10'\"\n            },\n
             \           {\n              \"domain\": {\n                \"type\":
-            \"string\"\n              },\n              \"header\": \"'%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F'\",\n
+            \"untyped\"\n              },\n              \"header\": \"'%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F'\",\n
             \             \"syntax\": \"'%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F'\"\n
             \           },\n            {\n              \"domain\": {\n                \"type\":
-            \"string\"\n              },\n              \"header\": \"'\u03BE'\",\n
+            \"untyped\"\n              },\n              \"header\": \"'\u03BE'\",\n
             \             \"syntax\": \"'\u03BE'\"\n            },\n            {\n
-            \             \"domain\": {\n                \"type\": \"string\"\n              },\n
+            \             \"domain\": {\n                \"type\": \"untyped\"\n              },\n
             \             \"header\": \"'\\\\\\/%25''\\\"&<>#'\",\n              \"syntax\":
             \"'\\\\\\/%25''\\\"&<>#'\"\n            },\n            {\n              \"domain\":
-            {\n                \"type\": \"string\"\n              },\n              \"header\":
+            {\n                \"type\": \"untyped\"\n              },\n              \"header\":
             \"''\",\n              \"syntax\": \"''\"\n            }\n          ]\n
             \       }\n      }\n    },\n    \"path\": \"\",\n    \"syntax\": \"\\/{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10','%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F','\u03BE','\\\\\\/%25''\\\"&<>#',''}\"\n
             \ },\n  \"data\": [\n    [\n      \"\\u0001\\u0002\\u0003\\u0004\\u0005\\u0006\\u0007\\b\\t\\n\\u000B\\f\\r\\u000E\\u000F\\u0010\",\n
@@ -30150,10 +30178,10 @@ tests:
             font-weight: bold; margin: 1px 0 0 }\ndiv.htsql-welcome > p { margin:
             1px 0 0 }\n</style>\n</head>\n<body>\n<table class=\"htsql-output\" summary=\"\">\n<thead>\n<tr><th
             class=\"htsql-empty-header\"></th><th>'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10'</th><th>'%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F'</th><th>'\u03BE'</th><th>'\\/%25''\"&amp;&lt;&gt;#'</th><th>''</th></tr>\n</thead>\n<tbody>\n<tr
-            class=\"htsql-odd-row\"><td class=\"htsql-index\">1</td><td class=\"htsql-string-type\">\x01\x02\x03\x04\x05\x06\a\b\t\n\v\f\r\x0E\x0F\x10</td><td
-            class=\"htsql-string-type\">\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\e\x1C\x1D\x1E\x1F\x7F</td><td
-            class=\"htsql-string-type\">\u03BE</td><td class=\"htsql-string-type\">\\/%'\"&amp;&lt;&gt;#</td><td
-            class=\"htsql-string-type htsql-empty-value\"></td></tr>\n</tbody>\n</table>\n</body>\n</html>\n"
+            class=\"htsql-odd-row\"><td class=\"htsql-index\">1</td><td class=\"htsql-untyped-type\">\x01\x02\x03\x04\x05\x06\a\b\t\n\v\f\r\x0E\x0F\x10</td><td
+            class=\"htsql-untyped-type\">\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\e\x1C\x1D\x1E\x1F\x7F</td><td
+            class=\"htsql-untyped-type\">\u03BE</td><td class=\"htsql-untyped-type\">\\/%'\"&amp;&lt;&gt;#</td><td
+            class=\"htsql-untyped-type htsql-empty-value\"></td></tr>\n</tbody>\n</table>\n</body>\n</html>\n"
         - uri: /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10', '%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F',
             '%CE%BE', '\/%25''"&<>#', ''}/:txt
           status: 200 OK
@@ -30165,9 +30193,7 @@ tests:
             | \"\\u0001\\u0002\\u0003\\u0004\\u0005\\u0006\\u0007\\b\\t\\n\\u000b\\f\\r\\u000e\\u000f\\u0010\"
             | \"\\u0011\\u0012\\u0013\\u0014\\u0015\\u0016\\u0017\\u0018\\u0019\\u001a\\u001b\\u001c\\u001d\\u001e\\u001f\x7F\"
             | \u03BE   | \\/%'\"&<>#      | \"\" |\n\n ----\n /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10','%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F','\u03BE','\\/%25''\"&<>#',''}\n
-            SELECT '\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\\n\uFFFD\uFFFD\\r\uFFFD\uFFFD\uFFFD',\n
-            \       '\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD',\n
-            \       '\u03BE',\n        '\\\\/%\\'\"&<>#',\n        ''\n"
+            SELECT TRUE\n"
       - id: nested-segments
         tests:
         - uri: /{/null, /school.limit(3), /department.limit(5)}/:raw
@@ -30189,7 +30215,7 @@ tests:
                             "type": "list",
                             "item": {
                               "domain": {
-                                "type": "string"
+                                "type": "untyped"
                               }
                             }
                           },
@@ -30533,7 +30559,7 @@ tests:
              /{/null,/school.limit(3),/department.limit(5)}
              SELECT TRUE
 
-               SELECT NULL
+               SELECT TRUE
                FROM (SELECT TRUE AS `!`) AS `!`
                WHERE FALSE
 

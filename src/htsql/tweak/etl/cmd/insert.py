@@ -3,11 +3,11 @@
 #
 
 
-from ....core.adapter import adapt
+from ....core.adapter import Adapter, adapt
 from ....core.error import BadRequestError
 from ....core.connect import transaction, scramble, unscramble
 from ....core.mark import EmptyMark
-from ....core.domain import ListDomain, RecordDomain, BooleanDomain
+from ....core.domain import Domain, ListDomain, RecordDomain, BooleanDomain
 from ....core.classify import normalize, classify, relabel
 from ....core.model import HomeNode, TableNode, TableArc, ColumnArc
 from ....core.cmd.act import Act, ProduceAction, produce
@@ -30,6 +30,24 @@ from ....core.tr.dump import serialize
 from ....core.tr.lookup import identify
 from .command import InsertCmd
 from ..tr.dump import serialize_insert
+
+
+class Clarify(Adapter):
+
+    adapt(Domain, Domain)
+
+    @staticmethod
+    def convert(value):
+        return value
+
+    def __init__(self, origin_domain, domain):
+        self.origin_domain = origin_domain
+        self.domain = domain
+
+    def __call__(self):
+        if self.origin_domain == self.domain:
+            return self.convert
+        return None
 
 
 class ProduceInsert(Act):

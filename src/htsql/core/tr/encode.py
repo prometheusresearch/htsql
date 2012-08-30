@@ -234,7 +234,13 @@ class EncodeSegment(Encode):
         if not flow.spans(root):
             raise EncodeError("a descendant segment flow is expected",
                               self.binding.mark)
-        if coerce(code.domain) is not None:
+        if (isinstance(code, LiteralCode) and
+                isinstance(code.domain, UntypedDomain)):
+            if code.value is None:
+                filter = LiteralCode(False, coerce(BooleanDomain()),
+                                     code.binding)
+                flow = FilteredFlow(flow, filter, flow.binding)
+        elif coerce(code.domain) is not None:
             filter = FormulaCode(IsNullSig(-1), coerce(BooleanDomain()),
                                  code.binding, op=code)
             flow = FilteredFlow(flow, filter, flow.binding)

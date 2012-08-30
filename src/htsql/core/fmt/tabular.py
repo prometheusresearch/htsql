@@ -15,9 +15,9 @@ from ..util import listof
 from ..adapter import Adapter, adapt, adapt_many
 from .format import Emit, EmitHeaders, CSVFormat
 from ..domain import (Domain, BooleanDomain, NumberDomain, FloatDomain,
-                      DecimalDomain, StringDomain, EnumDomain, DateDomain,
-                      TimeDomain, DateTimeDomain, ListDomain, RecordDomain,
-                      VoidDomain, OpaqueDomain, Profile)
+        DecimalDomain, StringDomain, EnumDomain, DateDomain, TimeDomain,
+        DateTimeDomain, ListDomain, RecordDomain, UntypedDomain, VoidDomain,
+        OpaqueDomain, Profile)
 import csv
 import cStringIO
 import math
@@ -227,7 +227,8 @@ class DecimalToCSV(ToCSV):
 
 class StringToCSV(ToCSV):
 
-    adapt_many(StringDomain,
+    adapt_many(UntypedDomain,
+               StringDomain,
                EnumDomain)
 
     def cells(self, value):

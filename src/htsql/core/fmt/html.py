@@ -17,9 +17,9 @@ from .format import HTMLFormat, EmitHeaders, Emit
 from ..mark import Mark
 from ..error import InternalServerError
 from ..domain import (Domain, BooleanDomain, NumberDomain, DecimalDomain,
-                      StringDomain, EnumDomain, DateDomain,
-                      TimeDomain, DateTimeDomain, ListDomain, RecordDomain,
-                      VoidDomain, OpaqueDomain, Profile)
+        StringDomain, EnumDomain, DateDomain, TimeDomain, DateTimeDomain,
+        ListDomain, RecordDomain, UntypedDomain, VoidDomain, OpaqueDomain,
+        Profile)
 import pkg_resources
 import cgi
 import re
@@ -589,7 +589,8 @@ class ListToHTML(ToHTML):
 
 class NativeToHTML(ToHTML):
 
-    adapt_many(StringDomain,
+    adapt_many(UntypedDomain,
+               StringDomain,
                EnumDomain)
 
     def dump(self, value):

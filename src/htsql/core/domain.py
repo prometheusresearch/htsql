@@ -106,6 +106,26 @@ class UntypedDomain(Domain):
     """
     family = 'untyped'
 
+    def parse(self, data):
+        # Sanity check on the argument.
+        assert isinstance(data, maybe(unicode))
+        # `None` represents `NULL` both in literal and native format.
+        if data is None:
+            return None
+        # No conversion is required for string values.
+        return data
+
+    def dump(self, value):
+        # Sanity check on the argument.
+        assert isinstance(value, maybe(unicode))
+        if value is not None:
+            assert u'\0' not in value
+        # `None` represents `NULL` both in literal and native format.
+        if value is None:
+            return None
+        # No conversion is required for string values.
+        return value
+
 
 class Profile(Comparable, Clonable, Printable):
 

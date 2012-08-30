@@ -382,6 +382,14 @@ class SelectIdentity(Select):
         return self.binding
 
 
+class SelectUntyped(Select):
+
+    adapt(UntypedDomain)
+
+    def __call__(self):
+        return self.binding
+
+
 class BindSelector(Bind):
 
     adapt(SelectorSyntax)

@@ -14,9 +14,9 @@ This module implements the JSON renderer.
 from ..util import Printable
 from ..adapter import Adapter, Protocol, adapt, adapt_many, call
 from ..domain import (Domain, BooleanDomain, NumberDomain, FloatDomain,
-                      StringDomain, EnumDomain, DateDomain, TimeDomain,
-                      DateTimeDomain, ListDomain, RecordDomain,
-                      VoidDomain, OpaqueDomain, Profile)
+        StringDomain, EnumDomain, DateDomain, TimeDomain, DateTimeDomain,
+        ListDomain, RecordDomain, UntypedDomain, VoidDomain, OpaqueDomain,
+        Profile)
 from .format import RawFormat, JSONFormat, EmitHeaders, Emit
 import re
 import math
@@ -270,7 +270,8 @@ class ListToRaw(ToRaw):
 
 class NativeToRaw(ToRaw):
 
-    adapt_many(BooleanDomain,
+    adapt_many(UntypedDomain,
+               BooleanDomain,
                NumberDomain,
                StringDomain,
                EnumDomain)

@@ -6,9 +6,9 @@
 from ..util import Printable, listof, tupleof
 from ..adapter import Adapter, Protocol, adapt, adapt_many, call
 from ..domain import (Domain, BooleanDomain, NumberDomain, DecimalDomain,
-                      StringDomain, EnumDomain, DateDomain, TimeDomain,
-                      DateTimeDomain, ListDomain, RecordDomain,
-                      VoidDomain, OpaqueDomain, Profile)
+        StringDomain, EnumDomain, DateDomain, TimeDomain, DateTimeDomain,
+        ListDomain, RecordDomain, UntypedDomain, VoidDomain, OpaqueDomain,
+        Profile)
 from .format import XMLFormat, EmitHeaders, Emit
 import re
 import decimal
@@ -237,7 +237,8 @@ class ListToXML(ToXML):
 
 class NativeToXML(ToXML):
 
-    adapt_many(StringDomain,
+    adapt_many(UntypedDomain,
+               StringDomain,
                EnumDomain,
                NumberDomain,
                DateDomain,

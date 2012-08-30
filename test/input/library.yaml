@@ -11,8 +11,8 @@ tests:
 - title: Literals
   tests:
 
-  # Untyped literals, implicitly converted to string
-  - uri: /{null(), '', 'HTSQL'}
+  # Untyped literals
+  - uri: /{null(), '', 'HTSQL', '%ce%bb%cf%8c%ce%b3%ce%bf%cf%82'}
 
   # Boolean values
   - uri: /{true(), false()}
@@ -24,14 +24,15 @@ tests:
     expect: 400
 
   # String values
-  - uri: /{'', 'HTSQL', 'O''Reilly',
-           '%ce%bb%cf%8c%ce%b3%ce%bf%cf%82',
-           '$-b \pm \sqrt{b^2 - 4ac} \over 2a$'}
+  - uri: /{string(''), string('HTSQL'), string('O''Reilly'),
+           string('%ce%bb%cf%8c%ce%b3%ce%bf%cf%82'),
+           string('$-b \pm \sqrt{b^2 - 4ac} \over 2a$')}
     ifndef: mssql
   # The regression database for MS SQL Server uses Latin1 locale and therefore
   # is unable to represent greek characters.
-  - uri: /{'', 'HTSQL', 'O''Reilly', 'zo%c3%b6logy',
-           '$-b \pm \sqrt{b^2 - 4ac} \over 2a$'}
+  - uri: /{string(''), string('HTSQL'), string('O''Reilly'),
+           string('zo%c3%b6logy'),
+           string('$-b \pm \sqrt{b^2 - 4ac} \over 2a$')}
     ifdef: mssql
   - uri: /{string('832040')}
 

@@ -87,25 +87,32 @@ tests:
 
 - title: Data Types
   tests:
-  - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL',
+  - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5,
+           string(null()), string(''), string('OMGWTFBBQ'),
            date('2010-04-15'), time('20:13:04.5'), datetime('2010-04-15 20:13')}
           /:raw
-  - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL',
+  - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5,
+           string(null()), string(''), string('OMGWTFBBQ'),
            date('2010-04-15'), time('20:13:04.5'), datetime('2010-04-15 20:13')}
           /:json
-  - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL',
+  - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5,
+           string(null()), string(''), string('OMGWTFBBQ'),
            date('2010-04-15'), time('20:13:04.5'), datetime('2010-04-15 20:13')}
           /:csv
-  - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL',
+  - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5,
+           string(null()), string(''), string('OMGWTFBBQ'),
            date('2010-04-15'), time('20:13:04.5'), datetime('2010-04-15 20:13')}
           /:tsv
-  - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL',
+  - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5,
+           string(null()), string(''), string('OMGWTFBBQ'),
            date('2010-04-15'), time('20:13:04.5'), datetime('2010-04-15 20:13')}
           /:xml
-  - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL',
+  - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5,
+           string(null()), string(''), string('OMGWTFBBQ'),
            date('2010-04-15'), time('20:13:04.5'), datetime('2010-04-15 20:13')}
           /:html
-  - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL',
+  - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5,
+           string(null()), string(''), string('OMGWTFBBQ'),
            date('2010-04-15'), time('20:13:04.5'), datetime('2010-04-15 20:13')}
           /:txt
   # a bug in HTML format prevented rendering NULL boolean values

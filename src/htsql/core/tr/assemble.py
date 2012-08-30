@@ -13,7 +13,7 @@ This module implements the assembling process.
 
 from ..util import Printable, Comparable, Record, listof, maybe
 from ..adapter import Adapter, adapt, adapt_many
-from ..domain import BooleanDomain
+from ..domain import BooleanDomain, UntypedDomain
 from .coerce import coerce
 from .flow import (Code, SegmentCode, LiteralCode, FormulaCode, CastCode,
                    RecordCode, IdentityCode, AnnihilatorCode, CorrelationCode,
@@ -1291,7 +1291,8 @@ class EvaluateLiteral(Evaluate):
 
     def __call__(self):
         # Keep all attributes, but switch the class.
-        yield LiteralPhrase(self.code.value, self.code.domain, self.code)
+        if not isinstance(self.code.domain, UntypedDomain):
+            yield LiteralPhrase(self.code.value, self.code.domain, self.code)
 
 
 class EvaluateCast(Evaluate):
@@ -1565,6 +1566,18 @@ class DecomposeCompound(Decompose):
 
     def __call__(self):
         return self.state.decompose(self.code.code)
+
+
+class DecomposeLiteral(Decompose):
+
+    adapt(LiteralCode)
+
+    def __call__(self):
+        if not isinstance(self.code.domain, UntypedDomain):
+            return super(DecomposeLiteral, self).__call__()
+        def compose_untyped(row, stream, value=self.code.value):
+            return value
+        return compose_untyped
 
 
 class DecomposeRecord(Decompose):

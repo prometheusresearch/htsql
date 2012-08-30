@@ -16,10 +16,9 @@ from ..util import maybe, oneof
 from ..context import context
 from .format import TextFormat, EmitHeaders, Emit
 from ..domain import (Domain, BooleanDomain, NumberDomain, IntegerDomain,
-                      DecimalDomain, FloatDomain, StringDomain, EnumDomain,
-                      DateDomain, TimeDomain, DateTimeDomain,
-                      ListDomain, RecordDomain, VoidDomain,
-                      OpaqueDomain, Profile)
+        DecimalDomain, FloatDomain, StringDomain, EnumDomain, DateDomain,
+        TimeDomain, DateTimeDomain, ListDomain, RecordDomain, UntypedDomain,
+        VoidDomain, OpaqueDomain, Profile)
 import re
 import decimal
 import datetime
@@ -203,7 +202,8 @@ class ToText(Adapter):
 
 class StringToText(ToText):
 
-    adapt_many(StringDomain,
+    adapt_many(UntypedDomain,
+               StringDomain,
                EnumDomain)
 
     threshold = 32
