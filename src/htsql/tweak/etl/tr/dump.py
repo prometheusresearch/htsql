@@ -40,7 +40,6 @@ class SerializeInsert(Utility, DumpBase):
                         table=self.table.name)
         else:
             self.format("INSERT INTO {table:name}",
-                        schema=self.table.schema.name,
                         table=self.table.name)
 
     def dump_columns(self):
@@ -75,7 +74,32 @@ class SerializeInsert(Utility, DumpBase):
                 self.write(u", ")
 
 
+class SerializeTruncate(Utility, DumpBase):
+
+    def __init__(self, table):
+        assert isinstance(table, TableEntity)
+        self.table = table
+        self.state = SerializingState()
+        self.stream = self.state.stream
+
+    def __call__(self):
+        if self.table.schema.name:
+            self.format("TRUNCATE {schema:name}.{table:name}"
+                        " RESTART IDENTITY CASCADE",
+                        schema=self.table.schema.name,
+                        table=self.table.name)
+        else:
+            self.format("TRUNCATE {table:name}"
+                        " RESTART IDENTITY CASCADE",
+                        table=self.table.name)
+        return self.stream.flush()
+
+
 def serialize_insert(table, columns, returning_columns):
     return SerializeInsert.__invoke__(table, columns, returning_columns)
+
+
+def serialize_truncate(table):
+    return SerializeTruncate.__invoke__(table)
 
 

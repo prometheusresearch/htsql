@@ -4,6 +4,8 @@
 
 
 from ....core.cmd.command import Command, ProducerCmd
+from ....core.entity import TableEntity
+
 
 
 class ETLCmd(ProducerCmd):
@@ -23,5 +25,12 @@ class UpdateCmd(ETLCmd):
 
 class DeleteCmd(ETLCmd):
     pass
+
+
+class TruncateCmd(ProducerCmd):
+
+    def __init__(self, table):
+        assert isinstance(table, TableEntity)
+        self.table = table
 
 

@@ -3,6 +3,6 @@
 #
 
 
-from . import command, insert
+from . import command, insert, truncate
 
 

@@ -36833,6 +36833,18 @@ tests:
     output:
       id: etl
       tests:
+      - uri: /truncate(product_line)
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: ''
+      - uri: /truncate(manufacturer)
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: ''
       - uri: /manufacturer:={code:='ACID', name:='Acer'} /:insert
         status: 200 OK
         headers:
@@ -36995,3 +37007,25 @@ tests:
                   "manufacturer"."name"
            FROM "manufacturer"
            ORDER BY 1 ASC
+      - uri: /product_line:={manufacturer_code:='SMSN', code:='GT', title:='Galaxy
+          Note'} /:insert
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: |2+
+           | product_line |
+          -+--------------+-
+           | SMSN.GT      |
+
+      - uri: /product_line:={manufacturer_code:=@manufacturer[2376].code, code:='U',
+          title:='Extreme Ultrabook'} /:insert
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: |2+
+           | product_line |
+          -+--------------+-
+           | 2376.U       |
+

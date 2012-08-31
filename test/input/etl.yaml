@@ -7,6 +7,8 @@ id: etl
 ifdef: pgsql
 tests:
 - load: etl
+- uri: /truncate(product_line)
+- uri: /truncate(manufacturer)
 - uri: /manufacturer:={code:='ACID', name:='Acer'}
         /:insert
 - uri: /manufacturer:={code:='DELL', name:='Dell'}
@@ -47,4 +49,19 @@ tests:
 - uri: /manufacturer:={code:='SMSN', name:='Samsung'}
         /:insert
 - uri: /manufacturer{id(), *}
+- uri: /product_line:={manufacturer_code:='SMSN',
+                       code:='GT', title:='Galaxy Note'}
+        /:insert
+- uri: /product_line:={manufacturer_code:=@manufacturer[2376].code,
+                       code:='U', title:='Extreme Ultrabook'}
+        /:insert
+- uri: /product_line:={manufacturer:='SMSN',
+                       code:='5', title:='Series 5 Ultrabook'}
+        /:insert
+  skip: true
+- uri: /product_line:={manufacturer:=top(@manufacturer?name~'fujitsu').id(),
+                       code:='E', title:='Lifebook E Series'}
+        /:insert
+  skip: true
+
 
