@@ -25,5 +25,26 @@ tests:
         /:insert
   headers:
     Accept: x-htsql/raw
+- uri: /manufacturer:={code:='ACID', name:='Acer'}
+        /:insert
+  expect: 409
+- uri: /manufacturer:={'SMSN', 'Samsung'}
+        /:insert
+  expect: 409
+- uri: /manufacturer:={code:='SMSN'}
+        /:insert
+  expect: 409
+- uri: /manufacturer:={name:='Samsung'}
+        /:insert
+  expect: 409
+- uri: /manufacturer:={code:='SMSN', name:='Samsung',
+                       full_name:='Samsung Electronics Co Ltd'}
+        /:insert
+  expect: 400
+- uri: /manufacturer:={code:='SMSN', name:=true}
+        /:insert
+  expect: 400
+- uri: /manufacturer:={code:='SMSN', name:='Samsung'}
+        /:insert
 - uri: /manufacturer{id(), *}
 

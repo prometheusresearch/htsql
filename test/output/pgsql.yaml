@@ -36919,6 +36919,57 @@ tests:
               "6702"
             ]
           }
+      - uri: /manufacturer:={code:='ACID', name:='Acer'} /:insert
+        status: 409 Conflict
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        body: |+
+          engine failure: failed to execute a database query: duplicate key value violates unique constraint "manufacturer_pk"
+
+      - uri: /manufacturer:={'SMSN', 'Samsung'} /:insert
+        status: 409 Conflict
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        body: |+
+          engine failure: failed to execute a database query: null value in column "code" violates not-null constraint
+
+      - uri: /manufacturer:={code:='SMSN'} /:insert
+        status: 409 Conflict
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        body: |+
+          engine failure: failed to execute a database query: null value in column "name" violates not-null constraint
+
+      - uri: /manufacturer:={name:='Samsung'} /:insert
+        status: 409 Conflict
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        body: |+
+          engine failure: failed to execute a database query: null value in column "code" violates not-null constraint
+
+      - uri: /manufacturer:={code:='SMSN', name:='Samsung', full_name:='Samsung Electronics
+          Co Ltd'} /:insert
+        status: 400 Bad Request
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        body: |
+          invalid request: unknown column name full_name
+      - uri: /manufacturer:={code:='SMSN', name:=true} /:insert
+        status: 400 Bad Request
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        body: |
+          invalid request: invalid type for column name: expected string; got boolean
+      - uri: /manufacturer:={code:='SMSN', name:='Samsung'} /:insert
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: |2+
+           | manufacturer |
+          -+--------------+-
+           | SMSN         |
+
       - uri: /manufacturer{id(), *}
         status: 200 OK
         headers:
@@ -36935,6 +36986,7 @@ tests:
            | AAPL | AAPL | Apple    |
            | ACID | ACID | Acer     |
            | DELL | DELL | Dell     |
+           | SMSN | SMSN | Samsung  |
            | TOSH | TOSH | Toshiba  |
 
            ----

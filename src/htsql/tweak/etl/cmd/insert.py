@@ -3,11 +3,13 @@
 #
 
 
-from ....core.adapter import Adapter, adapt
+from ....core.adapter import Adapter, adapt, adapt_many
 from ....core.error import BadRequestError
 from ....core.connect import transaction, scramble, unscramble
 from ....core.mark import EmptyMark
-from ....core.domain import Domain, ListDomain, RecordDomain, BooleanDomain
+from ....core.domain import (Domain, ListDomain, RecordDomain, BooleanDomain,
+        IntegerDomain, FloatDomain, DecimalDomain, StringDomain, DateDomain,
+        TimeDomain, DateTimeDomain, UntypedDomain)
 from ....core.classify import normalize, classify, relabel
 from ....core.model import HomeNode, TableNode, TableArc, ColumnArc
 from ....core.cmd.act import Act, ProduceAction, produce
@@ -30,15 +32,13 @@ from ....core.tr.dump import serialize
 from ....core.tr.lookup import identify
 from .command import InsertCmd
 from ..tr.dump import serialize_insert
+import datetime
+import decimal
 
 
 class Clarify(Adapter):
 
     adapt(Domain, Domain)
-
-    @staticmethod
-    def convert(value):
-        return value
 
     def __init__(self, origin_domain, domain):
         self.origin_domain = origin_domain
@@ -46,8 +46,58 @@ class Clarify(Adapter):
 
     def __call__(self):
         if self.origin_domain == self.domain:
-            return self.convert
+            return (lambda v: v)
         return None
+
+
+class ClarifyFromUntyped(Clarify):
+
+    adapt(UntypedDomain, Domain)
+
+    def __call__(self):
+        return (lambda v, p=self.domain.parse: p(v))
+
+
+class ClarifyFromSelf(Clarify):
+
+    adapt_many((BooleanDomain, BooleanDomain),
+               (IntegerDomain, IntegerDomain),
+               (FloatDomain, FloatDomain),
+               (DecimalDomain, DecimalDomain),
+               (StringDomain, StringDomain),
+               (DateDomain, DateDomain),
+               (TimeDomain, TimeDomain),
+               (DateTimeDomain, DateTimeDomain))
+
+    def __call__(self):
+        return (lambda v: v)
+
+
+class ClarifyDecimal(Clarify):
+
+    adapt_many((IntegerDomain, DecimalDomain),
+               (FloatDomain, DecimalDomain))
+
+    def __call__(self):
+        return (lambda v: decimal.Decimal(v) if v is not None else None)
+
+
+class ClarifyFloat(Clarify):
+
+    adapt_many((IntegerDomain, FloatDomain),
+               (DecimalDomain, FloatDomain))
+
+    def __call__(self):
+        return (lambda v: float(v) if v is not None else None)
+
+
+class ClarifyDateTimeFromDate(Clarify):
+
+    adapt(DateDomain, DateTimeDomain)
+
+    def __call__(self):
+        return (lambda v: datetime.datetime.combine(v, datetime.time())
+                            if v is not None else None)
 
 
 class ProduceInsert(Act):
@@ -57,9 +107,8 @@ class ProduceInsert(Act):
     def __call__(self):
         with transaction() as connection:
             product = produce(self.command.feed)
-            table, columns, slice = self.introspect_feed(product.meta)
-            converts = [unscramble(column.domain) for column in columns]
-            reconverts = [scramble(column.domain) for column in columns]
+            table, columns, slice, clarifies, converts, reconverts = \
+                    self.introspect_feed(product.meta)
             returning_columns = self.find_unique_key(table)
             sql = serialize_insert(table, columns, returning_columns)
             sql = sql.encode('utf-8')
@@ -78,6 +127,11 @@ class ProduceInsert(Act):
                     values = tuple(record[idx] for idx in slice)
                     values = [convert(value)
                               for value, convert in zip(values, converts)]
+                    try:
+                        values = [clarify(value)
+                                  for value, clarify in zip(values, clarifies)]
+                    except ValueError, exc:
+                        raise BadRequestError(str(exc))
                     values = [reconvert(value)
                               for value, reconvert in zip(values, reconverts)]
                     cursor.execute(sql, values)
@@ -142,20 +196,29 @@ class ProduceInsert(Act):
             index_by_column[column] = idx
         slice = []
         columns = []
+        clarifies = []
+        converts = []
+        reconverts = []
         for column in table.columns:
             if column not in index_by_column:
                 continue
             idx = index_by_column[column]
             field = fields[idx]
-            if coerce(field.domain, column.domain) is None:
+            clarify = Clarify.__invoke__(field.domain, column.domain)
+            if clarify is None:
                 raise BadRequestError("invalid type for column %s:"
                                       " expected %s; got %s"
                                       % (field.tag.encode('utf-8'),
                                          column.domain.family,
                                          field.domain.family))
+            convert = unscramble(field.domain)
+            reconvert = scramble(column.domain)
             slice.append(idx)
             columns.append(column)
-        return table, columns, slice
+            clarifies.append(clarify)
+            converts.append(convert)
+            reconverts.append(reconvert)
+        return table, columns, slice, clarifies, converts, reconverts
 
     def find_unique_key(self, table):
         returning_columns = []
