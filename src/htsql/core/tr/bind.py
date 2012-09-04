@@ -734,6 +734,7 @@ class BindLocator(Bind):
                         item = field.parse(branch.value)
                     except ValueError, exc:
                         raise BindError(str(exc), branch.mark)
+                    item = LiteralBinding(seed, item, field, branch)
                     value.append(item)
             return tuple(value)
         value = convert(identity.domain, self.syntax.rbranch.branches[:])

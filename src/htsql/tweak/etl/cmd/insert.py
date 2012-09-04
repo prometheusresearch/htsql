@@ -9,16 +9,16 @@ from ....core.connect import transaction, scramble, unscramble
 from ....core.mark import EmptyMark
 from ....core.domain import (Domain, ListDomain, RecordDomain, BooleanDomain,
         IntegerDomain, FloatDomain, DecimalDomain, StringDomain, DateDomain,
-        TimeDomain, DateTimeDomain, UntypedDomain)
+        TimeDomain, DateTimeDomain, IdentityDomain, UntypedDomain)
 from ....core.classify import normalize, classify, relabel
-from ....core.model import HomeNode, TableNode, TableArc, ColumnArc
+from ....core.model import HomeNode, TableNode, TableArc, ColumnArc, ChainArc
 from ....core.cmd.act import Act, ProduceAction, produce
 from ....core.cmd.retrieve import Product, RowStream
 from ....core.tr.bind import BindingState, Select
 from ....core.tr.syntax import VoidSyntax, IdentifierSyntax
 from ....core.tr.binding import (VoidBinding, RootBinding, FormulaBinding,
-        SieveBinding, AliasBinding, SegmentBinding, QueryBinding,
-        FreeTableRecipe, ColumnRecipe)
+        LocatorBinding, SelectionBinding, SieveBinding, AliasBinding,
+        SegmentBinding, QueryBinding, FreeTableRecipe, ColumnRecipe)
 from ....core.tr.signature import IsEqualSig, AndSig, PlaceholderSig
 from ....core.tr.decorate import decorate
 from ....core.tr.coerce import coerce
@@ -32,6 +32,7 @@ from ....core.tr.dump import serialize
 from ....core.tr.lookup import identify
 from .command import InsertCmd
 from ..tr.dump import serialize_insert
+import itertools
 import datetime
 import decimal
 
@@ -107,8 +108,7 @@ class ProduceInsert(Act):
     def __call__(self):
         with transaction() as connection:
             product = produce(self.command.feed)
-            table, columns, slice, clarifies, converts, reconverts = \
-                    self.introspect_feed(product.meta)
+            table, columns, extract = self.introspect_feed(product.meta)
             returning_columns = self.find_unique_key(table)
             sql = serialize_insert(table, columns, returning_columns)
             sql = sql.encode('utf-8')
@@ -124,16 +124,7 @@ class ProduceInsert(Act):
                 for record in product.data:
                     if record is None:
                         continue
-                    values = tuple(record[idx] for idx in slice)
-                    values = [convert(value)
-                              for value, convert in zip(values, converts)]
-                    try:
-                        values = [clarify(value)
-                                  for value, clarify in zip(values, clarifies)]
-                    except ValueError, exc:
-                        raise BadRequestError(str(exc))
-                    values = [reconvert(value)
-                              for value, reconvert in zip(values, reconverts)]
+                    values = extract(record, cursor)
                     cursor.execute(sql, values)
                     returning_values = cursor.fetchall()
                     if len(returning_values) != 1:
@@ -179,8 +170,9 @@ class ProduceInsert(Act):
         table = arc.table
         arc_by_signature = dict(((label.name, label.arity), label.arc)
                                 for label in classify(TableNode(table)))
-        slots = []
         index_by_column = {}
+        index_by_chain = {}
+        plan_by_chain = {}
         for idx, field in enumerate(fields):
             if field.tag is None:
                 continue
@@ -189,36 +181,100 @@ class ProduceInsert(Act):
                 raise BadRequestError("unknown column name %s"
                                       % field.tag.encode('utf-8'))
             arc = arc_by_signature[signature]
-            if not isinstance(arc, ColumnArc):
-                raise BadRequestError("expected a column name; got %s"
+            if isinstance(arc, ColumnArc):
+                column = arc.column
+                index_by_column[column] = idx
+            elif isinstance(arc, ChainArc):
+                joins = tuple(arc.joins)
+                if not joins[0].is_direct and all(join.reverse().is_contracting
+                                                  for join in joins[1:]):
+                    raise BadRequestError("cannot assign to a link %s"
+                                          % field.tag.encode('utf-8'))
+                index_by_chain[joins] = idx
+                plan = self.make_link_statement(joins)
+                plan_by_chain[joins] = plan
+            else:
+                raise BadRequestError("expected a column or a link name; got %s"
                                       % field.tag.encode('utf-8'))
-            column = arc.column
-            index_by_column[column] = idx
         slice = []
         columns = []
         clarifies = []
-        converts = []
         reconverts = []
+        resolves = []
+        indices = []
+        output_index_by_column = {}
         for column in table.columns:
-            if column not in index_by_column:
+            chains = [joins for joins in index_by_chain
+                      if column in joins[0].origin_columns]
+            if column not in index_by_column and not chains:
                 continue
-            idx = index_by_column[column]
-            field = fields[idx]
-            clarify = Clarify.__invoke__(field.domain, column.domain)
-            if clarify is None:
-                raise BadRequestError("invalid type for column %s:"
-                                      " expected %s; got %s"
-                                      % (field.tag.encode('utf-8'),
-                                         column.domain.family,
-                                         field.domain.family))
-            convert = unscramble(field.domain)
-            reconvert = scramble(column.domain)
-            slice.append(idx)
-            columns.append(column)
-            clarifies.append(clarify)
-            converts.append(convert)
-            reconverts.append(reconvert)
-        return table, columns, slice, clarifies, converts, reconverts
+            if (column in index_by_column and chains) or len(chains) > 1:
+                raise BadRequestError("duplicate column assignment for %s"
+                                      % column.name.encode('utf-8'))
+            if column in index_by_column:
+                idx = index_by_column[column]
+                field = fields[idx]
+                clarify = Clarify.__invoke__(field.domain, column.domain)
+                if clarify is None:
+                    raise BadRequestError("invalid type for column %s:"
+                                          " expected %s; got %s"
+                                          % (field.tag.encode('utf-8'),
+                                             column.domain.family,
+                                             field.domain.family))
+                reconvert = scramble(column.domain)
+                slice.append(idx)
+                columns.append(column)
+                clarifies.append(clarify)
+                reconverts.append(reconvert)
+                indices.append(len(slice)-1)
+            else:
+                [chain] = chains
+                idx = index_by_chain[chain]
+                plan, identity_domain, resolve = plan_by_chain[chain]
+                field = fields[idx]
+                if column == chain[0].origin_columns[0]:
+                    clarify = Clarify.__invoke__(field.domain, identity_domain)
+                    if clarify is None:
+                        raise BadRequestError("invalid type for column %s:"
+                                              " expected identity; got %s"
+                                              % (field.tag.encode('utf-8'),
+                                                 field.domain.family))
+                    start = len(index_by_column)+len(index_by_chain)+ \
+                            len(output_index_by_column)
+                    for origin_column in chain[0].origin_columns:
+                        output_index_by_column[origin_column] = start
+                        start += 1
+                    reconvert = scramble(column.domain)
+                    index = output_index_by_column[column]
+                    slice.append(idx)
+                    columns.append(column)
+                    clarifies.append(clarify)
+                    reconverts.append(reconvert)
+                    indices.append(index)
+                    resolves.append((resolve, len(slice)-1))
+                else:
+                    reconvert = scramble(column.domain)
+                    index = output_index_by_column[column]
+                    columns.append(column)
+                    reconverts.append(reconvert)
+                    indices.append(index)
+        def extract(record, cursor):
+            input_values = tuple(record[idx] for idx in slice)
+            try:
+                input_values = [clarify(value)
+                                for value, clarify
+                                    in zip(input_values, clarifies)]
+            except ValueError, exc:
+                raise BadRequestError(str(exc))
+            for resolve, resolve_idx in resolves:
+                input_value = input_values[resolve_idx]
+                resolved_values = resolve(input_value, cursor)
+                input_values.extend(resolved_values)
+            values = [input_values[idx] for idx in indices]
+            values = [reconvert(value)
+                      for value, reconvert in zip(values, reconverts)]
+            return values
+        return table, columns, extract
 
     def find_unique_key(self, table):
         returning_columns = []
@@ -292,5 +348,96 @@ class ProduceInsert(Act):
         assert plan.statement and not plan.statement.substatements
         return plan
 
+    def make_link_statement(self, joins):
+        state = BindingState()
+        syntax = VoidSyntax()
+        scope = RootBinding(syntax)
+        state.set_root(scope)
+        table = joins[-1].target
+        seed = state.use(FreeTableRecipe(table), syntax)
+        recipe = identify(seed)
+        if recipe is None:
+            raise BadRequestError("cannot determine identity of a link")
+        identity = state.use(recipe, syntax, scope=seed)
+        idx = itertools.count()
+        def make_value(domain):
+            value = []
+            for field in domain.fields:
+                if isinstance(field, IdentityDomain):
+                    item = make_value(field)
+                else:
+                    item = FormulaBinding(scope,
+                                          PlaceholderSig(next(idx)+1),
+                                          field,
+                                          syntax)
+                value.append(item)
+            return tuple(value)
+        value = make_value(identity.domain)
+        scope = LocatorBinding(scope, seed, identity, value, syntax)
+        state.push_scope(scope)
+        if len(joins) > 1:
+            recipe = AttachedTableRecipe([join.reverse()
+                                          for join in reversed(joins[1:])])
+            scope = state.use(recipe, syntax)
+            state.push_scope(scope)
+        elements = []
+        for column in joins[0].target_columns:
+            binding = state.use(ColumnRecipe(column), syntax)
+            elements.append(binding)
+        fields = [decorate(element) for element in elements]
+        domain = RecordDomain(fields)
+        scope = SelectionBinding(scope, elements, domain, syntax)
+        binding = Select.__invoke__(scope, state)
+        domain = ListDomain(binding.domain)
+        binding = SegmentBinding(state.root, binding, domain, syntax)
+        profile = decorate(binding)
+        binding = QueryBinding(state.root, binding, profile, syntax)
+        expression = encode(binding)
+        expression = rewrite(expression)
+        term = compile(expression)
+        frame = assemble(term)
+        frame = reduce(frame)
+        plan = serialize(frame)
+        assert plan.statement and not plan.statement.substatements
+        raw_domains = []
+        for leaf in identity.domain.leaves:
+            domain = identity.domain
+            for idx in leaf:
+                domain = domain.fields[idx]
+            raw_domains.append(domain)
+        raw_reconverts = []
+        for raw_domain in raw_domains:
+            raw_reconvert = scramble(raw_domain)
+            raw_reconverts.append(raw_reconvert)
+        resolve_sql = plan.statement.sql.encode('utf-8')
+        resolve_converts = [unscramble(domain)
+                            for domain in plan.statement.domains]
+        def resolve(value, cursor,
+                    resolve_sql=resolve_sql,
+                    resolve_converts=resolve_converts,
+                    reconverts=raw_reconverts,
+                    leaves=identity.domain.leaves):
+            raw_values = []
+            for leaf in leaves:
+                raw_value = value
+                for idx in leaf:
+                    raw_value = raw_value[idx]
+                raw_values.append(raw_value)
+            raw_values = [reconvert(raw_value)
+                          for raw_value, reconvert
+                            in zip(raw_values, reconverts)]
+            cursor.execute(resolve_sql, raw_values)
+            rows = []
+            for row in cursor:
+                row = tuple(convert(item)
+                            for item, convert in zip(row, resolve_converts))
+                rows.append(row)
+            stream = RowStream(rows, [])
+            data = plan.compose(None, stream)
+            stream.close()
+            if len(data) != 1:
+                raise BadRequestError("unable to resolve a link")
+            return data[0]
+        return plan, identity.domain, resolve
 
 

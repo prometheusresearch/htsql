@@ -37029,3 +37029,102 @@ tests:
           -+--------------+-
            | 2376.U       |
 
+      - uri: /product_line:={manufacturer:='SMSN', code:='5', title:='Series 5 Ultrabook'}
+          /:insert
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: |2+
+           | product_line |
+          -+--------------+-
+           | SMSN.5       |
+
+      - uri: /product_line:={manufacturer:=top(@manufacturer?name~'fujitsu').id(),
+          code:='E', title:='Lifebook E Series'} /:insert
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: |2+
+           | product_line |
+          -+--------------+-
+           | 6702.E       |
+
+      - uri: /product_line
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: |2
+           | product_line                                  |
+           +-------------------+------+--------------------+
+           | manufacturer_code | code | title              |
+          -+-------------------+------+--------------------+-
+           | 2376              | U    | Extreme Ultrabook  |
+           | 6702              | E    | Lifebook E Series  |
+           | SMSN              | 5    | Series 5 Ultrabook |
+           | SMSN              | GT   | Galaxy Note        |
+
+           ----
+           /product_line
+           SELECT "product_line"."manufacturer_code",
+                  "product_line"."code",
+                  "product_line"."title"
+           FROM "product_line"
+           ORDER BY 1 ASC, 2 ASC
+      - uri: "/product:={sku:='A0000001', product_line:='6702.E', title:='Fujitsu
+          LifeBook AH552/SL Notebook', description:='Are you looking for an essential
+          notebook with an extra-slim design, suitable for daily use? Then the 39.6
+          cm (15.6-inch) Fujitsu LIFEBOOK AH552/SL is the right choice. With only
+          25.4 mm in height and weight of 2.2 kg it fits into nearly every bag. Thanks
+          to integrated WLAN and Bluetooth\xAE you can work anytime and anywhere and
+          the elegant aluminum cover gives you the headturning looks.', list_price:=null}
+          /:insert"
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: |2+
+           | product  |
+          -+----------+-
+           | A0000001 |
+
+      - uri: /product
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: " | product                                                                                                                                       |\n
+          +----------+-------------------+-------------------+-----------------------------+--------------+----------------------------------+------------+\n
+          | sku      | manufacturer_code | product_line_code | title                       |
+          is_available | description                      | list_price |\n-+----------+-------------------+-------------------+-----------------------------+--------------+----------------------------------+------------+-\n
+          | A0000001 | 6702              | E                 | Fujitsu LifeBook AH552/SL
+          \  | true         | Are you looking for an essential |            |\n :
+          \         :                   :                   : Notebook                    :
+          \             : notebook with an extra-slim      :            :\n :          :
+          \                  :                   :                             :              :
+          design, suitable for daily use?  :            :\n :          :                   :
+          \                  :                             :              : Then the
+          39.6 cm (15.6-inch)     :            :\n :          :                   :
+          \                  :                             :              : Fujitsu
+          LIFEBOOK AH552/SL is the :            :\n :          :                   :
+          \                  :                             :              : right
+          choice. With only 25.4 mm  :            :\n :          :                   :
+          \                  :                             :              : in height
+          and weight of 2.2 kg   :            :\n :          :                   :
+          \                  :                             :              : it fits
+          into nearly every bag.   :            :\n :          :                   :
+          \                  :                             :              : Thanks
+          to integrated WLAN and    :            :\n :          :                   :
+          \                  :                             :              : Bluetooth\xAE
+          you can work anytime  :            :\n :          :                   :
+          \                  :                             :              : and anywhere
+          and the elegant     :            :\n :          :                   :                   :
+          \                            :              : aluminum cover gives you the
+          \    :            :\n :          :                   :                   :
+          \                            :              : headturning looks.               :
+          \           :\n\n ----\n /product\n SELECT \"product\".\"sku\",\n        \"product\".\"manufacturer_code\",\n
+          \       \"product\".\"product_line_code\",\n        \"product\".\"title\",\n
+          \       \"product\".\"is_available\",\n        \"product\".\"description\",\n
+          \       \"product\".\"list_price\"\n FROM \"product\"\n ORDER BY 1 ASC\n"

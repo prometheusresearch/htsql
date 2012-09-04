@@ -452,12 +452,11 @@ class RelateLocator(Relate):
                     filter = convert(element, item)
                 else:
                     element = self.state.encode(element)
-                    literal = LiteralCode(item, element.domain,
-                                          self.binding)
+                    item = self.state.encode(item)
                     filter = FormulaCode(IsEqualSig(+1),
                                          coerce(BooleanDomain()),
                                          self.binding,
-                                         lop=element, rop=literal)
+                                         lop=element, rop=item)
                 filters.append(filter)
             if len(filters) == 1:
                 return filters[0]

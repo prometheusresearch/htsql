@@ -194,11 +194,15 @@ class IdentityDomain(Domain):
         assert isinstance(fields, listof(Domain))
         self.fields = fields
         self.arity = 0
-        for field in fields:
+        self.leaves = []
+        for idx, field in enumerate(fields):
             if isinstance(field, IdentityDomain):
                 self.arity += field.arity
+                for leaf in field.leaves:
+                    self.leaves.append([idx]+leaf)
             else:
                 self.arity += 1
+                self.leaves.append([idx])
 
     def __basis__(self):
         return (tuple(self.fields),)
@@ -229,7 +233,7 @@ class IdentityDomain(Domain):
         arity = 0
         while tokens:
             token = tokens.pop(0)
-            while token in u'[(':
+            while token is not None and token in u'[(':
                 stack.append((value, arity, token))
                 value = []
                 arity = 0
@@ -241,7 +245,7 @@ class IdentityDomain(Domain):
             value.append((token, None))
             arity += 1
             token = tokens.pop(0)
-            while token in u'])':
+            while token is not None and token in u'])':
                 if not stack:
                     raise ValueError("ill-formed locator")
                 parent_value, parent_arity, parent_bracket = stack.pop()
@@ -270,10 +274,10 @@ class IdentityDomain(Domain):
                             total_arity = item_arity
                         elif item_arity is None:
                             total_arity += 1
-                            items.append(item)
+                            items.append((item, None))
                         else:
                             total_arity += item_arity
-                            items.append(item)
+                            items.append((item, item_arity))
                     if total_arity > field.arity:
                         raise ValueError("ill-formed locator")
                     item = collect(items, total_arity, field)
