@@ -12,48 +12,39 @@
 from ...util import aresubclasses
 from ...adapter import Adapter, Component, adapt, adapt_many, call
 from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
-                       IntegerDomain, DecimalDomain, FloatDomain,
-                       DateDomain, TimeDomain, DateTimeDomain, EnumDomain,
-                       ListDomain, RecordDomain)
+        IntegerDomain, DecimalDomain, FloatDomain, DateDomain, TimeDomain,
+        DateTimeDomain, EnumDomain, ListDomain, RecordDomain)
 from ..syntax import (NumberSyntax, StringSyntax, IdentifierSyntax,
-                      SpecifierSyntax, ApplicationSyntax, OperatorSyntax,
-                      GroupSyntax)
+        SpecifierSyntax, ApplicationSyntax, OperatorSyntax, GroupSyntax)
 from ..binding import (LiteralBinding, SortBinding, SieveBinding,
-                       FormulaBinding, CastBinding, ImplicitCastBinding,
-                       WrappingBinding, TitleBinding, DirectionBinding,
-                       QuotientBinding, AssignmentBinding, DefinitionBinding,
-                       SelectionBinding, HomeBinding, RescopingBinding,
-                       CoverBinding, ForkBinding, ClipBinding, CommandBinding,
-                       SegmentBinding, QueryBinding, Binding,
-                       BindingRecipe, ComplementRecipe, KernelRecipe,
-                       SubstitutionRecipe, ClosedRecipe)
+        FormulaBinding, CastBinding, ImplicitCastBinding, WrappingBinding,
+        TitleBinding, DirectionBinding, QuotientBinding, AssignmentBinding,
+        DefinitionBinding, SelectionBinding, HomeBinding, RescopingBinding,
+        CoverBinding, ForkBinding, ClipBinding, CommandBinding, SegmentBinding,
+        QueryBinding, Binding, BindingRecipe, ComplementRecipe, KernelRecipe,
+        SubstitutionRecipe, ClosedRecipe)
 from ..bind import BindByName, BindingState
 from ..error import BindError
 from ..coerce import coerce
 from ..decorate import decorate
 from ..lookup import direct, expand, identify, guess_tag, lookup_command
 from ..signature import (Signature, NullarySig, UnarySig, BinarySig,
-                         CompareSig, IsEqualSig, IsTotallyEqualSig, IsInSig,
-                         IsNullSig, IfNullSig, NullIfSig, AndSig, OrSig,
-                         NotSig, SortDirectionSig)
-from .signature import (AsSig, LimitSig, SortSig, CastSig,
-                        MakeDateSig, MakeDateTimeSig, CombineDateTimeSig,
-                        ExtractYearSig, ExtractMonthSig, ExtractDaySig,
-                        ExtractHourSig, ExtractMinuteSig, ExtractSecondSig,
-                        AddSig, ConcatenateSig, HeadSig, TailSig, SliceSig,
-                        AtSig, ReplaceSig, UpperSig, LowerSig, TrimSig,
-                        DateIncrementSig, DateTimeIncrementSig,
-                        SubtractSig, DateDecrementSig, DateTimeDecrementSig,
-                        DateDifferenceSig, TodaySig, NowSig,
-                        MultiplySig, DivideSig, IfSig, SwitchSig,
-                        KeepPolaritySig, ReversePolaritySig,
-                        RoundSig, RoundToSig, TruncSig, TruncToSig, LengthSig,
-                        ContainsSig, ExistsSig, CountSig, MinMaxSig,
-                        SumSig, AvgSig, AggregateSig, QuantifySig,
-                        DefineSig, WhereSig, SelectSig, LinkSig, TopSig)
+        CompareSig, IsEqualSig, IsTotallyEqualSig, IsInSig, IsNullSig,
+        IfNullSig, NullIfSig, AndSig, OrSig, NotSig, SortDirectionSig)
+from .signature import (AsSig, LimitSig, SortSig, CastSig, MakeDateSig,
+        MakeDateTimeSig, CombineDateTimeSig, ExtractYearSig, ExtractMonthSig,
+        ExtractDaySig, ExtractHourSig, ExtractMinuteSig, ExtractSecondSig,
+        AddSig, ConcatenateSig, HeadSig, TailSig, SliceSig, AtSig, ReplaceSig,
+        UpperSig, LowerSig, TrimSig, DateIncrementSig, DateTimeIncrementSig,
+        SubtractSig, DateDecrementSig, DateTimeDecrementSig, DateDifferenceSig,
+        TodaySig, NowSig, MultiplySig, DivideSig, IfSig, SwitchSig,
+        KeepPolaritySig, ReversePolaritySig, RoundSig, RoundToSig, TruncSig,
+        TruncToSig, LengthSig, ContainsSig, ExistsSig, CountSig, MinMaxSig,
+        SumSig, AvgSig, AggregateSig, QuantifySig, DefineSig, WhereSig,
+        SelectSig, LinkSig, TopSig)
 from ...cmd.command import RendererCmd, DefaultCmd, RetrieveCmd, SQLCmd
 from ...fmt.format import (RawFormat, JSONFormat, CSVFormat, TSVFormat,
-                           HTMLFormat, TextFormat, XMLFormat)
+        HTMLFormat, TextFormat, XMLFormat)
 import sys
 
 
@@ -612,7 +603,7 @@ class BindAs(BindMacro):
                             " or an identifier" % self.name.encode('utf-8'),
                             title.mark)
         base = self.state.bind(base)
-        return TitleBinding(base, title.value, self.syntax)
+        return TitleBinding(base, title, self.syntax)
 
 
 #class BindSieve(BindMacro):

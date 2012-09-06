@@ -28690,7 +28690,7 @@ tests:
                           "header": "Name",
                           "path": "school.name",
                           "syntax": "name:as(Name)",
-                          "tag": "name"
+                          "tag": "Name"
                         },
                         {
                           "domain": {
@@ -28757,39 +28757,39 @@ tests:
             {
               "school": [
                 {
-                  "name": "School of Art & Design",
+                  "Name": "School of Art & Design",
                   "1": 1
                 },
                 {
-                  "name": "School of Business",
+                  "Name": "School of Business",
                   "1": 3
                 },
                 {
-                  "name": "College of Education",
+                  "Name": "College of Education",
                   "1": 2
                 },
                 {
-                  "name": "School of Engineering",
+                  "Name": "School of Engineering",
                   "1": 4
                 },
                 {
-                  "name": "School of Arts and Humanities",
+                  "Name": "School of Arts and Humanities",
                   "1": 6
                 },
                 {
-                  "name": "School of Music & Dance",
+                  "Name": "School of Music & Dance",
                   "1": 4
                 },
                 {
-                  "name": "School of Natural Sciences",
+                  "Name": "School of Natural Sciences",
                   "1": 4
                 },
                 {
-                  "name": "Public Honorariums",
+                  "Name": "Public Honorariums",
                   "1": 0
                 },
                 {
-                  "name": "School of Continuing Studies",
+                  "Name": "School of Continuing Studies",
                   "1": 0
                 }
               ]
@@ -28824,39 +28824,39 @@ tests:
             <?xml version="1.0" encoding="UTF-8" ?>
             <htsql:result xmlns:htsql="http://htsql.org/2010/xml">
               <school>
-                <name>School of Art &amp; Design</name>
+                <Name>School of Art &amp; Design</Name>
                 <_2>1</_2>
               </school>
               <school>
-                <name>School of Business</name>
+                <Name>School of Business</Name>
                 <_2>3</_2>
               </school>
               <school>
-                <name>College of Education</name>
+                <Name>College of Education</Name>
                 <_2>2</_2>
               </school>
               <school>
-                <name>School of Engineering</name>
+                <Name>School of Engineering</Name>
                 <_2>4</_2>
               </school>
               <school>
-                <name>School of Arts and Humanities</name>
+                <Name>School of Arts and Humanities</Name>
                 <_2>6</_2>
               </school>
               <school>
-                <name>School of Music &amp; Dance</name>
+                <Name>School of Music &amp; Dance</Name>
                 <_2>4</_2>
               </school>
               <school>
-                <name>School of Natural Sciences</name>
+                <Name>School of Natural Sciences</Name>
                 <_2>4</_2>
               </school>
               <school>
-                <name>Public Honorariums</name>
+                <Name>Public Honorariums</Name>
                 <_2>0</_2>
               </school>
               <school>
-                <name>School of Continuing Studies</name>
+                <Name>School of Continuing Studies</Name>
                 <_2>0</_2>
               </school>
             </htsql:result>

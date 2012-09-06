@@ -13,11 +13,11 @@ tests:
         /:insert
 - uri: /manufacturer:={code:='DELL', name:='Dell'}
         /:insert
-- uri: /manufacturer:={code:='TOSH', name:='Toshiba'}
+- uri: /{'TOSH' :as code, 'Toshiba' :as name} :as manufacturer
         /:insert
-- uri: /manufacturer:={code:='0992', name:='Lenovo'}
+- uri: /{code:='0992', name:='Lenovo'} :as manufacturer
         /:insert
-- uri: /manufacturer:={code:='2376', name:='Gigabyte'}
+- uri: /manufacturer:={'2376' :as code, 'Gigabyte' :as name}
         /:insert
 - uri: /manufacturer:={code:='AAPL', name:='Apple'}
         /:insert

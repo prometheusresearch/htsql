@@ -14,8 +14,8 @@ This module declares binding nodes and recipe objects.
 from ..util import maybe, listof, tupleof, Clonable, Printable, Comparable
 from ..entity import TableEntity, ColumnEntity, Join
 from ..domain import (Domain, VoidDomain, BooleanDomain, ListDomain,
-                      RecordDomain, EntityDomain, IdentityDomain, Profile)
-from .syntax import Syntax, VoidSyntax
+        RecordDomain, EntityDomain, IdentityDomain, Profile)
+from .syntax import Syntax, VoidSyntax, IdentifierSyntax, StringSyntax
 from .signature import Signature, Bag, Formula
 from ..cmd.command import Command
 
@@ -596,7 +596,7 @@ class TitleBinding(WrappingBinding):
     """
 
     def __init__(self, base, title, syntax):
-        assert isinstance(title, unicode)
+        assert isinstance(title, (IdentifierSyntax, StringSyntax))
         super(TitleBinding, self).__init__(base, syntax)
         self.title = title
 

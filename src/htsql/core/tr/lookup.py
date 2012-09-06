@@ -1174,7 +1174,17 @@ class GuessHeaderFromTitle(Lookup):
     adapt(TitleBinding, GuessHeaderProbe)
 
     def __call__(self):
-        return self.binding.title
+        return self.binding.title.value
+
+
+class GuessTagFromTitle(Lookup):
+
+    adapt(TitleBinding, GuessTagProbe)
+
+    def __call__(self):
+        if isinstance(self.binding.title, IdentifierSyntax):
+            return self.binding.title.value
+        return super(GuessTagFromTitle, self).__call__()
 
 
 class GuessNameFromAlias(Lookup):
