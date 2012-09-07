@@ -28,7 +28,8 @@ class DjangoIntrospect(Introspect):
         all_models = []
         for app in models.get_apps():
             for model in models.get_models(app, include_auto_created=True):
-                if model not in seen_models:
+                if (model not in seen_models and
+                        model._meta.auto_created not in seen_models):
                     continue
                 all_models.append(model)
         schema = catalog.add_schema(u"")
