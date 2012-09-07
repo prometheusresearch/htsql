@@ -635,6 +635,7 @@ class BooleanToHTML(ToHTML):
             return [u"htsql-true-value"]
         if value is False:
             return [u"htsql-false-value"]
+        return []
 
     def dump(self, value):
         if value is None:
