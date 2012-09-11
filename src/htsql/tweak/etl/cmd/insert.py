@@ -13,7 +13,7 @@ from ....core.domain import (Domain, ListDomain, RecordDomain, BooleanDomain,
 from ....core.classify import normalize, classify, relabel
 from ....core.model import HomeNode, TableNode, TableArc, ColumnArc, ChainArc
 from ....core.cmd.act import Act, ProduceAction, produce
-from ....core.cmd.retrieve import Product, RowStream
+from ....core.cmd.retrieve import Product, RowStream, build_retrieve_pipe
 from ....core.tr.bind import BindingState, Select
 from ....core.tr.syntax import VoidSyntax, IdentifierSyntax
 from ....core.tr.binding import (VoidBinding, RootBinding, FormulaBinding,
@@ -22,13 +22,6 @@ from ....core.tr.binding import (VoidBinding, RootBinding, FormulaBinding,
 from ....core.tr.signature import IsEqualSig, AndSig, PlaceholderSig
 from ....core.tr.decorate import decorate
 from ....core.tr.coerce import coerce
-from ....core.tr.encode import encode
-from ....core.tr.flow import OrderedFlow
-from ....core.tr.rewrite import rewrite
-from ....core.tr.compile import compile
-from ....core.tr.assemble import assemble
-from ....core.tr.reduce import reduce
-from ....core.tr.dump import serialize
 from ....core.tr.lookup import identify
 from .command import InsertCmd
 from ..tr.dump import serialize_insert
@@ -339,12 +332,8 @@ class ProduceInsert(Act):
         binding = SegmentBinding(state.scope, binding, domain, syntax)
         profile = decorate(binding)
         binding = QueryBinding(state.scope, binding, profile, syntax)
-        expression = encode(binding)
-        expression = rewrite(expression)
-        term = compile(expression)
-        frame = assemble(term)
-        frame = reduce(frame)
-        plan = serialize(frame)
+        pipe = build_retrieve_pipe(binding)
+        plan = pipe.plan
         assert plan.statement and not plan.statement.substatements
         return plan
 
@@ -392,12 +381,8 @@ class ProduceInsert(Act):
         binding = SegmentBinding(state.root, binding, domain, syntax)
         profile = decorate(binding)
         binding = QueryBinding(state.root, binding, profile, syntax)
-        expression = encode(binding)
-        expression = rewrite(expression)
-        term = compile(expression)
-        frame = assemble(term)
-        frame = reduce(frame)
-        plan = serialize(frame)
+        pipe =  build_retrieve_pipe(binding)
+        plan = pipe.plan
         assert plan.statement and not plan.statement.substatements
         raw_domains = []
         for leaf in identity.domain.leaves:

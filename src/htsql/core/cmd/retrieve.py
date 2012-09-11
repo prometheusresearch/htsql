@@ -17,7 +17,7 @@ from ..tr.compile import compile
 from ..tr.assemble import assemble
 from ..tr.reduce import reduce
 from ..tr.dump import serialize
-from ..tr.plan import Statement
+from ..tr.plan import Plan, Statement
 from ..connect import transaction, unscramble
 from ..error import PermissionError
 
@@ -104,35 +104,47 @@ class RowStream(object):
             substream.close()
 
 
-class ProduceRetrieve(Act):
+class RetrievePipe(object):
 
-    adapt(RetrieveCmd, ProduceAction)
+    def __init__(self, plan):
+        assert isinstance(plan, Plan)
+        self.plan = plan
+        self.profile = plan.profile
+        self.statement = plan.statement
+        self.compose = plan.compose
 
-    def __call__(self):
-        binding = self.command.binding
-        expression = encode(binding)
-        # FIXME: abstract it out.
-        if isinstance(self.action, SafeProduceAction):
-            limit = self.action.limit
-            expression = self.safe_patch(expression, limit)
-        expression = rewrite(expression)
-        term = compile(expression)
-        frame = assemble(term)
-        frame = reduce(frame)
-        plan = serialize(frame)
-        meta = plan.profile.clone(plan=plan)
+    def __call__(self, input=None):
+        meta = self.profile.clone(plan=self.plan)
         data = None
-        if plan.statement:
+        if self.statement:
             if not context.env.can_read:
                 raise PermissionError("not enough permissions"
                                       " to execute the query")
             stream = None
             with transaction() as connection:
                 cursor = connection.cursor()
-                stream = RowStream.open(plan.statement, cursor)
-            data = plan.compose(None, stream)
+                stream = RowStream.open(self.statement, cursor)
+            data = self.compose(None, stream)
             stream.close()
         return Product(meta, data)
+
+
+class BuildRetrievePipe(Utility):
+
+    def __init__(self, binding, limit=None):
+        self.binding = binding
+        self.limit = limit
+
+    def __call__(self):
+        expression = encode(self.binding)
+        if self.limit is not None:
+            expression = self.safe_patch(expression, self.limit)
+        expression = rewrite(expression)
+        term = compile(expression)
+        frame = assemble(term)
+        frame = reduce(frame)
+        plan = serialize(frame)
+        return RetrievePipe(plan)
 
     def safe_patch(self, expression, limit):
         segment = expression.segment
@@ -155,19 +167,25 @@ class ProduceRetrieve(Act):
         return expression
 
 
+class ProduceRetrieve(Act):
+
+    adapt(RetrieveCmd, ProduceAction)
+
+    def __call__(self):
+        limit = None
+        if isinstance(self.action, SafeProduceAction):
+            limit = self.action.limit
+        pipe = build_retrieve_pipe(self.command.binding, limit)
+        return pipe()
+
+
 class AnalyzeRetrieve(Act):
 
     adapt(RetrieveCmd, AnalyzeAction)
 
     def __call__(self):
-        binding = self.command.binding
-        expression = encode(binding)
-        expression = rewrite(expression)
-        term = compile(expression)
-        frame = assemble(term)
-        frame = reduce(frame)
-        plan = serialize(frame)
-        return plan
+        pipe = build_retrieve_pipe(self.command.binding)
+        return pipe.plan
 
 
 class RenderSQL(Act):
@@ -187,5 +205,8 @@ class RenderSQL(Act):
                 body.append(statement.sql.encode('utf-8'))
                 queue.extend(statement.substatements)
         return (status, headers, body)
+
+
+build_retrieve_pipe = BuildRetrievePipe.__invoke__
 
 
