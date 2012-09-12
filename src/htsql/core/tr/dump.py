@@ -164,6 +164,7 @@ class SerializingState(object):
         self.hook_stack = []
         # The active serializing hints and directives.
         self.hook = None
+        self.placeholders = {}
 
     def set_tree(self, frame):
         """
@@ -201,6 +202,10 @@ class SerializingState(object):
         """
         self.hook = self.hook_stack.pop()
 
+    def add_placeholder(self, index, domain):
+        if index not in self.placeholders:
+            self.placeholders[index] = domain
+
     def flush(self):
         """
         Clears the serializing state and returns the generated SQL.
@@ -212,6 +217,7 @@ class SerializingState(object):
         self.frame_alias_by_tag = {}
         assert not self.hook_stack
         self.hook = None
+        self.placeholders = {}
         # Truncate the stream and return the accumulated data.
         return self.stream.flush()
 
@@ -324,11 +330,12 @@ class SerializeSegment(Serialize):
         # Dump the `SELECT` statement.
         self.state.dump(self.clause)
         # Retrieve and return the generated SQL.
+        placeholders = self.state.placeholders
         sql = self.state.flush()
         domains = [phrase.domain for phrase in self.clause.select]
         substatements = [self.state.serialize(subframe)
                          for subframe in self.clause.subtrees]
-        return Statement(sql, domains, substatements)
+        return Statement(sql, domains, substatements, placeholders)
 
     def aliasing(self, frame=None,
                  taken_select_aliases=None,
@@ -819,12 +826,15 @@ class FormatPlaceholder(Format):
     call('placeholder')
 
     def __init__(self, kind, value, modifier, state):
-        assert isinstance(value, (int, str))
+        assert isinstance(value, maybe(unicode))
         assert modifier is None
         super(FormatPlaceholder, self).__init__(kind, value, modifier, state)
 
     def __call__(self):
-        self.stream.write(u"?")
+        if self.value is None:
+            self.stream.write(u"?")
+        else:
+            self.stream.write(u":"+self.value)
 
 
 class FormatPass(Format):
@@ -2022,7 +2032,9 @@ class DumpPlaceholder(DumpBySignature):
     adapt(PlaceholderSig)
 
     def __call__(self):
-        self.format("{index:placeholder}", self.signature)
+        self.state.add_placeholder(self.signature.index, self.domain)
+        self.format("{index:placeholder}",
+                    index=unicode(self.signature.index+1))
 
 
 def serialize(clause, state=None):

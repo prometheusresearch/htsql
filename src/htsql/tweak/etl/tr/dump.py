@@ -57,7 +57,7 @@ class SerializeInsert(Utility, DumpBase):
         self.newline()
         self.write(u"VALUES (")
         for idx, column in enumerate(self.columns):
-            self.format("{index:placeholder}", index=idx+1)
+            self.format("{index:placeholder}", index=None)
             if idx < len(self.columns)-1:
                 self.write(u", ")
         self.write(u")")

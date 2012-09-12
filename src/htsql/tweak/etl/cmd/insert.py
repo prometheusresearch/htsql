@@ -105,12 +105,9 @@ class ProduceInsert(Act):
             returning_columns = self.find_unique_key(table)
             sql = serialize_insert(table, columns, returning_columns)
             sql = sql.encode('utf-8')
-            identity_plan = self.make_identity_statement(table,
+            identity_pipe = self.make_identity_statement(table,
                                                     returning_columns)
-            identity_sql = identity_plan.statement.sql.encode('utf-8')
-            identity_converts = [unscramble(domain)
-                        for domain in identity_plan.statement.domains]
-            meta = identity_plan.profile
+            meta = identity_pipe.plan.profile
             data = []
             if product.data is not None:
                 cursor = connection.cursor()
@@ -123,16 +120,7 @@ class ProduceInsert(Act):
                     if len(returning_values) != 1:
                         raise BadRequestError("unable to locate inserted row")
                     [returning_values] = returning_values
-                    cursor.execute(identity_sql, returning_values)
-                    rows = []
-                    for row in cursor:
-                        row = tuple(convert(item)
-                                    for item, convert in zip(row,
-                                                    identity_converts))
-                        rows.append(row)
-                    stream = RowStream(rows, [])
-                    ids = identity_plan.compose(None, stream)
-                    stream.close()
+                    ids = identity_pipe(returning_values).data
                     if len(ids) != 1:
                         raise BadRequestError("unable to locate inserted row")
                     data.extend(ids)
@@ -223,7 +211,7 @@ class ProduceInsert(Act):
             else:
                 [chain] = chains
                 idx = index_by_chain[chain]
-                plan, identity_domain, resolve = plan_by_chain[chain]
+                identity_domain, resolve = plan_by_chain[chain]
                 field = fields[idx]
                 if column == chain[0].origin_columns[0]:
                     clarify = Clarify.__invoke__(field.domain, identity_domain)
@@ -296,7 +284,7 @@ class ProduceInsert(Act):
         for idx, column in enumerate(returning_columns):
             column_binding = state.use(ColumnRecipe(column), syntax)
             placeholder_binding = FormulaBinding(scope,
-                                                 PlaceholderSig(idx+1),
+                                                 PlaceholderSig(idx),
                                                  column_binding.domain,
                                                  syntax)
             condition = FormulaBinding(scope,
@@ -333,9 +321,7 @@ class ProduceInsert(Act):
         profile = decorate(binding)
         binding = QueryBinding(state.scope, binding, profile, syntax)
         pipe = build_retrieve_pipe(binding)
-        plan = pipe.plan
-        assert plan.statement and not plan.statement.substatements
-        return plan
+        return pipe
 
     def make_link_statement(self, joins):
         state = BindingState()
@@ -356,7 +342,7 @@ class ProduceInsert(Act):
                     item = make_value(field)
                 else:
                     item = FormulaBinding(scope,
-                                          PlaceholderSig(next(idx)+1),
+                                          PlaceholderSig(next(idx)),
                                           field,
                                           syntax)
                 value.append(item)
@@ -382,25 +368,7 @@ class ProduceInsert(Act):
         profile = decorate(binding)
         binding = QueryBinding(state.root, binding, profile, syntax)
         pipe =  build_retrieve_pipe(binding)
-        plan = pipe.plan
-        assert plan.statement and not plan.statement.substatements
-        raw_domains = []
-        for leaf in identity.domain.leaves:
-            domain = identity.domain
-            for idx in leaf:
-                domain = domain.fields[idx]
-            raw_domains.append(domain)
-        raw_reconverts = []
-        for raw_domain in raw_domains:
-            raw_reconvert = scramble(raw_domain)
-            raw_reconverts.append(raw_reconvert)
-        resolve_sql = plan.statement.sql.encode('utf-8')
-        resolve_converts = [unscramble(domain)
-                            for domain in plan.statement.domains]
-        def resolve(value, cursor,
-                    resolve_sql=resolve_sql,
-                    resolve_converts=resolve_converts,
-                    reconverts=raw_reconverts,
+        def resolve(value, cursor, resolve_pipe=pipe,
                     leaves=identity.domain.leaves):
             raw_values = []
             for leaf in leaves:
@@ -408,21 +376,11 @@ class ProduceInsert(Act):
                 for idx in leaf:
                     raw_value = raw_value[idx]
                 raw_values.append(raw_value)
-            raw_values = [reconvert(raw_value)
-                          for raw_value, reconvert
-                            in zip(raw_values, reconverts)]
-            cursor.execute(resolve_sql, raw_values)
-            rows = []
-            for row in cursor:
-                row = tuple(convert(item)
-                            for item, convert in zip(row, resolve_converts))
-                rows.append(row)
-            stream = RowStream(rows, [])
-            data = plan.compose(None, stream)
-            stream.close()
+            product = resolve_pipe(raw_values)
+            data = product.data
             if len(data) != 1:
                 raise BadRequestError("unable to resolve a link")
             return data[0]
-        return plan, identity.domain, resolve
+        return identity.domain, resolve
 
 

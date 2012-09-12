@@ -17,13 +17,14 @@ from ..domain import Profile, Domain
 
 class Statement(Printable):
 
-    def __init__(self, sql, domains, substatements):
+    def __init__(self, sql, domains, substatements, placeholders=None):
         assert isinstance(sql, unicode)
         assert isinstance(domains, listof(Domain))
         assert isinstance(substatements, listof(Statement))
         self.sql = sql
         self.domains = domains
         self.substatements = substatements
+        self.placeholders = placeholders
 
 
 class Plan(Printable):

@@ -29,7 +29,10 @@ class PGSQLFormatLiteral(FormatLiteral):
 class PGSQLFormatPlaceholder(FormatPlaceholder):
 
     def __call__(self):
-        self.stream.write(u"%s")
+        if self.value is None:
+            self.stream.write(u"%s")
+        else:
+            self.stream.write(u"%%(%s)s" % self.value)
 
 
 class PGSQLDumpSortDirection(DumpSortDirection):

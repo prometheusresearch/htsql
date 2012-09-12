@@ -18,7 +18,7 @@ from ..tr.assemble import assemble
 from ..tr.reduce import reduce
 from ..tr.dump import serialize
 from ..tr.plan import Plan, Statement
-from ..connect import transaction, unscramble
+from ..connect import transaction, scramble, unscramble
 from ..error import PermissionError
 
 
@@ -42,10 +42,23 @@ class Product(object):
 class RowStream(object):
 
     @classmethod
-    def open(cls, statement, cursor):
+    def open(cls, statement, cursor, input=None):
         converts = [unscramble(domain)
                     for domain in statement.domains]
-        cursor.execute(statement.sql.encode('utf-8'))
+        sql = statement.sql.encode('utf-8')
+        parameters = None
+        if statement.placeholders:
+            assert input is not None
+            parameters = {}
+            for index in sorted(statement.placeholders):
+                domain = statement.placeholders[index]
+                convert = scramble(domain)
+                value = convert(input[index])
+                parameters[str(index+1)] = value
+        if parameters is None:
+            cursor.execute(sql)
+        else:
+            cursor.execute(sql, parameters)
         rows = []
         for row in cursor:
             row = tuple(convert(item)
@@ -123,7 +136,7 @@ class RetrievePipe(object):
             stream = None
             with transaction() as connection:
                 cursor = connection.cursor()
-                stream = RowStream.open(self.statement, cursor)
+                stream = RowStream.open(self.statement, cursor, input)
             data = self.compose(None, stream)
             stream.close()
         return Product(meta, data)

@@ -463,7 +463,7 @@ class FromPredicateSig(UnarySig):
 class PlaceholderSig(NullarySig):
 
     def __init__(self, index):
-        assert isinstance(index, (str, int))
+        assert isinstance(index, int)
         self.index = index
 
     def __basis__(self):
