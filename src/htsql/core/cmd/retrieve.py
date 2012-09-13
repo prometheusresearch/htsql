@@ -142,7 +142,7 @@ class RetrievePipe(object):
         return Product(meta, data)
 
 
-class BuildRetrievePipe(Utility):
+class BuildRetrieve(Utility):
 
     def __init__(self, binding, limit=None):
         self.binding = binding
@@ -188,7 +188,7 @@ class ProduceRetrieve(Act):
         limit = None
         if isinstance(self.action, SafeProduceAction):
             limit = self.action.limit
-        pipe = build_retrieve_pipe(self.command.binding, limit)
+        pipe = build_retrieve(self.command.binding, limit)
         return pipe()
 
 
@@ -197,7 +197,7 @@ class AnalyzeRetrieve(Act):
     adapt(RetrieveCmd, AnalyzeAction)
 
     def __call__(self):
-        pipe = build_retrieve_pipe(self.command.binding)
+        pipe = build_retrieve(self.command.binding)
         return pipe.plan
 
 
@@ -220,6 +220,6 @@ class RenderSQL(Act):
         return (status, headers, body)
 
 
-build_retrieve_pipe = BuildRetrievePipe.__invoke__
+build_retrieve = BuildRetrieve.__invoke__
 
 

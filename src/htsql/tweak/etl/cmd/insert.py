@@ -3,7 +3,8 @@
 #
 
 
-from ....core.adapter import Adapter, adapt, adapt_many
+from ....core.util import listof
+from ....core.adapter import Utility, Adapter, adapt, adapt_many
 from ....core.error import BadRequestError
 from ....core.connect import transaction, scramble, unscramble
 from ....core.mark import EmptyMark
@@ -11,9 +12,11 @@ from ....core.domain import (Domain, ListDomain, RecordDomain, BooleanDomain,
         IntegerDomain, FloatDomain, DecimalDomain, StringDomain, DateDomain,
         TimeDomain, DateTimeDomain, IdentityDomain, UntypedDomain)
 from ....core.classify import normalize, classify, relabel
-from ....core.model import HomeNode, TableNode, TableArc, ColumnArc, ChainArc
+from ....core.model import (HomeNode, TableNode, Arc, TableArc, ColumnArc,
+        ChainArc)
+from ....core.entity import TableEntity, ColumnEntity
 from ....core.cmd.act import Act, ProduceAction, produce
-from ....core.cmd.retrieve import Product, RowStream, build_retrieve_pipe
+from ....core.cmd.retrieve import Product, RowStream, build_retrieve
 from ....core.tr.bind import BindingState, Select
 from ....core.tr.syntax import VoidSyntax, IdentifierSyntax
 from ....core.tr.binding import (VoidBinding, RootBinding, FormulaBinding,
@@ -94,40 +97,28 @@ class ClarifyDateTimeFromDate(Clarify):
                             if v is not None else None)
 
 
-class ProduceInsert(Act):
+class ExtractNodePipe(object):
 
-    adapt(InsertCmd, ProduceAction)
+    def __init__(self, node, arcs, converts):
+        assert isinstance(node, TableNode)
+        assert isinstance(arcs, listof(Arc))
+        assert isinstance(converts, list)
+        assert len(arcs) == len(converts)
+        self.node = node
+        self.arcs = arcs
+        self.converts = converts
+
+    def __call__(self, row):
+        return tuple(convert(row) for convert in self.converts)
+
+
+class BuildExtractNode(Utility):
+
+    def __init__(self, profile):
+        self.profile = profile
 
     def __call__(self):
-        with transaction() as connection:
-            product = produce(self.command.feed)
-            table, columns, extract = self.introspect_feed(product.meta)
-            returning_columns = self.find_unique_key(table)
-            sql = serialize_insert(table, columns, returning_columns)
-            sql = sql.encode('utf-8')
-            identity_pipe = self.make_identity_statement(table,
-                                                    returning_columns)
-            meta = identity_pipe.plan.profile
-            data = []
-            if product.data is not None:
-                cursor = connection.cursor()
-                for record in product.data:
-                    if record is None:
-                        continue
-                    values = extract(record, cursor)
-                    cursor.execute(sql, values)
-                    returning_values = cursor.fetchall()
-                    if len(returning_values) != 1:
-                        raise BadRequestError("unable to locate inserted row")
-                    [returning_values] = returning_values
-                    ids = identity_pipe(returning_values).data
-                    if len(ids) != 1:
-                        raise BadRequestError("unable to locate inserted row")
-                    data.extend(ids)
-        return Product(meta, data)
-
-    def introspect_feed(self, profile):
-        domain = profile.domain
+        domain = self.profile.domain
         if not (isinstance(domain, ListDomain) and
                 isinstance(domain.item_domain, RecordDomain)):
             feed_type = domain.family
@@ -136,24 +127,23 @@ class ProduceInsert(Act):
             raise BadRequestError("unexpected feed type: expected"
                                   " a list of records; got %s" % feed_type)
         fields = domain.item_domain.fields
-        if profile.tag is None:
+        if self.profile.tag is None:
             raise BadRequestError("missing table name")
-        signature = (normalize(profile.tag), None)
+        signature = (normalize(self.profile.tag), None)
         arc_by_signature = dict(((label.name, label.arity), label.arc)
                                 for label in classify(HomeNode()))
         if signature not in arc_by_signature:
             raise BadRequestError("unknown table name %s"
-                                  % profile.tag.encode('utf-8'))
+                                  % self.profile.tag.encode('utf-8'))
         arc = arc_by_signature[signature]
         if not isinstance(arc, TableArc):
             raise BadRequestError("expected a table name; got %s"
-                                  % profile.tag.encode('utf-8'))
-        table = arc.table
+                                  % self.profile.tag.encode('utf-8'))
+        node = TableNode(arc.table)
+        labels = classify(node)
         arc_by_signature = dict(((label.name, label.arity), label.arc)
-                                for label in classify(TableNode(table)))
-        index_by_column = {}
-        index_by_chain = {}
-        plan_by_chain = {}
+                                for label in labels)
+        index_by_arc = {}
         for idx, field in enumerate(fields):
             if field.tag is None:
                 continue
@@ -162,102 +152,146 @@ class ProduceInsert(Act):
                 raise BadRequestError("unknown column name %s"
                                       % field.tag.encode('utf-8'))
             arc = arc_by_signature[signature]
-            if isinstance(arc, ColumnArc):
-                column = arc.column
-                index_by_column[column] = idx
-            elif isinstance(arc, ChainArc):
-                joins = tuple(arc.joins)
-                if not joins[0].is_direct and all(join.reverse().is_contracting
-                                                  for join in joins[1:]):
-                    raise BadRequestError("cannot assign to a link %s"
-                                          % field.tag.encode('utf-8'))
-                index_by_chain[joins] = idx
-                plan = self.make_link_statement(joins)
-                plan_by_chain[joins] = plan
-            else:
+            if not isinstance(arc, (ColumnArc, ChainArc)):
                 raise BadRequestError("expected a column or a link name; got %s"
                                       % field.tag.encode('utf-8'))
-        slice = []
-        columns = []
-        clarifies = []
-        reconverts = []
-        resolves = []
-        indices = []
-        output_index_by_column = {}
-        for column in table.columns:
-            chains = [joins for joins in index_by_chain
-                      if column in joins[0].origin_columns]
-            if column not in index_by_column and not chains:
-                continue
-            if (column in index_by_column and chains) or len(chains) > 1:
-                raise BadRequestError("duplicate column assignment for %s"
-                                      % column.name.encode('utf-8'))
-            if column in index_by_column:
-                idx = index_by_column[column]
+            index_by_arc[arc] = idx
+        arcs = []
+        converts = []
+        for label in labels:
+            if label.arc in index_by_arc:
+                arc = label.arc
+                idx = index_by_arc[arc]
                 field = fields[idx]
-                clarify = Clarify.__invoke__(field.domain, column.domain)
+                if label.arc in arcs:
+                    raise BadRequestError("duplicate field %s"
+                                          % field.tag.encode('utf-8'))
+                arcs.append(arc)
+                if isinstance(arc, ColumnArc):
+                    arc_domain = arc.column.domain
+                elif isinstance(arc, ChainArc):
+                    joins = arc.joins
+                    if not joins[0].is_direct and \
+                            all(join.reverse().is_contracting
+                                for join in joins[1:]):
+                        raise BadRequestError("cannot assign to link %s"
+                                              % field.tag.encode('utf-8'))
+                    state = BindingState()
+                    syntax = VoidSyntax()
+                    scope = RootBinding(syntax)
+                    state.set_root(scope)
+                    seed = state.use(FreeTableRecipe(arc.target.table), syntax)
+                    recipe = identify(seed)
+                    if recipe is None:
+                        raise BadRequestError("cannot determine identity of a link")
+                    identity = state.use(recipe, syntax, scope=seed)
+                    arc_domain = identity.domain
+                clarify = Clarify.__invoke__(field.domain, arc_domain)
                 if clarify is None:
                     raise BadRequestError("invalid type for column %s:"
                                           " expected %s; got %s"
                                           % (field.tag.encode('utf-8'),
-                                             column.domain.family,
-                                             field.domain.family))
-                reconvert = scramble(column.domain)
-                slice.append(idx)
-                columns.append(column)
-                clarifies.append(clarify)
-                reconverts.append(reconvert)
-                indices.append(len(slice)-1)
-            else:
-                [chain] = chains
-                idx = index_by_chain[chain]
-                identity_domain, resolve = plan_by_chain[chain]
-                field = fields[idx]
-                if column == chain[0].origin_columns[0]:
-                    clarify = Clarify.__invoke__(field.domain, identity_domain)
-                    if clarify is None:
-                        raise BadRequestError("invalid type for column %s:"
-                                              " expected identity; got %s"
-                                              % (field.tag.encode('utf-8'),
-                                                 field.domain.family))
-                    start = len(index_by_column)+len(index_by_chain)+ \
-                            len(output_index_by_column)
-                    for origin_column in chain[0].origin_columns:
-                        output_index_by_column[origin_column] = start
-                        start += 1
-                    reconvert = scramble(column.domain)
-                    index = output_index_by_column[column]
-                    slice.append(idx)
-                    columns.append(column)
-                    clarifies.append(clarify)
-                    reconverts.append(reconvert)
-                    indices.append(index)
-                    resolves.append((resolve, len(slice)-1))
-                else:
-                    reconvert = scramble(column.domain)
-                    index = output_index_by_column[column]
-                    columns.append(column)
-                    reconverts.append(reconvert)
-                    indices.append(index)
-        def extract(record, cursor):
-            input_values = tuple(record[idx] for idx in slice)
-            try:
-                input_values = [clarify(value)
-                                for value, clarify
-                                    in zip(input_values, clarifies)]
-            except ValueError, exc:
-                raise BadRequestError(str(exc))
-            for resolve, resolve_idx in resolves:
-                input_value = input_values[resolve_idx]
-                resolved_values = resolve(input_value, cursor)
-                input_values.extend(resolved_values)
-            values = [input_values[idx] for idx in indices]
-            values = [reconvert(value)
-                      for value, reconvert in zip(values, reconverts)]
-            return values
-        return table, columns, extract
+                                             arc_domain, field.domain.family))
+                convert = (lambda v, i=idx, c=clarify: c(v[i]))
+                converts.append(convert)
+        return ExtractNodePipe(node, arcs, converts)
 
-    def find_unique_key(self, table):
+
+class ExtractTablePipe(object):
+
+    def __init__(self, table, columns, resolves, extracts):
+        assert isinstance(table, TableEntity)
+        assert isinstance(columns, listof(ColumnEntity))
+        self.table = table
+        self.columns = columns
+        self.resolves = resolves
+        self.extracts = extracts
+
+    def __call__(self, row):
+        row = [resolve(item) for item, resolve in zip(row, self.resolves)]
+        return tuple(extract(row) for extract in self.extracts)
+
+
+class BuildExtractTable(Utility):
+
+    def __init__(self, node, arcs):
+        assert isinstance(node, TableNode)
+        assert isinstance(arcs, listof(Arc))
+        self.node = node
+        self.arcs = arcs
+
+    def __call__(self):
+        table = self.node.table
+        resolves = []
+        extract_by_column = {}
+        for idx, arc in enumerate(self.arcs):
+            if isinstance(arc, ColumnArc):
+                column = arc.column
+                if column in extract_by_column:
+                    raise BadRequestError("duplicate column assignment for %s"
+                                          % column.name.encode('utf-8'))
+                resolve = (lambda v: v)
+                extract = (lambda r, i=idx: r[i])
+                resolves.append(resolve)
+                extract_by_column[column] = extract
+            elif isinstance(arc, ChainArc):
+                resolve_pipe = BuildResolveChain.__invoke__(arc.joins)
+                resolve = (lambda v, p=resolve_pipe: p(v))
+                resolves.append(resolve)
+                for column_idx, column in enumerate(resolve_pipe.columns):
+                    if column in extract_by_column:
+                        raise BadRequestError("duplicate column assignment for %s"
+                                              % column.name.encode('utf-8'))
+                    extract = (lambda r, i=idx, k=column_idx: r[i][k])
+                    extract_by_column[column] = extract
+        columns = []
+        extracts = []
+        for column in table.columns:
+            if column in extract_by_column:
+                columns.append(column)
+                extracts.append(extract_by_column[column])
+        return ExtractTablePipe(table, columns, resolves, extracts)
+
+
+class ExecuteInsertPipe(object):
+
+    def __init__(self, table, input_columns, output_columns, sql):
+        assert isinstance(table, TableEntity)
+        assert isinstance(input_columns, listof(ColumnEntity))
+        assert isinstance(output_columns, listof(ColumnEntity))
+        assert isinstance(sql, unicode)
+        self.table = table
+        self.input_columns = input_columns
+        self.output_columns = output_columns
+        self.sql = sql
+        self.input_converts = [scramble(column.domain)
+                               for column in input_columns]
+        self.output_converts = [unscramble(column.domain)
+                                for column in output_columns]
+
+    def __call__(self, row):
+        row = tuple(convert(item)
+               for item, convert in zip(row, self.input_converts))
+        with transaction() as connection:
+            cursor = connection.cursor()
+            cursor.execute(self.sql.encode('utf-8'), row)
+            rows = cursor.fetchall()
+            if len(rows) != 1:
+                raise BadRequestError("unable to locate inserted row")
+            [row] = rows
+        return row
+
+
+class BuildExecuteInsert(Utility):
+
+    def __init__(self, table, columns):
+        assert isinstance(table, TableEntity)
+        assert isinstance(columns, listof(ColumnEntity))
+        self.table = table
+        self.columns = columns
+
+    def __call__(self):
+        table = self.table
         returning_columns = []
         if table.primary_key is not None:
             returning_columns = table.primary_key.origin_columns
@@ -271,17 +305,41 @@ class ProduceInsert(Act):
                     break
         if not returning_columns:
             raise BadRequestError("table does not have a primary key")
-        return returning_columns
+        sql = serialize_insert(table, self.columns, returning_columns)
+        return ExecuteInsertPipe(table, self.columns, returning_columns, sql)
 
-    def make_identity_statement(self, table, returning_columns):
+
+class ResolveIdentityPipe(object):
+
+    def __init__(self, profile, pipe):
+        self.profile = profile
+        self.pipe = pipe
+
+    def __call__(self, row):
+        product = self.pipe(row)
+        data = product.data
+        if len(data) != 1:
+            raise BadRequestError("unable to locate inserted row")
+        return data[0]
+
+
+class BuildResolveIdentity(Utility):
+
+    def __init__(self, table, columns):
+        assert isinstance(table, TableEntity)
+        assert isinstance(columns, listof(ColumnEntity))
+        self.table = table
+        self.columns = columns
+
+    def __call__(self):
         state = BindingState()
         syntax = VoidSyntax()
         scope = RootBinding(syntax)
         state.set_root(scope)
-        scope = state.use(FreeTableRecipe(table), syntax)
+        scope = state.use(FreeTableRecipe(self.table), syntax)
         state.push_scope(scope)
         conditions = []
-        for idx, column in enumerate(returning_columns):
+        for idx, column in enumerate(self.columns):
             column_binding = state.use(ColumnRecipe(column), syntax)
             placeholder_binding = FormulaBinding(scope,
                                                  PlaceholderSig(idx),
@@ -308,7 +366,7 @@ class ProduceInsert(Act):
         if recipe is None:
             raise BindRequestError("cannot determine table identity")
         binding = state.use(recipe, syntax)
-        labels = relabel(TableArc(table))
+        labels = relabel(TableArc(self.table))
         if labels:
             label = labels[0]
             identifier = IdentifierSyntax(label.name, EmptyMark())
@@ -320,21 +378,51 @@ class ProduceInsert(Act):
         binding = SegmentBinding(state.scope, binding, domain, syntax)
         profile = decorate(binding)
         binding = QueryBinding(state.scope, binding, profile, syntax)
-        pipe = build_retrieve_pipe(binding)
-        return pipe
+        pipe = build_retrieve(binding)
+        return ResolveIdentityPipe(pipe.profile, pipe)
 
-    def make_link_statement(self, joins):
+
+class ResolveChainPipe(object):
+
+    def __init__(self, columns, domain, pipe):
+        assert isinstance(columns, listof(ColumnEntity))
+        self.columns = columns
+        self.pipe = pipe
+        self.leaves = domain.leaves
+
+    def __call__(self, value):
+        if value is None:
+            return (None,)*len(self.columns)
+        raw_values = []
+        for leaf in self.leaves:
+            raw_value = value
+            for idx in leaf:
+                raw_value = raw_value[idx]
+            raw_values.append(raw_value)
+        product = self.pipe(raw_values)
+        data = product.data
+        if len(data) != 1:
+            raise BadRequestError("unable to resolve a link")
+        return data[0]
+
+
+class BuildResolveChain(Utility):
+
+    def __init__(self, joins):
+        self.joins = joins
+
+    def __call__(self):
+        joins = self.joins
         state = BindingState()
         syntax = VoidSyntax()
         scope = RootBinding(syntax)
         state.set_root(scope)
-        table = joins[-1].target
-        seed = state.use(FreeTableRecipe(table), syntax)
+        seed = state.use(FreeTableRecipe(joins[-1].target), syntax)
         recipe = identify(seed)
         if recipe is None:
             raise BadRequestError("cannot determine identity of a link")
         identity = state.use(recipe, syntax, scope=seed)
-        idx = itertools.count()
+        count = itertools.count()
         def make_value(domain):
             value = []
             for field in domain.fields:
@@ -342,7 +430,7 @@ class ProduceInsert(Act):
                     item = make_value(field)
                 else:
                     item = FormulaBinding(scope,
-                                          PlaceholderSig(next(idx)),
+                                          PlaceholderSig(next(count)),
                                           field,
                                           syntax)
                 value.append(item)
@@ -352,7 +440,7 @@ class ProduceInsert(Act):
         state.push_scope(scope)
         if len(joins) > 1:
             recipe = AttachedTableRecipe([join.reverse()
-                                          for join in reversed(joins[1:])])
+                                          for join in joins[:0:-1]])
             scope = state.use(recipe, syntax)
             state.push_scope(scope)
         elements = []
@@ -367,20 +455,36 @@ class ProduceInsert(Act):
         binding = SegmentBinding(state.root, binding, domain, syntax)
         profile = decorate(binding)
         binding = QueryBinding(state.root, binding, profile, syntax)
-        pipe =  build_retrieve_pipe(binding)
-        def resolve(value, cursor, resolve_pipe=pipe,
-                    leaves=identity.domain.leaves):
-            raw_values = []
-            for leaf in leaves:
-                raw_value = value
-                for idx in leaf:
-                    raw_value = raw_value[idx]
-                raw_values.append(raw_value)
-            product = resolve_pipe(raw_values)
-            data = product.data
-            if len(data) != 1:
-                raise BadRequestError("unable to resolve a link")
-            return data[0]
-        return identity.domain, resolve
+        pipe =  build_retrieve(binding)
+        columns = joins[0].origin_columns[:]
+        domain = identity.domain
+        return ResolveChainPipe(columns, domain, pipe)
+
+
+class ProduceInsert(Act):
+
+    adapt(InsertCmd, ProduceAction)
+
+    def __call__(self):
+        with transaction() as connection:
+            product = produce(self.command.feed)
+            extract_node = BuildExtractNode.__invoke__(product.meta)
+            extract_table = BuildExtractTable.__invoke__(
+                    extract_node.node, extract_node.arcs)
+            execute_insert = BuildExecuteInsert.__invoke__(
+                    extract_table.table, extract_table.columns)
+            resolve_identity = BuildResolveIdentity.__invoke__(
+                    execute_insert.table, execute_insert.output_columns)
+            meta = resolve_identity.profile
+            data = []
+            for record in product.data:
+                if record is None:
+                    continue
+                row = resolve_identity(
+                        execute_insert(
+                            extract_table(
+                                extract_node(record))))
+                data.append(row)
+            return Product(meta, data)
 
 
