@@ -74,6 +74,70 @@ class SerializeInsert(Utility, DumpBase):
                 self.write(u", ")
 
 
+class SerializeUpdate(Utility, DumpBase):
+
+    def __init__(self, table, columns, key_columns, returning_columns):
+        assert isinstance(table, TableEntity)
+        assert isinstance(columns, listof(ColumnEntity))
+        assert isinstance(key_columns, listof(ColumnEntity))
+        assert isinstance(returning_columns, maybe(listof(ColumnEntity)))
+        self.table = table
+        self.columns = columns
+        self.key_columns = key_columns
+        self.returning_columns = returning_columns
+        self.state = SerializingState()
+        self.stream = self.state.stream
+
+    def __call__(self):
+        self.dump_update()
+        if self.columns:
+            self.dump_columns()
+        if self.key_columns:
+            self.dump_keys()
+        if self.returning_columns:
+            self.dump_returning()
+        return self.stream.flush()
+
+    def dump_update(self):
+        if self.table.schema.name:
+            self.format("UPDATE {schema:name}.{table:name}",
+                        schema=self.table.schema.name,
+                        table=self.table.name)
+        else:
+            self.format("UPDATE {table:name}",
+                        table=self.table.name)
+
+    def dump_columns(self):
+        self.newline()
+        self.write(u"SET ")
+        self.indent()
+        for idx, column in enumerate(self.columns):
+            if idx > 0:
+                self.newline()
+            self.format("{column:name} = {index:placeholder}",
+                        column=column.name, index=None)
+            if idx < len(self.columns)-1:
+                self.write(u",")
+        self.dedent()
+
+    def dump_keys(self):
+        self.newline()
+        self.write(u"WHERE ")
+        for idx, column in enumerate(self.key_columns):
+            if idx > 0:
+                self.write(u" AND ")
+            self.format("{column:name} = {index:placeholder}",
+                        column=column.name, index=None)
+
+    def dump_returning(self):
+        self.newline()
+        self.write(u"RETURNING ")
+        for idx, column in enumerate(self.returning_columns):
+            self.format("{column:name}", column=column.name)
+            if idx < len(self.returning_columns)-1:
+                self.write(u", ")
+
+
 class SerializeTruncate(Utility, DumpBase):
 
     def __init__(self, table):
@@ -97,6 +161,11 @@ class SerializeTruncate(Utility, DumpBase):
 
 def serialize_insert(table, columns, returning_columns):
     return SerializeInsert.__invoke__(table, columns, returning_columns)
+
+
+def serialize_update(table, columns, key_columns, returning_columns):
+    return SerializeUpdate.__invoke__(table, columns, key_columns,
+                                      returning_columns)
 
 
 def serialize_truncate(table):

@@ -14,7 +14,7 @@ from ....core.tr.binding import QueryBinding, SegmentBinding, CommandBinding
 from ....core.tr.syntax import IdentifierSyntax
 from ....core.tr.fn.bind import BindCommand
 from ....core.cmd.command import DefaultCmd
-from ..cmd.command import InsertCmd, UpdateCmd, DeleteCmd, TruncateCmd
+from ..cmd.command import InsertCmd, MergeCmd, UpdateCmd, DeleteCmd, TruncateCmd
 
 
 class BindETL(BindCommand):
@@ -38,6 +38,12 @@ class BindInsert(BindETL):
 
     call('insert')
     cmd = InsertCmd
+
+
+class BindMerge(BindETL):
+
+    call('merge')
+    cmd = MergeCmd
 
 
 class BindUpdate(BindETL):

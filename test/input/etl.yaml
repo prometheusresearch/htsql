@@ -61,6 +61,9 @@ tests:
 - uri: /product_line:={manufacturer:=top(@manufacturer?name~'fujitsu').id(),
                        code:='E', title:='Lifebook E Series'}
         /:insert
+- uri: /product_line:={manufacturer:='0992',
+                       code:='Z', title:='IdeaPad Z Series'}
+        /:insert
 - uri: /product_line
 - uri: /product:={sku:='A0000001',
                   product_line:='6702.E',
@@ -68,5 +71,19 @@ tests:
                   description:='Are you looking for an essential notebook with an extra-slim design, suitable for daily use? Then the 39.6 cm (15.6-inch) Fujitsu LIFEBOOK AH552/SL is the right choice. With only 25.4 mm in height and weight of 2.2 kg it fits into nearly every bag. Thanks to integrated WLAN and Bluetooth® you can work anytime and anywhere and the elegant aluminum cover gives you the headturning looks.',
                   list_price:=null}
         /:insert
+- uri: /product:={sku:='A0000002',
+                  product_line:='0992.Z',
+                  title:='Lenovo IdeaPad Z580'}
+        /:merge
+- uri: /product:={sku:='A0000002',
+                  description:='IdeaPad Z Series laptops offer you a great balance of multimedia performance, affordability, and bold style, so you’re sure to make impressions as well as be entertained - no matter where you go',
+                  list_price:='699.00'}
+        /:merge
+- uri: /product:={list_price:='649.00'}
+        /:merge
+  expect: 400
+- uri: /product:={sku:='A0000002',
+                  list_price:='649.00'}
+        /:merge
 - uri: /product
 

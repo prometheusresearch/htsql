@@ -37051,6 +37051,17 @@ tests:
           -+--------------+-
            | 6702.E       |
 
+      - uri: /product_line:={manufacturer:='0992', code:='Z', title:='IdeaPad Z Series'}
+          /:insert
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: |2+
+           | product_line |
+          -+--------------+-
+           | 0992.Z       |
+
       - uri: /product_line
         status: 200 OK
         headers:
@@ -37061,6 +37072,7 @@ tests:
            +-------------------+------+--------------------+
            | manufacturer_code | code | title              |
           -+-------------------+------+--------------------+-
+           | 0992              | Z    | IdeaPad Z Series   |
            | 2376              | U    | Extreme Ultrabook  |
            | 6702              | E    | Lifebook E Series  |
            | SMSN              | 5    | Series 5 Ultrabook |
@@ -37089,6 +37101,46 @@ tests:
            | product  |
           -+----------+-
            | A0000001 |
+
+      - uri: /product:={sku:='A0000002', product_line:='0992.Z', title:='Lenovo IdeaPad
+          Z580'} /:merge
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: |2+
+           | product  |
+          -+----------+-
+           | A0000002 |
+
+      - uri: "/product:={sku:='A0000002', description:='IdeaPad Z Series laptops offer
+          you a great balance of multimedia performance, affordability, and bold style,
+          so you\u2019re sure to make impressions as well as be entertained - no matter
+          where you go', list_price:='699.00'} /:merge"
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: |2+
+           | product  |
+          -+----------+-
+           | A0000002 |
+
+      - uri: /product:={list_price:='649.00'} /:merge
+        status: 400 Bad Request
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        body: |
+          invalid request: missing identity field sku
+      - uri: /product:={sku:='A0000002', list_price:='649.00'} /:merge
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: |2+
+           | product  |
+          -+----------+-
+           | A0000002 |
 
       - uri: /product
         status: 200 OK
@@ -37124,6 +37176,21 @@ tests:
           \                            :              : aluminum cover gives you the
           \    :            :\n :          :                   :                   :
           \                            :              : headturning looks.               :
+          \           :\n | A0000002 | 0992              | Z                 | Lenovo
+          IdeaPad Z580         | true         | IdeaPad Z Series laptops offer   |
+          \    649.00 |\n :          :                   :                   :                             :
+          \             : you a great balance of           :            :\n :          :
+          \                  :                   :                             :              :
+          multimedia performance,          :            :\n :          :                   :
+          \                  :                             :              : affordability,
+          and bold style,   :            :\n :          :                   :                   :
+          \                            :              : so you\u2019re sure to make
+          \          :            :\n :          :                   :                   :
+          \                            :              : impressions as well as be
+          \       :            :\n :          :                   :                   :
+          \                            :              : entertained - no matter where
+          \   :            :\n :          :                   :                   :
+          \                            :              : you go                           :
           \           :\n\n ----\n /product\n SELECT \"product\".\"sku\",\n        \"product\".\"manufacturer_code\",\n
           \       \"product\".\"product_line_code\",\n        \"product\".\"title\",\n
           \       \"product\".\"is_available\",\n        \"product\".\"description\",\n

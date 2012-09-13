@@ -19,6 +19,10 @@ class InsertCmd(ETLCmd):
     pass
 
 
+class MergeCmd(ETLCmd):
+    pass
+
+
 class UpdateCmd(ETLCmd):
     pass
 
