@@ -138,6 +138,41 @@ class SerializeUpdate(Utility, DumpBase):
                 self.write(u", ")
 
 
+class SerializeDelete(Utility, DumpBase):
+
+    def __init__(self, table, key_columns):
+        assert isinstance(table, TableEntity)
+        assert isinstance(key_columns, listof(ColumnEntity))
+        self.table = table
+        self.key_columns = key_columns
+        self.state = SerializingState()
+        self.stream = self.state.stream
+
+    def __call__(self):
+        self.dump_delete()
+        if self.key_columns:
+            self.dump_keys()
+        return self.stream.flush()
+
+    def dump_delete(self):
+        if self.table.schema.name:
+            self.format("DELETE FROM {schema:name}.{table:name}",
+                        schema=self.table.schema.name,
+                        table=self.table.name)
+        else:
+            self.format("DELETE FROM {table:name}",
+                        table=self.table.name)
+
+    def dump_keys(self):
+        self.newline()
+        self.write(u"WHERE ")
+        for idx, column in enumerate(self.key_columns):
+            if idx > 0:
+                self.write(u" AND ")
+            self.format("{column:name} = {index:placeholder}",
+                        column=column.name, index=None)
+
+
 class SerializeTruncate(Utility, DumpBase):
 
     def __init__(self, table):
@@ -166,6 +201,10 @@ def serialize_insert(table, columns, returning_columns):
 def serialize_update(table, columns, key_columns, returning_columns):
     return SerializeUpdate.__invoke__(table, columns, key_columns,
                                       returning_columns)
+
+
+def serialize_delete(table, key_columns):
+    return SerializeDelete.__invoke__(table, key_columns)
 
 
 def serialize_truncate(table):

@@ -99,23 +99,29 @@ class ClarifyDateTimeFromDate(Clarify):
 
 class ExtractNodePipe(object):
 
-    def __init__(self, node, arcs, converts):
+    def __init__(self, node, arcs, id_convert, converts):
         assert isinstance(node, TableNode)
         assert isinstance(arcs, listof(Arc))
         assert isinstance(converts, list)
-        assert len(arcs) == len(converts)
         self.node = node
         self.arcs = arcs
+        self.id_convert = id_convert
         self.converts = converts
 
     def __call__(self, row):
-        return tuple(convert(row) for convert in self.converts)
+        if self.id_convert is not None:
+            return (self.id_convert(row),
+                    tuple(convert(row) for convert in self.converts))
+        else:
+            return tuple(convert(row) for convert in self.converts)
 
 
 class BuildExtractNode(Utility):
 
-    def __init__(self, profile):
+    def __init__(self, profile, with_id=False, with_fields=True):
         self.profile = profile
+        self.with_id = with_id
+        self.with_fields = with_fields
 
     def __call__(self):
         domain = self.profile.domain
@@ -140,61 +146,89 @@ class BuildExtractNode(Utility):
             raise BadRequestError("expected a table name; got %s"
                                   % self.profile.tag.encode('utf-8'))
         node = TableNode(arc.table)
-        labels = classify(node)
-        arc_by_signature = dict(((label.name, label.arity), label.arc)
-                                for label in labels)
-        index_by_arc = {}
-        for idx, field in enumerate(fields):
-            if field.tag is None:
-                continue
-            signature = (normalize(field.tag), None)
-            if signature not in arc_by_signature:
-                raise BadRequestError("unknown column name %s"
-                                      % field.tag.encode('utf-8'))
-            arc = arc_by_signature[signature]
-            if not isinstance(arc, (ColumnArc, ChainArc)):
-                raise BadRequestError("expected a column or a link name; got %s"
-                                      % field.tag.encode('utf-8'))
-            index_by_arc[arc] = idx
+        id_convert = None
+        if self.with_id:
+            if not fields:
+                raise BadRequestError("the first field is expected to be"
+                                      " a table identity")
+            id_field = fields[0]
+            state = BindingState()
+            syntax = VoidSyntax()
+            scope = RootBinding(syntax)
+            state.set_root(scope)
+            seed = state.use(FreeTableRecipe(node.table), syntax)
+            recipe = identify(seed)
+            if recipe is None:
+                raise BadRequestError("cannot determine identity of the table")
+            identity = state.use(recipe, syntax, scope=seed)
+            id_domain = identity.domain
+            clarify = Clarify.__invoke__(id_field.domain, id_domain)
+            if clarify is None:
+                raise BadRequestError("the first field is expected to be"
+                                      " a table identity")
+            id_convert = (lambda r, c=clarify: c(r[0]))
+        if self.with_fields:
+            labels = classify(node)
+            arc_by_signature = dict(((label.name, label.arity), label.arc)
+                                    for label in labels)
+            index_by_arc = {}
+            for idx, field in enumerate(fields):
+                if self.with_id and idx == 0:
+                    continue
+                if field.tag is None:
+                    continue
+                signature = (normalize(field.tag), None)
+                if signature not in arc_by_signature:
+                    raise BadRequestError("unknown column name %s"
+                                          % field.tag.encode('utf-8'))
+                arc = arc_by_signature[signature]
+                if not isinstance(arc, (ColumnArc, ChainArc)):
+                    raise BadRequestError("expected a column or a link name;"
+                                          " got %s" % field.tag.encode('utf-8'))
+                index_by_arc[arc] = idx
         arcs = []
         converts = []
-        for label in labels:
-            if label.arc in index_by_arc:
-                arc = label.arc
-                idx = index_by_arc[arc]
-                field = fields[idx]
-                if label.arc in arcs:
-                    raise BadRequestError("duplicate field %s"
-                                          % field.tag.encode('utf-8'))
-                arcs.append(arc)
-                if isinstance(arc, ColumnArc):
-                    arc_domain = arc.column.domain
-                elif isinstance(arc, ChainArc):
-                    joins = arc.joins
-                    if not joins[0].is_direct and \
-                            all(join.reverse().is_contracting
-                                for join in joins[1:]):
-                        raise BadRequestError("cannot assign to link %s"
+        if self.with_fields:
+            for label in labels:
+                if label.arc in index_by_arc:
+                    arc = label.arc
+                    idx = index_by_arc[arc]
+                    field = fields[idx]
+                    if label.arc in arcs:
+                        raise BadRequestError("duplicate field %s"
                                               % field.tag.encode('utf-8'))
-                    state = BindingState()
-                    syntax = VoidSyntax()
-                    scope = RootBinding(syntax)
-                    state.set_root(scope)
-                    seed = state.use(FreeTableRecipe(arc.target.table), syntax)
-                    recipe = identify(seed)
-                    if recipe is None:
-                        raise BadRequestError("cannot determine identity of a link")
-                    identity = state.use(recipe, syntax, scope=seed)
-                    arc_domain = identity.domain
-                clarify = Clarify.__invoke__(field.domain, arc_domain)
-                if clarify is None:
-                    raise BadRequestError("invalid type for column %s:"
-                                          " expected %s; got %s"
-                                          % (field.tag.encode('utf-8'),
-                                             arc_domain, field.domain.family))
-                convert = (lambda v, i=idx, c=clarify: c(v[i]))
-                converts.append(convert)
-        return ExtractNodePipe(node, arcs, converts)
+                    arcs.append(arc)
+                    if isinstance(arc, ColumnArc):
+                        arc_domain = arc.column.domain
+                    elif isinstance(arc, ChainArc):
+                        joins = arc.joins
+                        if not joins[0].is_direct and \
+                                all(join.reverse().is_contracting
+                                    for join in joins[1:]):
+                            raise BadRequestError("cannot assign to link %s"
+                                                  % field.tag.encode('utf-8'))
+                        state = BindingState()
+                        syntax = VoidSyntax()
+                        scope = RootBinding(syntax)
+                        state.set_root(scope)
+                        seed = state.use(FreeTableRecipe(arc.target.table),
+                                         syntax)
+                        recipe = identify(seed)
+                        if recipe is None:
+                            raise BadRequestError("cannot determine"
+                                                  " identity of a link")
+                        identity = state.use(recipe, syntax, scope=seed)
+                        arc_domain = identity.domain
+                    clarify = Clarify.__invoke__(field.domain, arc_domain)
+                    if clarify is None:
+                        raise BadRequestError("invalid type for column %s:"
+                                              " expected %s; got %s"
+                                              % (field.tag.encode('utf-8'),
+                                                 arc_domain,
+                                                 field.domain.family))
+                    convert = (lambda v, i=idx, c=clarify: c(v[i]))
+                    converts.append(convert)
+        return ExtractNodePipe(node, arcs, id_convert, converts)
 
 
 class ExtractTablePipe(object):

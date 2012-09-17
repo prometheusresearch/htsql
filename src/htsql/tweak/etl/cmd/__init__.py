@@ -3,6 +3,6 @@
 #
 
 
-from . import command, insert, merge, truncate
+from . import command, delete, insert, merge, truncate, update
 
 

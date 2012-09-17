@@ -82,8 +82,17 @@ tests:
 - uri: /product:={list_price:='649.00'}
         /:merge
   expect: 400
-- uri: /product:={sku:='A0000002',
+- uri: /product:={'A0000002',
                   list_price:='649.00'}
-        /:merge
+        /:update
+- uri: /product:={sku:='A0000003',
+                  manufacturer:='SMSN',
+                  title:='Smart TV'}
+        /:insert
+- uri: /product[A0000003]
+        /:delete
+  expect: 400
+- uri: /product[A0000003]{id()}
+        /:delete
 - uri: /product
 
