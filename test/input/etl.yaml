@@ -72,7 +72,7 @@ tests:
                   list_price:=null}
         /:insert
 - uri: /product:={sku:='A0000002',
-                  product_line:='0992.Z',
+                  product_line:=[0992.Z],
                   title:='Lenovo IdeaPad Z580'}
         /:merge
 - uri: /product:={sku:='A0000002',
@@ -82,7 +82,7 @@ tests:
 - uri: /product:={list_price:='649.00'}
         /:merge
   expect: 400
-- uri: /product:={'A0000002',
+- uri: /product:={[A0000002],
                   list_price:='649.00'}
         /:update
 - uri: /product:={sku:='A0000003',

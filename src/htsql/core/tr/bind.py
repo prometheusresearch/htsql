@@ -742,6 +742,16 @@ class BindLocator(Bind):
                               self.syntax)
 
 
+class BindLocation(Bind):
+
+    adapt(LocationSyntax)
+
+    def __call__(self):
+        elements = [self.state.bind(branch)
+                    for branch in self.syntax.branches]
+        return IdentityBinding(self.state.scope, elements, self.syntax)
+
+
 class BindGroup(Bind):
 
     adapt(GroupSyntax)

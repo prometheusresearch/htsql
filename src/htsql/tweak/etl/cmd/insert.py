@@ -97,6 +97,26 @@ class ClarifyDateTimeFromDate(Clarify):
                             if v is not None else None)
 
 
+class ClarifyIdentity(Clarify):
+
+    adapt(IdentityDomain, IdentityDomain)
+
+    def __call__(self):
+        if self.origin_domain == self.domain:
+            return (lambda v: v)
+        if self.origin_domain.arity != self.domain.arity:
+            return None
+        converts = []
+        for origin_field, field in zip(self.origin_domain.fields,
+                                           self.domain.fields):
+            convert = Clarify.__invoke__(origin_field, field)
+            if convert is None:
+                return None
+            converts.append(convert)
+        return (lambda v, cs=converts: tuple(c(i) for i, c in zip(v, cs))
+                                       if v is not None else None)
+
+
 class ExtractNodePipe(object):
 
     def __init__(self, node, arcs, id_convert, converts):

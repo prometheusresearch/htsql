@@ -132,7 +132,8 @@ class QueryParser(Parser):
         label           ::= STRING | '(' location ')' | '[' location ']'
 
         atom            ::= '@' atom | '*' index? | '^' | selector | group |
-                            identifier call? | reference | literal
+                            '[' location ']' | identifier call? | reference |
+                            literal
         index           ::= NUMBER | '(' NUMBER ')'
 
         group           ::= '(' segment | top ')'
@@ -631,8 +632,9 @@ class AtomParser(Parser):
     @classmethod
     def process(cls, tokens):
         # Expect:
-        #   atom        ::= '@' atom | '*' index? | '^' | selector | group |
-        #                   identifier call? | reference | literal
+        # atom            ::= '@' atom | '*' index? | '^' | selector | group |
+        #                     '[' location ']' | identifier call? | reference |
+        #                     literal
         #   index       ::= NUMBER | '(' NUMBER ')'
         #   call        ::= '(' arguments? ')'
         #   arguments   ::= argument ( ',' argument )* ','?
@@ -670,6 +672,10 @@ class AtomParser(Parser):
         elif tokens.peek(SymbolToken, [u'{']):
             selector = SelectorParser << tokens
             return selector
+        # A locator literal.
+        elif tokens.peek(SymbolToken, [u'[']):
+            location = LocationParser << tokens
+            return location
         # An identifier or a function call.
         elif tokens.peek(NameToken):
             identifier = IdentifierParser << tokens

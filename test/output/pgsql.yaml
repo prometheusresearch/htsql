@@ -37102,7 +37102,7 @@ tests:
           -+----------+-
            | A0000001 |
 
-      - uri: /product:={sku:='A0000002', product_line:='0992.Z', title:='Lenovo IdeaPad
+      - uri: /product:={sku:='A0000002', product_line:=[0992.Z], title:='Lenovo IdeaPad
           Z580'} /:merge
         status: 200 OK
         headers:
@@ -37132,7 +37132,7 @@ tests:
         - [Content-Type, text/plain; charset=UTF-8]
         body: |
           invalid request: missing identity field sku
-      - uri: /product:={'A0000002', list_price:='649.00'} /:update
+      - uri: /product:={[A0000002], list_price:='649.00'} /:update
         status: 200 OK
         headers:
         - [Content-Type, text/plain; charset=UTF-8]
