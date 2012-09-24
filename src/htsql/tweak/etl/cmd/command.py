@@ -3,6 +3,7 @@
 #
 
 
+from ....core.util import listof
 from ....core.cmd.command import Command, ProducerCmd
 from ....core.entity import TableEntity
 
@@ -36,5 +37,12 @@ class TruncateCmd(ProducerCmd):
     def __init__(self, table):
         assert isinstance(table, TableEntity)
         self.table = table
+
+
+class DoCmd(ProducerCmd):
+
+    def __init__(self, commands):
+        assert isinstance(commands, listof(Command))
+        self.commands = commands
 
 

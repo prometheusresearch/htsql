@@ -94,5 +94,9 @@ tests:
   expect: 400
 - uri: /product[A0000003]{id()}
         /:delete
+- uri: /do(/product:={sku:='A0000003',
+                      manufacturer:=[0992],
+                      title:='Lenovo ThinkPad T430'}/:insert,
+           /product[A0000003])
 - uri: /product
 

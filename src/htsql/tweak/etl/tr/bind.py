@@ -12,9 +12,11 @@ from ....core.tr.lookup import lookup_command
 from ....core.tr.decorate import decorate
 from ....core.tr.binding import QueryBinding, SegmentBinding, CommandBinding
 from ....core.tr.syntax import IdentifierSyntax
+from ....core.tr.signature import ConnectiveSig
 from ....core.tr.fn.bind import BindCommand
 from ....core.cmd.command import DefaultCmd
-from ..cmd.command import InsertCmd, MergeCmd, UpdateCmd, DeleteCmd, TruncateCmd
+from ..cmd.command import (InsertCmd, MergeCmd, UpdateCmd, DeleteCmd,
+        TruncateCmd, DoCmd)
 
 
 class BindETL(BindCommand):
@@ -75,6 +77,27 @@ class BindTruncate(BindCommand):
             raise BindError("a table is expected", op.mark)
         table = arc.table
         command = TruncateCmd(table)
+        return CommandBinding(self.state.scope, command, self.syntax)
+
+
+class BindDo(BindCommand):
+
+    call('do')
+    signature = ConnectiveSig
+
+    def expand(self, ops):
+        commands = []
+        for op in ops:
+            op = self.state.bind(op)
+            command = lookup_command(op)
+            if command is None:
+                if not isinstance(op, SegmentBinding):
+                    raise BindError("a segment is expected", op.mark)
+                profile = decorate(op)
+                binding = QueryBinding(self.state.root, op, profile, op.syntax)
+                command = DefaultCmd(binding)
+            commands.append(command)
+        command = DoCmd(commands)
         return CommandBinding(self.state.scope, command, self.syntax)
 
 

@@ -37165,6 +37165,31 @@ tests:
         - [Content-Type, text/plain; charset=UTF-8]
         - [Vary, Accept]
         body: ''
+      - uri: /do(/product:={sku:='A0000003', manufacturer:=[0992], title:='Lenovo
+          ThinkPad T430'}/:insert, /product[A0000003])
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: |2
+           | product                                                                                                           |
+           +----------+-------------------+-------------------+----------------------+--------------+-------------+------------+
+           | sku      | manufacturer_code | product_line_code | title                | is_available | description | list_price |
+          -+----------+-------------------+-------------------+----------------------+--------------+-------------+------------+-
+           | A0000003 | 0992              |                   | Lenovo ThinkPad T430 | true         |             |            |
+
+           ----
+           /product[A0000003]
+           SELECT "product"."sku",
+                  "product"."manufacturer_code",
+                  "product"."product_line_code",
+                  "product"."title",
+                  "product"."is_available",
+                  "product"."description",
+                  "product"."list_price"
+           FROM "product"
+           WHERE ("product"."sku" = 'A0000003')
+           ORDER BY 1 ASC
       - uri: /product
         status: 200 OK
         headers:
@@ -37214,7 +37239,9 @@ tests:
           \                            :              : entertained - no matter where
           \   :            :\n :          :                   :                   :
           \                            :              : you go                           :
-          \           :\n\n ----\n /product\n SELECT \"product\".\"sku\",\n        \"product\".\"manufacturer_code\",\n
+          \           :\n | A0000003 | 0992              |                   | Lenovo
+          ThinkPad T430        | true         |                                  |
+          \           |\n\n ----\n /product\n SELECT \"product\".\"sku\",\n        \"product\".\"manufacturer_code\",\n
           \       \"product\".\"product_line_code\",\n        \"product\".\"title\",\n
           \       \"product\".\"is_available\",\n        \"product\".\"description\",\n
           \       \"product\".\"list_price\"\n FROM \"product\"\n ORDER BY 1 ASC\n"
