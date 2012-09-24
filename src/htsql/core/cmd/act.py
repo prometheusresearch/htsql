@@ -5,8 +5,8 @@
 
 from ..adapter import Adapter, adapt
 from ..error import BadRequestError
-from .command import (Command, UniversalCmd, DefaultCmd, RetrieveCmd,
-                      ProducerCmd, RendererCmd)
+from .command import (Command, UniversalCmd, DefaultCmd, FetchCmd, ProducerCmd,
+        RendererCmd)
 from ..tr.lookup import lookup_command
 from ..tr.parse import parse
 from ..tr.bind import bind
@@ -84,7 +84,7 @@ class ActDefault(Act):
     adapt(DefaultCmd, Action)
 
     def __call__(self):
-        command = RetrieveCmd(self.command.binding)
+        command = FetchCmd(self.command.binding)
         return act(command, self.action)
 
 

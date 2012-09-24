@@ -6,7 +6,7 @@
 from ....core.adapter import adapt
 from ....core.connect import transaction
 from ....core.cmd.act import Act, ProduceAction
-from ....core.cmd.retrieve import Product
+from ....core.cmd.fetch import Product
 from ....core.tr.binding import VoidBinding
 from ....core.tr.decorate import decorate
 from .command import TruncateCmd

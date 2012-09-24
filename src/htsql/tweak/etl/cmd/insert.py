@@ -16,7 +16,7 @@ from ....core.model import (HomeNode, TableNode, Arc, TableArc, ColumnArc,
         ChainArc)
 from ....core.entity import TableEntity, ColumnEntity
 from ....core.cmd.act import Act, ProduceAction, produce
-from ....core.cmd.retrieve import Product, RowStream, build_retrieve
+from ....core.cmd.fetch import Product, RowStream, build_fetch
 from ....core.tr.bind import BindingState, Select
 from ....core.tr.syntax import VoidSyntax, IdentifierSyntax
 from ....core.tr.binding import (VoidBinding, RootBinding, FormulaBinding,
@@ -432,7 +432,7 @@ class BuildResolveIdentity(Utility):
         binding = SegmentBinding(state.scope, binding, domain, syntax)
         profile = decorate(binding)
         binding = QueryBinding(state.scope, binding, profile, syntax)
-        pipe = build_retrieve(binding)
+        pipe = build_fetch(binding)
         return ResolveIdentityPipe(pipe.profile, pipe)
 
 
@@ -509,7 +509,7 @@ class BuildResolveChain(Utility):
         binding = SegmentBinding(state.root, binding, domain, syntax)
         profile = decorate(binding)
         binding = QueryBinding(state.root, binding, profile, syntax)
-        pipe =  build_retrieve(binding)
+        pipe =  build_fetch(binding)
         columns = joins[0].origin_columns[:]
         domain = identity.domain
         return ResolveChainPipe(columns, domain, pipe)

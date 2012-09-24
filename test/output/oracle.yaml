@@ -32147,7 +32147,7 @@ tests:
                      WHERE (1 <> 0)
       - id: commands
         tests:
-        - uri: /school/:retrieve
+        - uri: /school/:fetch
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
@@ -32174,7 +32174,7 @@ tests:
                     "SCHOOL"."CAMPUS"
              FROM "SCHOOL"
              ORDER BY 1 ASC
-        - uri: /retrieve(/school)
+        - uri: /fetch(/school)
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
@@ -32201,7 +32201,7 @@ tests:
                     "SCHOOL"."CAMPUS"
              FROM "SCHOOL"
              ORDER BY 1 ASC
-        - uri: /school/:retrieve/:raw
+        - uri: /school/:fetch/:raw
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
@@ -32309,7 +32309,7 @@ tests:
                    "SCHOOL"."CAMPUS"
             FROM "SCHOOL"
             ORDER BY 1 ASC
-        - uri: /school/:retrieve/:sql
+        - uri: /school/:fetch/:sql
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
@@ -32319,29 +32319,29 @@ tests:
                    "SCHOOL"."CAMPUS"
             FROM "SCHOOL"
             ORDER BY 1 ASC
-        - uri: /retrieve()
+        - uri: /fetch()
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'retrieve' expects 1 argument; got 0:
-                /retrieve()
-                 ^^^^^^^^^^
-        - uri: /retrieve(school)
+            bind error: function 'fetch' expects 1 argument; got 0:
+                /fetch()
+                 ^^^^^^^
+        - uri: /fetch(school)
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'retrieve' expects a segment argument:
-                /retrieve(school)
-                          ^^^^^^
-        - uri: /school/:html/:retrieve
+            bind error: function 'fetch' expects a segment argument:
+                /fetch(school)
+                       ^^^^^^
+        - uri: /school/:html/:fetch
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'retrieve' expects a segment argument:
-                /school/:html/:retrieve
+            bind error: function 'fetch' expects a segment argument:
+                /school/:html/:fetch
                 ^^^^^^^^^^^^^
         - uri: /school/:html/:json
           status: 400 Bad Request
@@ -36889,14 +36889,14 @@ tests:
                 /school*department
                  ^^^^^^^^^^^^^^^^^
             (valid types: ('integer', 'integer'), ('integer', 'decimal'), ('decimal', 'integer'), ('decimal', 'decimal'), ('integer', 'float'), ('decimal', 'float'), ('float', 'integer'), ('float', 'decimal'), ('float', 'float'))
-        - uri: /retrieve(school)
+        - uri: /fetch(school)
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'retrieve' expects a segment argument:
-                /retrieve(school)
-                          ^^^^^^
+            bind error: function 'fetch' expects a segment argument:
+                /fetch(school)
+                       ^^^^^^
         - uri: /html(school)
           status: 400 Bad Request
           headers:

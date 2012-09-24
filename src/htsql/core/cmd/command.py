@@ -37,7 +37,7 @@ class ProducerCmd(Command):
     pass
 
 
-class RetrieveCmd(ProducerCmd):
+class FetchCmd(ProducerCmd):
 
     def __init__(self, binding):
         self.binding = binding

@@ -226,7 +226,7 @@ tests:
   - uri: /school*department
     expect: 400
   # invalid special arguments
-  - uri: /retrieve(school)
+  - uri: /fetch(school)
     expect: 400
   - uri: /html(school)
     expect: 400

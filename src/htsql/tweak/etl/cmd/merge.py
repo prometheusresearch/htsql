@@ -10,7 +10,7 @@ from ....core.entity import TableEntity, ColumnEntity
 from ....core.classify import localize, relabel
 from ....core.connect import transaction, scramble, unscramble
 from ....core.domain import IdentityDomain, RecordDomain, ListDomain
-from ....core.cmd.retrieve import Product, build_retrieve
+from ....core.cmd.fetch import Product, build_fetch
 from ....core.cmd.act import Act, ProduceAction, produce
 from ....core.tr.bind import BindingState, Select
 from ....core.tr.syntax import VoidSyntax, IdentifierSyntax
@@ -153,7 +153,7 @@ class BuildResolveKey(Utility):
         binding = SegmentBinding(state.root, binding, domain, syntax)
         profile = decorate(binding)
         binding = QueryBinding(state.root, binding, profile, syntax)
-        pipe =  build_retrieve(binding)
+        pipe =  build_fetch(binding)
         domain = identity.domain
         return ResolveKeyPipe(columns, domain, pipe)
 

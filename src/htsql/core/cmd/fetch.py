@@ -7,7 +7,7 @@ from ..adapter import adapt, Utility
 from ..util import Record, listof
 from ..context import context
 from ..domain import ListDomain, RecordDomain, Profile
-from .command import RetrieveCmd, SQLCmd
+from .command import FetchCmd, SQLCmd
 from .act import (analyze, Act, ProduceAction, SafeProduceAction,
                   AnalyzeAction, RenderAction)
 from ..tr.encode import encode
@@ -117,7 +117,7 @@ class RowStream(object):
             substream.close()
 
 
-class RetrievePipe(object):
+class FetchPipe(object):
 
     def __init__(self, plan):
         assert isinstance(plan, Plan)
@@ -142,7 +142,7 @@ class RetrievePipe(object):
         return Product(meta, data)
 
 
-class BuildRetrieve(Utility):
+class BuildFetch(Utility):
 
     def __init__(self, binding, limit=None):
         self.binding = binding
@@ -157,7 +157,7 @@ class BuildRetrieve(Utility):
         frame = assemble(term)
         frame = reduce(frame)
         plan = serialize(frame)
-        return RetrievePipe(plan)
+        return FetchPipe(plan)
 
     def safe_patch(self, expression, limit):
         segment = expression.segment
@@ -180,24 +180,24 @@ class BuildRetrieve(Utility):
         return expression
 
 
-class ProduceRetrieve(Act):
+class ProduceFetch(Act):
 
-    adapt(RetrieveCmd, ProduceAction)
+    adapt(FetchCmd, ProduceAction)
 
     def __call__(self):
         limit = None
         if isinstance(self.action, SafeProduceAction):
             limit = self.action.limit
-        pipe = build_retrieve(self.command.binding, limit)
+        pipe = build_fetch(self.command.binding, limit)
         return pipe()
 
 
-class AnalyzeRetrieve(Act):
+class AnalyzeFetch(Act):
 
-    adapt(RetrieveCmd, AnalyzeAction)
+    adapt(FetchCmd, AnalyzeAction)
 
     def __call__(self):
-        pipe = build_retrieve(self.command.binding)
+        pipe = build_fetch(self.command.binding)
         return pipe.plan
 
 
@@ -220,6 +220,6 @@ class RenderSQL(Act):
         return (status, headers, body)
 
 
-build_retrieve = BuildRetrieve.__invoke__
+build_fetch = BuildFetch.__invoke__
 
 

@@ -233,17 +233,17 @@ tests:
 
 - title: Commands
   tests:
-  - uri: /school/:retrieve
-  - uri: /retrieve(/school)
-  - uri: /school/:retrieve/:raw
+  - uri: /school/:fetch
+  - uri: /fetch(/school)
+  - uri: /school/:fetch/:raw
   - uri: /school/:sql
-  - uri: /school/:retrieve/:sql
+  - uri: /school/:fetch/:sql
   # Errors
-  - uri: /retrieve()
+  - uri: /fetch()
     expect: 400
-  - uri: /retrieve(school)
+  - uri: /fetch(school)
     expect: 400
-  - uri: /school/:html/:retrieve
+  - uri: /school/:html/:fetch
     expect: 400
   - uri: /school/:html/:json
     expect: 400

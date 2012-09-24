@@ -42,7 +42,7 @@ from .signature import (AsSig, LimitSig, SortSig, CastSig, MakeDateSig,
         TruncToSig, LengthSig, ContainsSig, ExistsSig, CountSig, MinMaxSig,
         SumSig, AvgSig, AggregateSig, QuantifySig, DefineSig, WhereSig,
         SelectSig, LinkSig, TopSig)
-from ...cmd.command import RendererCmd, DefaultCmd, RetrieveCmd, SQLCmd
+from ...cmd.command import RendererCmd, DefaultCmd, FetchCmd, SQLCmd
 from ...fmt.format import (RawFormat, JSONFormat, CSVFormat, TSVFormat,
         HTMLFormat, TextFormat, XMLFormat)
 import sys
@@ -390,9 +390,9 @@ class BindCommand(BindMacro):
     signature = UnarySig
 
 
-class BindRetrieve(BindCommand):
+class BindFetch(BindCommand):
 
-    call('retrieve')
+    call('fetch')
 
     def expand(self, op):
         op = self.state.bind(op)
@@ -401,8 +401,13 @@ class BindRetrieve(BindCommand):
                             % self.name.encode('utf-8'), op.mark)
         profile = decorate(op)
         binding = QueryBinding(self.state.root, op, profile, op.syntax)
-        command = RetrieveCmd(binding)
+        command = FetchCmd(binding)
         return CommandBinding(self.state.scope, command, self.syntax)
+
+
+class BindRetrieve(BindFetch):
+
+    call('retrieve')
 
 
 class BindFormat(BindCommand):

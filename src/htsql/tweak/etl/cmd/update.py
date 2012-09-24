@@ -6,7 +6,7 @@
 from ....core.adapter import adapt
 from ....core.error import BadRequestError
 from ....core.connect import transaction
-from ....core.cmd.retrieve import Product
+from ....core.cmd.fetch import Product
 from ....core.cmd.act import Act, ProduceAction, produce
 from .command import UpdateCmd
 from .insert import BuildExtractNode, BuildExtractTable, BuildResolveIdentity

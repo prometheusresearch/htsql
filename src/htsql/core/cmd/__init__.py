@@ -11,6 +11,6 @@ This package implements commands and actions.
 """
 
 
-from . import act, command, retrieve
+from . import act, command, fetch
 
 
