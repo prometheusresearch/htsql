@@ -18,12 +18,12 @@ from ..domain import (Domain, BooleanDomain, IntegerDomain, DecimalDomain,
         IdentityDomain, VoidDomain)
 from ..classify import normalize
 from .error import BindError
-from .syntax import (Syntax, QuerySyntax, SegmentSyntax, SelectorSyntax,
-        ApplicationSyntax, FunctionSyntax, MappingSyntax, OperatorSyntax,
-        QuotientSyntax, SieveSyntax, LinkSyntax, HomeSyntax, AssignmentSyntax,
-        SpecifierSyntax, LocatorSyntax, LocationSyntax, GroupSyntax,
-        IdentifierSyntax, WildcardSyntax, ReferenceSyntax, ComplementSyntax,
-        StringSyntax, NumberSyntax)
+from .syntax import (Syntax, QuerySyntax, WeakSegmentSyntax, SegmentSyntax,
+        SelectorSyntax, ApplicationSyntax, FunctionSyntax, MappingSyntax,
+        OperatorSyntax, QuotientSyntax, SieveSyntax, LinkSyntax, HomeSyntax,
+        AssignmentSyntax, SpecifierSyntax, LocatorSyntax, LocationSyntax,
+        GroupSyntax, IdentifierSyntax, WildcardSyntax, ReferenceSyntax,
+        ComplementSyntax, StringSyntax, NumberSyntax)
 from .binding import (Binding, WrappingBinding, QueryBinding, SegmentBinding,
         RootBinding, HomeBinding, FreeTableBinding, AttachedTableBinding,
         ColumnBinding, QuotientBinding, KernelBinding, ComplementBinding,
@@ -315,8 +315,14 @@ class BindSegment(Bind):
             seed = self.state.scope
         if lookup_command(seed) is not None:
             return seed
+        if (isinstance(self.syntax, WeakSegmentSyntax) and
+                isinstance(seed, SegmentBinding)):
+            return seed
         seed = Select.__invoke__(seed, self.state)
-        domain = ListDomain(seed.domain)
+        if isinstance(self.syntax, WeakSegmentSyntax):
+            domain = seed.domain
+        else:
+            domain = ListDomain(seed.domain)
         return SegmentBinding(self.state.scope, seed, domain,
                               self.syntax)
 

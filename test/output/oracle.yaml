@@ -32145,6 +32145,1023 @@ tests:
                      SELECT 1
                      FROM DUAL "!"
                      WHERE (1 <> 0)
+      - id: scalar-data
+        tests:
+        - uri: /fetch(null)/:raw
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="null.js"]
+          body: |
+            {
+              "meta": {
+                "domain": {
+                  "type": "untyped"
+                },
+                "header": "null",
+                "syntax": "null",
+                "tag": "null"
+              }
+            }
+        - uri: /fetch(null)/:json
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="null.js"]
+          body: |
+            {}
+        - uri: /fetch(null)/:csv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/csv; charset=UTF-8]
+          - [Content-Disposition, attachment; filename="null.csv"]
+          body: "null\r\n\"\"\r\n"
+        - uri: /fetch(null)/:tsv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/tab-separated-values; charset=UTF-8]
+          - [Content-Disposition, attachment; filename="null.tsv"]
+          body: "null\r\n\"\"\r\n"
+        - uri: /fetch(null)/:xml
+          status: 200 OK
+          headers:
+          - [Content-Type, application/xml]
+          - [Content-Disposition, inline; filename="null.xml"]
+          body: |
+            <?xml version="1.0" encoding="UTF-8" ?>
+            <htsql:result xmlns:htsql="http://htsql.org/2010/xml" />
+        - uri: /fetch(null)/:html
+          status: 200 OK
+          headers:
+          - [Content-Type, text/html; charset=UTF-8]
+          body: |
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <title>null</title>
+            <style type="text/css">
+            table.htsql-output { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
+            table.htsql-output > thead { background-color: #f2f2f2; border-bottom: 1px solid #1a1a1a }
+            table.htsql-output > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align: center; vertical-align: bottom; overflow: hidden; word-wrap: break-word; border-top: 1px solid #999999; border-left: 1px solid #999999 }
+            table.htsql-output > thead > tr > th.htsql-empty-header:after { content: "\A0" }
+            table.htsql-output > tbody > tr.htsql-odd-row { background-color: #ffffff }
+            table.htsql-output > tbody > tr.htsql-even-row { background-color: #f2f2f2 }
+            table.htsql-output > tbody > tr:hover { color: #ffffff; background-color: #333333 }
+            table.htsql-output > tbody > tr > td { padding: 0.2em 0.5em; vertical-align: baseline; overflow: hidden; word-wrap: break-word; border-left: 1px solid #999999; border-right: 1px solid #999999 }
+            table.htsql-output > tbody > tr > td.htsql-integer-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-decimal-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-float-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-null-value:after { content: "\A0" }
+            table.htsql-output > tbody > tr > td.htsql-empty-value { color: #999999 }
+            table.htsql-output > tbody > tr > td.htsql-empty-value:after { content: "\2B1A" }
+            table.htsql-output > tbody > tr > td.htsql-false-value { font-style: italic }
+            table.htsql-output > tbody > tr > td.htsql-null-record-value { border-left-style: dashed; border-right-style: dashed }
+            table.htsql-output > tbody > tr > td.htsql-section { border-top: 1px dotted #999999 }
+            table.htsql-output > tbody > tr > td.htsql-index { font-size: 90%; font-weight: bold; text-align: right; width: 0; color: #999999; border-left-style: solid; border-right-color: #1a1a1a; -moz-user-select: none; -webkit-user-select: none; user-select: none }
+            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
+            div.htsql-welcome > h1 { font-size: 200%; font-weight: bold; margin: 1px 0 0 }
+            div.htsql-welcome > p { margin: 1px 0 0 }
+            </style>
+            </head>
+            <body>
+            <table class="htsql-output" summary="null">
+            <thead>
+            <tr><th>null</th></tr>
+            </thead>
+            <tbody>
+            <tr class="htsql-odd-row"><td class="htsql-untyped-type htsql-null-value"></td></tr>
+            </tbody>
+            </table>
+            </body>
+            </html>
+        - uri: /fetch(null)/:txt
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | null |
+            -+------+-
+             |      |
+
+             ----
+             null
+             SELECT 1
+             FROM DUAL "!"
+             WHERE (0 <> 0)
+        - uri: /fetch({})/:raw
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="_.js"]
+          body: |
+            {
+              "meta": {
+                "domain": {
+                  "type": "record",
+                  "fields": []
+                },
+                "path": "",
+                "syntax": "{}"
+              },
+              "data": []
+            }
+        - uri: /fetch({})/:json
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="_.js"]
+          body: |
+            {
+              "0": {}
+            }
+        - uri: /fetch({})/:csv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/csv; charset=UTF-8]
+          - [Content-Disposition, attachment; filename="_.csv"]
+          body: ''
+        - uri: /fetch({})/:tsv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/tab-separated-values; charset=UTF-8]
+          - [Content-Disposition, attachment; filename="_.tsv"]
+          body: ''
+        - uri: /fetch({})/:xml
+          status: 200 OK
+          headers:
+          - [Content-Type, application/xml]
+          - [Content-Disposition, inline; filename="_.xml"]
+          body: |
+            <?xml version="1.0" encoding="UTF-8" ?>
+            <htsql:result xmlns:htsql="http://htsql.org/2010/xml">
+              <_ />
+            </htsql:result>
+        - uri: /fetch({})/:txt
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: ''
+        - uri: /fetch(count(school))/:raw
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="count(school).js"]
+          body: |
+            {
+              "meta": {
+                "domain": {
+                  "type": "integer"
+                },
+                "header": "count(school)",
+                "syntax": "count(school)"
+              },
+              "data": 9
+            }
+        - uri: /fetch(count(school))/:json
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="count(school).js"]
+          body: |
+            {
+              "0": 9
+            }
+        - uri: /fetch(count(school))/:csv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/csv; charset=UTF-8]
+          - [Content-Disposition, attachment; filename="count(school).csv"]
+          body: "count(school)\r\n9\r\n"
+        - uri: /fetch(count(school))/:tsv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/tab-separated-values; charset=UTF-8]
+          - [Content-Disposition, attachment; filename="count(school).tsv"]
+          body: "count(school)\r\n9\r\n"
+        - uri: /fetch(count(school))/:xml
+          status: 200 OK
+          headers:
+          - [Content-Type, application/xml]
+          - [Content-Disposition, inline; filename="count(school).xml"]
+          body: |
+            <?xml version="1.0" encoding="UTF-8" ?>
+            <htsql:result xmlns:htsql="http://htsql.org/2010/xml">
+              <_>9</_>
+            </htsql:result>
+        - uri: /fetch(count(school))/:html
+          status: 200 OK
+          headers:
+          - [Content-Type, text/html; charset=UTF-8]
+          body: |
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <title>count(school)</title>
+            <style type="text/css">
+            table.htsql-output { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
+            table.htsql-output > thead { background-color: #f2f2f2; border-bottom: 1px solid #1a1a1a }
+            table.htsql-output > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align: center; vertical-align: bottom; overflow: hidden; word-wrap: break-word; border-top: 1px solid #999999; border-left: 1px solid #999999 }
+            table.htsql-output > thead > tr > th.htsql-empty-header:after { content: "\A0" }
+            table.htsql-output > tbody > tr.htsql-odd-row { background-color: #ffffff }
+            table.htsql-output > tbody > tr.htsql-even-row { background-color: #f2f2f2 }
+            table.htsql-output > tbody > tr:hover { color: #ffffff; background-color: #333333 }
+            table.htsql-output > tbody > tr > td { padding: 0.2em 0.5em; vertical-align: baseline; overflow: hidden; word-wrap: break-word; border-left: 1px solid #999999; border-right: 1px solid #999999 }
+            table.htsql-output > tbody > tr > td.htsql-integer-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-decimal-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-float-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-null-value:after { content: "\A0" }
+            table.htsql-output > tbody > tr > td.htsql-empty-value { color: #999999 }
+            table.htsql-output > tbody > tr > td.htsql-empty-value:after { content: "\2B1A" }
+            table.htsql-output > tbody > tr > td.htsql-false-value { font-style: italic }
+            table.htsql-output > tbody > tr > td.htsql-null-record-value { border-left-style: dashed; border-right-style: dashed }
+            table.htsql-output > tbody > tr > td.htsql-section { border-top: 1px dotted #999999 }
+            table.htsql-output > tbody > tr > td.htsql-index { font-size: 90%; font-weight: bold; text-align: right; width: 0; color: #999999; border-left-style: solid; border-right-color: #1a1a1a; -moz-user-select: none; -webkit-user-select: none; user-select: none }
+            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
+            div.htsql-welcome > h1 { font-size: 200%; font-weight: bold; margin: 1px 0 0 }
+            div.htsql-welcome > p { margin: 1px 0 0 }
+            </style>
+            </head>
+            <body>
+            <table class="htsql-output" summary="count(school)">
+            <thead>
+            <tr><th>count(school)</th></tr>
+            </thead>
+            <tbody>
+            <tr class="htsql-odd-row"><td class="htsql-integer-type">9</td></tr>
+            </tbody>
+            </table>
+            </body>
+            </html>
+        - uri: /fetch(count(school))/:txt
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | count(school) |
+            -+---------------+-
+             |             9 |
+
+             ----
+             count(school)
+             SELECT "SCHOOL"."count"
+             FROM (SELECT COUNT(1) AS "count"
+                   FROM "SCHOOL") "SCHOOL"
+             WHERE ("SCHOOL"."count" IS NOT NULL)
+        - uri: /fetch(school[art])/:raw
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="school.js"]
+          body: |
+            {
+              "meta": {
+                "domain": {
+                  "type": "record",
+                  "fields": [
+                    {
+                      "domain": {
+                        "type": "string"
+                      },
+                      "header": "code",
+                      "syntax": "code",
+                      "tag": "code"
+                    },
+                    {
+                      "domain": {
+                        "type": "string"
+                      },
+                      "header": "name",
+                      "syntax": "name",
+                      "tag": "name"
+                    },
+                    {
+                      "domain": {
+                        "type": "string"
+                      },
+                      "header": "campus",
+                      "syntax": "campus",
+                      "tag": "campus"
+                    }
+                  ]
+                },
+                "header": "school",
+                "syntax": "school[art]",
+                "tag": "school"
+              },
+              "data": [
+                "art",
+                "School of Art & Design",
+                "old"
+              ]
+            }
+        - uri: /fetch(school[art])/:json
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="school.js"]
+          body: |
+            {
+              "school": {
+                "code": "art",
+                "name": "School of Art & Design",
+                "campus": "old"
+              }
+            }
+        - uri: /fetch(school[art])/:csv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/csv; charset=UTF-8]
+          - [Content-Disposition, attachment; filename="school.csv"]
+          body: "code,name,campus\r\nart,School of Art & Design,old\r\n"
+        - uri: /fetch(school[art])/:tsv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/tab-separated-values; charset=UTF-8]
+          - [Content-Disposition, attachment; filename="school.tsv"]
+          body: "code\tname\tcampus\r\nart\tSchool of Art & Design\told\r\n"
+        - uri: /fetch(school[art])/:xml
+          status: 200 OK
+          headers:
+          - [Content-Type, application/xml]
+          - [Content-Disposition, inline; filename="school.xml"]
+          body: |
+            <?xml version="1.0" encoding="UTF-8" ?>
+            <htsql:result xmlns:htsql="http://htsql.org/2010/xml">
+              <school>
+                <code>art</code>
+                <name>School of Art &amp; Design</name>
+                <campus>old</campus>
+              </school>
+            </htsql:result>
+        - uri: /fetch(school[art])/:html
+          status: 200 OK
+          headers:
+          - [Content-Type, text/html; charset=UTF-8]
+          body: |
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <title>school</title>
+            <style type="text/css">
+            table.htsql-output { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
+            table.htsql-output > thead { background-color: #f2f2f2; border-bottom: 1px solid #1a1a1a }
+            table.htsql-output > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align: center; vertical-align: bottom; overflow: hidden; word-wrap: break-word; border-top: 1px solid #999999; border-left: 1px solid #999999 }
+            table.htsql-output > thead > tr > th.htsql-empty-header:after { content: "\A0" }
+            table.htsql-output > tbody > tr.htsql-odd-row { background-color: #ffffff }
+            table.htsql-output > tbody > tr.htsql-even-row { background-color: #f2f2f2 }
+            table.htsql-output > tbody > tr:hover { color: #ffffff; background-color: #333333 }
+            table.htsql-output > tbody > tr > td { padding: 0.2em 0.5em; vertical-align: baseline; overflow: hidden; word-wrap: break-word; border-left: 1px solid #999999; border-right: 1px solid #999999 }
+            table.htsql-output > tbody > tr > td.htsql-integer-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-decimal-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-float-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-null-value:after { content: "\A0" }
+            table.htsql-output > tbody > tr > td.htsql-empty-value { color: #999999 }
+            table.htsql-output > tbody > tr > td.htsql-empty-value:after { content: "\2B1A" }
+            table.htsql-output > tbody > tr > td.htsql-false-value { font-style: italic }
+            table.htsql-output > tbody > tr > td.htsql-null-record-value { border-left-style: dashed; border-right-style: dashed }
+            table.htsql-output > tbody > tr > td.htsql-section { border-top: 1px dotted #999999 }
+            table.htsql-output > tbody > tr > td.htsql-index { font-size: 90%; font-weight: bold; text-align: right; width: 0; color: #999999; border-left-style: solid; border-right-color: #1a1a1a; -moz-user-select: none; -webkit-user-select: none; user-select: none }
+            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
+            div.htsql-welcome > h1 { font-size: 200%; font-weight: bold; margin: 1px 0 0 }
+            div.htsql-welcome > p { margin: 1px 0 0 }
+            </style>
+            </head>
+            <body>
+            <table class="htsql-output" summary="school">
+            <thead>
+            <tr><th colspan="3">school</th></tr>
+            <tr><th>code</th><th>name</th><th>campus</th></tr>
+            </thead>
+            <tbody>
+            <tr class="htsql-odd-row"><td class="htsql-string-type">art</td><td class="htsql-string-type">School of Art &amp; Design</td><td class="htsql-string-type">old</td></tr>
+            </tbody>
+            </table>
+            </body>
+            </html>
+        - uri: /fetch(school[art])/:txt
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school                                 |
+             +------+------------------------+--------+
+             | code | name                   | campus |
+            -+------+------------------------+--------+-
+             | art  | School of Art & Design | old    |
+
+             ----
+             school[art]
+             SELECT "SCHOOL"."CODE",
+                    "SCHOOL"."NAME",
+                    "SCHOOL"."CAMPUS"
+             FROM "SCHOOL"
+             WHERE ("SCHOOL"."CODE" = 'art')
+             ORDER BY 1 ASC
+        - uri: /fetch(school[none])/:raw
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="school.js"]
+          body: |
+            {
+              "meta": {
+                "domain": {
+                  "type": "record",
+                  "fields": [
+                    {
+                      "domain": {
+                        "type": "string"
+                      },
+                      "header": "code",
+                      "syntax": "code",
+                      "tag": "code"
+                    },
+                    {
+                      "domain": {
+                        "type": "string"
+                      },
+                      "header": "name",
+                      "syntax": "name",
+                      "tag": "name"
+                    },
+                    {
+                      "domain": {
+                        "type": "string"
+                      },
+                      "header": "campus",
+                      "syntax": "campus",
+                      "tag": "campus"
+                    }
+                  ]
+                },
+                "header": "school",
+                "syntax": "school[none]",
+                "tag": "school"
+              }
+            }
+        - uri: /fetch(school[none])/:json
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="school.js"]
+          body: |
+            {}
+        - uri: /fetch(school[none])/:csv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/csv; charset=UTF-8]
+          - [Content-Disposition, attachment; filename="school.csv"]
+          body: "code,name,campus\r\n,,\r\n"
+        - uri: /fetch(school[none])/:tsv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/tab-separated-values; charset=UTF-8]
+          - [Content-Disposition, attachment; filename="school.tsv"]
+          body: "code\tname\tcampus\r\n\t\t\r\n"
+        - uri: /fetch(school[none])/:xml
+          status: 200 OK
+          headers:
+          - [Content-Type, application/xml]
+          - [Content-Disposition, inline; filename="school.xml"]
+          body: |
+            <?xml version="1.0" encoding="UTF-8" ?>
+            <htsql:result xmlns:htsql="http://htsql.org/2010/xml" />
+        - uri: /fetch(school[none])/:txt
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school               |
+             +------+------+--------+
+             | code | name | campus |
+            -+------+------+--------+-
+             :      :      :        :
+
+             ----
+             school[none]
+             SELECT "SCHOOL"."CODE",
+                    "SCHOOL"."NAME",
+                    "SCHOOL"."CAMPUS"
+             FROM "SCHOOL"
+             WHERE ("SCHOOL"."CODE" = 'none')
+             ORDER BY 1 ASC
+        - uri: /fetch({/school?campus='old', /department?school.campus='old'})/:raw
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="_.js"]
+          body: |
+            {
+              "meta": {
+                "domain": {
+                  "type": "record",
+                  "fields": [
+                    {
+                      "domain": {
+                        "type": "list",
+                        "item": {
+                          "domain": {
+                            "type": "record",
+                            "fields": [
+                              {
+                                "domain": {
+                                  "type": "string"
+                                },
+                                "header": "code",
+                                "path": "school.code",
+                                "syntax": "code",
+                                "tag": "code"
+                              },
+                              {
+                                "domain": {
+                                  "type": "string"
+                                },
+                                "header": "name",
+                                "path": "school.name",
+                                "syntax": "name",
+                                "tag": "name"
+                              },
+                              {
+                                "domain": {
+                                  "type": "string"
+                                },
+                                "header": "campus",
+                                "path": "school.campus",
+                                "syntax": "campus",
+                                "tag": "campus"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "header": "school",
+                      "path": "school",
+                      "syntax": "\/school?campus='old'",
+                      "tag": "school"
+                    },
+                    {
+                      "domain": {
+                        "type": "list",
+                        "item": {
+                          "domain": {
+                            "type": "record",
+                            "fields": [
+                              {
+                                "domain": {
+                                  "type": "string"
+                                },
+                                "header": "code",
+                                "path": "department.code",
+                                "syntax": "code",
+                                "tag": "code"
+                              },
+                              {
+                                "domain": {
+                                  "type": "string"
+                                },
+                                "header": "name",
+                                "path": "department.name",
+                                "syntax": "name",
+                                "tag": "name"
+                              },
+                              {
+                                "domain": {
+                                  "type": "string"
+                                },
+                                "header": "school_code",
+                                "path": "department.school_code",
+                                "syntax": "school_code",
+                                "tag": "school_code"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "header": "department",
+                      "path": "department",
+                      "syntax": "\/department?school.campus='old'",
+                      "tag": "department"
+                    }
+                  ]
+                },
+                "path": "",
+                "syntax": "{\/school?campus='old',\/department?school.campus='old'}"
+              },
+              "data": [
+                [
+                  [
+                    "art",
+                    "School of Art & Design",
+                    "old"
+                  ],
+                  [
+                    "edu",
+                    "College of Education",
+                    "old"
+                  ],
+                  [
+                    "la",
+                    "School of Arts and Humanities",
+                    "old"
+                  ],
+                  [
+                    "ns",
+                    "School of Natural Sciences",
+                    "old"
+                  ]
+                ],
+                [
+                  [
+                    "arthis",
+                    "Art History",
+                    "la"
+                  ],
+                  [
+                    "astro",
+                    "Astronomy",
+                    "ns"
+                  ],
+                  [
+                    "chem",
+                    "Chemistry",
+                    "ns"
+                  ],
+                  [
+                    "edpol",
+                    "Educational Policy",
+                    "edu"
+                  ],
+                  [
+                    "eng",
+                    "English",
+                    "la"
+                  ],
+                  [
+                    "hist",
+                    "History",
+                    "la"
+                  ],
+                  [
+                    "lang",
+                    "Foreign Languages",
+                    "la"
+                  ],
+                  [
+                    "mth",
+                    "Mathematics",
+                    "ns"
+                  ],
+                  [
+                    "phys",
+                    "Physics",
+                    "ns"
+                  ],
+                  [
+                    "poli",
+                    "Political Science",
+                    "la"
+                  ],
+                  [
+                    "psych",
+                    "Psychology",
+                    "la"
+                  ],
+                  [
+                    "stdart",
+                    "Studio Art",
+                    "art"
+                  ],
+                  [
+                    "tched",
+                    "Teacher Education",
+                    "edu"
+                  ]
+                ]
+              ]
+            }
+        - uri: /fetch({/school?campus='old', /department?school.campus='old'})/:json
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="_.js"]
+          body: |
+            {
+              "0": {
+                "school": [
+                  {
+                    "code": "art",
+                    "name": "School of Art & Design",
+                    "campus": "old"
+                  },
+                  {
+                    "code": "edu",
+                    "name": "College of Education",
+                    "campus": "old"
+                  },
+                  {
+                    "code": "la",
+                    "name": "School of Arts and Humanities",
+                    "campus": "old"
+                  },
+                  {
+                    "code": "ns",
+                    "name": "School of Natural Sciences",
+                    "campus": "old"
+                  }
+                ],
+                "department": [
+                  {
+                    "code": "arthis",
+                    "name": "Art History",
+                    "school_code": "la"
+                  },
+                  {
+                    "code": "astro",
+                    "name": "Astronomy",
+                    "school_code": "ns"
+                  },
+                  {
+                    "code": "chem",
+                    "name": "Chemistry",
+                    "school_code": "ns"
+                  },
+                  {
+                    "code": "edpol",
+                    "name": "Educational Policy",
+                    "school_code": "edu"
+                  },
+                  {
+                    "code": "eng",
+                    "name": "English",
+                    "school_code": "la"
+                  },
+                  {
+                    "code": "hist",
+                    "name": "History",
+                    "school_code": "la"
+                  },
+                  {
+                    "code": "lang",
+                    "name": "Foreign Languages",
+                    "school_code": "la"
+                  },
+                  {
+                    "code": "mth",
+                    "name": "Mathematics",
+                    "school_code": "ns"
+                  },
+                  {
+                    "code": "phys",
+                    "name": "Physics",
+                    "school_code": "ns"
+                  },
+                  {
+                    "code": "poli",
+                    "name": "Political Science",
+                    "school_code": "la"
+                  },
+                  {
+                    "code": "psych",
+                    "name": "Psychology",
+                    "school_code": "la"
+                  },
+                  {
+                    "code": "stdart",
+                    "name": "Studio Art",
+                    "school_code": "art"
+                  },
+                  {
+                    "code": "tched",
+                    "name": "Teacher Education",
+                    "school_code": "edu"
+                  }
+                ]
+              }
+            }
+        - uri: /fetch({/school?campus='old', /department?school.campus='old'})/:csv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/csv; charset=UTF-8]
+          - [Content-Disposition, attachment; filename="_.csv"]
+          body: "code,name,campus,code,name,school_code\r\nart,School of Art & Design,old,arthis,Art
+            History,la\r\nedu,College of Education,old,astro,Astronomy,ns\r\nla,School
+            of Arts and Humanities,old,chem,Chemistry,ns\r\nns,School of Natural Sciences,old,edpol,Educational
+            Policy,edu\r\n,,,eng,English,la\r\n,,,hist,History,la\r\n,,,lang,Foreign
+            Languages,la\r\n,,,mth,Mathematics,ns\r\n,,,phys,Physics,ns\r\n,,,poli,Political
+            Science,la\r\n,,,psych,Psychology,la\r\n,,,stdart,Studio Art,art\r\n,,,tched,Teacher
+            Education,edu\r\n"
+        - uri: /fetch({/school?campus='old', /department?school.campus='old'})/:tsv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/tab-separated-values; charset=UTF-8]
+          - [Content-Disposition, attachment; filename="_.tsv"]
+          body: "code\tname\tcampus\tcode\tname\tschool_code\r\nart\tSchool of Art
+            & Design\told\tarthis\tArt History\tla\r\nedu\tCollege of Education\told\tastro\tAstronomy\tns\r\nla\tSchool
+            of Arts and Humanities\told\tchem\tChemistry\tns\r\nns\tSchool of Natural
+            Sciences\told\tedpol\tEducational Policy\tedu\r\n\t\t\teng\tEnglish\tla\r\n\t\t\thist\tHistory\tla\r\n\t\t\tlang\tForeign
+            Languages\tla\r\n\t\t\tmth\tMathematics\tns\r\n\t\t\tphys\tPhysics\tns\r\n\t\t\tpoli\tPolitical
+            Science\tla\r\n\t\t\tpsych\tPsychology\tla\r\n\t\t\tstdart\tStudio Art\tart\r\n\t\t\ttched\tTeacher
+            Education\tedu\r\n"
+        - uri: /fetch({/school?campus='old', /department?school.campus='old'})/:xml
+          status: 200 OK
+          headers:
+          - [Content-Type, application/xml]
+          - [Content-Disposition, inline; filename="_.xml"]
+          body: |
+            <?xml version="1.0" encoding="UTF-8" ?>
+            <htsql:result xmlns:htsql="http://htsql.org/2010/xml">
+              <_>
+                <school>
+                  <code>art</code>
+                  <name>School of Art &amp; Design</name>
+                  <campus>old</campus>
+                </school>
+                <school>
+                  <code>edu</code>
+                  <name>College of Education</name>
+                  <campus>old</campus>
+                </school>
+                <school>
+                  <code>la</code>
+                  <name>School of Arts and Humanities</name>
+                  <campus>old</campus>
+                </school>
+                <school>
+                  <code>ns</code>
+                  <name>School of Natural Sciences</name>
+                  <campus>old</campus>
+                </school>
+                <department>
+                  <code>arthis</code>
+                  <name>Art History</name>
+                  <school_code>la</school_code>
+                </department>
+                <department>
+                  <code>astro</code>
+                  <name>Astronomy</name>
+                  <school_code>ns</school_code>
+                </department>
+                <department>
+                  <code>chem</code>
+                  <name>Chemistry</name>
+                  <school_code>ns</school_code>
+                </department>
+                <department>
+                  <code>edpol</code>
+                  <name>Educational Policy</name>
+                  <school_code>edu</school_code>
+                </department>
+                <department>
+                  <code>eng</code>
+                  <name>English</name>
+                  <school_code>la</school_code>
+                </department>
+                <department>
+                  <code>hist</code>
+                  <name>History</name>
+                  <school_code>la</school_code>
+                </department>
+                <department>
+                  <code>lang</code>
+                  <name>Foreign Languages</name>
+                  <school_code>la</school_code>
+                </department>
+                <department>
+                  <code>mth</code>
+                  <name>Mathematics</name>
+                  <school_code>ns</school_code>
+                </department>
+                <department>
+                  <code>phys</code>
+                  <name>Physics</name>
+                  <school_code>ns</school_code>
+                </department>
+                <department>
+                  <code>poli</code>
+                  <name>Political Science</name>
+                  <school_code>la</school_code>
+                </department>
+                <department>
+                  <code>psych</code>
+                  <name>Psychology</name>
+                  <school_code>la</school_code>
+                </department>
+                <department>
+                  <code>stdart</code>
+                  <name>Studio Art</name>
+                  <school_code>art</school_code>
+                </department>
+                <department>
+                  <code>tched</code>
+                  <name>Teacher Education</name>
+                  <school_code>edu</school_code>
+                </department>
+              </_>
+            </htsql:result>
+        - uri: /fetch({/school?campus='old', /department?school.campus='old'})/:html
+          status: 200 OK
+          headers:
+          - [Content-Type, text/html; charset=UTF-8]
+          body: |
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <title></title>
+            <style type="text/css">
+            table.htsql-output { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
+            table.htsql-output > thead { background-color: #f2f2f2; border-bottom: 1px solid #1a1a1a }
+            table.htsql-output > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align: center; vertical-align: bottom; overflow: hidden; word-wrap: break-word; border-top: 1px solid #999999; border-left: 1px solid #999999 }
+            table.htsql-output > thead > tr > th.htsql-empty-header:after { content: "\A0" }
+            table.htsql-output > tbody > tr.htsql-odd-row { background-color: #ffffff }
+            table.htsql-output > tbody > tr.htsql-even-row { background-color: #f2f2f2 }
+            table.htsql-output > tbody > tr:hover { color: #ffffff; background-color: #333333 }
+            table.htsql-output > tbody > tr > td { padding: 0.2em 0.5em; vertical-align: baseline; overflow: hidden; word-wrap: break-word; border-left: 1px solid #999999; border-right: 1px solid #999999 }
+            table.htsql-output > tbody > tr > td.htsql-integer-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-decimal-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-float-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-null-value:after { content: "\A0" }
+            table.htsql-output > tbody > tr > td.htsql-empty-value { color: #999999 }
+            table.htsql-output > tbody > tr > td.htsql-empty-value:after { content: "\2B1A" }
+            table.htsql-output > tbody > tr > td.htsql-false-value { font-style: italic }
+            table.htsql-output > tbody > tr > td.htsql-null-record-value { border-left-style: dashed; border-right-style: dashed }
+            table.htsql-output > tbody > tr > td.htsql-section { border-top: 1px dotted #999999 }
+            table.htsql-output > tbody > tr > td.htsql-index { font-size: 90%; font-weight: bold; text-align: right; width: 0; color: #999999; border-left-style: solid; border-right-color: #1a1a1a; -moz-user-select: none; -webkit-user-select: none; user-select: none }
+            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
+            div.htsql-welcome > h1 { font-size: 200%; font-weight: bold; margin: 1px 0 0 }
+            div.htsql-welcome > p { margin: 1px 0 0 }
+            </style>
+            </head>
+            <body>
+            <table class="htsql-output" summary="">
+            <thead>
+            <tr><th colspan="4">school</th><th colspan="4">department</th></tr>
+            <tr><th class="htsql-empty-header"></th><th>code</th><th>name</th><th>campus</th><th class="htsql-empty-header"></th><th>code</th><th>name</th><th>school_code</th></tr>
+            </thead>
+            <tbody>
+            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-string-type">art</td><td class="htsql-string-type">School of Art &amp; Design</td><td class="htsql-string-type">old</td><td class="htsql-index">1</td><td class="htsql-string-type">arthis</td><td class="htsql-string-type">Art History</td><td class="htsql-string-type">la</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-string-type">edu</td><td class="htsql-string-type">College of Education</td><td class="htsql-string-type">old</td><td class="htsql-index">2</td><td class="htsql-string-type">astro</td><td class="htsql-string-type">Astronomy</td><td class="htsql-string-type">ns</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">3</td><td class="htsql-string-type">la</td><td class="htsql-string-type">School of Arts and Humanities</td><td class="htsql-string-type">old</td><td class="htsql-index">3</td><td class="htsql-string-type">chem</td><td class="htsql-string-type">Chemistry</td><td class="htsql-string-type">ns</td></tr>
+            <tr class="htsql-even-row"><td rowspan="10" class="htsql-index">4</td><td rowspan="10" class="htsql-string-type">ns</td><td rowspan="10" class="htsql-string-type">School of Natural Sciences</td><td rowspan="10" class="htsql-string-type">old</td><td class="htsql-index">4</td><td class="htsql-string-type">edpol</td><td class="htsql-string-type">Educational Policy</td><td class="htsql-string-type">edu</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-string-type">eng</td><td class="htsql-string-type">English</td><td class="htsql-string-type">la</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">6</td><td class="htsql-string-type">hist</td><td class="htsql-string-type">History</td><td class="htsql-string-type">la</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">7</td><td class="htsql-string-type">lang</td><td class="htsql-string-type">Foreign Languages</td><td class="htsql-string-type">la</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">8</td><td class="htsql-string-type">mth</td><td class="htsql-string-type">Mathematics</td><td class="htsql-string-type">ns</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">9</td><td class="htsql-string-type">phys</td><td class="htsql-string-type">Physics</td><td class="htsql-string-type">ns</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">10</td><td class="htsql-string-type">poli</td><td class="htsql-string-type">Political Science</td><td class="htsql-string-type">la</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">11</td><td class="htsql-string-type">psych</td><td class="htsql-string-type">Psychology</td><td class="htsql-string-type">la</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">12</td><td class="htsql-string-type">stdart</td><td class="htsql-string-type">Studio Art</td><td class="htsql-string-type">art</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">13</td><td class="htsql-string-type">tched</td><td class="htsql-string-type">Teacher Education</td><td class="htsql-string-type">edu</td></tr>
+            </tbody>
+            </table>
+            </body>
+            </html>
+        - uri: /fetch({/school?campus='old', /department?school.campus='old'})/:txt
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school                                        | department                                |
+             +------+-------------------------------+--------+--------+--------------------+-------------+
+             | code | name                          | campus | code   | name               | school_code |
+            -+------+-------------------------------+--------+--------+--------------------+-------------+-
+             | art  | School of Art & Design        | old    | arthis | Art History        | la          |
+             | edu  | College of Education          | old    | astro  | Astronomy          | ns          |
+             | la   | School of Arts and Humanities | old    | chem   | Chemistry          | ns          |
+             | ns   | School of Natural Sciences    | old    | edpol  | Educational Policy | edu         |
+             :      :                               :        | eng    | English            | la          |
+             :      :                               :        | hist   | History            | la          |
+             :      :                               :        | lang   | Foreign Languages  | la          |
+             :      :                               :        | mth    | Mathematics        | ns          |
+             :      :                               :        | phys   | Physics            | ns          |
+             :      :                               :        | poli   | Political Science  | la          |
+             :      :                               :        | psych  | Psychology         | la          |
+             :      :                               :        | stdart | Studio Art         | art         |
+             :      :                               :        | tched  | Teacher Education  | edu         |
+
+             ----
+             {/school?campus='old',/department?school.campus='old'}
+             SELECT 1
+             FROM DUAL "!"
+
+               SELECT "SCHOOL"."CODE",
+                      "SCHOOL"."NAME",
+                      "SCHOOL"."CAMPUS"
+               FROM "SCHOOL"
+               WHERE ("SCHOOL"."CAMPUS" = 'old')
+               ORDER BY 1 ASC
+
+               SELECT "DEPARTMENT"."CODE",
+                      "DEPARTMENT"."NAME",
+                      "DEPARTMENT"."SCHOOL_CODE"
+               FROM "DEPARTMENT"
+                    LEFT OUTER JOIN "SCHOOL"
+                                    ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL"."CODE")
+               WHERE ("SCHOOL"."CAMPUS" = 'old')
+               ORDER BY 1 ASC
       - id: commands
         tests:
         - uri: /school/:fetch
@@ -32332,7 +33349,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'fetch' expects a segment argument:
+            encode error: a singular expression is expected:
                 /fetch(school)
                        ^^^^^^
         - uri: /school/:html/:fetch
@@ -36894,7 +37911,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'fetch' expects a segment argument:
+            encode error: a singular expression is expected:
                 /fetch(school)
                        ^^^^^^
         - uri: /html(school)

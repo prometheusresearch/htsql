@@ -17,7 +17,8 @@ from ..domain import Profile, Domain
 
 class Statement(Printable):
 
-    def __init__(self, sql, domains, substatements, placeholders=None):
+    def __init__(self, sql, domains, substatements,
+                 placeholders=None, is_single=False):
         assert isinstance(sql, unicode)
         assert isinstance(domains, listof(Domain))
         assert isinstance(substatements, listof(Statement))
@@ -25,6 +26,7 @@ class Statement(Printable):
         self.domains = domains
         self.substatements = substatements
         self.placeholders = placeholders
+        self.is_single = is_single
 
 
 class Plan(Printable):

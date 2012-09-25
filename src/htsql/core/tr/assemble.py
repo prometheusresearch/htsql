@@ -15,6 +15,7 @@ from ..util import Printable, Comparable, Record, listof, maybe
 from ..adapter import Adapter, adapt, adapt_many
 from ..domain import BooleanDomain, UntypedDomain
 from .coerce import coerce
+from .syntax import WeakSegmentSyntax
 from .flow import (Code, SegmentCode, LiteralCode, FormulaCode, CastCode,
                    RecordCode, IdentityCode, AnnihilatorCode, CorrelationCode,
                    Unit, ColumnUnit, CompoundUnit)
@@ -1534,12 +1535,27 @@ class DecomposeSegment(Decompose):
             self.state.push_segment(self.code)
             compose_code = self.state.decompose(self.code.code)
             self.state.pop_segment()
-            def compose_root_segment(row, stream, compose_code=compose_code):
-                items = []
-                for row in stream:
-                    items.append(compose_code(row, stream))
-                return items
-            return compose_root_segment
+            is_single = (isinstance(self.code.syntax, WeakSegmentSyntax))
+            if not is_single:
+                def compose_root_segment(row, stream,
+                                         compose_code=compose_code):
+                    items = []
+                    for row in stream:
+                        items.append(compose_code(row, stream))
+                    return items
+                return compose_root_segment
+            else:
+                def compose_root_value(row, stream,
+                                       compose_code=compose_code):
+                    items = []
+                    for row in stream:
+                        items.append(compose_code(row, stream))
+                    assert len(items) <= 1
+                    if items:
+                        return items[0]
+                    else:
+                        return None
+                return compose_root_value
         else:
             key_stencil = self.state.get_key_stencil()
             self.state.push_segment(self.code)

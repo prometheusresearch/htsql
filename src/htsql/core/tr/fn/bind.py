@@ -14,8 +14,9 @@ from ...adapter import Adapter, Component, adapt, adapt_many, call
 from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
         IntegerDomain, DecimalDomain, FloatDomain, DateDomain, TimeDomain,
         DateTimeDomain, EnumDomain, ListDomain, RecordDomain)
-from ..syntax import (NumberSyntax, StringSyntax, IdentifierSyntax,
-        SpecifierSyntax, ApplicationSyntax, OperatorSyntax, GroupSyntax)
+from ..syntax import (WeakSegmentSyntax, NumberSyntax, StringSyntax,
+        IdentifierSyntax, SpecifierSyntax, ApplicationSyntax, OperatorSyntax,
+        GroupSyntax)
 from ..binding import (LiteralBinding, SortBinding, SieveBinding,
         FormulaBinding, CastBinding, ImplicitCastBinding, WrappingBinding,
         TitleBinding, DirectionBinding, QuotientBinding, AssignmentBinding,
@@ -395,6 +396,7 @@ class BindFetch(BindCommand):
     call('fetch')
 
     def expand(self, op):
+        op = WeakSegmentSyntax(op, op.mark)
         op = self.state.bind(op)
         if not isinstance(op, SegmentBinding):
             raise BindError("function '%s' expects a segment argument"

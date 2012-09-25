@@ -112,6 +112,12 @@ class SegmentSyntax(Syntax):
             return u'/%s' % self.branch
 
 
+class WeakSegmentSyntax(SegmentSyntax):
+
+    def __unicode__(self):
+        return unicode(self.branch)
+
+
 class SelectorSyntax(Syntax):
     """
     Represents a selector expression.

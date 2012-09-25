@@ -231,6 +231,53 @@ tests:
   - uri: /(/(/(/(/true))))/:html
   - uri: /(/(/(/(/true))))/:txt
 
+- title: Scalar Data
+  tests:
+  - uri: /fetch(null)/:raw
+  - uri: /fetch(null)/:json
+  - uri: /fetch(null)/:csv
+  - uri: /fetch(null)/:tsv
+  - uri: /fetch(null)/:xml
+  - uri: /fetch(null)/:html
+  - uri: /fetch(null)/:txt
+  - uri: /fetch({})/:raw
+  - uri: /fetch({})/:json
+  - uri: /fetch({})/:csv
+  - uri: /fetch({})/:tsv
+  - uri: /fetch({})/:xml
+  - uri: /fetch({})/:html
+    skip: true # shows the welcome page
+  - uri: /fetch({})/:txt
+  - uri: /fetch(count(school))/:raw
+  - uri: /fetch(count(school))/:json
+  - uri: /fetch(count(school))/:csv
+  - uri: /fetch(count(school))/:tsv
+  - uri: /fetch(count(school))/:xml
+  - uri: /fetch(count(school))/:html
+  - uri: /fetch(count(school))/:txt
+  - uri: /fetch(school[art])/:raw
+  - uri: /fetch(school[art])/:json
+  - uri: /fetch(school[art])/:csv
+  - uri: /fetch(school[art])/:tsv
+  - uri: /fetch(school[art])/:xml
+  - uri: /fetch(school[art])/:html
+  - uri: /fetch(school[art])/:txt
+  - uri: /fetch(school[none])/:raw
+  - uri: /fetch(school[none])/:json
+  - uri: /fetch(school[none])/:csv
+  - uri: /fetch(school[none])/:tsv
+  - uri: /fetch(school[none])/:xml
+  - uri: /fetch(school[none])/:html
+    skip: true # no rows are displayed
+  - uri: /fetch(school[none])/:txt
+  - uri: /fetch({/school?campus='old', /department?school.campus='old'})/:raw
+  - uri: /fetch({/school?campus='old', /department?school.campus='old'})/:json
+  - uri: /fetch({/school?campus='old', /department?school.campus='old'})/:csv
+  - uri: /fetch({/school?campus='old', /department?school.campus='old'})/:tsv
+  - uri: /fetch({/school?campus='old', /department?school.campus='old'})/:xml
+  - uri: /fetch({/school?campus='old', /department?school.campus='old'})/:html
+  - uri: /fetch({/school?campus='old', /department?school.campus='old'})/:txt
+
 - title: Commands
   tests:
   - uri: /school/:fetch
