@@ -38205,6 +38205,43 @@ tests:
            FROM "product"
            WHERE ("product"."sku" = 'A0000003')
            ORDER BY 1 ASC
+      - uri: /insert(manufacturer:={code:='SNY', name:='Sony'})/:json
+        status: 200 OK
+        headers:
+        - [Content-Type, application/javascript]
+        - [Content-Disposition, inline; filename="manufacturer.js"]
+        body: |
+          {
+            "manufacturer": "SNY"
+          }
+      - uri: /merge({'A0000004' :as sku, [SNY] :as manufacturer, 'Sony Vaio' :as title}
+          :as product)/:json
+        status: 200 OK
+        headers:
+        - [Content-Type, application/javascript]
+        - [Content-Disposition, inline; filename="product.js"]
+        body: |
+          {
+            "product": "A0000004"
+          }
+      - uri: /merge({'A0000004' :as sku, 'Sony Vaio SVE1711X1EB' :as title} :as product)/:json
+        status: 200 OK
+        headers:
+        - [Content-Type, application/javascript]
+        - [Content-Disposition, inline; filename="product.js"]
+        body: |
+          {
+            "product": "A0000004"
+          }
+      - uri: /update(product[A0000004]{id(), list_price:=1279})/:json
+        status: 200 OK
+        headers:
+        - [Content-Type, application/javascript]
+        - [Content-Disposition, inline; filename="product.js"]
+        body: |
+          {
+            "product": "A0000004"
+          }
       - uri: /product
         status: 200 OK
         headers:
@@ -38256,7 +38293,9 @@ tests:
           \                            :              : you go                           :
           \           :\n | A0000003 | 0992              |                   | Lenovo
           ThinkPad T430        | true         |                                  |
-          \           |\n\n ----\n /product\n SELECT \"product\".\"sku\",\n        \"product\".\"manufacturer_code\",\n
+          \           |\n | A0000004 | SNY               |                   | Sony
+          Vaio SVE1711X1EB       | true         |                                  |
+          \   1279.00 |\n\n ----\n /product\n SELECT \"product\".\"sku\",\n        \"product\".\"manufacturer_code\",\n
           \       \"product\".\"product_line_code\",\n        \"product\".\"title\",\n
           \       \"product\".\"is_available\",\n        \"product\".\"description\",\n
           \       \"product\".\"list_price\"\n FROM \"product\"\n ORDER BY 1 ASC\n"

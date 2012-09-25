@@ -245,10 +245,15 @@ class ProduceMerge(Act):
                     extract_table_for_update.table,
                     extract_table_for_update.columns)
             resolve_identity = BuildResolveIdentity.__invoke__(
-                    execute_insert.table, execute_insert.output_columns)
+                    execute_insert.table, execute_insert.output_columns,
+                    extract_node.is_list)
             meta = resolve_identity.profile
             data = []
-            for record in product.data:
+            if extract_node.is_list:
+                records = product.data
+            else:
+                records = [product.data]
+            for record in records:
                 if record is None:
                     continue
                 row = extract_node(record)
@@ -262,6 +267,12 @@ class ProduceMerge(Act):
                     key = execute_insert(row)
                 row = resolve_identity(key)
                 data.append(row)
+            if not extract_node.is_list:
+                assert len(data) <= 1
+                if data:
+                    data = data[0]
+                else:
+                    data = None
             return Product(meta, data)
 
 

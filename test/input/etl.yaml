@@ -98,5 +98,12 @@ tests:
                       manufacturer:=[0992],
                       title:='Lenovo ThinkPad T430'}/:insert,
            /product[A0000003])
+- uri: /insert(manufacturer:={code:='SNY', name:='Sony'})/:json
+- uri: /merge({'A0000004' :as sku,
+               [SNY] :as manufacturer,
+               'Sony Vaio' :as title} :as product)/:json
+- uri: /merge({'A0000004' :as sku,
+               'Sony Vaio SVE1711X1EB' :as title} :as product)/:json
+- uri: /update(product[A0000004]{id(), list_price:=1279})/:json
 - uri: /product
 

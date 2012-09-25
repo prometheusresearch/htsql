@@ -30,10 +30,15 @@ class ProduceUpdate(Act):
                     extract_table.table,
                     extract_table.columns)
             resolve_identity = BuildResolveIdentity.__invoke__(
-                    execute_update.table, execute_update.output_columns)
+                    execute_update.table, execute_update.output_columns,
+                    extract_node.is_list)
             meta = resolve_identity.profile
             data = []
-            for record in product.data:
+            if extract_node.is_list:
+                records = product.data
+            else:
+                records = [product.data]
+            for record in records:
                 if record is None:
                     continue
                 key_id, row = extract_node(record)
@@ -42,6 +47,12 @@ class ProduceUpdate(Act):
                 key = execute_update(key, row)
                 row = resolve_identity(key)
                 data.append(row)
+            if not extract_node.is_list:
+                assert len(data) <= 1
+                if data:
+                    data = data[0]
+                else:
+                    data = None
             return Product(meta, data)
 
 

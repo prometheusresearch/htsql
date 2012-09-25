@@ -119,7 +119,7 @@ class ClarifyIdentity(Clarify):
 
 class ExtractNodePipe(object):
 
-    def __init__(self, node, arcs, id_convert, converts):
+    def __init__(self, node, arcs, id_convert, converts, is_list):
         assert isinstance(node, TableNode)
         assert isinstance(arcs, listof(Arc))
         assert isinstance(converts, list)
@@ -127,6 +127,7 @@ class ExtractNodePipe(object):
         self.arcs = arcs
         self.id_convert = id_convert
         self.converts = converts
+        self.is_list = is_list
 
     def __call__(self, row):
         if self.id_convert is not None:
@@ -145,14 +146,19 @@ class BuildExtractNode(Utility):
 
     def __call__(self):
         domain = self.profile.domain
-        if not (isinstance(domain, ListDomain) and
-                isinstance(domain.item_domain, RecordDomain)):
+        is_list = (isinstance(domain, ListDomain))
+        if not ((isinstance(domain, ListDomain) and
+                 isinstance(domain.item_domain, RecordDomain)) or
+                isinstance(domain, RecordDomain)):
             feed_type = domain.family
             if isinstance(domain, ListDomain):
                 feed_type += " of " + domain.item_domain.family
             raise BadRequestError("unexpected feed type: expected"
                                   " a list of records; got %s" % feed_type)
-        fields = domain.item_domain.fields
+        if is_list:
+            fields = domain.item_domain.fields
+        else:
+            fields = domain.fields
         if self.profile.tag is None:
             raise BadRequestError("missing table name")
         signature = (normalize(self.profile.tag), None)
@@ -248,7 +254,7 @@ class BuildExtractNode(Utility):
                                                  field.domain.family))
                     convert = (lambda v, i=idx, c=clarify: c(v[i]))
                     converts.append(convert)
-        return ExtractNodePipe(node, arcs, id_convert, converts)
+        return ExtractNodePipe(node, arcs, id_convert, converts, is_list)
 
 
 class ExtractTablePipe(object):
@@ -379,11 +385,12 @@ class ResolveIdentityPipe(object):
 
 class BuildResolveIdentity(Utility):
 
-    def __init__(self, table, columns):
+    def __init__(self, table, columns, is_list=True):
         assert isinstance(table, TableEntity)
         assert isinstance(columns, listof(ColumnEntity))
         self.table = table
         self.columns = columns
+        self.is_list = is_list
 
     def __call__(self):
         state = BindingState()
@@ -433,7 +440,10 @@ class BuildResolveIdentity(Utility):
         profile = decorate(binding)
         binding = QueryBinding(state.scope, binding, profile, syntax)
         pipe = build_fetch(binding)
-        return ResolveIdentityPipe(pipe.profile, pipe)
+        profile = pipe.profile
+        if not self.is_list:
+            profile = profile.clone(domain=profile.domain.item_domain)
+        return ResolveIdentityPipe(profile, pipe)
 
 
 class ResolveChainPipe(object):
@@ -528,10 +538,15 @@ class ProduceInsert(Act):
             execute_insert = BuildExecuteInsert.__invoke__(
                     extract_table.table, extract_table.columns)
             resolve_identity = BuildResolveIdentity.__invoke__(
-                    execute_insert.table, execute_insert.output_columns)
+                    execute_insert.table, execute_insert.output_columns,
+                    extract_node.is_list)
             meta = resolve_identity.profile
             data = []
-            for record in product.data:
+            if extract_node.is_list:
+                records = product.data
+            else:
+                records = [product.data]
+            for record in records:
                 if record is None:
                     continue
                 row = resolve_identity(
@@ -539,6 +554,12 @@ class ProduceInsert(Act):
                             extract_table(
                                 extract_node(record))))
                 data.append(row)
+            if not extract_node.is_list:
+                assert len(data) <= 1
+                if data:
+                    data = data[0]
+                else:
+                    data = None
             return Product(meta, data)
 
 

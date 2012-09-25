@@ -11,7 +11,7 @@ from ....core.tr.error import BindError
 from ....core.tr.lookup import lookup_command
 from ....core.tr.decorate import decorate
 from ....core.tr.binding import QueryBinding, SegmentBinding, CommandBinding
-from ....core.tr.syntax import IdentifierSyntax
+from ....core.tr.syntax import IdentifierSyntax, WeakSegmentSyntax
 from ....core.tr.signature import ConnectiveSig
 from ....core.tr.fn.bind import BindCommand
 from ....core.cmd.command import DefaultCmd
@@ -24,6 +24,7 @@ class BindETL(BindCommand):
     cmd = None
 
     def expand(self, op):
+        op = WeakSegmentSyntax(op, op.mark)
         op = self.state.bind(op)
         feed = lookup_command(op)
         if feed is None:
@@ -88,6 +89,7 @@ class BindDo(BindCommand):
     def expand(self, ops):
         commands = []
         for op in ops:
+            op = WeakSegmentSyntax(op, op.mark)
             op = self.state.bind(op)
             command = lookup_command(op)
             if command is None:

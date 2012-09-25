@@ -79,7 +79,11 @@ class ProduceDelete(Act):
                     extract_node.node.table)
             meta = decorate(VoidBinding())
             data = None
-            for record in product.data:
+            if extract_node.is_list:
+                records = product.data
+            else:
+                records = [product.data]
+            for record in records:
                 if record is None:
                     continue
                 id_value, row = extract_node(record)
