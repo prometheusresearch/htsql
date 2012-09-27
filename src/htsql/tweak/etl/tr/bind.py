@@ -87,19 +87,7 @@ class BindDo(BindCommand):
     signature = ConnectiveSig
 
     def expand(self, ops):
-        commands = []
-        for op in ops:
-            op = WeakSegmentSyntax(op, op.mark)
-            op = self.state.bind(op)
-            command = lookup_command(op)
-            if command is None:
-                if not isinstance(op, SegmentBinding):
-                    raise BindError("a segment is expected", op.mark)
-                profile = decorate(op)
-                binding = QueryBinding(self.state.root, op, profile, op.syntax)
-                command = DefaultCmd(binding)
-            commands.append(command)
-        command = DoCmd(commands)
+        command = DoCmd(self.state.scope, ops)
         return CommandBinding(self.state.scope, command, self.syntax)
 
 

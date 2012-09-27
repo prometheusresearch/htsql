@@ -38242,6 +38242,31 @@ tests:
           {
             "product": "A0000004"
           }
+      - uri: /do($new_list_price:=product[A0000004].list_price*0.8:round(2), update(product[A0000004]{id(),
+          list_price:=$new_list_price}), product[A0000004])
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: |2
+           | product                                                                                                            |
+           +----------+-------------------+-------------------+-----------------------+--------------+-------------+------------+
+           | sku      | manufacturer_code | product_line_code | title                 | is_available | description | list_price |
+          -+----------+-------------------+-------------------+-----------------------+--------------+-------------+------------+-
+           | A0000004 | SNY               |                   | Sony Vaio SVE1711X1EB | true         |             |    1023.20 |
+
+           ----
+           product[A0000004]
+           SELECT "product"."sku",
+                  "product"."manufacturer_code",
+                  "product"."product_line_code",
+                  "product"."title",
+                  "product"."is_available",
+                  "product"."description",
+                  "product"."list_price"
+           FROM "product"
+           WHERE ("product"."sku" = 'A0000004')
+           ORDER BY 1 ASC
       - uri: /product
         status: 200 OK
         headers:
@@ -38295,7 +38320,7 @@ tests:
           ThinkPad T430        | true         |                                  |
           \           |\n | A0000004 | SNY               |                   | Sony
           Vaio SVE1711X1EB       | true         |                                  |
-          \   1279.00 |\n\n ----\n /product\n SELECT \"product\".\"sku\",\n        \"product\".\"manufacturer_code\",\n
+          \   1023.20 |\n\n ----\n /product\n SELECT \"product\".\"sku\",\n        \"product\".\"manufacturer_code\",\n
           \       \"product\".\"product_line_code\",\n        \"product\".\"title\",\n
           \       \"product\".\"is_available\",\n        \"product\".\"description\",\n
           \       \"product\".\"list_price\"\n FROM \"product\"\n ORDER BY 1 ASC\n"

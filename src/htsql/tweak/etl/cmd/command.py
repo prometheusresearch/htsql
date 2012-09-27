@@ -41,8 +41,8 @@ class TruncateCmd(ProducerCmd):
 
 class DoCmd(ProducerCmd):
 
-    def __init__(self, commands):
-        assert isinstance(commands, listof(Command))
-        self.commands = commands
+    def __init__(self, scope, ops):
+        self.scope = scope
+        self.ops = ops
 
 

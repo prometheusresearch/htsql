@@ -105,5 +105,8 @@ tests:
 - uri: /merge({'A0000004' :as sku,
                'Sony Vaio SVE1711X1EB' :as title} :as product)/:json
 - uri: /update(product[A0000004]{id(), list_price:=1279})/:json
+- uri: /do($new_list_price:=product[A0000004].list_price*0.8:round(2),
+           update(product[A0000004]{id(), list_price:=$new_list_price}),
+           product[A0000004])
 - uri: /product
 
