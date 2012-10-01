@@ -914,10 +914,14 @@ class ExpandCover(Lookup):
         return lookup(self.binding.seed, probe)
 
 
-class GuessTagAndHeaderFromLocator(Lookup):
+class GuessTagHeaderFromLocatorClipPath(Lookup):
 
     adapt_many((LocatorBinding, GuessTagProbe),
-               (LocatorBinding, GuessHeaderProbe))
+               (LocatorBinding, GuessHeaderProbe),
+               (LocatorBinding, GuessPathProbe),
+               (ClipBinding, GuessTagProbe),
+               (ClipBinding, GuessHeaderProbe),
+               (ClipBinding, GuessPathProbe))
 
     def __call__(self):
         return lookup(self.binding.seed, self.probe)

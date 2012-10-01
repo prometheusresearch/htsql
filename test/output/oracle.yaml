@@ -23049,7 +23049,7 @@ tests:
             - [Content-Type, text/plain; charset=UTF-8]
             - [Vary, Accept]
             body: |2
-               | school:top                             |
+               | school                                 |
                +------+------------------------+--------+
                | code | name                   | campus |
               -+------+------------------------+--------+-
@@ -23078,7 +23078,7 @@ tests:
             - [Content-Type, text/plain; charset=UTF-8]
             - [Vary, Accept]
             body: |2
-               | school:top(3)                          |
+               | school                                 |
                +------+------------------------+--------+
                | code | name                   | campus |
               -+------+------------------------+--------+-
@@ -23109,7 +23109,7 @@ tests:
             - [Content-Type, text/plain; charset=UTF-8]
             - [Vary, Accept]
             body: |2
-               | school:top(3,2)                               |
+               | school                                        |
                +------+-------------------------------+--------+
                | code | name                          | campus |
               -+------+-------------------------------+--------+-
@@ -23140,11 +23140,11 @@ tests:
             - [Content-Type, text/plain; charset=UTF-8]
             - [Vary, Accept]
             body: |2
-               | top(school.sort(count(department)-)) |
-               +------------+-------------------------+
-               | code       | count(department)       |
-              -+------------+-------------------------+-
-               | la         |                       6 |
+               | school                   |
+               +------+-------------------+
+               | code | count(department) |
+              -+------+-------------------+-
+               | la   |                 6 |
 
                ----
                /top(school.sort(count(department)-)){code,count(department)}
@@ -23176,13 +23176,13 @@ tests:
             - [Content-Type, text/plain; charset=UTF-8]
             - [Vary, Accept]
             body: |2
-               | top(school.sort(count(department)-),3) |
-               +-------------+--------------------------+
-               | code        | count(department)        |
-              -+-------------+--------------------------+-
-               | la          |                        6 |
-               | eng         |                        4 |
-               | mus         |                        4 |
+               | school                   |
+               +------+-------------------+
+               | code | count(department) |
+              -+------+-------------------+-
+               | la   |                 6 |
+               | eng  |                 4 |
+               | mus  |                 4 |
 
                ----
                /top(school.sort(count(department)-),3){code,count(department)}
@@ -23214,13 +23214,13 @@ tests:
             - [Content-Type, text/plain; charset=UTF-8]
             - [Vary, Accept]
             body: |2
-               | top(school.sort(count(department)-),3,2) |
-               +--------------+---------------------------+
-               | code         | count(department)         |
-              -+--------------+---------------------------+-
-               | mus          |                         4 |
-               | ns           |                         4 |
-               | bus          |                         3 |
+               | school                   |
+               +------+-------------------+
+               | code | count(department) |
+              -+------+-------------------+-
+               | mus  |                 4 |
+               | ns   |                 4 |
+               | bus  |                 3 |
 
                ----
                /top(school.sort(count(department)-),3,2){code,count(department)}
@@ -23254,7 +23254,7 @@ tests:
             body: |2
                | school                                                                                             |
                +-------------------------------+----------------+---------------------------------------------------+
-               |                               |                | top(program)                                      |
+               |                               |                | program                                           |
                |                               |                +----------------------------------+----------------+
                | name                          | count(program) | title                            | count(student) |
               -+-------------------------------+----------------+----------------------------------+----------------+-
@@ -23307,7 +23307,7 @@ tests:
             body: |2
                | school                                                                                             |
                +-------------------------------+----------------+---------------------------------------------------+
-               |                               |                | top(program,3)                                    |
+               |                               |                | program                                           |
                |                               |                +----------------------------------+----------------+
                | name                          | count(program) | title                            | count(student) |
               -+-------------------------------+----------------+----------------------------------+----------------+-
@@ -23376,7 +23376,7 @@ tests:
             body: |2
                | school                                                                                             |
                +-------------------------------+----------------+---------------------------------------------------+
-               |                               |                | top(program,3,2)                                  |
+               |                               |                | program                                           |
                |                               |                +----------------------------------+----------------+
                | name                          | count(program) | title                            | count(student) |
               -+-------------------------------+----------------+----------------------------------+----------------+-
@@ -23439,7 +23439,7 @@ tests:
             body: |2
                | school^campus                                   |
                +--------+----------------------------------------+
-               |        | top(^)                                 |
+               |        | ^                                      |
                |        +------+------------------------+--------+
                | campus | code | name                   | campus |
               -+--------+------+------------------------+--------+-
@@ -23565,7 +23565,7 @@ tests:
             status: 200 OK
             headers:
             - [Content-Type, text/csv; charset=UTF-8]
-            - [Content-Disposition, 'attachment; filename="school:top.csv"']
+            - [Content-Disposition, attachment; filename="school.csv"]
             body: "code,name,campus\r\nart,School of Art & Design,old\r\n"
         - id: identity
           tests:
@@ -29705,6 +29705,7 @@ tests:
                   }
                 },
                 "header": "enrollment",
+                "path": "enrollment",
                 "syntax": "\/enrollment[1010.[[mth.101].[2008.fall].001]]{id()}",
                 "tag": "enrollment"
               },
@@ -32425,6 +32426,7 @@ tests:
                         "type": "string"
                       },
                       "header": "code",
+                      "path": "school.code",
                       "syntax": "code",
                       "tag": "code"
                     },
@@ -32433,6 +32435,7 @@ tests:
                         "type": "string"
                       },
                       "header": "name",
+                      "path": "school.name",
                       "syntax": "name",
                       "tag": "name"
                     },
@@ -32441,12 +32444,14 @@ tests:
                         "type": "string"
                       },
                       "header": "campus",
+                      "path": "school.campus",
                       "syntax": "campus",
                       "tag": "campus"
                     }
                   ]
                 },
                 "header": "school",
+                "path": "school",
                 "syntax": "school[art]",
                 "tag": "school"
               },
@@ -32576,6 +32581,7 @@ tests:
                         "type": "string"
                       },
                       "header": "code",
+                      "path": "school.code",
                       "syntax": "code",
                       "tag": "code"
                     },
@@ -32584,6 +32590,7 @@ tests:
                         "type": "string"
                       },
                       "header": "name",
+                      "path": "school.name",
                       "syntax": "name",
                       "tag": "name"
                     },
@@ -32592,12 +32599,14 @@ tests:
                         "type": "string"
                       },
                       "header": "campus",
+                      "path": "school.campus",
                       "syntax": "campus",
                       "tag": "campus"
                     }
                   ]
                 },
                 "header": "school",
+                "path": "school",
                 "syntax": "school[none]",
                 "tag": "school"
               }
