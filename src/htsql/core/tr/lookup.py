@@ -217,6 +217,16 @@ class CommandProbe(Probe):
     pass
 
 
+class UnwrapProbe(Probe):
+
+    def __init__(self, binding_class, is_deep=True):
+        assert (isinstance(binding_class, type) and
+                issubclass(binding_class, Binding))
+        assert isinstance(is_deep, bool)
+        self.binding_class = binding_class
+        self.is_deep = is_deep
+
+
 class Prescribe(Adapter):
 
     adapt(Arc)
@@ -379,6 +389,16 @@ class GuessHeader(Lookup):
         return None
 
 
+class Unwrap(Lookup):
+
+    adapt(Binding, UnwrapProbe)
+
+    def __call__(self):
+        if isinstance(self.binding, self.probe.binding_class):
+            return self.binding
+        return None
+
+
 class LookupReferenceInScoping(Lookup):
     # Find a reference in a scoping node.
 
@@ -466,6 +486,18 @@ class GuessPathFromChaining(Lookup):
         return lookup(self.binding.base, self.probe)
 
 
+class UnwrapChaining(Lookup):
+
+    adapt(ChainingBinding, UnwrapProbe)
+
+    def __call__(self):
+        if isinstance(self.binding, self.probe.binding_class):
+            return self.binding
+        if self.probe.is_deep:
+            return lookup(self.binding.base, self.probe)
+        return None
+
+
 class LookupInImplicitCast(Lookup):
 
     adapt_many((ImplicitCastBinding, GuessNameProbe),
@@ -479,11 +511,33 @@ class LookupInImplicitCast(Lookup):
         return lookup(self.binding.base, self.probe)
 
 
+class UnwrapImplicitCast(Lookup):
+
+    adapt(ImplicitCastBinding, UnwrapProbe)
+
+    def __call__(self):
+        if isinstance(self.binding, self.probe.binding_class):
+            return self.binding
+        if self.probe.is_deep:
+            return lookup(self.binding.base, self.probe)
+        return None
+
+
 class LookupCommandInWrapping(Lookup):
 
     adapt(WrappingBinding, CommandProbe)
 
     def __call__(self):
+        return lookup(self.binding.base, self.probe)
+
+
+class UnwrapWrapping(Lookup):
+
+    adapt(WrappingBinding, UnwrapProbe)
+
+    def __call__(self):
+        if isinstance(self.binding, self.probe.binding_class):
+            return self.binding
         return lookup(self.binding.base, self.probe)
 
 
@@ -521,6 +575,18 @@ class GuessFromSegment(Lookup):
 
     def __call__(self):
         return lookup(self.binding.seed, self.probe)
+
+
+class UnwrapSegment(Lookup):
+
+    adapt(SegmentBinding, UnwrapProbe)
+
+    def __call__(self):
+        if isinstance(self.binding, self.probe.binding_class):
+            return self.binding
+        if self.probe.is_deep:
+            return lookup(self.binding.seed, self.probe)
+        return None
 
 
 class LookupCommandInCommand(Lookup):
@@ -1396,6 +1462,11 @@ def direct(binding):
 
 def lookup_command(binding):
     probe = CommandProbe()
+    return lookup(binding, probe)
+
+
+def unwrap(binding, binding_class, is_deep=True):
+    probe = UnwrapProbe(binding_class, is_deep)
     return lookup(binding, probe)
 
 
