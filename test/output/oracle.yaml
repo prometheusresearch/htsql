@@ -23880,6 +23880,75 @@ tests:
                  FROM "PROGRAM"
                  WHERE ("PROGRAM"."DEGREE" IS NOT NULL)
                  ORDER BY 3 ASC NULLS FIRST, 1 ASC, 2 ASC
+          - uri: /school[$id] :where $id:='ns'
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school                                     |
+               +------+----------------------------+--------+
+               | code | name                       | campus |
+              -+------+----------------------------+--------+-
+               | ns   | School of Natural Sciences | old    |
+
+               ----
+               /school[$id]:where($id:='ns')
+               SELECT "SCHOOL"."CODE",
+                      "SCHOOL"."NAME",
+                      "SCHOOL"."CAMPUS"
+               FROM "SCHOOL"
+               WHERE ("SCHOOL"."CODE" = 'ns')
+               ORDER BY 1 ASC
+          - uri: /course[$id]{id(), title} :where $id:=[astro.105]
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | course                          |
+               +-----------+---------------------+
+               | id()      | title               |
+              -+-----------+---------------------+-
+               | astro.105 | General Astronomy I |
+
+               ----
+               /course[$id]{id(),title}:where($id:=[astro.105])
+               SELECT "COURSE"."DEPARTMENT_CODE",
+                      "COURSE"."NO",
+                      "COURSE"."TITLE"
+               FROM "COURSE"
+               WHERE ("COURSE"."DEPARTMENT_CODE" = 'astro')
+                     AND ("COURSE"."NO" = 105)
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /class[$course.$season.001] :where ($course:=[astro.105], $season:=[2009.spring])
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | class                                                                               |
+               +-----------------+-----------+------+--------+---------+-----------------+-----------+
+               | department_code | course_no | year | season | section | instructor_code | class_seq |
+              -+-----------------+-----------+------+--------+---------+-----------------+-----------+-
+               | astro           |       105 | 2009 | spring | 001     | mtriplett       |      1167 |
+
+               ----
+               /class[$course.$season.001]:where($course:=[astro.105],$season:=[2009.spring])
+               SELECT "CLASS"."DEPARTMENT_CODE",
+                      "CLASS"."COURSE_NO",
+                      "CLASS"."YEAR",
+                      "CLASS"."SEASON",
+                      "CLASS"."SECTION",
+                      "CLASS"."INSTRUCTOR_CODE",
+                      "CLASS"."CLASS_SEQ"
+               FROM "CLASS"
+               WHERE ("CLASS"."DEPARTMENT_CODE" = 'astro')
+                     AND ("CLASS"."COURSE_NO" = 105)
+                     AND ("CLASS"."YEAR" = 2009)
+                     AND ("CLASS"."SEASON" = 'spring')
+                     AND ("CLASS"."SECTION" = '001')
+               ORDER BY 1 ASC, 2 ASC, 3 ASC, 4 ASC, 5 ASC
           - uri: /program[ns]
             status: 400 Bad Request
             headers:
@@ -23901,7 +23970,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              bind error: invalid decimal literal: uchem:
+              encode error: invalid decimal literal: uchem:
                   /course[ns.uchem]
                              ^^^^^
           - uri: /program^degree{id()}
@@ -23912,6 +23981,14 @@ tests:
               bind error: cannot determine identity:
                   /program^degree{id()}
                                   ^^^^
+          - uri: /course[$id]{id(), title} :where $id:='astro.105'
+            status: 400 Bad Request
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |
+              bind error: ill-formed locator:
+                  /course[$id]{id(), title} :where $id:='astro.105'
+                         ^^^^^
         - id: table-expressions
           tests:
           - uri: /(school?code='art').department

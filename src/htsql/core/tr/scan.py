@@ -277,6 +277,8 @@ class Scanner(object):
                          jump='locator'),
                 ScanRule(r""" \] | \) """, SymbolToken,
                          is_end=True),
+                ScanRule(r""" \$ """, SymbolToken,
+                         jump='identifier'),
                 ScanRule(r""" \. """, SymbolToken),
                 ScanRule(r""" [\w-]+ """, UnquotedStringToken),
                 ScanRule(r""" ' (?: [^'\0] | '')* ' """, StringToken,
@@ -285,6 +287,9 @@ class Scanner(object):
                          error="""cannot find a matching quote mark"""),
                 ScanRule(r""" $ """, None,
                          error="""cannot find a matching ']'""")),
+            ScanGroup('identifier',
+                ScanRule(r""" (?! \d) \w+ """, NameToken,
+                         is_end=True)),
     ]
 
     # The regular expression to match %-escape sequences.

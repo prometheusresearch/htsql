@@ -471,6 +471,7 @@ class IdentityBinding(Binding):
         domain = IdentityDomain([element.domain for element in elements])
         super(IdentityBinding, self).__init__(base, domain, syntax)
         self.elements = elements
+        self.arity = domain.arity
 
 
 class AssignmentBinding(Binding):

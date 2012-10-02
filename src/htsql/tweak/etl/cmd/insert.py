@@ -220,7 +220,10 @@ class BuildExtractNode(Utility):
                     arc = label.arc
                     idx = index_by_arc[arc]
                     field = fields[idx]
-                    if label.arc in arcs:
+                    if (isinstance(arc, ColumnArc) and arc.link is not None
+                            and isinstance(field.domain, IdentityDomain)):
+                        arc = arc.link
+                    if arc in arcs:
                         raise BadRequestError("duplicate field %s"
                                               % field.tag.encode('utf-8'))
                     arcs.append(arc)

@@ -458,15 +458,10 @@ class LocationSyntax(Syntax):
 
     def __init__(self, branches, mark):
         assert isinstance(branches, listof(oneof(LocationSyntax,
+                                                 ReferenceSyntax,
                                                  StringSyntax)))
         super(LocationSyntax, self).__init__(mark)
         self.branches = branches
-        self.arity = 0
-        for branch in self.branches:
-            if isinstance(branch, LocationSyntax):
-                self.arity += branch.arity
-            else:
-                self.arity += 1
 
     def __basis__(self):
         return (tuple(self.branches),)

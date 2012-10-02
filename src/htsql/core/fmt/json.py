@@ -15,8 +15,8 @@ from ..util import Printable
 from ..adapter import Adapter, Protocol, adapt, adapt_many, call
 from ..domain import (Domain, BooleanDomain, NumberDomain, FloatDomain,
         StringDomain, EnumDomain, DateDomain, TimeDomain, DateTimeDomain,
-        ListDomain, RecordDomain, UntypedDomain, VoidDomain, OpaqueDomain,
-        Profile)
+        ListDomain, RecordDomain, IdentityDomain, UntypedDomain, VoidDomain,
+        OpaqueDomain, Profile)
 from .format import RawFormat, JSONFormat, EmitHeaders, Emit
 import re
 import math
@@ -449,6 +449,26 @@ class RecordDomainToRaw(DomainToRaw):
             for token in profile_to_raw(field):
                 yield token
         yield JS_END
+        yield JS_END
+
+
+class IdentityDomainToRaw(DomainToRaw):
+
+    adapt(IdentityDomain)
+
+    def __call__(self):
+        yield JS_MAP
+        yield u"type"
+        yield unicode(self.domain.family)
+        #yield u"fields"
+        #yield JS_SEQ
+        #for field in self.domain.fields:
+        #    yield JS_MAP
+        #    yield u"domain"
+        #    for token in domain_to_raw(field):
+        #        yield token
+        #    yield JS_END
+        #yield JS_END
         yield JS_END
 
 

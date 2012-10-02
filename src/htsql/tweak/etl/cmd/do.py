@@ -5,6 +5,7 @@
 
 from ....core.adapter import Adapter, adapt
 from ....core.connect import transaction
+from ....core.domain import IdentityDomain
 from ....core.cmd.command import DefaultCmd
 from ....core.cmd.act import Act, ProduceAction, produce
 from ....core.cmd.fetch import Product
@@ -12,7 +13,8 @@ from ....core.tr.syntax import (WeakSegmentSyntax, AssignmentSyntax,
         ReferenceSyntax)
 from ....core.tr.bind import BindingState
 from ....core.tr.binding import (VoidBinding, QueryBinding, SegmentBinding,
-        LiteralBinding, DefinitionBinding, BindingRecipe, ClosedRecipe)
+        LiteralBinding, IdentityBinding, DefinitionBinding, BindingRecipe,
+        ClosedRecipe)
 from ....core.tr.decorate import decorate
 from ....core.tr.lookup import lookup_command
 from ....core.tr.error import BindError
@@ -60,8 +62,23 @@ class ProduceDo(Act):
                     command = DefaultCmd(binding)
                 product = produce(command)
                 if reference is not None:
-                    literal = LiteralBinding(state.scope, product.data,
-                                             product.meta.domain, reference)
+                    if (isinstance(product.meta.domain, IdentityDomain) and
+                            product.data is not None):
+                        def convert(domain, data):
+                            items = []
+                            for element, item in zip(domain.fields, data):
+                                if isinstance(element, IdentityDomain):
+                                    item = convert(element, item)
+                                else:
+                                    item = LiteralBinding(state.scope, item,
+                                                          element, reference)
+                                items.append(item)
+                            return IdentityBinding(state.scope, items,
+                                                   reference)
+                        literal = convert(product.meta.domain, product.data)
+                    else:
+                        literal = LiteralBinding(state.scope, product.data,
+                                                 product.meta.domain, reference)
                     recipe = ClosedRecipe(BindingRecipe(literal))
         return product
 

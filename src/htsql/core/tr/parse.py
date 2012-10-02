@@ -129,7 +129,8 @@ class QueryParser(Parser):
         specifier       ::= locator ( '.' locator )*
         locator         ::= atom ( '[' location ']' )?
         location        ::= label ( '.' label )*
-        label           ::= STRING | '(' location ')' | '[' location ']'
+        label           ::= STRING | '(' location ')' | '[' location ']' |
+                            reference
 
         atom            ::= '@' atom | '*' index? | '^' | selector | group |
                             '[' location ']' | identifier call? | reference |
@@ -606,7 +607,8 @@ class LabelParser(Parser):
     @classmethod
     def process(cls, tokens):
         # Expect:
-        #   label           ::= STRING | '(' location ')' | '[' location ']'
+        #   label           ::= STRING | '(' location ')' | '[' location ']' |
+        #                       reference
         if tokens.peek(UnquotedStringToken):
             token = tokens.pop(UnquotedStringToken)
             return UnquotedStringSyntax(token.value, token.mark)
@@ -615,6 +617,15 @@ class LabelParser(Parser):
             return StringSyntax(token.value, token.mark)
         elif tokens.peek(SymbolToken, [u'[', u'(']):
             label = LocationParser << tokens
+            return label
+        elif tokens.peek(SymbolToken, [u'$']):
+            head_token = tokens.pop(SymbolToken, [u'$'])
+            if not tokens.peek(NameToken):
+                raise ParseError("symbol '$' must be followed by an identifier",
+                                 head_token.mark)
+            identifier = IdentifierParser << tokens
+            mark = Mark.union(head_token, identifier)
+            label = ReferenceSyntax(identifier, mark)
             return label
         if tokens.peek(EndToken):
             token = tokens.pop(EndToken)

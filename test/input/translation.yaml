@@ -342,6 +342,10 @@ tests:
     - uri: /department{id(), school{id()}}
     - uri: /course[astro.105].class.id()
     - uri: /program^degree{*, /^.id()}
+    - uri: /school[$id] :where $id:='ns'
+    - uri: /course[$id]{id(), title} :where $id:=[astro.105]
+    - uri: /class[$course.$season.001]
+            :where ($course:=[astro.105], $season:=[2009.spring])
     - uri: /program[ns]
       expect: 400
     - uri: /school[ns.uchem]
@@ -349,6 +353,8 @@ tests:
     - uri: /course[ns.uchem]
       expect: 400
     - uri: /program^degree{id()}
+      expect: 400
+    - uri: /course[$id]{id(), title} :where $id:='astro.105'
       expect: 400
 
   - title: Table Expressions

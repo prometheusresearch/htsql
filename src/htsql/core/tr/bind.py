@@ -38,7 +38,7 @@ from .binding import (Binding, WrappingBinding, QueryBinding, SegmentBinding,
         AmbiguousRecipe)
 from .lookup import (lookup_attribute, lookup_reference, lookup_complement,
         lookup_attribute_set, lookup_reference_set, expand, direct, guess_tag,
-        lookup_command, identify)
+        lookup_command, identify, unwrap)
 from .coerce import coerce
 from .decorate import decorate
 
@@ -703,27 +703,28 @@ class BindLocator(Bind):
         if recipe is None:
             raise BindError("cannot determine identity", seed.mark)
         identity = self.state.use(recipe, self.syntax.rbranch, scope=seed)
-        if identity.domain.arity != self.syntax.rbranch.arity:
+        location = self.state.bind(self.syntax.rbranch, scope=seed)
+        if identity.domain.arity != location.arity:
             raise BindError("ill-formed locator", self.syntax.rbranch.mark)
-        def convert(identity, branches):
+        def convert(identity, elements):
             value = []
             for field in identity.fields:
                 if isinstance(field, IdentityDomain):
                     total_arity = 0
                     items = []
                     while total_arity < field.arity:
-                        assert branches
-                        branch = branches.pop(0)
+                        assert elements
+                        element = elements.pop(0)
                         if (total_arity == 0 and
-                                isinstance(branch, LocationSyntax) and
-                                branch.arity == field.arity):
-                            items = branch.branches[:]
-                            total_arity = branch.arity
-                        elif isinstance(branch, LocationSyntax):
-                            items.append(branch)
-                            total_arity += branch.arity
+                                isinstance(element, IdentityBinding) and
+                                element.arity == field.arity):
+                            items = element.elements[:]
+                            total_arity = element.arity
+                        elif isinstance(element, IdentityBinding):
+                            items.append(element)
+                            total_arity += element.arity
                         else:
-                            items.append(branch)
+                            items.append(element)
                             total_arity += 1
                     if total_arity > field.arity:
                         raise BindError("ill-formed locator",
@@ -731,19 +732,18 @@ class BindLocator(Bind):
                     item = convert(field, items)
                     value.append(item)
                 else:
-                    assert branches
-                    branch = branches.pop(0)
-                    if not isinstance(branch, StringSyntax):
+                    assert elements
+                    element = elements.pop(0)
+                    if isinstance(element, IdentityBinding):
                         raise BindError("ill-formed locator",
                                         self.syntax.lbranch.mark)
-                    try:
-                        item = field.parse(branch.value)
-                    except ValueError, exc:
-                        raise BindError(str(exc), branch.mark)
-                    item = LiteralBinding(seed, item, field, branch)
+                    item = ImplicitCastBinding(element, field, element.syntax)
                     value.append(item)
             return tuple(value)
-        value = convert(identity.domain, self.syntax.rbranch.branches[:])
+        elements = location.elements[:]
+        while len(elements) == 1 and isinstance(elements[0], IdentityBinding):
+            elements = elements[0].elements[:]
+        value = convert(identity.domain, elements)
         return LocatorBinding(self.state.scope, seed, identity, value,
                               self.syntax)
 
@@ -753,8 +753,13 @@ class BindLocation(Bind):
     adapt(LocationSyntax)
 
     def __call__(self):
-        elements = [self.state.bind(branch)
-                    for branch in self.syntax.branches]
+        elements = []
+        for branch in self.syntax.branches:
+            element = self.state.bind(branch)
+            identity = unwrap(element, IdentityBinding, is_deep=False)
+            if identity is not None:
+                element = identity
+            elements.append(element)
         return IdentityBinding(self.state.scope, elements, self.syntax)
 
 
