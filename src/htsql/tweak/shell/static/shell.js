@@ -260,7 +260,7 @@ $(document).ready(function() {
             else
                 query = "/shell('" + query.replace(/'/g,"''") + "')";
         }
-        var url = config.serverRoot+encodeURI(query).replace(/#/, '%23');
+        var url = config.serverRoot+encodeURI(query).replace(/#/g, '%23');
         try {
             if (replace)
                 history.replaceState(data, title, url);
@@ -302,7 +302,7 @@ $(document).ready(function() {
                     + "','" + config.canWriteOnStart + "')";
             success = handleSuccessWithPermissions;
         }
-        var url = config.serverRoot+encodeURI(query).replace(/#/, '%23');
+        var url = config.serverRoot+encodeURI(query).replace(/#/g, '%23');
         $.ajax({
             url: url,
             dataType: 'json',
@@ -1179,10 +1179,13 @@ $(document).ready(function() {
     }
 
     function scanQuery(query) {
-        var regexp = /->|:=|\[|\]|[~<>=!&|.,?(){}:$@^/*+-]|'(?:[^']|'')*'|\d+[.eE]?|(?!\d)[_0-9a-zA-Z\u0080-\uFFFF]+/g;
+        var regexp = /#[^\r\n]*|->|:=|\[|\]|[~<>=!&|.,?(){}:$@^/*+-]|'(?:[^']|'')*'|\d+[.eE]?|(?!\d)[_0-9a-zA-Z\u0080-\uFFFF]+/g;
         var tokens = [];
         var match;
         while ((match = regexp.exec(query))) {
+            if (/^#/.test(match[0])) {
+                continue;
+            }
             tokens.push(match[0]);
         }
         var state = new ScanState();

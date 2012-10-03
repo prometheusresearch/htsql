@@ -54,6 +54,9 @@ CodeMirror.defineMode("htsql", function(conf) {
                 state.locator += 1;
                 return 'htsql-punctuation';
             }
+            if (stream.match(/^\#[^\r\n]*/)) {
+                return 'htsql-comment';
+            }
             stream.next();
             return null;
         }

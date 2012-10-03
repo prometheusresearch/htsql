@@ -4,7 +4,8 @@ from docutils import nodes
 from docutils.parsers.rst import Directive, directives
 from sphinx.util.osutil import copyfile
 from pygments.lexer import RegexLexer
-from pygments.token import Punctuation, Text, Operator, Name, String, Number
+from pygments.token import (Punctuation, Text, Operator, Name, String, Number,
+        Comment)
 
 import re
 import os, os.path
@@ -33,6 +34,7 @@ class HtsqlLexer(RegexLexer):
             (r'~|!~|<=|<|>=|>|==|=|!==|!=|!|'
              r'&|\||->|\?|\^|/|\*|\+|-', Operator),
             (r'\.|,|\(|\)|\{|\}|:=|:|\$|@', Punctuation),
+            (r'\#[^\r\n]*', Comment.Single),
             (r'\[', Punctuation, 'locator'),
         ],
         'locator': [

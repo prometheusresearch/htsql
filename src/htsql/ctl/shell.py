@@ -436,6 +436,7 @@ class GetPostBaseCmd(Cmd):
     method = None
 
     pattern = r"""
+    \# [^\r\n]* |
     ~ | < | > | = | ! | & | \| | -> | \. | , | \? | \^ |
     / | \* | \+ | - | \( | \) | \{ | \} | := | : | \$ | @ |
     \[ | \] |
@@ -452,6 +453,7 @@ class GetPostBaseCmd(Cmd):
             return
         argument = argument.decode('utf-8', 'replace')
         tokens = cls.regexp.findall(argument)
+        tokens = [token for token in tokens if not token.startswith('#')]
         tokens = [''] + [token.encode('utf-8') for token in tokens] + ['']
         state = ScanState()
         for idx in range(1, len(tokens)-1):

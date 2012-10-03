@@ -16,3 +16,7 @@
 .cm-s-default span.cm-htsql-punctuation {
   color: #525252;
 }
+.cm-s-default span.cm-htsql-comment {
+  color: #408090;
+  font-style: italic;
+}
