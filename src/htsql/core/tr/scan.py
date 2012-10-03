@@ -255,7 +255,7 @@ class Scanner(object):
 
     groups = [
             ScanGroup('top',
-                ScanRule(r""" \s+ """, None),
+                ScanRule(r""" \s+ | \# [^\r\n\0]* """, None),
                 ScanRule(r""" (?! \d) \w+ """, NameToken),
                 ScanRule(r""" ' (?: [^'\0] | '')* ' """, StringToken,
                          unquote=(lambda v: v[1:-1].replace(u'\'\'', u'\''))),
