@@ -202,6 +202,41 @@ tests:
               del sys.modules[name]
       del __builtin__.sandbox
 
+# TWEAK.GATEWAY - define gateways to other databases
+- title: tweak.gateway
+  ifdef: mysql
+  tests:
+  # Addon description
+  - ctl: [ext, tweak.gateway]
+
+  # Load the addon
+  - load: demo
+    extensions:
+      tweak.gateway:
+        gateways:
+          sqlite_gw: sqlite:///build/regress/sqlite/htsql_demo.sqlite
+          pgsql_gw:
+            engine: pgsql
+            database: htsql_demo
+            username: htsql_demo
+            password: secret
+            host: ${PGSQL_HOST}
+            port: ${PGSQL_PORT}
+
+  # Normal queries
+  - uri: /sqlite_gw(/school)
+  - uri: /department[ee]{name, count(course)}/:pgsql_gw
+
+  # Formats and commands
+  - uri: /sqlite_gw(/school[art].program)/:json
+  - uri: /pgsql_gw(/fetch(count(course)))/:raw
+
+  # Errors
+  - uri: /pgsql_gw(/school/:html)
+    expect: 400
+  - uri: /sqlite_gw(/nothing)
+    expect: 400
+
 # TWEAK.INET - IPv4 data type
 - title: tweak.inet
   ifdef: pgsql

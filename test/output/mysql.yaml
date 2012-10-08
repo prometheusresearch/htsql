@@ -34003,6 +34003,133 @@ tests:
              ORDER BY `polls_choice`.`id` ASC
         - py: remove-module-path
           stdout: ''
+      - id: tweak.gateway
+        tests:
+        - ctl: [ext, tweak.gateway]
+          stdout: |+
+            TWEAK.GATEWAY - define gateways to other databases
+
+            This addon allows you to create a gateway to another database
+            and execute HTSQL queries against it.
+
+            Parameter `gateways` is a mapping of names to connection URIs.
+            Each mapping entry creates a function which takes a query
+            as a parameter and execute it against the database specified
+            by the connection URI.
+
+            Parameters:
+              gateways={NAME:DB}       : gateway definitions
+
+          exit: 0
+        - uri: /sqlite_gw(/school)
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | school                                        |
+             +------+-------------------------------+--------+
+             | code | name                          | campus |
+            -+------+-------------------------------+--------+-
+             | art  | School of Art & Design        | old    |
+             | bus  | School of Business            | south  |
+             | edu  | College of Education          | old    |
+             | eng  | School of Engineering         | north  |
+             | la   | School of Arts and Humanities | old    |
+             | mus  | School of Music & Dance       | south  |
+             | ns   | School of Natural Sciences    | old    |
+             | ph   | Public Honorariums            |        |
+             | sc   | School of Continuing Studies  |        |
+
+             ----
+             /school
+             SELECT "school"."code",
+                    "school"."name",
+                    "school"."campus"
+             FROM "school"
+             ORDER BY 1 ASC
+        - uri: /department[ee]{name, count(course)}/:pgsql_gw
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | department                             |
+             +------------------------+---------------+
+             | name                   | count(course) |
+            -+------------------------+---------------+-
+             | Electrical Engineering |            14 |
+
+             ----
+             /department[ee]{name,count(course)}
+             SELECT "department"."name",
+                    COALESCE("course"."count", 0)
+             FROM "ad"."department"
+                  LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                          "course"."department_code"
+                                   FROM "ad"."course"
+                                   GROUP BY 2) AS "course"
+                                  ON ("department"."code" = "course"."department_code")
+             WHERE ("department"."code" = 'ee')
+             ORDER BY "department"."code" ASC
+        - uri: /sqlite_gw(/school[art].program)/:json
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="program.js"]
+          body: |
+            {
+              "program": [
+                {
+                  "school_code": "art",
+                  "code": "gart",
+                  "title": "Post Baccalaureate in Art History",
+                  "degree": "pb"
+                },
+                {
+                  "school_code": "art",
+                  "code": "uhist",
+                  "title": "Bachelor of Arts in Art History",
+                  "degree": "ba"
+                },
+                {
+                  "school_code": "art",
+                  "code": "ustudio",
+                  "title": "Bachelor of Arts in Studio Art",
+                  "degree": "ba"
+                }
+              ]
+            }
+        - uri: /pgsql_gw(/fetch(count(course)))/:raw
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="count(course).js"]
+          body: |
+            {
+              "meta": {
+                "domain": {
+                  "type": "integer"
+                },
+                "header": "count(course)",
+                "syntax": "count(course)"
+              },
+              "data": 358
+            }
+        - uri: /pgsql_gw(/school/:html)
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            invalid request: unsupported action
+        - uri: /sqlite_gw(/nothing)
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unrecognized attribute 'nothing':
+                /sqlite_gw(/nothing)
+                            ^^^^^^^
       - id: tweak.meta
         tests:
         - ctl: [ext, tweak.meta]

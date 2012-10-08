@@ -3,6 +3,7 @@
 #
 
 
+from .util import to_name
 from .context import context
 from .cache import once
 from .adapter import Adapter, adapt
@@ -10,27 +11,9 @@ from .model import (Node, Arc, Label, HomeNode, TableNode, TableArc, ChainArc,
                     ColumnArc, SyntaxArc, AmbiguousArc)
 from .entity import DirectJoin, ReverseJoin
 from .introspect import introspect
-import re
-import unicodedata
 
 
-def normalize(name):
-    """
-    Normalizes a name to provide a valid HTSQL identifier.
-
-    We assume `name` is a Unicode string.  Then it is:
-
-    - translated to Unicode normal form C;
-    - converted to lowercase;
-    - has non-alphanumeric characters replaced with underscores;
-    - preceded with an underscore if it starts with a digit.
-
-    The result is a valid HTSQL identifier.
-    """
-    assert isinstance(name, unicode) and len(name) > 0
-    name = unicodedata.normalize('NFC', name).lower()
-    name = re.sub(ur"(?u)^(?=\d)|\W", u"_", name)
-    return name
+normalize = to_name
 
 
 class Classify(Adapter):

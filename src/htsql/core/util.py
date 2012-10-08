@@ -20,6 +20,7 @@ import pkgutil
 import datetime, time
 import keyword
 import operator
+import unicodedata
 
 
 #
@@ -498,6 +499,28 @@ def trim_doc(doc):
     if indent:
         lines = [line[indent:] for line in lines]
     return "\n".join(lines)
+
+
+#
+# Name normalization.
+#
+
+
+def to_name(value):
+    """
+    Converts a non-empty string to a valid HTSQL identifier.
+
+    The given value is transformed as follows:
+
+    - translated to Unicode normal form C;
+    - converted to lowercase;
+    - has non-alphanumeric characters replaced with underscores;
+    - preceded with an underscore if it starts with a digit.
+    """
+    assert isinstance(value, unicode) and len(value) > 0
+    value = unicodedata.normalize('NFC', value).lower()
+    value = re.sub(ur"(?u)^(?=\d)|\W", u"_", value)
+    return value
 
 
 #

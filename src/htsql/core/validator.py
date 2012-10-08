@@ -11,7 +11,7 @@ This module provides utilities for data validation and conversion.
 """
 
 
-from util import DB, maybe, oneof, listof, tupleof, dictof
+from util import DB, maybe, oneof, listof, tupleof, dictof, to_name
 import re
 
 
@@ -190,6 +190,53 @@ class WordVal(Validator):
         # Normalize and return the value.
         value = value.replace('_', '-').replace(' ', '-')
         return value
+
+
+class NameVal(Validator):
+    """
+    Verifies if the value is a valid HTSQL identifier.
+
+    `is_nullable` (Boolean)
+        If set, ``None`` values are permitted.
+    """
+
+    hint = """a name"""
+
+    # A regular expression for matching words.
+    regexp = re.compile(r'^(?!\d)\w+$', re.U)
+
+    def __init__(self, is_nullable=False):
+        # Sanity check on the arguments.
+        assert isinstance(is_nullable, bool)
+        self.is_nullable = is_nullable
+
+    def __call__(self, value):
+        # `None` is allowed if the `is_nullable` flag is set.
+        if value is None:
+            if self.is_nullable:
+                return None
+            else:
+                raise ValueError("the null value is not permitted")
+
+        # A byte or a Unicode string is expected.
+        if not isinstance(value, (str, unicode)):
+            raise ValueError("a string value is expected; got %r" % value)
+
+        # Byte strings must be UTF-8 encoded.
+        if isinstance(value, str):
+            try:
+                value = value.decode('utf-8')
+            except UnicodeDecodeError, exc:
+                raise ValueError("unable to decode %r: %s" % (value, exc))
+
+        # Check if the string matches the name pattern.
+        if not self.regexp.match(value):
+            raise ValueError("a string containing alphanumeric characters"
+                             " and underscores is expected;"
+                             " got %r" % value)
+
+        # Normalize and return the value.
+        return to_name(value)
 
 
 class ChoiceVal(Validator):
