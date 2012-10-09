@@ -712,6 +712,7 @@ class RunCmd(GetPostBaseCmd):
         if not query or query[0] != '/':
             self.ctl.out("** file %r does not contain a valid HTSQL query"
                          % self.argument)
+            return
 
         # Prepare and execute a WSGI request.
         request = Request.prepare('GET', query=query,
