@@ -79,7 +79,7 @@ class ConfigYAMLLoader(BaseYAMLLoader):
                                     attribute_node.start_mark)
         return super(ConfigYAMLLoader, self).construct_document(document_node)
 
-    def construct_import(self, node):
+    def construct_include(self, node):
         if not isinstance(node, yaml.ScalarNode):
             raise yaml.constructor.ConstructorError(None, None,
                     "expected a file name, but found %s" % node.id,
@@ -107,7 +107,8 @@ class ConfigYAMLLoader(BaseYAMLLoader):
             return super(ConfigYAMLLoader, self).construct_object(node)
 
 
-ConfigYAMLLoader.add_constructor(u'!import', ConfigYAMLLoader.construct_import)
+ConfigYAMLLoader.add_constructor(u'!include',
+        ConfigYAMLLoader.construct_include)
 
 
 class Request(object):
