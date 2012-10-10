@@ -806,6 +806,31 @@ class MapVal(Validator):
         return value
 
 
+class UnionVal(Validator):
+
+    def __init__(self, validators, is_nullable=False):
+        assert isinstance(validators, listof(Validator))
+        assert isinstance(is_nullable, bool)
+        self.validators = validators
+        self.is_nullable = is_nullable
+
+    def __call__(self, value):
+        # `None` is allowed if the `is_nullable` flag is set.
+        if value is None:
+            if self.is_nullable:
+                return None
+            else:
+                raise ValueError("the null value is not permitted")
+
+        messages = []
+        for validator in self.validators:
+            try:
+                return validator(value)
+            except ValueError, exc:
+                messages.append(str(exc))
+        raise ValueError("; ".join(messages))
+
+
 class ExtensionVal(Validator):
 
     pattern = r"""

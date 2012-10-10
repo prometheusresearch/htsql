@@ -4,8 +4,9 @@
 
 
 from . import command
+from ...core.util import DB
 from ...core.addon import Addon, Parameter
-from ...core.validator import MapVal, NameVal, DBVal
+from ...core.validator import AnyVal, UnionVal, MapVal, NameVal, StrVal, DBVal
 from .command import BindGateway
 
 
@@ -24,7 +25,11 @@ class TweakGatewayAddon(Addon):
     """
 
     parameters = [
-            Parameter('gateways', MapVal(NameVal(), DBVal()),
+            Parameter('gateways',
+                      MapVal(NameVal(),
+                          UnionVal([
+                              DBVal(),
+                              MapVal(StrVal(), AnyVal())])),
                       default={},
                       value_name="{NAME:DB}",
                       hint="""gateway definitions"""),
@@ -35,7 +40,10 @@ class TweakGatewayAddon(Addon):
         self.functions = {}
         for name in sorted(self.gateways):
             db = self.gateways[name]
-            instance = app.__class__(db)
+            if isinstance(db, DB):
+                instance = app.__class__(db)
+            else:
+                instance = app.__class__(None, db)
             class_name = "Bind%s" % name.title().replace('_', '').encode('utf-8')
             namespace = {
                 '__names__': [(name.encode('utf-8'), 1)],
