@@ -20,9 +20,7 @@ import getpass
 import yaml, yaml.constructor
 
 
-BaseYAMLLoader = yaml.SafeLoader
-if hasattr(yaml, 'CSafeLoader'):
-    BaseYAMLLoader = yaml.CSafeLoader
+BaseYAMLLoader = getattr(yaml, 'CSafeLoader', yaml.SafeLoader)
 
 
 class ConfigYAMLLoader(BaseYAMLLoader):
@@ -40,6 +38,10 @@ class ConfigYAMLLoader(BaseYAMLLoader):
         $
     """
     dotted_name_regexp = re.compile(dotted_name_pattern, re.X)
+
+    def __init__(self, stream):
+        self.stream = stream
+        super(ConfigYAMLLoader, self).__init__(stream)
 
     def load(self):
         return self.get_single_data()
@@ -76,6 +78,36 @@ class ConfigYAMLLoader(BaseYAMLLoader):
                                     "invalid parameter name",
                                     attribute_node.start_mark)
         return super(ConfigYAMLLoader, self).construct_document(document_node)
+
+    def construct_import(self, node):
+        if not isinstance(node, yaml.ScalarNode):
+            raise yaml.constructor.ConstructorError(None, None,
+                    "expected a file name, but found %s" % node.id,
+                    node.start_mark)
+        if not node.value:
+            raise yaml.constructor.ConstructorError(None, None,
+                    "expected a file name, but found an empty node",
+                    node.start_mark)
+        basename = getattr(self.stream, 'name', None)
+        filename = node.value.encode('utf-8')
+        if not os.path.isabs(filename):
+            if not basename:
+                raise yaml.constructor.ConstructorError(None, None,
+                        "unable to resolve a relative file name %s" % filename,
+                        node.start_mark)
+            filename = os.path.join(os.path.dirname(basename), filename)
+        try:
+            stream = open(filename, 'rb')
+        except IOError, exc:
+            raise yaml.constructor.ConstructorError(None, None,
+                    "unable to open a file: %s" % exc, node.start_mark)
+        loader = self.__class__(stream)
+        node = loader.get_single_node()
+        if node is not None:
+            return super(ConfigYAMLLoader, self).construct_object(node)
+
+
+ConfigYAMLLoader.add_constructor(u'!import', ConfigYAMLLoader.construct_import)
 
 
 class Request(object):
