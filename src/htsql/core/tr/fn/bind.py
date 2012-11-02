@@ -647,7 +647,7 @@ class BindSelect(BindMacro):
         elements = []
         for op in ops:
             element = self.state.bind(op)
-            recipes = expand(element, with_syntax=True)
+            recipes = expand(element, with_wild=True)
             if recipes is not None:
                 for syntax, recipe in recipes:
                     if not isinstance(syntax, (IdentifierSyntax, GroupSyntax)):

@@ -18544,8 +18544,6 @@ tests:
             - [Vary, Accept]
             body: |2
                | department                                                                                    |
-               +-----------------------------------------------+-----------------------------------------------+
-               | school                                        | department                                    |
                +------+-------------------------------+--------+--------+------------------------+-------------+
                | code | name                          | campus | code   | name                   | school_code |
               -+------+-------------------------------+--------+--------+------------------------+-------------+-
@@ -18553,8 +18551,8 @@ tests:
                | la   | School of Arts and Humanities | old    | arthis | Art History            | la          |
                | ns   | School of Natural Sciences    | old    | astro  | Astronomy              | ns          |
                | eng  | School of Engineering         | north  | be     | Bioengineering         | eng         |
-               :      :                               :        | bursar | Bursar's Office        |             |
-               :      :                               :        | career | Career Development     |             |
+               |      |                               |        | bursar | Bursar's Office        |             |
+               |      |                               |        | career | Career Development     |             |
                | ns   | School of Natural Sciences    | old    | chem   | Chemistry              | ns          |
                | eng  | School of Engineering         | north  | comp   | Computer Science       | eng         |
                | bus  | School of Business            | south  | econ   | Economics              | bus         |
@@ -18566,7 +18564,7 @@ tests:
                | eng  | School of Engineering         | north  | me     | Mechanical Engineering | eng         |
                | bus  | School of Business            | south  | mm     | Management & Marketing | bus         |
                | ns   | School of Natural Sciences    | old    | mth    | Mathematics            | ns          |
-               :      :                               :        | parent | Parents & Alumni       |             |
+               |      |                               |        | parent | Parents & Alumni       |             |
                | ns   | School of Natural Sciences    | old    | phys   | Physics                | ns          |
                | mus  | School of Music & Dance       | south  | pia    | Piano                  | mus         |
                | la   | School of Arts and Humanities | old    | poli   | Political Science      | la          |
@@ -18579,21 +18577,16 @@ tests:
 
                ----
                /department.select(school.*,*)
-               SELECT "SCHOOL"."!",
-                      "SCHOOL"."CODE",
+               SELECT "SCHOOL"."CODE",
                       "SCHOOL"."NAME",
                       "SCHOOL"."CAMPUS",
                       "DEPARTMENT"."CODE",
                       "DEPARTMENT"."NAME",
                       "DEPARTMENT"."SCHOOL_CODE"
                FROM "DEPARTMENT"
-                    LEFT OUTER JOIN (SELECT 1 AS "!",
-                                            "SCHOOL"."CODE",
-                                            "SCHOOL"."NAME",
-                                            "SCHOOL"."CAMPUS"
-                                     FROM "SCHOOL") "SCHOOL"
+                    LEFT OUTER JOIN "SCHOOL"
                                     ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL"."CODE")
-               ORDER BY 5 ASC
+               ORDER BY 4 ASC
         - id: aggregates
           tests:
           - uri: /exists(school)
