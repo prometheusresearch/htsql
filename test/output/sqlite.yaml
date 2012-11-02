@@ -33955,6 +33955,121 @@ tests:
              ORDER BY "polls_choice"."id" ASC
         - py: remove-module-path
           stdout: ''
+      - id: tweak.filedb
+        tests:
+        - ctl: [ext, tweak.filedb]
+          stdout: |+
+            TWEAK.FILEDB - make a database from a set of CSV files
+
+            Parameters:
+              sources=SOURCES
+
+          exit: 0
+        - uri: /table{id:integer,text,date:date}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | table                          |
+             +------------+------+------------+
+             | id:integer | text | date:date  |
+            -+------------+------+------------+-
+             |          1 | one  | 2011-01-01 |
+             |          2 | two  | 2012-02-02 |
+             |          3 |      |            |
+
+             ----
+             /table{id:integer,text,date:date}
+             SELECT CAST("table"."id" AS INTEGER),
+                    "table"."text",
+                    DATE("table"."date")
+             FROM "table"
+             ORDER BY "table"."id" ASC, 2 ASC, "table"."date" ASC
+        - uri: /names
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | names                                         |
+             +---------+---------------+------+----+----+----+
+             | regular | _with_spaces_ | copy | _4 | _5 | _6 |
+            -+---------+---------------+------+----+----+----+-
+
+             ----
+             /names
+             SELECT "names"."regular",
+                    "names"."_with_spaces_",
+                    "names"."copy",
+                    "names"."_4",
+                    "names"."_5",
+                    "names"."_6"
+             FROM "names"
+             ORDER BY 1 ASC, 2 ASC, 3 ASC, 4 ASC, 5 ASC, 6 ASC
+        - uri: /nothing
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | nothing           |
+             +----+----+----+----+
+             | _1 | _2 | _3 | _4 |
+            -+----+----+----+----+-
+             |    |    |    |    |
+             |    |    |    |    |
+
+             ----
+             /nothing
+             SELECT "nothing"."_1",
+                    "nothing"."_2",
+                    "nothing"."_3",
+                    "nothing"."_4"
+             FROM "nothing"
+             ORDER BY 1 ASC, 2 ASC, 3 ASC, 4 ASC
+        - uri: /duplicate_table_name
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | duplicate_table_name     |
+             +--------------------------+
+             | filename                 |
+            -+--------------------------+-
+             | duplicate-table-name.csv |
+
+             ----
+             /duplicate_table_name
+             SELECT "duplicate_table_name"."filename"
+             FROM "duplicate_table_name"
+             ORDER BY 1 ASC
+        - uri: /_5
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | _5                       |
+             +--------------------------+
+             | filename                 |
+            -+--------------------------+-
+             | Duplicate_Table_Name.csv |
+
+             ----
+             /_5
+             SELECT "_5"."filename"
+             FROM "_5"
+             ORDER BY 1 ASC
+        - uri: /empty
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unrecognized attribute 'empty':
+                /empty
+                 ^^^^^
       - id: tweak.meta
         tests:
         - ctl: [ext, tweak.meta]

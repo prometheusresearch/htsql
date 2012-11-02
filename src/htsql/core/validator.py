@@ -11,7 +11,7 @@ This module provides utilities for data validation and conversion.
 """
 
 
-from util import DB, maybe, oneof, listof, tupleof, dictof, to_name
+from util import Record, DB, maybe, oneof, listof, tupleof, dictof, to_name
 import re
 
 
@@ -829,6 +829,58 @@ class UnionVal(Validator):
             except ValueError, exc:
                 messages.append(str(exc))
         raise ValueError("; ".join(messages))
+
+
+class RecordVal(Validator):
+
+    def __init__(self, fields, is_nullable=False):
+        assert isinstance(fields, listof(tuple))
+        for field in fields:
+            assert 2 <= len(field) <= 3
+            assert isinstance(field[0], str)
+            assert isinstance(field[1], Validator)
+        assert isinstance(is_nullable, bool)
+        self.fields = fields
+        self.record_type = Record.make(None, [field[0] for field in fields])
+        self.is_nullable = is_nullable
+
+    def __call__(self, value):
+        if value is None:
+            if self.is_nullable:
+                return None
+            else:
+                raise ValueError("the null value is not permitted")
+
+        if isinstance(value, (str, unicode)):
+            validator = MapVal(WordVal(), AnyVal())
+            value = validator(value)
+
+        if not isinstance(value, dict):
+            raise ValueError("a record is required; got %r" % value)
+
+        field_names = set(field[0] for field in self.fields)
+        for word in sorted(value):
+            if not word.replace('-', '_') in field_names:
+                raise ValueError("unknown record field %r" % word)
+        for field in self.fields:
+            if len(field) != 2:
+                continue
+            word = field[0].replace('_', '-')
+            if word not in value:
+                raise ValueError("missing record field %r" % word)
+
+        field_values = []
+        for field in self.fields:
+            word = field[0].replace('_', '-')
+            validator = field[1]
+            default = field[2] if len(field) > 2 else None
+            if word in value:
+                field_value = validator(value[word])
+            else:
+                field_value = default
+            field_values.append(field_value)
+
+        return self.record_type(*field_values)
 
 
 class ExtensionVal(Validator):

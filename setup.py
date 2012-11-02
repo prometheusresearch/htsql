@@ -55,6 +55,7 @@ def get_addons():
         'tweak.csrf = htsql.tweak.csrf:TweakCSRFAddon',
         'tweak.django = htsql.tweak.django:TweakDjangoAddon',
         'tweak.etl = htsql.tweak.etl:TweakETLAddon',
+        'tweak.filedb = htsql.tweak.filedb:TweakFileDBAddon',
         'tweak.gateway = htsql.tweak.gateway:TweakGatewayAddon',
         'tweak.hello = htsql.tweak.hello:TweakHelloAddon',
         'tweak.inet = htsql.tweak.inet:TweakINetAddon',

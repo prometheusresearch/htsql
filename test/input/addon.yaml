@@ -202,6 +202,78 @@ tests:
               del sys.modules[name]
       del __builtin__.sandbox
 
+# TWEAK.FILEDB - make a database from a set of CSV files
+- title: tweak.filedb
+  ifdef: sqlite
+  tests:
+  # Addon description
+  - ctl: [ext, tweak.filedb]
+
+  # Sample CSV files
+  - write: build/regress/table.csv
+    data: |
+        id,text,date
+        1,one,2011-01-01
+        2,two,2012-02-02
+        3,,
+  - write: build/regress/Names.csv
+    data: |
+        regular,"""With Spaces""",copy,copy,,_0
+  - write: build/regress/irregular-fields.csv
+    data: |
+        column1,column2,column3
+        regular,row,with 3 columns
+        short,row
+        long,row,with...,an extra column
+  - write: build/regress/nothing.csv
+    data: |
+        ,,,
+        ,,,
+        ,,,
+  - write: build/regress/duplicate-table-name.csv
+    data: |
+        filename
+        duplicate-table-name.csv
+  - write: build/regress/Duplicate_Table_Name.csv
+    data: |
+        filename
+        Duplicate_Table_Name.csv
+  - write: build/regress/empty.csv
+    data: ""
+
+  # Initialize the application
+  - db: null
+    extensions:
+      htsql:
+        debug: true
+      tweak.filedb:
+        sources:
+        - file: build/regress/table.csv
+        - file: build/regress/Names.csv
+        - file: build/regress/nothing.csv
+        - file: build/regress/duplicate-table-name.csv
+        - file: build/regress/Duplicate_Table_Name.csv
+        - file: build/regress/empty.csv
+
+  # Database content
+  - uri: /table{id:integer,text,date:date}
+  - uri: /names
+  - uri: /nothing
+  - uri: /duplicate_table_name
+  - uri: /_5
+  - uri: /empty
+    expect: 400
+
+  # Cleanup
+  - remove:
+    - build/regress/table.csv
+    - build/regress/Names.csv
+    - build/regress/irregular-fields.csv
+    - build/regress/nothing.csv
+    - build/regress/duplicate-table-name.csv
+    - build/regress/Duplicate_Table_name.csv
+    - build/regress/empty.csv
+
 # TWEAK.GATEWAY - define gateways to other databases
 - title: tweak.gateway
   ifdef: mysql
