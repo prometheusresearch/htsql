@@ -184,6 +184,8 @@ class ExecuteUpdatePipe(object):
                         for item, convert in zip(key_row, self.key_converts))
         row = tuple(convert(item)
                     for item, convert in zip(row, self.input_converts))
+        if not row:
+            return key_row
         with transaction() as connection:
             cursor = connection.cursor()
             cursor.execute(self.sql.encode('utf-8'), row+key_row)
