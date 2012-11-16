@@ -18,24 +18,24 @@ from ..domain import (Domain, BooleanDomain, IntegerDomain, DecimalDomain,
         IdentityDomain, VoidDomain)
 from ..classify import normalize
 from .error import BindError
-from .syntax import (Syntax, QuerySyntax, WeakSegmentSyntax, SegmentSyntax,
-        SelectorSyntax, ApplicationSyntax, FunctionSyntax, MappingSyntax,
-        OperatorSyntax, QuotientSyntax, SieveSyntax, LinkSyntax, HomeSyntax,
-        AssignmentSyntax, SpecifierSyntax, LocatorSyntax, LocationSyntax,
-        GroupSyntax, IdentifierSyntax, WildcardSyntax, ReferenceSyntax,
-        ComplementSyntax, StringSyntax, NumberSyntax)
+from ..syn.syntax import (Syntax, CollectSyntax, SelectSyntax, ApplySyntax,
+        FunctionSyntax, PipeSyntax, OperatorSyntax, PrefixSyntax,
+        ProjectSyntax, FilterSyntax, LinkSyntax, DetachSyntax, AssignSyntax,
+        ComposeSyntax, LocateSyntax, IdentitySyntax, GroupSyntax,
+        IdentifierSyntax, UnpackSyntax, ReferenceSyntax, ComplementSyntax,
+        StringSyntax, LabelSyntax, NumberSyntax, RecordSyntax, DirectSyntax)
 from .binding import (Binding, WrappingBinding, QueryBinding, SegmentBinding,
-        RootBinding, HomeBinding, FreeTableBinding, AttachedTableBinding,
-        ColumnBinding, QuotientBinding, KernelBinding, ComplementBinding,
-        LinkBinding, LocatorBinding, SieveBinding, SortBinding, CastBinding,
-        IdentityBinding, ImplicitCastBinding, RescopingBinding,
-        AssignmentBinding, DefinitionBinding, SelectionBinding,
-        WildSelectionBinding, RerouteBinding, ReferenceRerouteBinding,
-        AliasBinding, LiteralBinding, VoidBinding, Recipe, LiteralRecipe,
-        SelectionRecipe, FreeTableRecipe, AttachedTableRecipe, ColumnRecipe,
-        KernelRecipe, ComplementRecipe, IdentityRecipe, ChainRecipe,
-        SubstitutionRecipe, BindingRecipe, ClosedRecipe, PinnedRecipe,
-        AmbiguousRecipe)
+        WeakSegmentBinding, RootBinding, HomeBinding, FreeTableBinding,
+        AttachedTableBinding, ColumnBinding, QuotientBinding, KernelBinding,
+        ComplementBinding, LinkBinding, LocatorBinding, SieveBinding,
+        SortBinding, CastBinding, IdentityBinding, ImplicitCastBinding,
+        RescopingBinding, AssignmentBinding, DefinitionBinding,
+        SelectionBinding, WildSelectionBinding, DirectionBinding, TitleBinding,
+        RerouteBinding, ReferenceRerouteBinding, AliasBinding, LiteralBinding,
+        VoidBinding, Recipe, LiteralRecipe, SelectionRecipe, FreeTableRecipe,
+        AttachedTableRecipe, ColumnRecipe, KernelRecipe, ComplementRecipe,
+        IdentityRecipe, ChainRecipe, SubstitutionRecipe, BindingRecipe,
+        ClosedRecipe, PinnedRecipe, AmbiguousRecipe)
 from .lookup import (lookup_attribute, lookup_reference, lookup_complement,
         lookup_attribute_set, lookup_reference_set, expand, direct, guess_tag,
         lookup_command, identify, unwrap)
@@ -253,44 +253,18 @@ def hint_choices(choices):
     return " ".join(chunks)
 
 
-class BindQuery(Bind):
+class BindCollect(Bind):
 
-    adapt(QuerySyntax)
-
-    def __call__(self):
-        # Initialize the lookup scope with a root node.
-        root = RootBinding(self.syntax)
-        self.state.set_root(root)
-        # Bind the segment node if it is available.
-        segment = None
-        if self.syntax.segment is not None:
-            # FIXME: refactor the top-level syntax nodes.
-            if self.syntax.segment.branch is not None:
-                segment = self.state.bind(self.syntax.segment)
-        # Shut down the lookup scope stack.
-        self.state.flush()
-        if segment is not None:
-            if lookup_command(segment) is not None:
-                return segment
-            profile = decorate(segment)
-        else:
-            profile = decorate(VoidBinding())
-        # Construct and return the top-level binding node.
-        return QueryBinding(root, segment, profile, self.syntax)
-
-
-class BindSegment(Bind):
-
-    adapt(SegmentSyntax)
+    adapt(CollectSyntax)
 
     def __call__(self):
         ## FIXME: an empty segment syntax should not be generated.
-        #if self.syntax.branch is None:
+        #if self.syntax.arm is None:
         #    raise BindError("output columns are not specified",
         #                    self.syntax.mark)
         # Bind the segment expression.
-        if self.syntax.branch is not None:
-            seed = self.state.bind(self.syntax.branch)
+        if self.syntax.arm is not None:
+            seed = self.state.bind(self.syntax.arm)
             if isinstance(seed, AssignmentBinding):
                 if len(seed.terms) != 1:
                     raise BindError("qualified definition is not allowed"
@@ -308,21 +282,15 @@ class BindSegment(Bind):
                                                 None, seed.body)
                 recipe = ClosedRecipe(recipe)
                 syntax = seed.syntax
-                if isinstance(syntax, AssignmentSyntax):
-                    syntax = syntax.lbranch
+                if isinstance(syntax, AssignSyntax):
+                    syntax = syntax.larm
                 seed = self.state.use(recipe, syntax)
         else:
             seed = self.state.scope
         if lookup_command(seed) is not None:
             return seed
-        if (isinstance(self.syntax, WeakSegmentSyntax) and
-                isinstance(seed, SegmentBinding)):
-            return seed
         seed = Select.__invoke__(seed, self.state)
-        if isinstance(self.syntax, WeakSegmentSyntax):
-            domain = seed.domain
-        else:
-            domain = ListDomain(seed.domain)
+        domain = ListDomain(seed.domain)
         return SegmentBinding(self.state.scope, seed, domain,
                               self.syntax)
 
@@ -396,20 +364,26 @@ class SelectUntyped(Select):
         return self.binding
 
 
-class BindSelector(Bind):
+class BindSelect(Bind):
 
-    adapt(SelectorSyntax)
+    adapt(SelectSyntax)
 
     def __call__(self):
-        # Determine the base of the selection.
-        scope = self.state.scope
-        if self.syntax.lbranch is not None:
-            scope = self.state.bind(self.syntax.lbranch)
-        self.state.push_scope(scope)
+        scope = self.state.bind(self.syntax.larm)
+        return self.state.bind(self.syntax.rarm, scope=scope)
+
+
+class BindRecord(Bind):
+
+    adapt(RecordSyntax)
+
+    def __call__(self):
         # Extract selector elements.
         elements = []
-        for branch in self.syntax.rbranches:
-            binding = self.state.bind(branch)
+        scope = self.state.scope
+        self.state.push_scope(scope)
+        for arm in self.syntax.arms:
+            binding = self.state.bind(arm)
             # Handle in-selector assignments.
             if isinstance(binding, AssignmentBinding):
                 if len(binding.terms) != 1:
@@ -428,8 +402,8 @@ class BindSelector(Bind):
                                                 None, binding.body)
                 recipe = ClosedRecipe(recipe)
                 syntax = binding.syntax
-                if isinstance(syntax, AssignmentSyntax):
-                    syntax = syntax.lbranch
+                if isinstance(syntax, AssignSyntax):
+                    syntax = syntax.larm.larms[0]
                 binding = self.state.use(recipe, syntax)
                 scope = DefinitionBinding(scope, name, is_reference,
                                           None, recipe, scope.syntax)
@@ -464,9 +438,9 @@ class BindSelector(Bind):
         return SelectionBinding(scope, elements, domain, self.syntax)
 
 
-class BindApplication(Bind):
+class BindApply(Bind):
 
-    adapt(ApplicationSyntax)
+    adapt(ApplySyntax)
 
     def __call__(self):
         # Look for the parameterized attribute in the current local scope.
@@ -490,16 +464,16 @@ class BindOperator(Bind):
         return self.state.call(self.syntax)
 
 
-class BindQuotient(Bind):
+class BindProject(Bind):
 
-    adapt(QuotientSyntax)
+    adapt(ProjectSyntax)
 
     def __call__(self):
         # Get the seed of the quotient.
-        seed = self.state.bind(self.syntax.lbranch)
+        seed = self.state.bind(self.syntax.larm)
         # get the kernel expressions.
         elements = []
-        binding = self.state.bind(self.syntax.rbranch, scope=seed)
+        binding = self.state.bind(self.syntax.rarm, scope=seed)
         recipes = expand(binding, with_syntax=True)
         if recipes is not None:
             for syntax, recipe in recipes:
@@ -538,15 +512,15 @@ class BindQuotient(Bind):
         return binding
 
 
-class BindSieve(Bind):
+class BindFilter(Bind):
 
-    adapt(SieveSyntax)
+    adapt(FilterSyntax)
 
     def __call__(self):
         # Get the sieve base.
-        base = self.state.bind(self.syntax.lbranch)
+        base = self.state.bind(self.syntax.larm)
         # Bind the filter and force the Boolean type on it.
-        filter = self.state.bind(self.syntax.rbranch, scope=base)
+        filter = self.state.bind(self.syntax.rarm, scope=base)
         filter = ImplicitCastBinding(filter, coerce(BooleanDomain()),
                                      filter.syntax)
         # Produce a sieve scope.
@@ -560,7 +534,7 @@ class BindLink(Bind):
     def __call__(self):
         # Bind the origin images.
         origin_images = []
-        binding = self.state.bind(self.syntax.lbranch)
+        binding = self.state.bind(self.syntax.larm)
         recipes = expand(binding, with_syntax=True)
         if recipes is not None:
             for syntax, recipe in recipes:
@@ -571,14 +545,14 @@ class BindLink(Bind):
             origin_images.append(binding)
         # Bind the target scope.
         home = HomeBinding(self.state.scope, self.syntax)
-        seed = self.state.bind(self.syntax.rbranch, scope=home)
+        seed = self.state.bind(self.syntax.rarm, scope=home)
         # Bind the target images; if not provided, reuse the syntax node
         # of the origin images.
         binding = seed
         target_images = []
         recipes = expand(seed, with_syntax=True)
         if recipes is None:
-            binding = self.state.bind(self.syntax.lbranch, scope=seed)
+            binding = self.state.bind(self.syntax.larm, scope=seed)
             recipes = expand(binding, with_syntax=True)
         if recipes is not None:
             for syntax, recipe in recipes:
@@ -606,20 +580,20 @@ class BindLink(Bind):
         return LinkBinding(self.state.scope, seed, images, self.syntax)
 
 
-class BindHome(Bind):
+class BindDetach(Bind):
 
-    adapt(HomeSyntax)
+    adapt(DetachSyntax)
 
     def __call__(self):
         # Make the home scope.
         home = HomeBinding(self.state.scope, self.syntax)
         # Bind the operand against the home scope.
-        return self.state.bind(self.syntax.rbranch, scope=home)
+        return self.state.bind(self.syntax.arm, scope=home)
 
 
-class BindAssignment(Bind):
+class BindAssign(Bind):
 
-    adapt(AssignmentSyntax)
+    adapt(AssignSyntax)
 
     def __call__(self):
         # Parse the left side of the assignment.  It takes one of the forms:
@@ -632,80 +606,55 @@ class BindAssignment(Bind):
         # The dot-separated names and reference indicators.
         terms = []
         parameters = None
-        syntax = self.syntax.lbranch
-        # Is it a reference?
-        # Expect a dot-separated list of identifiers followed
-        # by an optional function call or a reference.
-        # Dot-separated identifiers.
-        head = None
-        # An identifier, a reference, or a function call.
-        tail = syntax
-        if isinstance(syntax, SpecifierSyntax):
-            head = syntax.lbranch
-            tail = syntax.rbranch
-        # Parse and validate the qualifier.
-        if head is not None:
-            while isinstance(head, SpecifierSyntax):
-                syntax = head.rbranch
-                if not isinstance(syntax, IdentifierSyntax):
+        syntax = self.syntax.larm
+        for idx, arm in enumerate(syntax.larms):
+            if isinstance(arm, ReferenceSyntax):
+                if idx < len(syntax.larms)-1:
                     raise BindError("an identifier is expected",
-                                    syntax.mark)
-                terms.insert(0, (syntax.value, False))
-                head = head.lbranch
-            if not isinstance(head, IdentifierSyntax):
-                raise BindError("an identifier is expected", head.mark)
-            terms.insert(0, (head.value, False))
-        # Parse and validate the target identifier, reference or function call.
-        if isinstance(tail, IdentifierSyntax):
-            terms.append((tail.value, False))
-        elif isinstance(tail, ReferenceSyntax):
-            terms.append((tail.identifier.value, True))
-        elif isinstance(tail, FunctionSyntax):
-            terms.append((tail.name, False))
+                                    arm.mark)
+                terms.append((arm.identifier.name, True))
+            else:
+                terms.append((arm.name, False))
+        if syntax.rarms is not None:
             parameters = []
-            for argument in tail.arguments:
-                if isinstance(argument, IdentifierSyntax):
-                    parameters.append((argument.value, False))
-                elif isinstance(argument, ReferenceSyntax):
-                    parameters.append((argument.identifier.value, True))
+            for arm in syntax.rarms:
+                if isinstance(arm, ReferenceSyntax):
+                    parameters.append((arm.identifier.name, True))
                 else:
-                    raise BindError("an identifier is expected",
-                                    argument.mark)
-        else:
-            raise BindError("an identifier is expected", tail.mark)
+                    parameters.append((arm.name, False))
         # The right side of the assignment expression.
-        body = self.syntax.rbranch
+        body = self.syntax.rarm
         # Generate an assignment node.
         return AssignmentBinding(self.state.scope, terms, parameters, body,
                                  self.syntax)
 
 
-class BindSpecifier(Bind):
+class BindCompose(Bind):
 
-    adapt(SpecifierSyntax)
+    adapt(ComposeSyntax)
 
     def __call__(self):
         # Expression:
         #   parent . child
         # evaluates `child` in the scope of `parent`.
-        scope = self.state.bind(self.syntax.lbranch)
-        binding = self.state.bind(self.syntax.rbranch, scope=scope)
+        scope = self.state.bind(self.syntax.larm)
+        binding = self.state.bind(self.syntax.rarm, scope=scope)
         return binding
 
 
-class BindLocator(Bind):
+class BindLocate(Bind):
 
-    adapt(LocatorSyntax)
+    adapt(LocateSyntax)
 
     def __call__(self):
-        seed = self.state.bind(self.syntax.lbranch)
+        seed = self.state.bind(self.syntax.larm)
         recipe = identify(seed)
         if recipe is None:
             raise BindError("cannot determine identity", seed.mark)
-        identity = self.state.use(recipe, self.syntax.rbranch, scope=seed)
-        location = self.state.bind(self.syntax.rbranch, scope=seed)
+        identity = self.state.use(recipe, self.syntax.rarm, scope=seed)
+        location = self.state.bind(self.syntax.rarm, scope=seed)
         if identity.domain.arity != location.arity:
-            raise BindError("ill-formed locator", self.syntax.rbranch.mark)
+            raise BindError("ill-formed locator", self.syntax.rarm.mark)
         def convert(identity, elements):
             value = []
             for field in identity.fields:
@@ -728,7 +677,7 @@ class BindLocator(Bind):
                             total_arity += 1
                     if total_arity > field.arity:
                         raise BindError("ill-formed locator",
-                                        self.syntax.rbranch.mark)
+                                        self.syntax.rarm.mark)
                     item = convert(field, items)
                     value.append(item)
                 else:
@@ -736,7 +685,7 @@ class BindLocator(Bind):
                     element = elements.pop(0)
                     if isinstance(element, IdentityBinding):
                         raise BindError("ill-formed locator",
-                                        self.syntax.lbranch.mark)
+                                        self.syntax.larm.mark)
                     item = ImplicitCastBinding(element, field, element.syntax)
                     value.append(item)
             return tuple(value)
@@ -748,14 +697,14 @@ class BindLocator(Bind):
                               self.syntax)
 
 
-class BindLocation(Bind):
+class BindIdentity(Bind):
 
-    adapt(LocationSyntax)
+    adapt(IdentitySyntax)
 
     def __call__(self):
         elements = []
-        for branch in self.syntax.branches:
-            element = self.state.bind(branch)
+        for arm in self.syntax.arms:
+            element = self.state.bind(arm)
             identity = unwrap(element, IdentityBinding, is_deep=False)
             if identity is not None:
                 element = identity
@@ -770,7 +719,7 @@ class BindGroup(Bind):
     def __call__(self):
         # Bind the expression in parenthesis, then wrap the result
         # to attach the original syntax node.
-        binding = self.state.bind(self.syntax.branch)
+        binding = self.state.bind(self.syntax.arm)
         return WrappingBinding(binding, self.syntax)
 
 
@@ -780,7 +729,7 @@ class BindIdentifier(Bind):
 
     def __call__(self):
         # Look for the identifier in the current lookup scope.
-        recipe = lookup_attribute(self.state.scope, self.syntax.value)
+        recipe = lookup_attribute(self.state.scope, self.syntax.name)
         if recipe is not None:
             binding = self.state.use(recipe, self.syntax)
         # If not found, try the global scope.
@@ -789,9 +738,9 @@ class BindIdentifier(Bind):
         return binding
 
 
-class BindWildcard(Bind):
+class BindUnpack(Bind):
 
-    adapt(WildcardSyntax)
+    adapt(UnpackSyntax)
 
     def __call__(self):
         # Get all public columns in the current lookup scope.
@@ -802,11 +751,7 @@ class BindWildcard(Bind):
                             " are not defined", self.syntax.mark)
         # If a position is given, extract a specific element.
         if self.syntax.index is not None:
-            try:
-                index = int(self.syntax.index.value)
-            except ValueError:
-                raise BindError("an integer value is required",
-                                self.syntax.mark)
+            index = self.syntax.index
             index -= 1
             if not (0 <= index < len(recipes)):
                 raise BindError("value in range 1-%s is required"
@@ -826,6 +771,16 @@ class BindWildcard(Bind):
                                     self.syntax)
 
 
+class BindDirect(Bind):
+
+    adapt(DirectSyntax)
+
+    def __call__(self):
+        base = self.state.bind(self.syntax.arm)
+        direction = {u'+': +1, u'-': -1}[self.syntax.symbol]
+        return DirectionBinding(base, direction, self.syntax)
+
+
 class BindReference(Bind):
 
     adapt(ReferenceSyntax)
@@ -833,9 +788,9 @@ class BindReference(Bind):
     def __call__(self):
         # Look for a reference, complain if not found.
         recipe = lookup_reference(self.state.scope,
-                                  self.syntax.identifier.value)
+                                  self.syntax.identifier.name)
         if recipe is None:
-            model = self.syntax.identifier.value.lower()
+            model = self.syntax.identifier.name.lower()
             names = lookup_reference_set(self.state.scope)
             choices = [u"$"+name for name in sorted(names)
                                  if similar(model, name)]
@@ -861,13 +816,14 @@ class BindComplement(Bind):
 
 class BindString(Bind):
 
-    adapt(StringSyntax)
+    adapt_many(StringSyntax,
+               LabelSyntax)
 
     def __call__(self):
         # Bind a quoted literal.  Note that a quoted literal not necessarily
         # represents a string value; its initial domain is untyped.
         binding = LiteralBinding(self.state.scope,
-                                 self.syntax.value,
+                                 self.syntax.text,
                                  UntypedDomain(),
                                  self.syntax)
         return binding
@@ -882,12 +838,12 @@ class BindNumber(Bind):
 
         # Create an untyped literal binding.
         binding = LiteralBinding(self.state.scope,
-                                 self.syntax.value,
+                                 self.syntax.text,
                                  UntypedDomain(),
                                  self.syntax)
 
         # Cast the binding to an appropriate numeric type.
-        if self.syntax.is_exponential:
+        if self.syntax.is_float:
             domain = coerce(FloatDomain())
         elif self.syntax.is_decimal:
             domain = coerce(DecimalDomain())
@@ -994,29 +950,29 @@ class BindByName(Protocol):
 
     @classmethod
     def __dispatch__(interface, syntax, *args, **kwds):
-        assert isinstance(syntax, (ApplicationSyntax, IdentifierSyntax))
+        assert isinstance(syntax, (ApplySyntax, IdentifierSyntax))
         # We override `dispatch` since, as opposed to regular protocol
         # interfaces, we also want to take into account not only the
         # function name, but also the number of arguments.
-        if isinstance(syntax, ApplicationSyntax):
+        if isinstance(syntax, ApplySyntax):
             name = syntax.name
             arity = len(syntax.arguments)
         elif isinstance(syntax, IdentifierSyntax):
-            name = syntax.value
+            name = syntax.name
             arity = None
         return (name, arity)
 
     def __init__(self, syntax, state):
-        assert isinstance(syntax, (ApplicationSyntax, IdentifierSyntax))
+        assert isinstance(syntax, (ApplySyntax, IdentifierSyntax))
         assert isinstance(state, BindingState)
         self.syntax = syntax
         self.state = state
         # Extract commonly accessed attributes of the call node.
-        if isinstance(syntax, ApplicationSyntax):
+        if isinstance(syntax, ApplySyntax):
             self.name = syntax.name
             self.arguments = syntax.arguments
         elif isinstance(syntax, IdentifierSyntax):
-            self.name = syntax.value
+            self.name = syntax.name
             self.arguments = None
 
     def __call__(self):
@@ -1092,12 +1048,16 @@ class BindByName(Protocol):
         scope_name = guess_tag(self.state.scope)
         if scope_name is not None:
             scope_name = scope_name.encode('utf-8')
-        if isinstance(self.syntax, (FunctionSyntax, MappingSyntax)):
+        if isinstance(self.syntax, (FunctionSyntax, PipeSyntax)):
             raise BindError("unrecognized function '%s'"
                             % self.syntax.identifier,
                             self.syntax.mark, hint=hint)
         if isinstance(self.syntax, OperatorSyntax):
             raise BindError("unrecognized operator '%s'"
+                            % self.syntax.symbol.encode('utf-8'),
+                            self.syntax.mark, hint=hint)
+        if isinstance(self.syntax, PrefixSyntax):
+            raise BindError("unrecognized unary operator '%s'"
                             % self.syntax.symbol.encode('utf-8'),
                             self.syntax.mark, hint=hint)
         if isinstance(self.syntax, IdentifierSyntax):
@@ -1254,7 +1214,7 @@ class BindBySubstitution(BindByRecipe):
             if (len(self.recipe.terms) == 1 and
                     self.recipe.parameters is not None):
                 arity = len(self.recipe.parameters)
-            recipe = lookup_attribute(self.recipe.base, self.syntax.value)
+            recipe = lookup_attribute(self.recipe.base, self.syntax.name)
             if recipe is None:
                 raise BindError("unrecognized attribute '%s'" % self.syntax,
                                 self.syntax.mark)
@@ -1283,7 +1243,7 @@ class BindBySubstitution(BindByRecipe):
         scope = RerouteBinding(scope, self.recipe.base, scope.syntax)
         # Bind the parameters.
         if self.recipe.parameters is not None:
-            assert isinstance(self.syntax, ApplicationSyntax)
+            assert isinstance(self.syntax, ApplySyntax)
             assert len(self.syntax.arguments) == len(self.recipe.parameters)
             for (name, is_reference), syntax in zip(self.recipe.parameters,
                                                     self.syntax.arguments):
@@ -1347,7 +1307,7 @@ class BindByAmbiguous(BindByRecipe):
 
     def __call__(self):
         syntax = self.syntax
-        if isinstance(self.syntax, (FunctionSyntax, MappingSyntax)):
+        if isinstance(self.syntax, (FunctionSyntax, PipeSyntax)):
             syntax = self.syntax.identifier
         hint = None
         if self.recipe.alternatives:
@@ -1366,32 +1326,39 @@ class BindByAmbiguous(BindByRecipe):
 
 
 def bind(syntax, state=None, scope=None, environment=None):
-    """
-    Binds the given syntax node.
-
-    `syntax` (:class:`htsql.core.tr.syntax.Syntax`)
-        The syntax node to bind.
-
-    `state` (:class:`BindingState` or ``None``).
-        The binding state to use.  If not set, a new binding state
-        is created.
-
-    `scope` (:class:`htsql.core.tr.binding.Binding` or ``None``)
-        If specified, updates the lookup scope when binding
-        the node.
-    """
-    # Create a new binding state if necessary.
-    if state is None:
+    if state is not None:
+        if scope is not None:
+            state.push_scope(scope)
+        binding = Bind.__invoke__(syntax, state)
+        if scope is not None:
+            state.pop_scope()
+        return binding
+    else:
         state = BindingState(environment)
-    # If passed, set the new lookup scope.
-    if scope is not None:
-        state.push_scope(scope)
-    # Realize and apply the `Bind` adapter.
-    binding = Bind.__invoke__(syntax, state)
-    # Restore the old lookup scope.
-    if scope is not None:
-        state.pop_scope()
-    # Return the binding node.
-    return binding
+        root = RootBinding(syntax)
+        state.set_root(root)
+        if isinstance(syntax, AssignSyntax):
+            specifier = syntax.larm
+            if not (len(specifier.larms) == 1 and
+                    isinstance(specifier.larms[0], IdentifierSyntax) and
+                    specifier.rarms is None):
+                raise BindError("expected an identifier", specifier.mark)
+            identifier = specifier.larms[0]
+            segment = state.bind(syntax.rarm)
+            if not isinstance(segment, SegmentBinding):
+                segment = Select.__invoke__(segment, state)
+                segment = WeakSegmentBinding(root, segment,
+                                             segment.domain, segment.syntax)
+            segment = segment.clone(seed=TitleBinding(segment.seed, identifier,
+                                                      segment.seed.syntax))
+        else:
+            segment = state.bind(syntax)
+            if not isinstance(segment, SegmentBinding):
+                segment = Select.__invoke__(segment, state)
+                segment = WeakSegmentBinding(root, segment,
+                                             segment.domain, segment.syntax)
+        state.flush()
+        profile = decorate(segment)
+        return QueryBinding(root, segment, profile, syntax)
 
 

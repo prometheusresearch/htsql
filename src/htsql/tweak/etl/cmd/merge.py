@@ -11,9 +11,9 @@ from ....core.classify import localize, relabel
 from ....core.connect import transaction, scramble, unscramble
 from ....core.domain import IdentityDomain, RecordDomain, ListDomain
 from ....core.cmd.fetch import Product, build_fetch
-from ....core.cmd.act import Act, ProduceAction, produce
+from ....core.cmd.act import Act, ProduceAction, act
 from ....core.tr.bind import BindingState, Select
-from ....core.tr.syntax import VoidSyntax, IdentifierSyntax
+from ....core.syn.syntax import VoidSyntax
 from ....core.tr.binding import (VoidBinding, RootBinding, FormulaBinding,
         LocatorBinding, SelectionBinding, SieveBinding, AliasBinding,
         SegmentBinding, QueryBinding, FreeTableRecipe, ColumnRecipe)
@@ -231,7 +231,7 @@ class ProduceMerge(Act):
 
     def __call__(self):
         with transaction() as connection:
-            product = produce(self.command.feed)
+            product = act(self.command.feed, self.action)
             extract_node = BuildExtractNode.__invoke__(product.meta)
             extract_table = BuildExtractTable.__invoke__(
                     extract_node.node, extract_node.arcs)

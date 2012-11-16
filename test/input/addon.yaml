@@ -306,6 +306,7 @@ tests:
   # Errors
   - uri: /pgsql_gw(/school/:html)
     expect: 400
+    skip: true # is it still an error?
   - uri: /sqlite_gw(/nothing)
     expect: 400
 

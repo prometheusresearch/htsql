@@ -14,9 +14,8 @@ from ...adapter import Adapter, Component, adapt, adapt_many, call
 from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
         IntegerDomain, DecimalDomain, FloatDomain, DateDomain, TimeDomain,
         DateTimeDomain, EnumDomain, ListDomain, RecordDomain)
-from ..syntax import (WeakSegmentSyntax, NumberSyntax, StringSyntax,
-        IdentifierSyntax, SpecifierSyntax, ApplicationSyntax, OperatorSyntax,
-        GroupSyntax)
+from ...syn.syntax import (NumberSyntax, StringSyntax, IdentifierSyntax,
+        ComposeSyntax, ApplySyntax, OperatorSyntax, PrefixSyntax, GroupSyntax)
 from ..binding import (LiteralBinding, SortBinding, SieveBinding,
         FormulaBinding, CastBinding, ImplicitCastBinding, WrappingBinding,
         TitleBinding, DirectionBinding, QuotientBinding, AssignmentBinding,
@@ -43,9 +42,6 @@ from .signature import (AsSig, LimitSig, SortSig, CastSig, MakeDateSig,
         TruncToSig, LengthSig, ContainsSig, ExistsSig, CountSig, MinMaxSig,
         SumSig, AvgSig, AggregateSig, QuantifySig, DefineSig, WhereSig,
         SelectSig, LinkSig, TopSig)
-from ...cmd.command import RendererCmd, DefaultCmd, FetchCmd, SQLCmd
-from ...fmt.format import (RawFormat, JSONFormat, CSVFormat, TSVFormat,
-        HTMLFormat, TextFormat, XMLFormat)
 import sys
 
 
@@ -285,7 +281,10 @@ class Correlate(Component):
     def __call__(self):
         if isinstance(self.binding.syntax, OperatorSyntax):
             name = "operator '%s'" % self.binding.syntax.symbol.encode('utf-8')
-        elif isinstance(self.binding.syntax, ApplicationSyntax):
+        if isinstance(self.binding.syntax, PrefixSyntax):
+            name = "unary operator '%s'" \
+                    % self.binding.syntax.symbol.encode('utf-8')
+        elif isinstance(self.binding.syntax, ApplySyntax):
             name = "function '%s'" % self.binding.syntax.name.encode('utf-8')
         else:
             name = "'%s'" % self.binding.syntax
@@ -384,111 +383,6 @@ class BindPolyFunction(BindFunction):
                                  self.signature(), self.codomain, self.syntax,
                                  **arguments)
         return Correlate.__invoke__(binding, self.state)
-
-
-class BindCommand(BindMacro):
-
-    signature = UnarySig
-
-
-class BindFetch(BindCommand):
-
-    call('fetch')
-
-    def expand(self, op):
-        op = WeakSegmentSyntax(op, op.mark)
-        op = self.state.bind(op)
-        if not isinstance(op, SegmentBinding):
-            raise BindError("function '%s' expects a segment argument"
-                            % self.name.encode('utf-8'), op.mark)
-        profile = decorate(op)
-        binding = QueryBinding(self.state.root, op, profile, op.syntax)
-        command = FetchCmd(binding)
-        return CommandBinding(self.state.scope, command, self.syntax)
-
-
-class BindRetrieve(BindFetch):
-
-    call('retrieve')
-
-
-class BindFormat(BindCommand):
-
-    format = None
-
-    def expand(self, op):
-        op = self.state.bind(op)
-        producer = lookup_command(op)
-        if producer is None:
-            if not isinstance(op, SegmentBinding):
-                raise BindError("function '%s' expects a segment argument"
-                                % self.name.encode('utf-8'), op.mark)
-            profile = decorate(op)
-            binding = QueryBinding(self.state.root, op, profile, op.syntax)
-            producer = DefaultCmd(binding)
-        format = self.format()
-        command = RendererCmd(format, producer)
-        return CommandBinding(self.state.scope, command, self.syntax)
-
-
-class BindText(BindFormat):
-
-    call('txt')
-    format = TextFormat
-
-
-class BindHTML(BindFormat):
-
-    call('html')
-    format = HTMLFormat
-
-
-class BindRaw(BindFormat):
-
-    call('raw')
-    format = RawFormat
-
-
-class BindJSON(BindFormat):
-
-    call('json')
-    format = JSONFormat
-
-
-class BindCSV(BindFormat):
-
-    call('csv')
-    format = CSVFormat
-
-
-class BindTSV(BindFormat):
-
-    call('tsv')
-    format = TSVFormat
-
-
-class BindXML(BindFormat):
-
-    call('xml')
-    format = XMLFormat
-
-
-class BindSQL(BindCommand):
-
-    call('sql')
-
-    def expand(self, op):
-        op = self.state.bind(op)
-        producer = lookup_command(op)
-        if producer is None:
-            if not isinstance(op, SegmentBinding):
-                raise BindError("function '%s' expects a segment argument"
-                                % self.name.encode('utf-8'), op.mark)
-            profile = decorate(op)
-            binding = QueryBinding(self.state.root, op, profile, op.syntax)
-            producer = DefaultCmd(binding)
-        command = SQLCmd(producer)
-        return CommandBinding(self.state.scope, command, self.syntax)
 
 
 class BindNull(BindMacro):
@@ -652,8 +546,8 @@ class BindSelect(BindMacro):
                 for syntax, recipe in recipes:
                     if not isinstance(syntax, (IdentifierSyntax, GroupSyntax)):
                         syntax = GroupSyntax(syntax, syntax.mark)
-                    syntax = SpecifierSyntax(element.syntax, syntax,
-                                             syntax.mark)
+                    syntax = ComposeSyntax(element.syntax, syntax,
+                                           syntax.mark)
                     elements.append(self.state.use(recipe, syntax))
             else:
                 elements.append(element)
@@ -1086,7 +980,7 @@ class BindOr(BindFunction):
 
 class BindNot(BindFunction):
 
-    call('!_')
+    call(('!', 1))
     signature = NotSig
     hint = """(! p) -> TRUE if p is FALSE"""
 
@@ -1370,7 +1264,7 @@ class CorrelateFloatDivide(CorrelateFunction):
 
 class BindKeepPolarity(BindPolyFunction):
 
-    call('+_')
+    call(('+', 1))
     signature = KeepPolaritySig
     hint = """(+ x) -> x"""
 
@@ -1401,7 +1295,7 @@ class CorrelateFloatKeepPolarity(CorrelateFunction):
 
 class BindReversePolarity(BindPolyFunction):
 
-    call('-_')
+    call(('-', 1))
     signature = ReversePolaritySig
     hint = """(- x) -> negation of x"""
 

@@ -9,7 +9,7 @@ from ....core.error import BadRequestError
 from ....core.entity import TableEntity, ColumnEntity
 from ....core.connect import transaction, scramble
 from ....core.cmd.fetch import Product
-from ....core.cmd.act import Act, ProduceAction, produce
+from ....core.cmd.act import Act, ProduceAction, act
 from ....core.tr.binding import VoidBinding
 from ....core.tr.decorate import decorate
 from .command import DeleteCmd
@@ -70,7 +70,7 @@ class ProduceDelete(Act):
 
     def __call__(self):
         with transaction() as connection:
-            product = produce(self.command.feed)
+            product = act(self.command.feed, self.action)
             extract_node = BuildExtractNode.__invoke__(product.meta,
                     with_id=True, with_fields=False)
             resolve_key = BuildResolveKey.__invoke__(

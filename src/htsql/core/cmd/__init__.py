@@ -3,14 +3,6 @@
 #
 
 
-"""
-:mod:`htsql.core.cmd`
-=====================
-
-This package implements commands and actions.
-"""
-
-
-from . import act, command, fetch
+from . import act, command, fetch, summon
 
 

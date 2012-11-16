@@ -209,7 +209,7 @@ class Application(object):
 
     def produce(self, uri, **parameters):
         with self:
-            command = UniversalCmd(uri, parameters)
-            return produce(command)
+            command = UniversalCmd(uri)
+            return produce(command, parameters)
 
 

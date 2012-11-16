@@ -17,7 +17,7 @@ from ..domain import (Domain, BooleanDomain, IntegerDomain, DecimalDomain,
                       FloatDomain, StringDomain, EnumDomain, DateDomain,
                       TimeDomain, DateTimeDomain, ListDomain, RecordDomain)
 from .error import SerializeError
-from .syntax import IdentifierSyntax, ApplicationSyntax, LiteralSyntax
+from ..syn.syntax import IdentifierSyntax, ApplySyntax, LiteralSyntax
 from .frame import (Clause, Frame, TableFrame, BranchFrame, NestedFrame,
                     SegmentFrame, QueryFrame,
                     Phrase, NullPhrase, CastPhrase, LiteralPhrase,
@@ -958,13 +958,13 @@ class DubPhrase(Dub):
         syntax = self.clause.syntax
         # For an identifier node, take the identifier name.
         if isinstance(syntax, IdentifierSyntax):
-            return syntax.value
+            return syntax.name
         # For a function call node, take the function name.
-        if isinstance(syntax, ApplicationSyntax):
+        if isinstance(syntax, ApplySyntax):
             return syntax.name
         # For a literal node, take the value of the literal.
-        if isinstance(syntax, LiteralSyntax) and syntax.value:
-            return syntax.value
+        if isinstance(syntax, LiteralSyntax) and syntax.text:
+            return syntax.text
         # Otherwise, use the default alias.
         return super(DubPhrase, self).__call__()
 

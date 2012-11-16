@@ -1657,7 +1657,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: ambiguous name 'program':
+            ambiguous name 'program':
                 /(program?school_code='la'&code='uengl').program
                                                          ^^^^^^^
             (try 'part_of' or 'program_via_part_of')
@@ -1847,7 +1847,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: ambiguous name 'prerequisite':
+            ambiguous name 'prerequisite':
                 /(course?department_code='lang'&no=345).prerequisite
                                                         ^^^^^^^^^^^^
             (try 'prerequisite_via_of_course' or 'prerequisite_via_on_course')
@@ -2457,7 +2457,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: ambiguous name 'course':
+            ambiguous name 'course':
                 /(prerequisite?of_department_code='astro'&of_course_no=230 &on_department_code='phys'&on_course_no=130).course
                                                                                                                         ^^^^^^
             (try 'of_course' or 'on_course')
@@ -2527,7 +2527,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: ambiguous name 'classification':
+            ambiguous name 'classification':
                 /(classification?code='math').classification
                                               ^^^^^^^^^^^^^^
             (try 'part_of' or 'classification_via_part_of')
@@ -2970,7 +2970,7 @@ tests:
              | School of Continuing Studies  |          0 |
 
              ----
-             /school{name,count(department):as('# of Dept.')}
+             /school{name,count(department) :as '# of Dept.'}
              SELECT "SCHOOL"."NAME",
                     COALESCE("DEPARTMENT"."count", 0)
              FROM "SCHOOL"
@@ -6969,7 +6969,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            compile error: a singular expression is expected:
+            a singular expression is expected:
                 /department{name, course.credits}
                                          ^^^^^^^
         - uri: /department{name, max(course.credits)}
@@ -7026,7 +7026,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: a plural operand is expected:
+            a plural operand is expected:
                 /department{name, count(school)}
                                   ^^^^^^^^^^^^^
         - uri: /max(course.credits)
@@ -7882,7 +7882,7 @@ tests:
              | Wind                   |                0 |                        |                        |                                          |
 
              ----
-             /department{name,{count(sophomore),max(sophomore.credits),min(sophomore.credits),avg(sophomore.credits)}:where(sophomore:=course?no>=200&no<300)}
+             /department{name,{count(sophomore),max(sophomore.credits),min(sophomore.credits),avg(sophomore.credits)} :where(sophomore:=course?no>=200&no<300)}
              SELECT "DEPARTMENT"."NAME",
                     COALESCE("COURSE"."count", 0),
                     "COURSE"."max",
@@ -8077,7 +8077,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'level' in scope of 'course':
+            unrecognized attribute 'level' in scope of 'course':
                 /department.define(course(level) := course?no>=level*100 &no<(level+1)*100) {name, count(course(1)), count(course(2)), count(course(3)), count(course(4))}
                                                                ^^^^^
         - uri: /department.define(course($level) := course?no>=$level*100 &no<($level+1)*100)
@@ -8180,7 +8180,7 @@ tests:
              | Wind                   |          0 |                  |                  |                                          |          0 |                  |                  |                                          |          0 |                  |                  |                                          |          0 |                  |                  |                                          |
 
              ----
-             /department.define(stats($level):={count(set),max(set.credits),min(set.credits),avg(set.credits)}:where(set:=course?no>=$level*100&no<($level+1)*100)){name,stats(1),stats(2),stats(3),stats(4)}
+             /department.define(stats($level):={count(set),max(set.credits),min(set.credits),avg(set.credits)} :where set:=course?no>=$level*100&no<($level+1)*100){name,stats(1),stats(2),stats(3),stats(4)}
              SELECT "DEPARTMENT"."NAME",
                     COALESCE("COURSE"."count_1", 0),
                     "COURSE"."max_1",
@@ -9133,7 +9133,7 @@ tests:
              | tched           | 640 | Practice of Language Teaching    |       6 | " "                              |
 
              ----
-             /course?credits>$avg_credits:where($avg_credits:=avg(course.credits))
+             /course?credits>$avg_credits :where $avg_credits:=avg(course.credits)
              SELECT "COURSE_1"."DEPARTMENT_CODE",
                     "COURSE_1"."NO",
                     "COURSE_1"."TITLE",
@@ -12602,7 +12602,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid Boolean literal: expected 'true' or 'false'; got '':
+            invalid Boolean literal: expected 'true' or 'false'; got '':
                 /boolean('')
                  ^^^^^^^^^^^
         - uri: /boolean('yes')
@@ -12610,7 +12610,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid Boolean literal: expected 'true' or 'false'; got 'yes':
+            invalid Boolean literal: expected 'true' or 'false'; got 'yes':
                 /boolean('yes')
                  ^^^^^^^^^^^^^^
         - uri: /{string(''), string('HTSQL'), string('O''Reilly'), string('%ce%bb%cf%8c%ce%b3%ce%bf%cf%82'),
@@ -12693,7 +12693,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid integer literal: expected an integer in a decimal format; got '2.5e1':
+            invalid integer literal: expected an integer in a decimal format; got '2.5e1':
                 /{integer('2.5e1')}
                   ^^^^^^^^^^^^^^^^
         - uri: /{18446744073709551616, 340282366920938463463374607431768211456}
@@ -12760,7 +12760,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid decimal literal: vingt-cinq:
+            invalid decimal literal: vingt-cinq:
                 /{decimal('vingt-cinq')}
                   ^^^^^^^^^^^^^^^^^^^^^
         - uri: /{0e0, -57721e-5, 36288e2}
@@ -12798,7 +12798,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid float literal: vingt-cinq:
+            invalid float literal: vingt-cinq:
                 /float('vingt-cinq')
                  ^^^^^^^^^^^^^^^^^^^
         - uri: /{1e1024}
@@ -12806,7 +12806,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid float literal: inf:
+            invalid float literal: inf:
                 /{1e1024}
                   ^^^^^^
         - uri: /{float('inf')}
@@ -12814,7 +12814,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid float literal: inf:
+            invalid float literal: inf:
                 /{float('inf')}
                   ^^^^^^^^^^^^
         - uri: /{date('2010-04-15')}
@@ -12836,7 +12836,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid date literal: month must be in 1..12:
+            invalid date literal: month must be in 1..12:
                 /date('2010-13-07')
                  ^^^^^^^^^^^^^^^^^^
         - uri: /{time('20:03'), time('20:13:04.5')}
@@ -12859,7 +12859,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid time literal: hour must be in 0..23:
+            invalid time literal: hour must be in 0..23:
                 /{time('29:04')}
                   ^^^^^^^^^^^^^
         - uri: /{datetime('2010-04-15'), datetime('2010-04-15 20:13'), datetime('2010-04-15T20:13:04.5'),
@@ -12885,7 +12885,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid datetime literal: month must be in 1..12:
+            invalid datetime literal: month must be in 1..12:
                 /{datetime('2010-13-07 17:43')}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{datetime('2010-06-05 29:04')}
@@ -12893,7 +12893,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid datetime literal: hour must be in 0..23:
+            invalid datetime literal: hour must be in 0..23:
                 /{datetime('2010-06-05 29:04')}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       - id: logical-and-comparison-operators
@@ -13338,7 +13338,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: cannot coerce values of types ('boolean', 'integer') to a common type:
+            cannot coerce values of types ('boolean', 'integer') to a common type:
                 /{true()=1}
                   ^^^^^^^^
         - uri: /{'cinq'!=4.9}
@@ -13346,7 +13346,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid decimal literal: cinq:
+            invalid decimal literal: cinq:
                 /{'cinq'!=4.9}
                   ^^^^^^
         - uri: /{date('2010-04-15')==1991}
@@ -13354,7 +13354,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: cannot coerce values of types ('date', 'integer') to a common type:
+            cannot coerce values of types ('date', 'integer') to a common type:
                 /{date('2010-04-15')==1991}
                   ^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{date('2010-04-15')=datetime('2010-04-15')}
@@ -13362,7 +13362,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: cannot coerce values of types ('date', 'datetime') to a common type:
+            cannot coerce values of types ('date', 'datetime') to a common type:
                 /{date('2010-04-15')=datetime('2010-04-15')}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{datetime('2010-04-15 20:13')!==time('02:01')}
@@ -13370,7 +13370,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: cannot coerce values of types ('datetime', 'time') to a common type:
+            cannot coerce values of types ('datetime', 'time') to a common type:
                 /{datetime('2010-04-15 20:13')!==time('02:01')}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{1<10, 7.0<=7.0, 'omega'>'alpha'}
@@ -13475,7 +13475,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: values of type 'boolean' are not comparable:
+            values of type 'boolean' are not comparable:
                 /{false()<true()}
                   ^^^^^^^^^^^^^^
         - uri: /{'cinq'>4.9}
@@ -13483,7 +13483,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid decimal literal: cinq:
+            invalid decimal literal: cinq:
                 /{'cinq'>4.9}
                   ^^^^^^
         - uri: /{date('2010-04-15')>=1991}
@@ -13491,7 +13491,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: cannot coerce values of types ('date', 'integer') to a common type:
+            cannot coerce values of types ('date', 'integer') to a common type:
                 /{date('2010-04-15')>=1991}
                   ^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{datetime('2010-04-15 20:13')>time('02:01')}
@@ -13499,7 +13499,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: cannot coerce values of types ('datetime', 'time') to a common type:
+            cannot coerce values of types ('datetime', 'time') to a common type:
                 /{datetime('2010-04-15 20:13')>time('02:01')}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{if_null('Victor', 'William'), if_null(null(), 'William'), if_null('Victor',
@@ -13559,7 +13559,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid integer literal: expected an integer in a decimal format; got 'cinq':
+            invalid integer literal: expected an integer in a decimal format; got 'cinq':
                 /{if_null('cinq', 5)}
                           ^^^^^^
         - uri: /{null_if('cinq', 5)}
@@ -13567,7 +13567,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid integer literal: expected an integer in a decimal format; got 'cinq':
+            invalid integer literal: expected an integer in a decimal format; got 'cinq':
                 /{null_if('cinq', 5)}
                           ^^^^^^
         - uri: /{if_null(date('2010-04-15'),1991)}
@@ -13575,7 +13575,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: cannot coerce values of types ('date', 'integer') to a common type:
+            cannot coerce values of types ('date', 'integer') to a common type:
                 /{if_null(date('2010-04-15'),1991)}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{null_if(datetime('2010-04-15 20:13'),time('02:01'))}
@@ -13583,7 +13583,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: cannot coerce values of types ('datetime', 'time') to a common type:
+            cannot coerce values of types ('datetime', 'time') to a common type:
                 /{null_if(datetime('2010-04-15 20:13'),time('02:01'))}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{if(true(), 'then'), if(false(), 'then'), if(null(), 'then')}
@@ -13700,7 +13700,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid Boolean literal: expected 'true' or 'false'; got '':
+            invalid Boolean literal: expected 'true' or 'false'; got '':
                 /{if('', 'then', 'else')}
                      ^^
         - uri: /{switch(1, date('2010-04-15'), 1, date('1991-08-20'), 2)}
@@ -13708,7 +13708,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: cannot coerce values of types ('integer', 'date', 'date') to a common type:
+            cannot coerce values of types ('integer', 'date', 'date') to a common type:
                 /{switch(1, date('2010-04-15'), 1, date('1991-08-20'), 2)}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{switch(1, 1, 'George', 2, false())}
@@ -13716,7 +13716,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid Boolean literal: expected 'true' or 'false'; got 'George':
+            invalid Boolean literal: expected 'true' or 'false'; got 'George':
                 /{switch(1, 1, 'George', 2, false())}
                                ^^^^^^^^
       - id: numeric-functions-and-operators
@@ -13858,7 +13858,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid integer literal: expected an integer in a decimal format; got 'cinq':
+            invalid integer literal: expected an integer in a decimal format; got 'cinq':
                 /{integer('cinq')}
                   ^^^^^^^^^^^^^^^
         - uri: /{decimal(true())}
@@ -13866,7 +13866,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: cannot convert a value of type 'boolean' to 'decimal':
+            cannot convert a value of type 'boolean' to 'decimal':
                 /{decimal(true())}
                   ^^^^^^^^^^^^^^^
         - uri: /{float(date('2010-04-15'))}
@@ -13874,7 +13874,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: cannot convert a value of type 'date' to 'float':
+            cannot convert a value of type 'date' to 'float':
                 /{float(date('2010-04-15'))}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{integer(string('cinq'))}
@@ -14053,7 +14053,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: operator '+' cannot be applied to values of types ('untyped', 'integer'):
+            function '+' cannot be applied to values of types ('untyped', 'integer'):
                 /{'cinq'+7}
                   ^^^^^^^^
             (valid types: ('integer', 'integer'), ('integer', 'decimal'), ('decimal', 'integer'), ('decimal', 'decimal'), ('integer', 'float'), ('decimal', 'float'), ('float', 'integer'), ('float', 'decimal'), ('float', 'float'), ('date', 'integer'), ('datetime', 'integer'), ('datetime', 'decimal'), ('datetime', 'float'), ('string', 'string'))
@@ -14062,7 +14062,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: operator '-' cannot be applied to values of types ('decimal', 'date'):
+            function '-' cannot be applied to values of types ('decimal', 'date'):
                 /{2.125-date('2010-04-15')}
                   ^^^^^^^^^^^^^^^^^^^^^^^^
             (valid types: ('integer', 'integer'), ('integer', 'decimal'), ('decimal', 'integer'), ('decimal', 'decimal'), ('integer', 'float'), ('decimal', 'float'), ('float', 'integer'), ('float', 'decimal'), ('float', 'float'), ('date', 'integer'), ('datetime', 'integer'), ('datetime', 'decimal'), ('datetime', 'float'), ('date', 'date'))
@@ -14071,7 +14071,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: operator '/' cannot be applied to values of types ('boolean', 'float'):
+            function '/' cannot be applied to values of types ('boolean', 'float'):
                 /{true()/271828e-5}
                   ^^^^^^^^^^^^^^^^
             (valid types: ('integer', 'integer'), ('integer', 'decimal'), ('decimal', 'integer'), ('decimal', 'decimal'), ('integer', 'float'), ('decimal', 'float'), ('float', 'integer'), ('float', 'decimal'), ('float', 'float'))
@@ -14283,7 +14283,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'round' cannot be applied to values of types ('float', 'integer'):
+            function 'round' cannot be applied to values of types ('float', 'integer'):
                 /{round(271828e-5,2)}
                   ^^^^^^^^^^^^^^^^^^
             (valid types: ('integer', 'integer'), ('decimal', 'integer'))
@@ -14292,7 +14292,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'trunc' cannot be applied to values of types ('float', 'integer'):
+            function 'trunc' cannot be applied to values of types ('float', 'integer'):
                 /{trunc(271828e-5,2)}
                   ^^^^^^^^^^^^^^^^^^
             (valid types: ('integer', 'integer'), ('decimal', 'integer'))
@@ -14420,7 +14420,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'length' cannot be applied to a value of type 'date':
+            function 'length' cannot be applied to a value of type 'date':
                 /{length(date(2010-04-15))}
                   ^^^^^^^^^^^^^^^^^^^^^^^^
             (valid type: 'string')
@@ -14459,7 +14459,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: operator '+' cannot be applied to values of types ('string', 'integer'):
+            function '+' cannot be applied to values of types ('string', 'integer'):
                 /{string('LOL')+7}
                   ^^^^^^^^^^^^^^^
             (valid types: ('integer', 'integer'), ('integer', 'decimal'), ('decimal', 'integer'), ('decimal', 'decimal'), ('integer', 'float'), ('decimal', 'float'), ('float', 'integer'), ('float', 'decimal'), ('float', 'float'), ('date', 'integer'), ('datetime', 'integer'), ('datetime', 'decimal'), ('datetime', 'float'), ('string', 'string'))
@@ -14858,7 +14858,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid date literal: month must be in 1..12:
+            invalid date literal: month must be in 1..12:
                 /{date('2010-13-07')}
                   ^^^^^^^^^^^^^^^^^^
         - uri: /{date(true())}
@@ -14866,7 +14866,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: cannot convert a value of type 'boolean' to 'date':
+            cannot convert a value of type 'boolean' to 'date':
                 /{date(true())}
                   ^^^^^^^^^^^^
         - uri: /{date(7)}
@@ -14874,7 +14874,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: cannot convert a value of type 'integer' to 'date':
+            cannot convert a value of type 'integer' to 'date':
                 /{date(7)}
                   ^^^^^^^
         - uri: /{date(time('20:13'))}
@@ -14882,7 +14882,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: cannot convert a value of type 'time' to 'date':
+            cannot convert a value of type 'time' to 'date':
                 /{date(time('20:13'))}
                   ^^^^^^^^^^^^^^^^^^^
         - uri: /{date(string('birthday'))}
@@ -15015,7 +15015,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid time literal: hour must be in 0..23:
+            invalid time literal: hour must be in 0..23:
                 /{time('29:04')}
                   ^^^^^^^^^^^^^
         - uri: /{time(true())}
@@ -15023,7 +15023,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: cannot convert a value of type 'boolean' to 'time':
+            cannot convert a value of type 'boolean' to 'time':
                 /{time(true())}
                   ^^^^^^^^^^^^
         - uri: /{time(7)}
@@ -15031,7 +15031,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: cannot convert a value of type 'integer' to 'time':
+            cannot convert a value of type 'integer' to 'time':
                 /{time(7)}
                   ^^^^^^^
         - uri: /{time(date('2010-04-15'))}
@@ -15039,7 +15039,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: cannot convert a value of type 'date' to 'time':
+            cannot convert a value of type 'date' to 'time':
                 /{time(date('2010-04-15'))}
                   ^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{time(string('just a moment ago'))}
@@ -15126,7 +15126,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid datetime literal: month must be in 1..12:
+            invalid datetime literal: month must be in 1..12:
                 /{datetime('2010-13-07 17:43')}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{datetime(true())}
@@ -15134,7 +15134,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: cannot convert a value of type 'boolean' to 'datetime':
+            cannot convert a value of type 'boolean' to 'datetime':
                 /{datetime(true())}
                   ^^^^^^^^^^^^^^^^
         - uri: /{datetime(7)}
@@ -15142,7 +15142,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: cannot convert a value of type 'integer' to 'datetime':
+            cannot convert a value of type 'integer' to 'datetime':
                 /{datetime(7)}
                   ^^^^^^^^^^^
         - uri: /{datetime(time('20:13'))}
@@ -15150,7 +15150,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: cannot convert a value of type 'time' to 'datetime':
+            cannot convert a value of type 'time' to 'datetime':
                 /{datetime(time('20:13'))}
                   ^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{datetime(string('just a moment ago'))}
@@ -15577,7 +15577,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: a plural operand is expected:
+            a plural operand is expected:
                 /{exists(true())}
                          ^^^^^^
         - uri: /{every(true())}
@@ -15585,7 +15585,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: a plural operand is expected:
+            a plural operand is expected:
                 /{every(true())}
                         ^^^^^^
         - uri: /{count(true())}
@@ -15593,7 +15593,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: a plural operand is expected:
+            a plural operand is expected:
                 /{count(true())}
                   ^^^^^^^^^^^^^
         - uri: /course{no,credits}?department_code='be'
@@ -15719,7 +15719,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'min' cannot be applied to a value of type 'boolean':
+            function 'min' cannot be applied to a value of type 'boolean':
                 /{min(student.is_active), max(student.is_active)}
                   ^^^^^^^^^^^^^^^^^^^^^^
             (valid type: 'integer', 'decimal', 'float', 'string', 'date', 'time', 'datetime')
@@ -15764,7 +15764,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'sum' cannot be applied to a value of type 'datetime':
+            function 'sum' cannot be applied to a value of type 'datetime':
                 /{sum(student.dob)}
                   ^^^^^^^^^^^^^^^^
             (valid type: 'integer', 'decimal', 'float')
@@ -15773,7 +15773,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'avg' cannot be applied to a value of type 'string':
+            function 'avg' cannot be applied to a value of type 'string':
                 /{avg(student.name)}
                   ^^^^^^^^^^^^^^^^^
             (valid type: 'integer', 'decimal', 'float')
@@ -16838,7 +16838,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'instructor' in scope of 'student':
+            unrecognized attribute 'instructor' in scope of 'student':
                 /student.instructor
                          ^^^^^^^^^^
         - uri: /school?code='mus'
@@ -17868,7 +17868,7 @@ tests:
              | sc   | School of Continuing Studies  |        |
 
              ----
-             /(school:as('List of Schools'))
+             /(school :as 'List of Schools')
              SELECT "SCHOOL"."CODE",
                     "SCHOOL"."NAME",
                     "SCHOOL"."CAMPUS"
@@ -17895,7 +17895,7 @@ tests:
              | School of Continuing Studies  |
 
              ----
-             /school{name:as(Name)}
+             /school{name :as Name}
              SELECT "SCHOOL"."NAME"
              FROM "SCHOOL"
              ORDER BY "SCHOOL"."CODE" ASC
@@ -17921,7 +17921,7 @@ tests:
              | School of Continuing Studies  |                0 |
 
              ----
-             /(school:as('List of Schools')){name:as(Name),count(department):as('# of Departments')}
+             /(school :as 'List of Schools'){name :as Name,count(department) :as '# of Departments'}
              SELECT "SCHOOL"."NAME",
                     COALESCE("DEPARTMENT"."count", 0)
              FROM "SCHOOL"
@@ -19336,7 +19336,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              compile error: a singular expression is expected:
+              a singular expression is expected:
                   /school{code,department.exists(course)}
                                           ^^^^^^^^^^^^^^
           - uri: /school{code,department.avg(course.credits)}
@@ -19344,7 +19344,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              compile error: a singular expression is expected:
+              a singular expression is expected:
                   /school{code,department.avg(course.credits)}
                                           ^^^^^^^^^^^^^^^^^^^
           - uri: /department{sum(course.credits),count(course.credits), avg(course.credits)}?exists(course)
@@ -19892,12 +19892,12 @@ tests:
             - [Content-Type, text/plain; charset=UTF-8]
             - [Vary, Accept]
             body: |2
-               | avg(department{count(course?credits=3)}?code!='econ'):round(2) | avg(department{count(course?credits=5)}?code!='mth'):round(2) |
-              -+----------------------------------------------------------------+---------------------------------------------------------------+-
-               |                                                           8.04 |                                                          1.04 |
+               | avg(department{count(course?credits=3)}?code!='econ') :round(2) | avg(department{count(course?credits=5)}?code!='mth') :round(2) |
+              -+-----------------------------------------------------------------+----------------------------------------------------------------+-
+               |                                                            8.04 |                                                           1.04 |
 
                ----
-               /{avg(department{count(course?credits=3)}?code!='econ'):round(2),avg(department{count(course?credits=5)}?code!='mth'):round(2)}
+               /{avg(department{count(course?credits=3)}?code!='econ') :round(2),avg(department{count(course?credits=5)}?code!='mth') :round(2)}
                SELECT ROUND(AVG((CASE WHEN ("DEPARTMENT"."CODE" <> 'econ') THEN CAST(COALESCE("COURSE"."count_1", 0) AS NUMBER) END)), 2),
                       ROUND(AVG((CASE WHEN ("DEPARTMENT"."CODE" <> 'mth') THEN CAST(COALESCE("COURSE"."count_2", 0) AS NUMBER) END)), 2)
                FROM "DEPARTMENT"
@@ -20352,7 +20352,7 @@ tests:
                :                 :     :                            :         : industrial setting.              :
 
                ----
-               /course?credits=$max_credits:where($max_credits:=max(course.credits))
+               /course?credits=$max_credits :where $max_credits:=max(course.credits)
                SELECT "COURSE_1"."DEPARTMENT_CODE",
                       "COURSE_1"."NO",
                       "COURSE_1"."TITLE",
@@ -20417,7 +20417,7 @@ tests:
                | edpol  |                                 15 |
 
                ----
-               /department{code,count(course?credits=$max_credits)}.limit(10):where(department.$max_credits:=max(course.credits))
+               /department{code,count(course?credits=$max_credits)}.limit(10) :where department.$max_credits:=max(course.credits)
                SELECT "DEPARTMENT"."CODE",
                       COALESCE("COURSE"."count", 0)
                FROM (SELECT "DEPARTMENT"."CODE"
@@ -22475,7 +22475,7 @@ tests:
                | eng         | umech    |             11 |
 
                ----
-               /program{school_code,code,count(student)}?count(student)>avg(fork().count(student)):where(program:=program?school_code='eng')
+               /program{school_code,code,count(student)}?count(student)>avg(fork().count(student)) :where program:=program?school_code='eng'
                SELECT "PROGRAM_1"."SCHOOL_CODE",
                       "PROGRAM_1"."CODE",
                       COALESCE("STUDENT"."count", 0)
@@ -22517,7 +22517,7 @@ tests:
                | eng         | umech    |             11 |
 
                ----
-               /program{school_code,code,count(student)}?count(student)>avg(fork(school_code).count(student)):where(program:=program.limit(10,15))
+               /program{school_code,code,count(student)}?count(student)>avg(fork(school_code).count(student)) :where program:=program.limit(10,15)
                SELECT "PROGRAM_1"."SCHOOL_CODE",
                       "PROGRAM_1"."CODE",
                       COALESCE("STUDENT"."count", 0)
@@ -23049,7 +23049,7 @@ tests:
                | art  | School of Art & Design | old    |
 
                ----
-               /school:top
+               /school :top
                SELECT "SCHOOL"."CODE",
                       "SCHOOL"."NAME",
                       "SCHOOL"."CAMPUS"
@@ -23080,7 +23080,7 @@ tests:
                | edu  | College of Education   | old    |
 
                ----
-               /school:top(3)
+               /school :top(3)
                SELECT "SCHOOL"."CODE",
                       "SCHOOL"."NAME",
                       "SCHOOL"."CAMPUS"
@@ -23111,7 +23111,7 @@ tests:
                | la   | School of Arts and Humanities | old    |
 
                ----
-               /school:top(3,2)
+               /school :top(3,2)
                SELECT "SCHOOL"."CODE",
                       "SCHOOL"."NAME",
                       "SCHOOL"."CAMPUS"
@@ -23467,7 +23467,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              encode error: a plural expression is expected:
+              a plural expression is expected:
                   /department.top(school)
                                   ^^^^^^
           - uri: /class^{year, season} {*, /top(^.sort(count(enrollment)-),3).course{title}}
@@ -23886,7 +23886,7 @@ tests:
                | ns   | School of Natural Sciences | old    |
 
                ----
-               /school[$id]:where($id:='ns')
+               /school[$id] :where $id:='ns'
                SELECT "SCHOOL"."CODE",
                       "SCHOOL"."NAME",
                       "SCHOOL"."CAMPUS"
@@ -23906,7 +23906,7 @@ tests:
                | astro.105 | General Astronomy I |
 
                ----
-               /course[$id]{id(),title}:where($id:=[astro.105])
+               /course[$id]{id(),title} :where $id:=[astro.105]
                SELECT "COURSE"."DEPARTMENT_CODE",
                       "COURSE"."NO",
                       "COURSE"."TITLE"
@@ -23927,7 +23927,7 @@ tests:
                | astro           |       105 | 2009 | spring | 001     | mtriplett       |      1167 |
 
                ----
-               /class[$course.$season.001]:where($course:=[astro.105],$season:=[2009.spring])
+               /class[$course.$season.001] :where($course:=[astro.105],$season:=[2009.spring])
                SELECT "CLASS"."DEPARTMENT_CODE",
                       "CLASS"."COURSE_NO",
                       "CLASS"."YEAR",
@@ -23947,7 +23947,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              bind error: ill-formed locator:
+              ill-formed locator:
                   /program[ns]
                           ^^^^
           - uri: /school[ns.uchem]
@@ -23955,7 +23955,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              bind error: ill-formed locator:
+              ill-formed locator:
                   /school[ns.uchem]
                          ^^^^^^^^^^
           - uri: /course[ns.uchem]
@@ -23963,7 +23963,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              encode error: invalid decimal literal: uchem:
+              invalid decimal literal: uchem:
                   /course[ns.uchem]
                              ^^^^^
           - uri: /program^degree{id()}
@@ -23971,7 +23971,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              bind error: cannot determine identity:
+              cannot determine identity:
                   /program^degree{id()}
                                   ^^^^
           - uri: /course[$id]{id(), title} :where $id:='astro.105'
@@ -23979,7 +23979,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              bind error: ill-formed locator:
+              ill-formed locator:
                   /course[$id]{id(), title} :where $id:='astro.105'
                          ^^^^^
         - id: table-expressions
@@ -24311,7 +24311,7 @@ tests:
                | Carl Bailey       | 1985-04-06 | 2010-08-15 |            25.4 |  25.8 |
 
                ----
-               /define(student.age(date):=(date(date)-date(dob))/365:round(1),student.age():=age('2011-01-01'),inactive_student:=student?!is_active).inactive_student{name,dob,start_date,age(start_date),age()}
+               /define(student.age(date):=(date(date)-date(dob))/365 :round(1),student.age():=age('2011-01-01'),inactive_student:=student?!is_active).inactive_student{name,dob,start_date,age(start_date),age()}
                SELECT "STUDENT"."NAME",
                       "STUDENT"."DOB",
                       "STUDENT"."START_DATE",
@@ -24344,7 +24344,7 @@ tests:
                | sc   |              0 |                         0 |                         0 |
 
                ----
-               /school{code,{count(student),count(student?gender='m'),count(student?gender='f')}:where(student:=program.student?is_active)}
+               /school{code,{count(student),count(student?gender='m'),count(student?gender='f')} :where(student:=program.student?is_active)}
                SELECT "SCHOOL"."CODE",
                       COALESCE("STUDENT"."count_1", 0),
                       COALESCE("STUDENT"."count_2", 0),
@@ -24377,7 +24377,7 @@ tests:
                |     2 |     6 |             2 |            2 |
 
                ----
-               /department.define(stats(c):={min(c.credits):as(min),max(c.credits):as(max)}){stats(course),stats(course?no>=100&no<200)}?code='acc'
+               /department.define(stats(c):={min(c.credits) :as min,max(c.credits) :as max}){stats(course),stats(course?no>=100&no<200)}?code='acc'
                SELECT "COURSE"."min_1",
                       "COURSE"."max_1",
                       "COURSE"."min_2",
@@ -24466,7 +24466,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              bind error: unrecognized reference '$year':
+              unrecognized reference '$year':
                   /school.define(student_by_year($year) := program.student?year(dob)=$year) {code, student_by_year(1990).$year}
                                                                                                                          ^^^^^
           - uri: /define(f($x) := $x*2){{$x, f($x)} :where $x := 21}
@@ -24480,7 +24480,7 @@ tests:
                | 21 |    42 |
 
                ----
-               /define(f($x):=$x*2){{$x,f($x)}:where($x:=21)}
+               /define(f($x):=$x*2){{$x,f($x)} :where $x:=21}
                SELECT 21,
                       (21 * 2)
                FROM DUAL "!"
@@ -24543,7 +24543,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              bind error: qualified definition is not allowed for an in-selector assignment:
+              qualified definition is not allowed for an in-selector assignment:
                   /school{code, program.num_stud := count(student)}
                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
           - uri: /sch:=school{code, name}?exists(department)
@@ -24984,9 +24984,9 @@ tests:
             - [Content-Type, text/plain; charset=UTF-8]
             - [Vary, Accept]
             body: |2
-               | program^degree:if_null('--') |
+               | program^degree :if_null '--' |
                +------------------------------+
-               | degree:if_null('--')         |
+               | degree :if_null '--'         |
               -+------------------------------+-
                | --                           |
                | ba                           |
@@ -24998,7 +24998,7 @@ tests:
                | ph                           |
 
                ----
-               /distinct(program{degree:if_null('--')})
+               /distinct(program{degree :if_null '--'})
                SELECT COALESCE("PROGRAM"."DEGREE", '--')
                FROM "PROGRAM"
                WHERE (COALESCE("PROGRAM"."DEGREE", '--') IS NOT NULL)
@@ -25546,9 +25546,9 @@ tests:
             - [Content-Type, text/plain; charset=UTF-8]
             - [Vary, Accept]
             body: |2
-               | program^degree:if_null('--') |
+               | program^degree :if_null '--' |
                +------------------------------+
-               | degree:if_null('--')         |
+               | degree :if_null '--'         |
               -+------------------------------+-
                | ba                           |
                | pb                           |
@@ -25571,7 +25571,7 @@ tests:
                | --                           |
 
                ----
-               /school.distinct(program{degree:if_null('--')})
+               /school.distinct(program{degree :if_null '--'})
                SELECT "PROGRAM"."if_null"
                FROM "SCHOOL"
                     INNER JOIN (SELECT COALESCE("PROGRAM"."DEGREE", '--') AS "if_null",
@@ -26875,7 +26875,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              compile error: a singular expression is expected:
+              a singular expression is expected:
                   /{(school^campus).campus}
                                     ^^^^^^
         - id: nested-segments
@@ -28170,7 +28170,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              compile error: a singular expression is expected:
+              a singular expression is expected:
                   /school{code, department.(/course)}
                                 ^^^^^^^^^^
           - uri: /school{code, department{/course}}
@@ -28178,15 +28178,15 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              compile error: a singular expression is expected:
+              a singular expression is expected:
                   /school{code, department{/course}}
-                                ^^^^^^^^^^^^^^^^^^^
+                                          ^^^^^^^^^
           - uri: /school{code, /root().department}
             status: 400 Bad Request
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              encode error: a descendant segment flow is expected:
+              a descendant segment flow is expected:
                   /school{code, /root().department}
                                 ^^^^^^^^^^^^^^^^^^
       - id: known-issues
@@ -28288,7 +28288,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: an empty or constant kernel is not allowed:
+            an empty or constant kernel is not allowed:
                 /school^{}{true()}
                  ^^^^^^^^^
         - uri: /school^{true()}{true()}
@@ -28296,7 +28296,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: an empty or constant kernel is not allowed:
+            an empty or constant kernel is not allowed:
                 /school^{true()}{true()}
                  ^^^^^^^^^^^^^^^
         - uri: /school?false()^{true()}{true()}
@@ -28304,7 +28304,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: an empty or constant kernel is not allowed:
+            an empty or constant kernel is not allowed:
                 /school?false()^{true()}{true()}
                  ^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /school^{}{*, count(school)}
@@ -28312,7 +28312,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: an empty or constant kernel is not allowed:
+            an empty or constant kernel is not allowed:
                 /school^{}{*, count(school)}
                  ^^^^^^^^^
         - uri: /school^{true()}{*, count(school)}
@@ -28320,7 +28320,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: an empty or constant kernel is not allowed:
+            an empty or constant kernel is not allowed:
                 /school^{true()}{*, count(school)}
                  ^^^^^^^^^^^^^^^
         - uri: /school?false()^{true()}{*, count(school)}
@@ -28328,7 +28328,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: an empty or constant kernel is not allowed:
+            an empty or constant kernel is not allowed:
                 /school?false()^{true()}{*, count(school)}
                  ^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /school^{null()}{*, count(school)}
@@ -28336,7 +28336,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: an empty or constant kernel is not allowed:
+            an empty or constant kernel is not allowed:
                 /school^{null()}{*, count(school)}
                  ^^^^^^^^^^^^^^^
         - uri: /{school^{}{count(school)}, school?false()^{}{count(school)}}
@@ -28344,7 +28344,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: an empty or constant kernel is not allowed:
+            an empty or constant kernel is not allowed:
                 /{school^{}{count(school)}, school?false()^{}{count(school)}}
                   ^^^^^^^^^
         - uri: /school{program^{}{count(program)}, program?false()^{}{count(program)}}
@@ -28352,7 +28352,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: an empty or constant kernel is not allowed:
+            an empty or constant kernel is not allowed:
                 /school{program^{}{count(program)}, program?false()^{}{count(program)}}
                         ^^^^^^^^^^
         - uri: /{count(school^true()), count(school?false()^true()), count(school^null())}
@@ -28360,7 +28360,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: an empty or constant kernel is not allowed:
+            an empty or constant kernel is not allowed:
                 /{count(school^true()), count(school?false()^true()), count(school^null())}
                         ^^^^^^^^^^^^^
         - uri: /(school^null()).^
@@ -28368,7 +28368,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: an empty or constant kernel is not allowed:
+            an empty or constant kernel is not allowed:
                 /(school^null()).^
                   ^^^^^^^^^^^^^
         - uri: /department^school_code{school_code.name, name}
@@ -28376,7 +28376,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'name' in scope of 'school_code':
+            unrecognized attribute 'name' in scope of 'school_code':
                 /department^school_code{school_code.name, name}
                                                     ^^^^
         - uri: /program.part_of.*
@@ -28753,7 +28753,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized function 'unknown':
+            unrecognized function 'unknown':
                 /school/:unknown
                 ^^^^^^^^^^^^^^^^
       - id: format-selection-by-`accept`
@@ -29173,7 +29173,7 @@ tests:
                           },
                           "header": "Name",
                           "path": "school.name",
-                          "syntax": "name:as(Name)",
+                          "syntax": "name :as Name",
                           "tag": "Name"
                         },
                         {
@@ -29181,7 +29181,7 @@ tests:
                             "type": "integer"
                           },
                           "header": "# of Departments",
-                          "syntax": "count(department):as('# of Departments')"
+                          "syntax": "count(department) :as '# of Departments'"
                         }
                       ]
                     }
@@ -29189,7 +29189,7 @@ tests:
                 },
                 "header": "List of Schools",
                 "path": "school",
-                "syntax": "\/(school:as('List of Schools')){name:as(Name),count(department):as('# of Departments')}",
+                "syntax": "\/(school :as 'List of Schools'){name :as Name,count(department) :as '# of Departments'}",
                 "tag": "school"
               },
               "data": [
@@ -29420,7 +29420,7 @@ tests:
              | School of Continuing Studies  |                0 |
 
              ----
-             /(school:as('List of Schools')){name:as(Name),count(department):as('# of Departments')}
+             /(school :as 'List of Schools'){name :as Name,count(department) :as '# of Departments'}
              SELECT "SCHOOL"."NAME",
                     COALESCE("DEPARTMENT"."count", 0)
              FROM "SCHOOL"
@@ -29776,7 +29776,7 @@ tests:
                 },
                 "header": "enrollment",
                 "path": "enrollment",
-                "syntax": "\/enrollment[1010.[[mth.101].[2008.fall].001]]{id()}",
+                "syntax": "\/enrollment[1010.((mth.101).(2008.fall).001)]{id()}",
                 "tag": "enrollment"
               },
               "data": [
@@ -29880,7 +29880,7 @@ tests:
              | 1010.((mth.101).(2008.fall).001) |
 
              ----
-             /enrollment[1010.[[mth.101].[2008.fall].001]]{id()}
+             /enrollment[1010.((mth.101).(2008.fall).001)]{id()}
              SELECT "ENROLLMENT"."STUDENT_ID",
                     "CLASS_2"."DEPARTMENT_CODE",
                     "CLASS_2"."COURSE_NO",
@@ -30300,7 +30300,7 @@ tests:
                           },
                           "header": "school",
                           "path": "department.school",
-                          "syntax": "school{}",
+                          "syntax": "{}",
                           "tag": "school"
                         }
                       ]
@@ -33420,7 +33420,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'fetch' expects 1 argument; got 0:
+            expected 1 argument:
                 /fetch()
                  ^^^^^^^
         - uri: /fetch(school)
@@ -33428,7 +33428,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: a singular expression is expected:
+            a singular expression is expected:
                 /fetch(school)
                        ^^^^^^
         - uri: /school/:html/:fetch
@@ -33436,7 +33436,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'fetch' expects a segment argument:
+            unrecognized function 'html':
                 /school/:html/:fetch
                 ^^^^^^^^^^^^^
         - uri: /school/:html/:json
@@ -33444,13 +33444,13 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid request: unsupported action
+            unsupported action
         - uri: /school/:html/:sql
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid request: unsupported action
+            unsupported action
   - include: test/input/addon.yaml
     output:
       id: addon
@@ -34441,9 +34441,9 @@ tests:
           status: 403 Forbidden
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
-          - [Set-Cookie, htsql-csrf-token=e313ff21de56e2db047db57971be4bfa; Path=/]
+          - [Set-Cookie, htsql-csrf-token=24aa2b8c07f67e5b273cefaa7a5f250c; Path=/]
           body: |
-            not enough permissions: not enough permissions to execute the query
+            not enough permissions to execute the query
         - py: pass-csrf-token
           stdout: |+
             200 OK
@@ -35566,7 +35566,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'meta' expects 1 argument; got 0:
+            expected 1 argument:
                 /meta()
                  ^^^^^^
         - uri: /meta(/column,/link)
@@ -35574,7 +35574,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'meta' expects 1 argument; got 2:
+            expected 1 argument:
                 /meta(/column,/link)
                  ^^^^^^^^^^^^^^^^^^^
         - uri: /meta(/schema)
@@ -35582,7 +35582,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'schema':
+            unrecognized attribute 'schema':
                 /meta(/schema)
                        ^^^^^^
         - uri: /meta(table)
@@ -35590,7 +35590,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: a segment is required:
+            a singular expression is expected:
                 /meta(table)
                       ^^^^^
         - uri: /meta(/column.sort(table.name, field.sort))
@@ -35644,9 +35644,9 @@ tests:
           status: 403 Forbidden
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
-          - [Set-Cookie, htsql-csrf-token=41fe4fd90b830c80f59887e554cf2e1a; Path=/]
+          - [Set-Cookie, htsql-csrf-token=25b489ac32143309b9cbfc4214d05cc1; Path=/]
           body: |
-            not enough permissions: not enough permissions to execute the query
+            not enough permissions to execute the query
       - id: tweak.override
         tests:
         - ctl: [ext, tweak.override]
@@ -35757,7 +35757,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'department' in scope of 'school':
+            unrecognized attribute 'department' in scope of 'school':
                 /avg(school.count(department))
                                   ^^^^^^^^^^
         - uri: /avg(school.count(program))
@@ -35786,7 +35786,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'department' in scope of 'school':
+            unrecognized attribute 'department' in scope of 'school':
                 /avg(school.count(department))
                                   ^^^^^^^^^^
         - uri: /avg(school.count(program))
@@ -35815,7 +35815,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'department' in scope of 'school':
+            unrecognized attribute 'department' in scope of 'school':
                 /avg(school.count(department))
                                   ^^^^^^^^^^
         - uri: /school{code, count(department)}
@@ -35854,7 +35854,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'enrollment' in scope of 'student':
+            unrecognized attribute 'enrollment' in scope of 'student':
                 /student{name, count(enrollment)}
                                      ^^^^^^^^^^
         - uri: /max(confidential.pay_grade)
@@ -35878,7 +35878,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'ssn' in scope of 'confidential':
+            unrecognized attribute 'ssn' in scope of 'confidential':
                 /confidential.ssn
                               ^^^
         - uri: /student{name, dob, school.code, program.code, exists(instructor)}.limit(1)
@@ -35958,7 +35958,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'classification':
+            unrecognized attribute 'classification':
                 /classification
                  ^^^^^^^^^^^^^^
         - uri: /active_students().limit(10)
@@ -36057,7 +36057,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'active_students':
+            unrecognized attribute 'active_students':
                 /active_students
                  ^^^^^^^^^^^^^^^
             (did you mean: a function 'active_students')
@@ -36066,7 +36066,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'active_students' requires 0 arguments; got 1:
+            function 'active_students' requires 0 arguments; got 1:
                 /active_students(2010)
                  ^^^^^^^^^^^^^^^^^^^^^
         - uri: /students_by_year
@@ -36074,7 +36074,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'students_by_year':
+            unrecognized attribute 'students_by_year':
                 /students_by_year
                  ^^^^^^^^^^^^^^^^
             (did you mean: a function 'students_by_year')
@@ -36083,7 +36083,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'students_by_year' requires 1 argument; got 0:
+            function 'students_by_year' requires 1 argument; got 0:
                 /students_by_year()
                  ^^^^^^^^^^^^^^^^^^
         - uri: /program?exists(includes)
@@ -36123,7 +36123,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'program_via_part_of' in scope of 'program':
+            unrecognized attribute 'program_via_part_of' in scope of 'program':
                 /program?exists(program_via_part_of)
                                 ^^^^^^^^^^^^^^^^^^^
         - uri: /student?count(class)>55
@@ -36165,7 +36165,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'name' in scope of 'student':
+            unrecognized attribute 'name' in scope of 'student':
                 /student.name
                          ^^^^
         - uri: /(program?code='gart').active_students()
@@ -36237,7 +36237,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'active_students' in scope of 'program':
+            unrecognized attribute 'active_students' in scope of 'program':
                 /program.active_students
                          ^^^^^^^^^^^^^^^
             (did you mean: a function 'active_students')
@@ -36246,7 +36246,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'active_students' requires 0 arguments; got 1:
+            function 'active_students' requires 0 arguments; got 1:
                 /program.active_students(2010)
                          ^^^^^^^^^^^^^^^^^^^^^
         - uri: /program.students_by_year
@@ -36254,7 +36254,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'students_by_year' in scope of 'program':
+            unrecognized attribute 'students_by_year' in scope of 'program':
                 /program.students_by_year
                          ^^^^^^^^^^^^^^^^
             (did you mean: a function 'students_by_year')
@@ -36263,7 +36263,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'students_by_year' requires 1 argument; got 0:
+            function 'students_by_year' requires 1 argument; got 0:
                 /program.students_by_year()
                          ^^^^^^^^^^^^^^^^^^
         - uri: /active_students{name, gender, start_date}.limit(5)
@@ -36415,7 +36415,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'active_students' requires 0, 1 or 2 arguments; got 3:
+            function 'active_students' requires 0, 1 or 2 arguments; got 3:
                 /active_students(2009, 'm', 'phd')
                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /(program?code='gart').active_students{name, gender, start_date}
@@ -36529,7 +36529,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'active_students' requires 0, 1 or 2 arguments; got 3:
+            function 'active_students' requires 0, 1 or 2 arguments; got 3:
                 /(program?code='gart').active_students(2009, 'm', 'phd')
                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /student{name}?count(class)>55
@@ -36563,7 +36563,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'enrollment':
+            unrecognized attribute 'enrollment':
                 /enrollment
                  ^^^^^^^^^^
         - uri: /student.enrollment
@@ -36571,7 +36571,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'enrollment' in scope of 'student':
+            unrecognized attribute 'enrollment' in scope of 'student':
                 /student.enrollment
                          ^^^^^^^^^^
         - uri: /student.id
@@ -36579,7 +36579,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'id' in scope of 'student':
+            unrecognized attribute 'id' in scope of 'student':
                 /student.id
                          ^^
             (did you mean: a function 'id')
@@ -36710,9 +36710,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            parse error: unexpected symbol '/':
+            unrecognized attribute 'not':
                 /-/not-found
-                  ^
+                   ^^^
         - uri: /;)/not-found
           status: 404 Not Found
           headers:
@@ -37374,7 +37374,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            scan error: symbol '%' must be followed by two hexdecimal digits:
+            symbol '%' must be followed by two hexdecimal digits:
                 /%27?%@$'
                      ^
         - uri: /'%FF'
@@ -37388,7 +37388,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            scan error: cannot find a matching quote mark:
+            cannot find a matching quote mark:
                 /'Hello
                  ^
         - uri: /`Hello'
@@ -37396,7 +37396,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            scan error: unexpected symbol '`':
+            unexpected character '`':
                 /`Hello'
                  ^
       - id: parse-errors
@@ -37406,7 +37406,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            parse error: expected the end of query; got ',':
+            unexpected input:
                 /'Hello','World'
                         ^
         - uri: school
@@ -37414,7 +37414,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            parse error: query must start with symbol '/':
+            a singular expression is expected:
                 school
                 ^^^^^^
         - uri: /school/:1
@@ -37422,55 +37422,55 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            parse error: symbol '/' must be followed by ':' and an identifier:
+            unexpected input:
                 /school/:1
-                       ^
+                         ^
         - uri: /school/:html(/program}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            parse error: cannot find a matching ')':
+            unexpected input:
                 /school/:html(/program}
-                             ^^^^^^^^^
+                                      ^
         - uri: /school:1
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            parse error: symbol ':' must be followed by an identifier:
+            unexpected input:
                 /school:1
-                       ^
+                        ^
         - uri: /school :as ('School'}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            parse error: cannot find a matching ')':
+            unexpected input:
                 /school :as ('School'}
-                            ^^^^^^^^^
+                                     ^
         - uri: /school{code,name)
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            parse error: cannot find a matching '}':
+            unexpected input:
                 /school{code,name)
-                       ^^^^^^^^^^
+                                 ^
         - uri: /count(school}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            parse error: cannot find a matching ')':
+            unexpected input:
                 /count(school}
-                      ^^^^^^^
+                             ^
         - uri: /school{code,name,
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            parse error: unexpected end of query:
+            unexpected end of input:
                 /school{code,name,
                                   ^
         - uri: /school{code,,name}
@@ -37478,7 +37478,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            parse error: unexpected symbol ',':
+            unexpected input:
                 /school{code,,name}
                              ^
         - uri: /(2+2}
@@ -37486,17 +37486,17 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            parse error: cannot find a matching ')':
+            unexpected input:
                 /(2+2}
-                 ^^^^
+                     ^
         - uri: /{count(school))
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            parse error: cannot find a matching '}':
+            unexpected input:
                 /{count(school))
-                 ^^^^^^^^^^^^^^
+                               ^
       - id: bind-errors
         tests:
         - uri: /department{school, code}
@@ -37512,7 +37512,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: parameterized definition is not allowed for an in-selector assignment:
+            parameterized definition is not allowed for an in-selector assignment:
                 /school{code, num_dept():=count(department)}
                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /school{code, department.num_course:=count(course)}
@@ -37520,7 +37520,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: qualified definition is not allowed for an in-selector assignment:
+            qualified definition is not allowed for an in-selector assignment:
                 /school{code, department.num_course:=count(course)}
                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /department^school
@@ -37528,7 +37528,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: quotient column must be scalar:
+            quotient column must be scalar:
                 /department^school
                             ^^^^^^
         - uri: /department^(num_course:=count(course))
@@ -37536,7 +37536,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: quotient column must be scalar:
+            quotient column must be scalar:
                 /department^(num_course:=count(course))
                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /program.{school_code,code}->school{code}
@@ -37544,7 +37544,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unbalanced origin and target columns:
+            unbalanced origin and target columns:
                 /program.{school_code,code}->school{code}
                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /program.{code}->course{no}
@@ -37552,7 +37552,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: cannot coerce origin and target columns to a common type:
+            cannot coerce origin and target columns to a common type:
                 /program.{code}->course{no}
                  ^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /define((school).num_prog:=count(program)).true()
@@ -37560,47 +37560,47 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: an identifier is expected:
+            unexpected input:
                 /define((school).num_prog:=count(program)).true()
-                        ^^^^^^^^
+                                 ^^^^^^^^
         - uri: /define(true().school.num_prog:=count(program)).true()
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: an identifier is expected:
+            unexpected input:
                 /define(true().school.num_prog:=count(program)).true()
-                        ^^^^^^
+                               ^^^^^^
         - uri: /define(school.num_prog(1):=count(program)).true()
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: an identifier is expected:
+            unexpected input:
                 /define(school.num_prog(1):=count(program)).true()
-                                        ^
+                                          ^^
         - uri: /define(school.(num_prog):=count(program)).true()
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: an identifier is expected:
+            unexpected input:
                 /define(school.(num_prog):=count(program)).true()
-                               ^^^^^^^^^^
+                                         ^^
         - uri: /school?*1.5
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: an integer value is required:
+            unexpected input:
                 /school?*1.5
-                        ^^^^
+                         ^^^
         - uri: /school?*5
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: value in range 1-3 is required:
+            value in range 1-3 is required:
                 /school?*5
                         ^^
         - uri: /school?$code='art'
@@ -37608,7 +37608,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized reference '$code':
+            unrecognized reference '$code':
                 /school?$code='art'
                         ^^^^^
         - uri: /school{code, count(^)}
@@ -37616,7 +37616,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: '^' could only be used in a quotient scope:
+            '^' could only be used in a quotient scope:
                 /school{code, count(^)}
                                     ^
         - uri: /invalid
@@ -37624,7 +37624,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'invalid':
+            unrecognized attribute 'invalid':
                 /invalid
                  ^^^^^^^
         - uri: /invalid()
@@ -37632,7 +37632,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized function 'invalid':
+            unrecognized function 'invalid':
                 /invalid()
                  ^^^^^^^^^
         - uri: /school :invalid
@@ -37640,7 +37640,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized function 'invalid':
+            unrecognized function 'invalid':
                 /school :invalid
                  ^^^^^^^^^^^^^^^
         - uri: /define(invalid.value:=true()).invalid{value}
@@ -37648,7 +37648,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'invalid':
+            unrecognized attribute 'invalid':
                 /define(invalid.value:=true()).invalid{value}
                                                ^^^^^^^
         - uri: /program.program
@@ -37656,7 +37656,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: ambiguous name 'program':
+            ambiguous name 'program':
                 /program.program
                          ^^^^^^^
             (try 'part_of' or 'program_via_part_of')
@@ -37667,7 +37667,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized reference '$scool_code':
+            unrecognized reference '$scool_code':
                 /school?code=$scool_code :where $school_code:='art'
                              ^^^^^^^^^^^
             (did you mean: '$school_code')
@@ -37676,7 +37676,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized reference '$code':
+            unrecognized reference '$code':
                 /school?code=$code :where $school_code:='art'
                              ^^^^^
         - uri: /school?code=$scool_code :where ($school_code1:='art', $school_code2:='eng',
@@ -37685,7 +37685,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized reference '$scool_code':
+            unrecognized reference '$scool_code':
                 /school?code=$scool_code :where ($school_code1:='art', $school_code2:='eng', $school_code3:='mus')
                              ^^^^^^^^^^^
             (did you mean: '$school_code1', '$school_code2' or '$school_code3')
@@ -37694,7 +37694,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'school_code' in scope of 'school':
+            unrecognized attribute 'school_code' in scope of 'school':
                 /school?code=school_code :where $school_code:='art'
                              ^^^^^^^^^^^
             (did you mean: a reference '$school_code')
@@ -37703,7 +37703,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'count' in scope of 'school':
+            unrecognized attribute 'count' in scope of 'school':
                 /school{code, count{department}}
                               ^^^^^
             (did you mean: a function 'count')
@@ -37712,7 +37712,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'depatrment' in scope of 'school':
+            unrecognized attribute 'depatrment' in scope of 'school':
                 /school{code, count(depatrment)}
                                     ^^^^^^^^^^
             (did you mean: 'department')
@@ -37721,7 +37721,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'nulll' in scope of 'department':
+            unrecognized attribute 'nulll' in scope of 'department':
                 /department?school.code==nulll
                                          ^^^^^
             (did you mean: 'null')
@@ -37730,7 +37730,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'student' in scope of 'school':
+            unrecognized attribute 'student' in scope of 'school':
                 /school{code, count(student)}
                                     ^^^^^^^
         - uri: /program.define(student_by_year($year) := student?year(start_date)=$year)
@@ -37739,7 +37739,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'student_by_year' requires 1 argument; got 0:
+            function 'student_by_year' requires 1 argument; got 0:
                 /program.define(student_by_year($year) := student?year(start_date)=$year) {code, count(student_by_year())}
                                                                                                        ^^^^^^^^^^^^^^^^^
         - uri: /program.define(student_by_year($year) := student?year(start_date)=$year,
@@ -37748,7 +37748,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'student_by_year' requires 0 or 1 argument; got 2:
+            function 'student_by_year' requires 0 or 1 argument; got 2:
                 /program.define(student_by_year($year) := student?year(start_date)=$year, student_by_year() := student_by_year(2011)) {code, count(student_by_year(2009,2010))}
                                                                                                                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /department{school(), code}
@@ -37756,7 +37756,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized function 'school':
+            unrecognized function 'school':
                 /department{school(), code}
                             ^^^^^^^^
             (did you mean: an attribute 'school')
@@ -37766,7 +37766,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized function 'students_by_year':
+            unrecognized function 'students_by_year':
                 /program.define(student_by_year($year) := student?year(start_date)=$year) {code, count(students_by_year(2010))}
                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^
             (did you mean: 'student_by_year')
@@ -37775,7 +37775,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized function 'cont':
+            unrecognized function 'cont':
                 /cont(program)
                  ^^^^^^^^^^^^^
             (did you mean: 'count')
@@ -37784,7 +37784,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized function 'student_by_year':
+            unrecognized function 'student_by_year':
                 /program{code, count(student_by_year(2010))}
                                      ^^^^^^^^^^^^^^^^^^^^^
       - id: function-bind-errors
@@ -37794,7 +37794,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'count' expects 1 argument; got 0:
+            function 'count' expects 1 argument; got 0:
                 /count()
                  ^^^^^^^
         - uri: /today(1)
@@ -37802,7 +37802,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'today' expects 0 arguments; got 1:
+            function 'today' expects 0 arguments; got 1:
                 /today(1)
                  ^^^^^^^^
         - uri: /slice()
@@ -37810,7 +37810,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'slice' expects 1 to 3 arguments; got 0:
+            function 'slice' expects 1 to 3 arguments; got 0:
                 /slice()
                  ^^^^^^^
         - uri: /slice('HTSQL',1,3,5)
@@ -37818,7 +37818,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'slice' expects 1 to 3 arguments; got 4:
+            function 'slice' expects 1 to 3 arguments; got 4:
                 /slice('HTSQL',1,3,5)
                  ^^^^^^^^^^^^^^^^^^^^
         - uri: /school.sort()
@@ -37826,7 +37826,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'sort' expects 1 or more arguments; got 0:
+            function 'sort' expects 1 or more arguments; got 0:
                 /school.sort()
                         ^^^^^^
         - uri: /'SQL'={}
@@ -37834,7 +37834,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: at least one element is expected:
+            at least one element is expected:
                 /'SQL'={}
                        ^^
         - uri: /if(school)
@@ -37842,7 +37842,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'if' expects 2 or more arguments; got 1:
+            function 'if' expects 2 or more arguments; got 1:
                 /if(school)
                  ^^^^^^^^^^
         - uri: /switch(school,department)
@@ -37850,7 +37850,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'switch' expects 3 or more arguments; got 2:
+            function 'switch' expects 3 or more arguments; got 2:
                 /switch(school,department)
                  ^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /department{code, school :if_null 'none'}
@@ -37858,7 +37858,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: cannot coerce values of types ('entity', 'untyped') to a common type:
+            cannot coerce values of types ('entity', 'untyped') to a common type:
                 /department{code, school :if_null 'none'}
                                   ^^^^^^^^^^^^^^^^^^^^^^
         - uri: /department{code, is_null(school)}
@@ -37866,7 +37866,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: a scalar value is expected:
+            a scalar value is expected:
                 /department{code, is_null(school)}
                                   ^^^^^^^^^^^^^^^
         - uri: /school?code=today()
@@ -37874,7 +37874,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: cannot coerce values of types ('string', 'date') to a common type:
+            cannot coerce values of types ('string', 'date') to a common type:
                 /school?code=today()
                         ^^^^^^^^^^^^
         - uri: /school?code==today()
@@ -37882,7 +37882,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: cannot coerce values of types ('string', 'date') to a common type:
+            cannot coerce values of types ('string', 'date') to a common type:
                 /school?code==today()
                         ^^^^^^^^^^^^^
         - uri: /school?code={'art',5,today()}
@@ -37890,7 +37890,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: cannot coerce values of types ('string', 'untyped', 'integer', 'date') to a common type:
+            cannot coerce values of types ('string', 'untyped', 'integer', 'date') to a common type:
                 /school?code={'art',5,today()}
                         ^^^^^^^^^^^^^^^^^^^^^^
         - uri: /school?code<today()
@@ -37898,7 +37898,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: cannot coerce values of types ('string', 'date') to a common type:
+            cannot coerce values of types ('string', 'date') to a common type:
                 /school?code<today()
                         ^^^^^^^^^^^^
         - uri: /department{code, if(school,school.code,today())}
@@ -37906,7 +37906,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: cannot coerce values of types ('string', 'date') to a common type:
+            cannot coerce values of types ('string', 'date') to a common type:
                 /department{code, if(school,school.code,today())}
                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /department{code, if(school.code,school)}
@@ -37914,7 +37914,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: a scalar value is expected:
+            a scalar value is expected:
                 /department{code, if(school.code,school)}
                                                  ^^^^^^
         - uri: /department{code, switch(school.code,today(),now())}
@@ -37922,7 +37922,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: cannot coerce values of types ('string', 'date') to a common type:
+            cannot coerce values of types ('string', 'date') to a common type:
                 /department{code, switch(school.code,today(),now())}
                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /department{code, switch(school.code,'art',today(),now())}
@@ -37930,7 +37930,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: cannot coerce values of types ('date', 'datetime') to a common type:
+            cannot coerce values of types ('date', 'datetime') to a common type:
                 /department{code, switch(school.code,'art',today(),now())}
                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /department{code, switch(school.code,'art',school)}
@@ -37938,7 +37938,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: a scalar value is expected:
+            a scalar value is expected:
                 /department{code, switch(school.code,'art',school)}
                                                            ^^^^^^
         - uri: /student?is_active<true()
@@ -37946,7 +37946,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: values of type 'boolean' are not comparable:
+            values of type 'boolean' are not comparable:
                 /student?is_active<true()
                          ^^^^^^^^^^^^^^^^
         - uri: /trunc(school)
@@ -37954,7 +37954,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'trunc' cannot be applied to a value of type 'entity':
+            function 'trunc' cannot be applied to a value of type 'entity':
                 /trunc(school)
                  ^^^^^^^^^^^^^
             (valid type: 'integer', 'decimal', 'float')
@@ -37963,7 +37963,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'trunc' cannot be applied to values of types ('entity', 'entity'):
+            function 'trunc' cannot be applied to values of types ('entity', 'entity'):
                 /trunc(school,department)
                  ^^^^^^^^^^^^^^^^^^^^^^^^
             (valid types: ('integer', 'integer'), ('decimal', 'integer'))
@@ -37972,7 +37972,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: operator '-' cannot be applied to a value of type 'entity':
+            unary operator '-' cannot be applied to a value of type 'entity':
                 /-school
                  ^^^^^^^
             (valid type: 'integer', 'decimal', 'float')
@@ -37981,7 +37981,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: operator '*' cannot be applied to values of types ('entity', 'entity'):
+            function '*' cannot be applied to values of types ('entity', 'entity'):
                 /school*department
                  ^^^^^^^^^^^^^^^^^
             (valid types: ('integer', 'integer'), ('integer', 'decimal'), ('decimal', 'integer'), ('decimal', 'decimal'), ('integer', 'float'), ('decimal', 'float'), ('float', 'integer'), ('float', 'decimal'), ('float', 'float'))
@@ -37990,7 +37990,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: a singular expression is expected:
+            a singular expression is expected:
                 /fetch(school)
                        ^^^^^^
         - uri: /html(school)
@@ -37998,7 +37998,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'html' expects a segment argument:
+            a singular expression is expected:
                 /html(school)
                       ^^^^^^
         - uri: /distinct(department)
@@ -38006,7 +38006,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'distinct' expects an argument with a selector:
+            function 'distinct' expects an argument with a selector:
                 /distinct(department)
                           ^^^^^^^^^^
         - uri: /distinct(department{school})
@@ -38014,7 +38014,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: quotient column must be scalar:
+            quotient column must be scalar:
                 /distinct(department{school})
                                      ^^^^^^
         - uri: /school.limit(today())
@@ -38022,7 +38022,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'limit' expects a non-negative integer:
+            function 'limit' expects a non-negative integer:
                 /school.limit(today())
                               ^^^^^^^
         - uri: /school.limit(1,-1)
@@ -38030,7 +38030,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'limit' expects a non-negative integer:
+            function 'limit' expects a non-negative integer:
                 /school.limit(1,-1)
                                 ^^
         - uri: /department.sort(school)
@@ -38038,7 +38038,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'sort' expects a scalar expression:
+            function 'sort' expects a scalar expression:
                 /department.sort(school)
                                  ^^^^^^
         - uri: /define(today()){now()}
@@ -38046,7 +38046,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'define' expects an assignment expression:
+            function 'define' expects an assignment expression:
                 /define(today()){now()}
                         ^^^^^^^
         - uri: /today() :where now()
@@ -38054,7 +38054,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'where' expects an assignment expression:
+            function 'where' expects an assignment expression:
                 /today() :where now()
                                 ^^^^^
         - uri: /exists(school{code,name})
@@ -38062,33 +38062,33 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'exists' expects 1 argument; got 2:
+            function 'exists' expects 1 argument; got 2:
                 /exists(school{code,name})
-                        ^^^^^^^^^^^^^^^^^
+                              ^^^^^^^^^^^
         - uri: /count(school{code,name})
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'count' expects 1 argument; got 2:
+            function 'count' expects 1 argument; got 2:
                 /count(school{code,name})
-                       ^^^^^^^^^^^^^^^^^
+                             ^^^^^^^^^^^
         - uri: /avg(school{code,name})
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'avg' expects 1 argument; got 2:
+            function 'avg' expects 1 argument; got 2:
                 /avg(school{code,name})
-                     ^^^^^^^^^^^^^^^^^
+                           ^^^^^^^^^^^
         - uri: /max(school{code,name})
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: function 'max' expects 1 argument; got 2:
+            function 'max' expects 1 argument; got 2:
                 /max(school{code,name})
-                     ^^^^^^^^^^^^^^^^^
+                           ^^^^^^^^^^^
       - id: encode-errors
         tests:
         - uri: /true().fork()
@@ -38096,7 +38096,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: a code expression is expected:
+            a code expression is expected:
                 /true().fork()
                         ^^^^^^
         - uri: /true().fork(){true()}
@@ -38104,7 +38104,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: a flow expression is expected:
+            a flow expression is expected:
                 /true().fork(){true()}
                  ^^^^^^
         - uri: /school|department
@@ -38112,7 +38112,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: cannot deduce an unambiguous segment flow:
+            cannot deduce an unambiguous segment flow:
                 /school|department
                 ^^^^^^^^^^^^^^^^^^
         - uri: /department.(school^campus)
@@ -38120,7 +38120,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: a plural expression is expected:
+            a plural expression is expected:
                 /department.(school^campus)
                              ^^^^^^
         - uri: /department{code, count($school^campus)} :where $school:=school
@@ -38128,7 +38128,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: a descendant expression is expected:
+            a descendant expression is expected:
                 /department{code, count($school^campus)} :where $school:=school
                                                                          ^^^^^^
         - uri: /school^true()
@@ -38136,7 +38136,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: an empty or constant kernel is not allowed:
+            an empty or constant kernel is not allowed:
                 /school^true()
                  ^^^^^^^^^^^^^
         - uri: /date(true())
@@ -38144,7 +38144,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: cannot convert a value of type 'boolean' to 'date':
+            cannot convert a value of type 'boolean' to 'date':
                 /date(true())
                  ^^^^^^^^^^^^
         - uri: /boolean('!')
@@ -38152,7 +38152,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid Boolean literal: expected 'true' or 'false'; got '!':
+            invalid Boolean literal: expected 'true' or 'false'; got '!':
                 /boolean('!')
                  ^^^^^^^^^^^^
         - uri: /integer('!')
@@ -38160,7 +38160,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid integer literal: expected an integer in a decimal format; got '!':
+            invalid integer literal: expected an integer in a decimal format; got '!':
                 /integer('!')
                  ^^^^^^^^^^^^
         - uri: /decimal('!')
@@ -38168,7 +38168,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid decimal literal: !:
+            invalid decimal literal: !:
                 /decimal('!')
                  ^^^^^^^^^^^^
         - uri: /float('!')
@@ -38176,7 +38176,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid float literal: !:
+            invalid float literal: !:
                 /float('!')
                  ^^^^^^^^^^
         - uri: /date('!')
@@ -38184,7 +38184,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid date literal: expected a valid date in a 'YYYY-MM-DD' format; got '!':
+            invalid date literal: expected a valid date in a 'YYYY-MM-DD' format; got '!':
                 /date('!')
                  ^^^^^^^^^
         - uri: /time('!')
@@ -38192,7 +38192,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid time literal: expected a valid time in a 'HH:SS:MM.SSSSSS' format; got '!':
+            invalid time literal: expected a valid time in a 'HH:SS:MM.SSSSSS' format; got '!':
                 /time('!')
                  ^^^^^^^^^
         - uri: /datetime('!')
@@ -38200,7 +38200,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: invalid datetime literal: expected a valid date/time in a 'YYYY-MM-DD HH:SS:MM.SSSSSS' format; got '!':
+            invalid datetime literal: expected a valid date/time in a 'YYYY-MM-DD HH:SS:MM.SSSSSS' format; got '!':
                 /datetime('!')
                  ^^^^^^^^^^^^^
         - uri: /department{code, count(school)}
@@ -38208,7 +38208,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: a plural operand is expected:
+            a plural operand is expected:
                 /department{code, count(school)}
                                   ^^^^^^^^^^^^^
         - uri: /department{code, count(school{code})}
@@ -38216,7 +38216,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: a plural operand is expected:
+            a plural operand is expected:
                 /department{code, count(school{code})}
                                   ^^^^^^^^^^^^^^^^^^^
         - uri: /department{code, count($school{code})} :where $school:=school
@@ -38224,7 +38224,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: a descendant operand is expected:
+            a descendant operand is expected:
                 /department{code, count($school{code})} :where $school:=school
                                   ^^^^^^^^^^^^^^^^^^^^
         - uri: /school{code, count(program|department)}
@@ -38232,7 +38232,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: cannot deduce an unambiguous aggregate flow:
+            cannot deduce an unambiguous aggregate flow:
                 /school{code, count(program|department)}
                               ^^^^^^^^^^^^^^^^^^^^^^^^^
       - id: compile-errors
@@ -38242,7 +38242,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            compile error: a singular expression is expected:
+            a singular expression is expected:
                 /school{code, department.code}
                                          ^^^^
         - uri: /school{code, department.count(course)}
@@ -38250,7 +38250,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            compile error: a singular expression is expected:
+            a singular expression is expected:
                 /school{code, department.count(course)}
                                          ^^^^^^^^^^^^^
         - uri: /school{code, department.avg(course.credits)}
@@ -38258,7 +38258,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            compile error: a singular expression is expected:
+            a singular expression is expected:
                 /school{code, department.avg(course.credits)}
                                          ^^^^^^^^^^^^^^^^^^^
         - uri: /school{department^count(course){*}}
@@ -38266,9 +38266,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            compile error: a singular expression is expected:
+            a singular expression is expected:
                 /school{department^count(course){*}}
-                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                                ^^^
   - include: test/input/embedding.yaml
     output:
       id: embedding

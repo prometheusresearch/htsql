@@ -15,7 +15,7 @@ from ..adapter import Adapter, adapt, adapt_many
 from ..model import TableNode, ColumnArc, ChainArc
 from ..classify import normalize, localize
 from .error import CompileError
-from .syntax import IdentifierSyntax
+from ..syn.syntax import IdentifierSyntax
 from .flow import (Flow, ScalarFlow, TableFlow, FiberTableFlow, QuotientFlow,
         ComplementFlow, MonikerFlow, ForkedFlow, LinkedFlow, ClippedFlow,
         LocatorFlow, OrderedFlow, ColumnUnit, KernelUnit, CoveringUnit)

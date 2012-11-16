@@ -7,7 +7,7 @@ from ....core.adapter import adapt
 from ....core.error import BadRequestError
 from ....core.connect import transaction
 from ....core.cmd.fetch import Product
-from ....core.cmd.act import Act, ProduceAction, produce
+from ....core.cmd.act import Act, ProduceAction, act
 from .command import UpdateCmd
 from .insert import BuildExtractNode, BuildExtractTable, BuildResolveIdentity
 from .merge import BuildResolveKey, BuildExecuteUpdate
@@ -19,7 +19,7 @@ class ProduceUpdate(Act):
 
     def __call__(self):
         with transaction() as connection:
-            product = produce(self.command.feed)
+            product = act(self.command.feed, self.action)
             extract_node = BuildExtractNode.__invoke__(product.meta,
                     with_id=True, with_fields=True)
             resolve_key = BuildResolveKey.__invoke__(

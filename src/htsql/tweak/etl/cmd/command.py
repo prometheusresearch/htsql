@@ -3,15 +3,16 @@
 #
 
 
-from ....core.util import listof
-from ....core.cmd.command import Command, ProducerCmd
+from ....core.util import listof, tupleof, maybe
+from ....core.cmd.command import Command
 from ....core.entity import TableEntity
 
 
 
-class ETLCmd(ProducerCmd):
+class ETLCmd(Command):
 
-    def __init__(self, feed):
+    def __init__(self, feed, mark):
+        super(ETLCmd, self).__init__(mark)
         assert isinstance(feed, Command)
         self.feed = feed
 
@@ -32,17 +33,19 @@ class DeleteCmd(ETLCmd):
     pass
 
 
-class TruncateCmd(ProducerCmd):
+class TruncateCmd(Command):
 
-    def __init__(self, table):
+    def __init__(self, table, mark):
+        super(TruncateCmd, self).__init__(mark)
         assert isinstance(table, TableEntity)
         self.table = table
 
 
-class DoCmd(ProducerCmd):
+class DoCmd(Command):
 
-    def __init__(self, scope, ops):
-        self.scope = scope
-        self.ops = ops
+    def __init__(self, blocks, mark):
+        super(DoCmd, self).__init__(mark)
+        assert isinstance(blocks, listof(tupleof(maybe(unicode), Command)))
+        self.blocks = blocks
 
 

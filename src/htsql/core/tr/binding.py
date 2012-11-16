@@ -15,7 +15,7 @@ from ..util import maybe, listof, tupleof, Clonable, Printable, Comparable
 from ..entity import TableEntity, ColumnEntity, Join
 from ..domain import (Domain, VoidDomain, BooleanDomain, ListDomain,
         RecordDomain, EntityDomain, IdentityDomain, Profile)
-from .syntax import Syntax, VoidSyntax, IdentifierSyntax, StringSyntax
+from ..syn.syntax import Syntax, VoidSyntax, IdentifierSyntax, StringSyntax
 from .signature import Signature, Bag, Formula
 from ..cmd.command import Command
 
@@ -126,6 +126,10 @@ class SegmentBinding(Binding):
         assert isinstance(seed, Binding)
         super(SegmentBinding, self).__init__(base, domain, syntax)
         self.seed = seed
+
+
+class WeakSegmentBinding(SegmentBinding):
+    pass
 
 
 class CommandBinding(Binding):

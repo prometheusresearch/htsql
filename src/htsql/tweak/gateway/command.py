@@ -3,57 +3,46 @@
 #
 
 
-from ...core.context import context
-from ...core.adapter import adapt, call
-from ...core.cmd.command import ProducerCmd, DefaultCmd
-from ...core.cmd.act import Act, ProduceAction, act
-from ...core.tr.fn.bind import BindCommand
-from ...core.tr.signature import UnarySig
-from ...core.tr.bind import bind
-from ...core.tr.syntax import QuerySyntax, SegmentSyntax
-from ...core.tr.binding import CommandBinding
-from ...core.tr.error import BindError
-from ...core.tr.lookup import lookup_command
+from ...core.adapter import adapt
+from ...core.cmd.command import Command
+from ...core.cmd.act import Act, Action, RenderAction, act
+from ...core.cmd.summon import Summon, recognize, RecognizeError
 
 
-class GatewayCmd(ProducerCmd):
+class GatewayCmd(Command):
 
-    def __init__(self, instance, syntax, environment=None):
+    def __init__(self, instance, command, mark):
+        super(GatewayCmd, self).__init__(mark)
         self.instance = instance
-        self.syntax = syntax
-        self.environment = environment
+        self.command = command
 
 
-class BindGateway(BindCommand):
+class SummonGateway(Summon):
 
-    signature = UnarySig
     instance = None
 
-    def expand(self, op):
-        if not isinstance(op, SegmentSyntax):
-            raise BindError("a segment is required", op.mark)
-        op = QuerySyntax(op, op.mark)
-        command = GatewayCmd(self.instance, op,
-                             environment=self.state.environment)
-        return CommandBinding(self.state.scope, command, self.syntax)
+    def __call__(self):
+        if len(self.arguments) != 1:
+            raise RecognizeError("expected 1 argument", self.syntax.mark)
+        [syntax] = self.arguments
+        with self.instance:
+            command = recognize(syntax)
+        return GatewayCmd(self.instance, command, self.syntax.mark)
 
 
-class ProduceGateway(Act):
+class ActGateway(Act):
 
-    adapt(GatewayCmd, ProduceAction)
+    adapt(GatewayCmd, Action)
+
+    @classmethod
+    def __matches__(component, dispatch_key):
+        command_type, action_type = dispatch_key
+        if isinstance(action_type, RenderAction):
+            return False
+        return super(ActGateway, component).__matches__(dispatch_key)
 
     def __call__(self):
-        can_read = context.env.can_read
-        can_write = context.env.can_write
         with self.command.instance:
-            with context.env(can_read=context.env.can_read and can_read,
-                             can_write=context.env.can_write and can_write):
-                binding = bind(self.command.syntax,
-                               environment=self.command.environment)
-                command = lookup_command(binding)
-                if command is None:
-                    command = DefaultCmd(binding)
-                product = act(command, self.action)
-        return product
+            return act(self.command.command, self.action)
 
 

@@ -7,11 +7,11 @@ from ....core.context import context
 from ....core.adapter import adapt
 from ....core.cmd.act import Act, RenderAction, act
 from ....core.cmd.command import UniversalCmd, DefaultCmd
+from ....core.cmd.summon import Recognize
 from ..command import ShellCmd
-from ....core.tr.error import TranslateError
-from ....core.tr.parse import parse
-from ....core.tr.bind import bind
-from ....core.tr.lookup import lookup_command
+from ....core.syn.parse import parse
+from ....core.syn.syntax import SkipSyntax
+from ....core.error import MarkedError
 import re
 
 
@@ -49,26 +49,26 @@ class ShellRenderUniversal(Act):
             return super(ShellRenderUniversal, self).__call__()
         try:
             syntax = parse(self.command.query)
-            if addon.on_root and syntax.segment.branch is None:
-                command = ShellCmd(is_implicit=True)
+            if addon.on_root and isinstance(syntax, SkipSyntax):
+                command = ShellCmd(is_implicit=True, mark=syntax.mark)
             else:
-                binding = bind(syntax)
-                command = lookup_command(binding)
+                command = Recognize.__invoke__(syntax)
                 if command is None:
                     if (addon.on_default and
-                            syntax.segment.branch is not None):
+                            not isinstance(syntax, SkipSyntax)):
                         query = unquote(self.command.query)
                         query = query.decode('utf-8', 'replace')
-                        command = ShellCmd(query, is_implicit=True)
+                        command = ShellCmd(query, is_implicit=True,
+                                           mark=syntax.mark)
                     else:
-                        command = DefaultCmd(binding)
+                        command = DefaultCmd(syntax)
             return act(command, self.action)
-        except TranslateError:
+        except MarkedError:
             if not addon.on_error:
                 raise
             query = unquote(self.command.query)
             query = query.decode('utf-8', 'replace')
-            command = ShellCmd(query, is_implicit=True)
+            command = ShellCmd(query, is_implicit=True, mark=self.command.mark)
             return act(command, self.action)
 
 

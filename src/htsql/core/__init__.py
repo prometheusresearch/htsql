@@ -4,8 +4,8 @@
 
 
 from . import (adapter, addon, application, cache, cmd, connect, context,
-               domain, entity, error, introspect, mark, split_sql,
-               tr, util, validator, wsgi)
+        domain, entity, error, introspect, split_sql, syn, tr, util, validator,
+        wsgi)
 from .validator import DBVal, StrVal, BoolVal
 from .addon import Addon, Parameter, Variable, addon_registry
 from .connect import connect, DBError
@@ -53,7 +53,7 @@ class HTSQLAddon(Addon):
             Variable('can_write', True),
     ]
 
-    packages = ['.', '.cmd', '.fmt', '.tr', '.tr.fn']
+    packages = ['.', '.cmd', '.fmt', '.tr', '.tr.fn', '.syn']
     prerequisites = []
     postrequisites = ['engine']
 

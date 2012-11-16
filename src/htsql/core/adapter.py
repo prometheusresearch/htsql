@@ -63,6 +63,10 @@ class Component(object):
             # Create the class.
             return type.__new__(mcls, name, bases, content)
 
+        def __repr__(cls):
+            # Overriden to make a printable representation.
+            return "%s.%s" % (cls.__module__, cls.__name__)
+
     @staticmethod
     def __components__():
         """
@@ -136,21 +140,22 @@ class Component(object):
         # to match any dispatch keys.
         ## Check that we have at least one matching implementation.
         #if not implementations:
-        #    raise RuntimeError("when realizing interface %s.%s for key %r,"
+        #    raise RuntimeError("when realizing interface %s for key %r,"
         #                       " unable to find matching implementations"
-        #                       % (interface.__module__, interface.__name__,
-        #                          dispatch_key))
+        #                       % (interface.__module__, dispatch_key))
 
         # Generate a function:
         # order(implementation) -> [dominated implementations].
-        order_graph = {}
-        for dominating in implementations:
-            order_graph[dominating] = []
-            for dominated in implementations:
-                if dominating is dominated:
+        order_graph = dict((implementation, [])
+                           for implementation in implementations)
+        for implementation in implementations:
+            for challenger in implementations:
+                if implementation is challenger:
                     continue
-                if dominating.__dominates__(dominated):
-                    order_graph[dominating].append(dominated)
+                if implementation.__dominates__(challenger):
+                    order_graph[implementation].append(challenger)
+                elif implementation.__follows__(challenger):
+                    order_graph[challenger].append(implementation)
         order = (lambda implementation: order_graph[implementation])
 
         # Now we need to order the implementations unambiguously.
@@ -162,10 +167,8 @@ class Component(object):
             # of implementations which either form a domination loop or
             # have no ordering relation between them.
             message, conflict = exc
-            interface_name = "%s.%s" % (interface.__module__,
-                                        interface.__name__)
-            component_names = ", ".join("%s.%s" % (component.__module__,
-                                                   component.__name__)
+            interface_name = str(interface)
+            component_names = ", ".join(str(component)
                                         for component in conflict)
             if conflict[0] is conflict[-1]:
                 problem = "an ordering loop"
@@ -188,8 +191,7 @@ class Component(object):
         #   interface[implementation1,implementation2,...]
         module = interface.__module__
         name = "%s[%s]" % (interface.__name__,
-                           ",".join("%s.%s" % (component.__module__,
-                                               component.__name__)
+                           ",".join(str(component)
                                     for component in implementations
                                     if component is not interface))
         # Get the list of bases for the realization.
@@ -229,6 +231,14 @@ class Component(object):
         """
         # Refine in subclasses.
         return issubclass(component, other)
+
+    @classmethod
+    def __follows__(component, other):
+        """
+        Tests if the component is dominated by another component.
+        """
+        # Refine in subclasses.
+        return False
 
     @classmethod
     def __matches__(component, dispatch_key):
@@ -442,9 +452,9 @@ class Adapter(Component):
         # Note: In case if the component has more than one signature,
         # we require that at least one of the signatures is more
         # specific than some signature of the other component.  This
-        # rule does not guarantee anti-symmetricity, so ambiguously
+        # rule does not guarantee anti-symmetry, so ambiguously
         # defined implementations may make the ordering ill defined.
-        # Correctness of the ordering is verified in `Component.__realize()__`.
+        # Correctness of the ordering is verified in `Component.__realize__()`.
         for type_vector in component.__types__:
             for other_type_vector in other.__types__:
                 if aresubclasses(type_vector, other_type_vector):

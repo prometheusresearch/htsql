@@ -5,60 +5,60 @@
 
 from ..util import Printable, maybe, dictof, oneof
 from ..fmt.format import Format
+from ..syn.syntax import Syntax
+from ..error import Mark, EmptyMark
 
 
-class Command(Printable):
-    pass
+class Command(object):
+
+    def __init__(self, mark):
+        assert isinstance(mark, Mark)
+        self.mark = mark
 
 
 class UniversalCmd(Command):
 
-    def __init__(self, query, parameters=None):
-        assert isinstance(query, str)
-        assert isinstance(parameters, maybe(dictof(oneof(str, unicode),
-                                                   object)))
+    def __init__(self, query):
+        assert isinstance(query, (str, unicode))
+        super(UniversalCmd, self).__init__(EmptyMark())
         self.query = query
-        self.parameters = parameters
-
-    def __str__(self):
-        return repr(self.query)
 
 
 class DefaultCmd(Command):
 
-    def __init__(self, binding):
-        self.binding = binding
+    def __init__(self, syntax):
+        assert isinstance(syntax, Syntax)
+        super(DefaultCmd, self).__init__(syntax.mark)
+        self.syntax = syntax
 
-    def __str__(self):
-        return str(self.binding)
 
-
-class ProducerCmd(Command):
+class SkipCmd(Command):
     pass
 
 
-class FetchCmd(ProducerCmd):
+class FetchCmd(Command):
 
-    def __init__(self, binding):
-        self.binding = binding
+    def __init__(self, syntax, mark):
+        assert isinstance(syntax, Syntax)
+        super(FetchCmd, self).__init__(mark)
+        self.syntax = syntax
 
-    def __str__(self):
-        return str(self.binding)
 
+class FormatCmd(Command):
 
-class RendererCmd(Command):
-
-    def __init__(self, format, producer):
+    def __init__(self, feed, format, mark):
+        assert isinstance(feed, Command)
         assert isinstance(format, Format)
-        assert isinstance(producer, Command)
+        super(FormatCmd, self).__init__(mark)
         self.format = format
-        self.producer = producer
+        self.feed = feed
 
 
 class SQLCmd(Command):
 
-    def __init__(self, producer):
-        assert isinstance(producer, Command)
-        self.producer = producer
+    def __init__(self, feed, mark):
+        assert isinstance(feed, Command)
+        super(SQLCmd, self).__init__(mark)
+        self.feed = feed
 
 

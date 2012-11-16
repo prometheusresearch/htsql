@@ -377,7 +377,7 @@ tests:
        |             9 |
 
       /error
-      bind error: unrecognized attribute 'error':
+      unrecognized attribute 'error':
           /error
            ^^^^^
     exit: 0

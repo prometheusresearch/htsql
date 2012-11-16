@@ -6,7 +6,7 @@
 from .util import Comparable, Printable, Clonable, maybe, listof, tupleof
 from .domain import Domain
 from .entity import TableEntity, ColumnEntity, Join
-from .tr.syntax import Syntax
+from .syn.syntax import Syntax
 
 
 class Model(Comparable, Clonable, Printable):

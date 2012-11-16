@@ -13,28 +13,13 @@ translator.
 
 
 from ..util import maybe
-from ..error import BadRequestError
-from ..mark import Mark
+from ..error import MarkedError, Mark
 
 
-class TranslateError(BadRequestError):
+class TranslateError(MarkedError):
     """
     Represents a translation error.
     """
-
-    def __init__(self, detail, mark, hint=None):
-        assert isinstance(mark, Mark)
-        assert isinstance(hint, maybe(str))
-        super(TranslateError, self).__init__(detail)
-        self.mark = mark
-        self.hint = hint
-
-    def __str__(self):
-        lines = self.mark.excerpt()
-        mark_detail = "\n".join("    "+line.encode('utf-8') for line in lines)
-        return "%s: %s:\n%s%s" % (self.kind, self.detail, mark_detail,
-                                  "\n(%s)" % self.hint
-                                    if self.hint is not None else "")
 
 
 class ScanError(TranslateError):

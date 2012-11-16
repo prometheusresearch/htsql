@@ -18,13 +18,13 @@ from ..domain import (Domain, UntypedDomain, EntityDomain, RecordDomain,
         OpaqueDomain)
 from .error import EncodeError
 from .coerce import coerce
-from .syntax import WeakSegmentSyntax
-from .binding import (Binding, QueryBinding, SegmentBinding, WrappingBinding,
-        SelectionBinding, HomeBinding, RootBinding, FreeTableBinding,
-        AttachedTableBinding, ColumnBinding, QuotientBinding, KernelBinding,
-        ComplementBinding, IdentityBinding, LocatorBinding, CoverBinding,
-        ForkBinding, LinkBinding, ClipBinding, SieveBinding, SortBinding,
-        CastBinding, RescopingBinding, LiteralBinding, FormulaBinding)
+from .binding import (Binding, QueryBinding, SegmentBinding,
+        WeakSegmentBinding, WrappingBinding, SelectionBinding, HomeBinding,
+        RootBinding, FreeTableBinding, AttachedTableBinding, ColumnBinding,
+        QuotientBinding, KernelBinding, ComplementBinding, IdentityBinding,
+        LocatorBinding, CoverBinding, ForkBinding, LinkBinding, ClipBinding,
+        SieveBinding, SortBinding, CastBinding, RescopingBinding,
+        LiteralBinding, FormulaBinding)
 from .lookup import direct
 from .flow import (RootFlow, ScalarFlow, DirectTableFlow, FiberTableFlow,
         QuotientFlow, ComplementFlow, MonikerFlow, LocatorFlow, ForkedFlow,
@@ -245,7 +245,7 @@ class EncodeSegment(Encode):
             filter = FormulaCode(IsNullSig(-1), coerce(BooleanDomain()),
                                  code.binding, op=code)
             flow = FilteredFlow(flow, filter, flow.binding)
-        if isinstance(self.binding.syntax, WeakSegmentSyntax):
+        if isinstance(self.binding, WeakSegmentBinding):
             if not root.spans(flow):
                 raise EncodeError("a singular expression is expected",
                                   self.binding.mark)

@@ -9,94 +9,85 @@ tests:
 - load: etl
 - uri: /truncate(product_line)
 - uri: /truncate(manufacturer)
-- uri: /manufacturer:={code:='ACID', name:='Acer'}
+- uri: /{code:='ACID', name:='Acer'} :as manufacturer
         /:insert
-- uri: /manufacturer:={code:='DELL', name:='Dell'}
-        /:insert
+- uri: /insert(manufacturer:={code:='DELL', name:='Dell'})
 - uri: /{'TOSH' :as code, 'Toshiba' :as name} :as manufacturer
         /:insert
 - uri: /{code:='0992', name:='Lenovo'} :as manufacturer
         /:insert
-- uri: /manufacturer:={'2376' :as code, 'Gigabyte' :as name}
-        /:insert
-- uri: /manufacturer:={code:='AAPL', name:='Apple'}
+- uri: /insert(manufacturer:={'2376' :as code, 'Gigabyte' :as name})
+- uri: /{'AAPL' :as code, 'Apple' :as name} :as manufacturer
         /:insert
   headers:
     Accept: application/json
-- uri: /manufacturer:={code:='6702', name:='Fujitsu'}
+- uri: /{'6702' :as code, 'Fujitsu' :as name} :as manufacturer
         /:insert
   headers:
     Accept: x-htsql/raw
-- uri: /manufacturer:={code:='ACID', name:='Acer'}
+- uri: /{'ACID' :as code, 'Acer' :as name} :as manufacturer
         /:insert
   expect: 409
-- uri: /manufacturer:={'SMSN', 'Samsung'}
+- uri: /{'SMSN', 'Samsung'} :as manufacturer
         /:insert
   expect: 409
-- uri: /manufacturer:={code:='SMSN'}
+- uri: /{code:='SMSN'} :as manufacturer
         /:insert
   expect: 409
-- uri: /manufacturer:={name:='Samsung'}
+- uri: /{name:='Samsung'} :as manufacturer
         /:insert
   expect: 409
-- uri: /manufacturer:={code:='SMSN', name:='Samsung',
-                       full_name:='Samsung Electronics Co Ltd'}
+- uri: /{code:='SMSN', name:='Samsung',
+         full_name:='Samsung Electronics Co Ltd'} :as manufacturer
         /:insert
   expect: 400
-- uri: /manufacturer:={code:='SMSN', name:=true}
+- uri: /{code:='SMSN', name:=true} :as manufacturer
         /:insert
   expect: 400
-- uri: /manufacturer:={code:='SMSN', name:='Samsung'}
+- uri: /{code:='SMSN', name:='Samsung'} :as manufacturer
         /:insert
 - uri: /manufacturer{id(), *}
-- uri: /product_line:={manufacturer_code:='SMSN',
-                       code:='GT', title:='Galaxy Note'}
+- uri: /{manufacturer_code:='SMSN',
+         code:='GT', title:='Galaxy Note'} :as product_line
         /:insert
-- uri: /product_line:={manufacturer_code:=@manufacturer[2376].code,
-                       code:='U', title:='Extreme Ultrabook'}
+- uri: /{manufacturer_code:=@manufacturer[2376].code,
+         code:='U', title:='Extreme Ultrabook'} :as product_line
         /:insert
-- uri: /product_line:={manufacturer:='SMSN',
-                       code:='5', title:='Series 5 Ultrabook'}
+- uri: /{manufacturer:='SMSN',
+         code:='5', title:='Series 5 Ultrabook'} :as product_line
         /:insert
-- uri: /product_line:={manufacturer:=top(@manufacturer?name~'fujitsu').id(),
-                       code:='E', title:='Lifebook E Series'}
+- uri: /{manufacturer:=top(@manufacturer?name~'fujitsu').id(),
+         code:='E', title:='Lifebook E Series'} :as product_line
         /:insert
-- uri: /product_line:={manufacturer:='0992',
-                       code:='Z', title:='IdeaPad Z Series'}
+- uri: /{manufacturer:='0992',
+         code:='Z', title:='IdeaPad Z Series'} :as product_line
         /:insert
 - uri: /product_line
-- uri: /product:={sku:='A0000001',
-                  product_line:='6702.E',
-                  title:='Fujitsu LifeBook AH552/SL Notebook',
-                  description:='Are you looking for an essential notebook with an extra-slim design, suitable for daily use? Then the 39.6 cm (15.6-inch) Fujitsu LIFEBOOK AH552/SL is the right choice. With only 25.4 mm in height and weight of 2.2 kg it fits into nearly every bag. Thanks to integrated WLAN and Bluetooth® you can work anytime and anywhere and the elegant aluminum cover gives you the headturning looks.',
-                  list_price:=null}
-        /:insert
-- uri: /product:={sku:='A0000002',
-                  product_line:=[0992.Z],
-                  title:='Lenovo IdeaPad Z580'}
-        /:merge
-- uri: /product:={sku:='A0000002',
-                  description:='IdeaPad Z Series laptops offer you a great balance of multimedia performance, affordability, and bold style, so you’re sure to make impressions as well as be entertained - no matter where you go',
-                  list_price:='699.00'}
-        /:merge
-- uri: /product:={list_price:='649.00'}
-        /:merge
+- uri: /insert(product:={sku:='A0000001',
+                         product_line:='6702.E',
+                         title:='Fujitsu LifeBook AH552/SL Notebook',
+                         description:='Are you looking for an essential notebook with an extra-slim design, suitable for daily use? Then the 39.6 cm (15.6-inch) Fujitsu LIFEBOOK AH552/SL is the right choice. With only 25.4 mm in height and weight of 2.2 kg it fits into nearly every bag. Thanks to integrated WLAN and Bluetooth® you can work anytime and anywhere and the elegant aluminum cover gives you the headturning looks.',
+                         list_price:=null})
+- uri: /merge(product:={sku:='A0000002',
+                        product_line:=[0992.Z],
+                        title:='Lenovo IdeaPad Z580'})
+- uri: /merge(product:={sku:='A0000002',
+                        description:='IdeaPad Z Series laptops offer you a great balance of multimedia performance, affordability, and bold style, so you’re sure to make impressions as well as be entertained - no matter where you go',
+                        list_price:='699.00'})
+- uri: /merge(product:={list_price:='649.00'})
   expect: 400
-- uri: /product:={[A0000002],
-                  list_price:='649.00'}
-        /:update
-- uri: /product:={sku:='A0000003',
-                  manufacturer:='SMSN',
-                  title:='Smart TV'}
-        /:insert
-- uri: /product[A0000003]
-        /:delete
+- uri: /update(product:={[A0000002],
+                         list_price:='649.00'})
+- uri: /insert(product:={sku:='A0000003',
+                         manufacturer:='SMSN',
+                         title:='Smart TV'})
+- uri: /delete(product[A0000003])
   expect: 400
-- uri: /product[A0000003]{id()}
-        /:delete
-- uri: /do(/product:={sku:='A0000003',
-                      manufacturer:=[0992],
-                      title:='Lenovo ThinkPad T430'}/:insert,
+- uri: /delete(product[A0000003]{id()})
+- uri: /do(/{'A0000003' :as sku,
+             [0992] :as manufacturer,
+             'Lenovo ThinkPad T430' :as title} :as product
+            /:insert,
            /product[A0000003])
 - uri: /insert(manufacturer:={code:='SNY', name:='Sony'})/:json
 - uri: /merge({'A0000004' :as sku,

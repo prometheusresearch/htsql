@@ -15,7 +15,7 @@ from ..util import Printable, Comparable, Record, listof, maybe
 from ..adapter import Adapter, adapt, adapt_many
 from ..domain import BooleanDomain, UntypedDomain
 from .coerce import coerce
-from .syntax import WeakSegmentSyntax
+from .binding import WeakSegmentBinding
 from .flow import (Code, SegmentCode, LiteralCode, FormulaCode, CastCode,
                    RecordCode, IdentityCode, AnnihilatorCode, CorrelationCode,
                    Unit, ColumnUnit, CompoundUnit)
@@ -1535,7 +1535,7 @@ class DecomposeSegment(Decompose):
             self.state.push_segment(self.code)
             compose_code = self.state.decompose(self.code.code)
             self.state.pop_segment()
-            is_single = (isinstance(self.code.syntax, WeakSegmentSyntax))
+            is_single = (isinstance(self.code.binding, WeakSegmentBinding))
             if not is_single:
                 def compose_root_segment(row, stream,
                                          compose_code=compose_code):

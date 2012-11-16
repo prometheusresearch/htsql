@@ -7,17 +7,10 @@ from ....core.adapter import Adapter, adapt
 from ....core.connect import transaction
 from ....core.domain import IdentityDomain
 from ....core.cmd.command import DefaultCmd
-from ....core.cmd.act import Act, ProduceAction, produce
+from ....core.cmd.act import Act, ProduceAction, act
 from ....core.cmd.fetch import Product
-from ....core.tr.syntax import (WeakSegmentSyntax, AssignmentSyntax,
-        ReferenceSyntax)
 from ....core.tr.bind import BindingState
-from ....core.tr.binding import (VoidBinding, QueryBinding, SegmentBinding,
-        LiteralBinding, IdentityBinding, DefinitionBinding, BindingRecipe,
-        ClosedRecipe)
-from ....core.tr.decorate import decorate
-from ....core.tr.lookup import lookup_command
-from ....core.tr.error import BindError
+from ....core.tr.binding import LiteralRecipe, IdentityRecipe, ClosedRecipe
 from .command import DoCmd
 
 
@@ -26,41 +19,23 @@ class ProduceDo(Act):
     adapt(DoCmd, ProduceAction)
 
     def __call__(self):
-        scope = self.command.scope
-        root = scope
-        while root.base is not None:
-            root = root.base
-        reference = None
-        recipe = None
+        environment = []
+        parameters = self.action.parameters
+        if parameters is not None:
+            if isinstance(parameters, dict):
+                for name in sorted(parameters):
+                    value = parameters[name]
+                    if isinstance(name, str):
+                        name = name.decode('utf-8')
+                    recipe = embed(value)
+                    environment.append((name, recipe))
+            else:
+                environment = self.parameters[:]
         product = None
         with transaction():
-            for op in self.command.ops:
-                state = BindingState()
-                state.set_root(root)
-                state.push_scope(scope)
-                if reference is not None:
-                    seed = state.use(recipe, reference)
-                    scope = DefinitionBinding(scope, reference.identifier.value,
-                                              True, None, recipe, reference)
-                    state.push_scope(scope)
-                    reference = None
-                    recipe = None
-                if isinstance(op, AssignmentSyntax):
-                    if not isinstance(op.lbranch, ReferenceSyntax):
-                        raise BindError("a reference is expected",
-                                        op.lbranch.mark)
-                    reference = op.lbranch
-                    op = op.rbranch
-                op = WeakSegmentSyntax(op, op.mark)
-                op = state.bind(op)
-                command = lookup_command(op)
-                if command is None:
-                    if not isinstance(op, SegmentBinding):
-                        raise BindError("a segment is expected", op.mark)
-                    profile = decorate(op)
-                    binding = QueryBinding(state.root, op, profile, op.syntax)
-                    command = DefaultCmd(binding)
-                product = produce(command)
+            for reference, command in self.command.blocks:
+                action = self.action.clone(parameters=environment)
+                product = act(command, action)
                 if reference is not None:
                     if (isinstance(product.meta.domain, IdentityDomain) and
                             product.data is not None):
@@ -70,16 +45,15 @@ class ProduceDo(Act):
                                 if isinstance(element, IdentityDomain):
                                     item = convert(element, item)
                                 else:
-                                    item = LiteralBinding(state.scope, item,
-                                                          element, reference)
+                                    item = LiteralRecipe(item, element)
                                 items.append(item)
-                            return IdentityBinding(state.scope, items,
-                                                   reference)
+                            return IdentityRecipe(items)
                         literal = convert(product.meta.domain, product.data)
                     else:
-                        literal = LiteralBinding(state.scope, product.data,
-                                                 product.meta.domain, reference)
-                    recipe = ClosedRecipe(BindingRecipe(literal))
+                        literal = LiteralRecipe(product.data,
+                                                product.meta.domain)
+                    recipe = ClosedRecipe(literal)
+                    environment.append((reference, recipe))
         return product
 
 

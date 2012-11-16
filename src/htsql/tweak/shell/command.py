@@ -7,23 +7,18 @@ from ... import __version__, __legal__
 from ...core.util import maybe, listof
 from ...core.context import context
 from ...core.adapter import Adapter, adapt, adapt_many, call
-from ...core.error import HTTPError, PermissionError
+from ...core.error import HTTPError, PermissionError, MarkedError
 from ...core.domain import (Domain, BooleanDomain, NumberDomain, DateTimeDomain,
                             ListDomain, RecordDomain)
+from ...core.syn.syntax import StringSyntax, IntegerSyntax, IdentifierSyntax
 from ...core.cmd.command import UniversalCmd, Command, DefaultCmd
+from ...core.cmd.summon import Summon, RecognizeError
 from ...core.cmd.act import (Act, Action, RenderAction, UnsupportedActionError,
                              act, produce, safe_produce, analyze)
 from ...core.model import HomeNode, InvalidNode, InvalidArc
 from ...core.classify import classify, normalize
-from ...core.tr.error import TranslateError
-from ...core.tr.lookup import lookup_command
-from ...core.tr.syntax import (StringSyntax, NumberSyntax, SegmentSyntax,
-                               IdentifierSyntax, QuerySyntax)
 from ...core.tr.bind import bind
-from ...core.tr.binding import CommandBinding
 from ...core.tr.signature import Signature, Slot
-from ...core.tr.error import BindError
-from ...core.tr.fn.bind import BindCommand
 from ...core.fmt.json import (escape_json, dump_json, JS_SEQ, JS_MAP, JS_END,
                               to_raw, profile_to_raw)
 from ...core.fmt.html import Template
@@ -35,7 +30,8 @@ import wsgiref.util
 
 class ShellCmd(Command):
 
-    def __init__(self, query=None, is_implicit=False):
+    def __init__(self, query=None, is_implicit=False, mark=None):
+        super(ShellCmd, self).__init__(mark)
         assert isinstance(query, maybe(unicode))
         assert isinstance(is_implicit, bool)
         self.query = query
@@ -44,14 +40,16 @@ class ShellCmd(Command):
 
 class CompleteCmd(Command):
 
-    def __init__(self, names):
+    def __init__(self, names, mark):
+        super(CompleteCmd, self).__init__(mark)
         assert isinstance(names, listof(unicode))
         self.names = names
 
 
 class ProduceCmd(Command):
 
-    def __init__(self, query, page=None):
+    def __init__(self, query, page=None, mark=None):
+        super(ProduceCmd, self).__init__(mark)
         assert isinstance(query, unicode)
         assert isinstance(page, maybe(int))
         if page is None:
@@ -62,14 +60,16 @@ class ProduceCmd(Command):
 
 class AnalyzeCmd(Command):
 
-    def __init__(self, query):
+    def __init__(self, query, mark):
+        super(AnalyzeCmd, self).__init__(mark)
         assert isinstance(query, unicode)
         self.query = query
 
 
 class WithPermissionsCmd(Command):
 
-    def __init__(self, command, can_read, can_write):
+    def __init__(self, command, can_read, can_write, mark):
+        super(WithPermissionsCmd, self).__init__(mark)
         assert isinstance(command, Command)
         assert isinstance(can_read, bool)
         assert isinstance(can_write, bool)
@@ -116,98 +116,108 @@ class WithPermissionsSig(Signature):
     ]
 
 
-class BindShell(BindCommand):
+class SummonShell(Summon):
 
     call('shell')
-    signature = ShellSig
 
-    def expand(self, query):
-        if query is not None:
-            if isinstance(query, StringSyntax):
-                query = query.value
-            elif isinstance(query, SegmentSyntax):
-                query = unicode(query)
+    def __call__(self):
+        query = None
+        if self.arguments:
+            if len(self.arguments) != 1:
+                raise RecognizeError("expected no or 1 argument",
+                                     self.syntax.mark)
+            [syntax] = self.arguments
+            if isinstance(syntax, StringSyntax):
+                query = syntax.text
             else:
-                raise BindError("a query is required", query.mark)
-        command = ShellCmd(query)
-        return CommandBinding(self.state.scope, command, self.syntax)
+                query = unicode(syntax)
+        command = ShellCmd(query, False, self.syntax.mark)
+        return command
 
 
-class BindComplete(BindCommand):
+class SummonComplete(Summon):
 
     call('complete')
-    signature = CompleteSig
 
-    def expand(self, names):
-        identifiers = names
+    def __call__(self):
         names = []
-        for identifier in identifiers:
-            if not isinstance(identifier, (IdentifierSyntax, StringSyntax)):
-                raise BindError("an identifier is required", identifier.mark)
-            names.append(identifier.value)
-        command = CompleteCmd(names)
-        return CommandBinding(self.state.scope, command, self.syntax)
+        for syntax in self.arguments:
+            if not isinstance(syntax, (IdentifierSyntax, StringSyntax)):
+                raise RecognizeError("an identifier is required", syntax.mark)
+            if isinstance(syntax, IdentifierSyntax):
+                name = syntax.name
+            else:
+                name = syntax.text
+            names.append(name)
+        command = CompleteCmd(names, self.syntax.mark)
+        return command
 
 
-class BindProduce(BindCommand):
+class SummonProduce(Summon):
 
     call('produce')
-    signature = ProduceSig
 
-    def expand(self, query, page=None):
+    def __call__(self):
+        if not (1 <= len(self.arguments) <= 2):
+            raise RecognizeError("expected 1 or 2 arguments",
+                                 self.syntax.mark)
+        query = self.arguments[0]
         if not isinstance(query, StringSyntax):
-            raise BindError("a string literal is required", query.mark)
-        query = query.value
-        if page is not None:
-            if not isinstance(page, NumberSyntax) and page.is_integer:
-                raise BindError("an integer literal is required", page.mark)
-            page = int(page.value)
-        command = ProduceCmd(query, page)
-        return CommandBinding(self.state.scope, command, self.syntax)
+            raise RecognizeError("a string literal is required", query.mark)
+        query = query.text
+        page = None
+        if len(self.arguments) == 2:
+            page = self.arguments[1]
+            if not isinstance(page, IntegerSyntax):
+                raise RecognizeError("an integer literal is required", page.mark)
+            page = page.value
+        command = ProduceCmd(query, page, self.syntax.mark)
+        return command
 
 
-class BindAnalyze(BindCommand):
+class SummonAnalyze(Summon):
 
     call('analyze')
-    signature = AnalyzeSig
 
-    def expand(self, query):
+    def __call__(self):
+        if len(self.arguments) != 1:
+            raise RecognizeError("expected 1 argument",
+                                 self.syntax.mark)
+        query = self.arguments[0]
         if not isinstance(query, StringSyntax):
-            raise BindError("a string literal is required", query.mark)
-        query = query.value
-        command = AnalyzeCmd(query)
-        return CommandBinding(self.state.scope, command, self.syntax)
+            raise RecognizeError("a string literal is required", query.mark)
+        query = query.text
+        command = AnalyzeCmd(query, self.syntax.mark)
+        return command
 
 
-class BindWithPermissions(BindCommand):
+class SummonWithPermissions(Summon):
 
     call('with_permissions')
-    signature = WithPermissionsSig
 
-    def expand(self, query, can_read, can_write):
-        if not isinstance(query, SegmentSyntax):
-            raise BindError("a segment is required", query.mark)
-        query = QuerySyntax(query, query.mark)
+    def __call__(self):
+        if len(self.arguments) != 3:
+            raise RecognizeError("expected 3 arguments", self.syntax.mark)
+        query, can_read, can_write = self.arguments
         literals = [can_read, can_write]
         values = []
         domain = BooleanDomain()
         for literal in literals:
             if not isinstance(literal, StringSyntax):
-                raise BindError("a string literal is required", literal.mark)
+                raise RecognizeError("a string literal is required",
+                                     literal.mark)
             try:
-                value = domain.parse(literal.value)
+                value = domain.parse(literal.text)
             except ValueError, exc:
-                raise BindError(str(exc), literal.mark)
+                raise RecognizeError(str(exc), literal.mark)
             values.append(value)
         can_read, can_write = values
         with context.env(can_read=context.env.can_read and can_read,
                          can_write=context.env.can_write and can_write):
-            binding = bind(query)
-            command = lookup_command(binding)
-            if command is None:
-                command = DefaultCmd(binding)
-        command = WithPermissionsCmd(command, can_read, can_write)
-        return CommandBinding(self.state.scope, command, self.syntax)
+            query = recognize(query)
+        command = WithPermissionsCmd(query, can_read, can_write,
+                                     self.syntax.mark)
+        return command
 
 
 class RenderShell(Act):
@@ -381,12 +391,12 @@ class RenderProduceAnalyze(Act):
         first_column = None
         last_line = None
         last_column = None
-        if isinstance(exc, TranslateError) and exc.mark.input:
+        if isinstance(exc, MarkedError) and exc.mark.text:
             mark = exc.mark
-            first_break = mark.input.rfind(u'\n', 0, mark.start)+1
-            last_break = mark.input.rfind(u'\n', 0, mark.end)+1
-            first_line = mark.input.count(u'\n', 0, first_break)
-            last_line = mark.input.count(u'\n', 0, last_break)
+            first_break = mark.text.rfind(u'\n', 0, mark.start)+1
+            last_break = mark.text.rfind(u'\n', 0, mark.end)+1
+            first_line = mark.text.count(u'\n', 0, first_break)
+            last_line = mark.text.count(u'\n', 0, last_break)
             first_column = mark.start-first_break
             last_column = mark.end-last_break
             hint = exc.hint

@@ -3,14 +3,6 @@
 #
 
 
-"""
-:mod:`htsql.core.util`
-======================
-
-This module provides various hard-to-categorize utilities.
-"""
-
-
 import re
 import sys
 import math
@@ -18,9 +10,1037 @@ import decimal
 import urllib
 import pkgutil
 import datetime, time
+import collections
 import keyword
 import operator
 import unicodedata
+
+
+#
+# Type checking helpers.
+#
+
+
+class maybe(object):
+    """
+    Checks if a value is either ``None`` or an instance of the specified type.
+
+    Use with ``isinstance()`` as in::
+
+        isinstance(X, maybe(T))
+    """
+
+    def __init__(self, value_type):
+        self.value_type = value_type
+
+    def __instancecheck__(self, value):
+        return (value is None or isinstance(value, self.value_type))
+
+
+class oneof(object):
+    """
+    Checks if a value is an instance of one of the specified types.
+
+    Use with ``isinstance()`` as in::
+
+        isinstance(X, oneof(T1, T2, ...))
+    """
+
+    def __init__(self, *value_types):
+        self.value_types = value_types
+
+    def __instancecheck__(self, value):
+        return any(isinstance(value, value_type)
+                   for value_type in self.value_types)
+
+
+class listof(object):
+    """
+    Checks if a value is a list containing elements of the specified type.
+
+    Use with ``isinstance()`` as in::
+    
+        isinstance(X, listof(T))
+    """
+
+    def __init__(self, item_type):
+        self.item_type = item_type
+
+    def __instancecheck__(self, value):
+        return (isinstance(value, list) and
+                all(isinstance(item, self.item_type) for item in value))
+
+
+class setof(object):
+    """
+    Checks if a value is a set containing elements of the specified type.
+
+    Use with ``isinstance()`` as in::
+    
+        isinstance(X, setof(T))
+    """
+
+    def __init__(self, item_type):
+        self.item_type = item_type
+
+    def __instancecheck__(self, value):
+        return (isinstance(value, set) and
+                all(isinstance(item, self.item_type) for item in value))
+
+
+class tupleof(object):
+    """
+    Checks if a value is a tuple with the fixed number of elements
+    of the specified types.
+
+    Use with ``isinstance()`` as in::
+
+        isinstance(X, tupleof(T1, T2, ..., TN))
+    """
+
+    def __init__(self, *item_types):
+        self.item_types = item_types
+
+    def __instancecheck__(self, value):
+        return (isinstance(value, tuple) and
+                len(value) == len(self.item_types) and
+                all(isinstance(item, item_type)
+                    for item, item_type in zip(value, self.item_types)))
+
+
+class dictof(object):
+    """
+    Checks if a value is a dictionary with keys and elements of
+    the specified types.
+
+    Use with ``isinstance()`` as in::
+    
+        isinstance(X, dictof(T1, T2))
+    """
+
+    def __init__(self, key_type, item_type):
+        self.key_type = key_type
+        self.item_type = item_type
+
+    def __instancecheck__(self, value):
+        return (isinstance(value, dict) and
+                all(isinstance(key, self.key_type) and
+                    isinstance(value[key], self.item_type)
+                    for key in value))
+
+
+class omapof(object):
+    """
+    Checks if a value is an :class:`omap` object with elements of the specified
+    type.
+
+    Use with ``isinstance()`` as in::
+    
+        isinstance(X, omapof(T))
+    """
+
+    def __init__(self, item_type):
+        self.item_type = item_type
+
+    def __instancecheck__(self, value):
+        return (isinstance(value, frozenomap) and
+                all(isinstance(item, self.item_type)
+                    for item in value))
+
+
+class subclassof(object):
+    """
+    Checks if a value is a subclass of the specified class.
+
+    Use with ``isinstance()`` as in::
+
+        isinstance(X, subclassof(T))
+    """
+
+    def __init__(self, class_type):
+        self.class_type = class_type
+
+    def __instancecheck__(self, value):
+        return (isinstance(value, type) and issubclass(value, self.class_type))
+
+
+class filelike(object):
+    """
+    Checks if a value is a file or a file-like object.
+
+    Usage::
+
+        isinstance(X, filelike())
+    """
+
+    def __instancecheck__(self, value):
+        return (hasattr(value, 'read') or hasattr(value, 'write'))
+
+
+def aresubclasses(subclasses, superclasses):
+    """
+    Takes two lists; checks if each element of the first list is
+    a subclass of the corresponding element in the second list.
+
+    `subclasses`: sequence of ``type``
+        A list of potential subclasses.
+
+    `superclasses`: sequence of ``type``
+        A list of potential superclasses.
+
+    *Returns*: ``bool``
+        ``True`` if the check succeeds; ``False`` otherwise.
+    """
+    return (len(subclasses) == len(superclasses) and
+            all(issubclass(subclass, superclass)
+                for subclass, superclass in zip(subclasses, superclasses)))
+
+
+def isfinite(value):
+    """
+    Verifies that the given value is a finite number.
+    """
+    return (isinstance(value, (int, long)) or
+            (isinstance(value, float) and not math.isinf(value)
+                                      and not math.isnan(value)) or
+            (isinstance(value, decimal) and value.is_finite()))
+
+
+#
+# Text and formatting utilities.
+#
+
+
+def trim_doc(doc):
+    """
+    Strips indentation from a docstring; also removes leading and trailing
+    blank lines.
+
+    `doc`: ``str`` or ``None``
+        A docstring.
+    """
+    assert isinstance(doc, maybe(oneof(str, unicode)))
+
+    # Pass `None` through.
+    if doc is None:
+        return None
+
+    # Convert to a list of lines and remove leading and trailing blank lines.
+    lines = doc.splitlines()
+    while lines and not lines[0].strip():
+        lines.pop(0)
+    while lines and not lines[-1].strip():
+        lines.pop(-1)
+
+    # Find the smallest indentation for non-empty lines.
+    indent = None
+    for line in lines:
+        short_line = line.lstrip()
+        if short_line:
+            line_indent = len(line)-len(short_line)
+            if indent is None or line_indent < indent:
+                indent = line_indent
+
+    # Strip indentation whitespaces and return the result.
+    if indent:
+        lines = [line[indent:] for line in lines]
+    return "\n".join(lines)
+
+
+def to_name(text):
+    """
+    Converts a non-empty string to a valid HTSQL identifier.
+
+    The given `text`: ``unicode`` value is transformed as follows:
+
+    - translated to Unicode normal form C;
+    - converted to lowercase;
+    - has non-alphanumeric characters replaced with underscores;
+    - preceded with an underscore if it starts with a digit.
+    """
+    assert isinstance(text, unicode) and len(text) > 0
+    text = unicodedata.normalize('NFC', text).lower()
+    text = re.sub(ur"(?u)^(?=\d)|\W", u"_", text)
+    return text
+
+
+def similar(model, sample):
+    """
+    Checks if `model` is similar to `sample`.
+
+    `model`: ``unicode``
+        A model string.
+
+    `sample`: ``unicode``
+        A sample string.
+
+    *Returns*: ``bool``
+        ``True`` if `model` is not too much different from `sample`;
+        ``False`` otherwise.
+
+    Use for error reporting to suggest alternatives for an unknown `model`
+    identifier.
+    """
+    assert isinstance(model, unicode)
+    assert isinstance(sample, unicode)
+
+    # Skip empty strings.
+    if not model or not sample:
+        return False
+
+    # Confirm similarity if `model` is a prefix of `sample`, but not for
+    # a one-character `model`.
+    if len(model) > 1 and sample.startswith(model):
+        return True
+
+    # Find the edit distance between `model` and `sample`; confirm similarity
+    # if the distance is not greater than `1 + 1/5 * len(model)`.
+    M = len(model)
+    N = len(sample)
+    threshold = 1+M/5
+    INF = threshold+1
+    # Bail out early if the threshold is impossible to reach.
+    if abs(M-N) > threshold:
+        return False
+    # The edit distance between `model[:i]` and `sample[:j]`.
+    distance = {}
+    # Boundary conditions.
+    for i in range(min(M, threshold)+1):
+        distance[i, 0] = i
+    for j in range(min(N, threshold)+1):
+        distance[0, j] = j
+    # Apply dynamic programming with a recursive formula:
+    #   distance[i,j] = min(distance[i-1, j-1] + 1 (REPLACE),
+    #                       distance[i, j-1] + 1 (INSERT),
+    #                       distance[i-1, j] + 1 (DELETE),
+    #                       distance[i-1, j-1] if model[i] == sample[j])
+    for i in range(1, M+1):
+        for j in range(max(1, i-threshold), min(N, i+threshold)+1):
+            k = distance.get((i-1, j-1), INF)
+            if model[i-1] != sample[j-1]:
+                k += 1
+            if (i > 1 and j > 1 and model[i-2] == sample[j-1]
+                                and model[i-1] == sample[j-2]):
+                k = min(k, distance.get((i-2, j-2), INF)+1)
+            k = min(k, distance.get((i-1, j), INF)+1,
+                       distance.get((i, j-1), INF)+1)
+            if k <= threshold:
+                distance[i, j] = k
+
+    # Check if the distance does not exceed the threshold.
+    return ((M, N) in distance)
+
+
+class TextBuffer(object):
+    """
+    Reads the input text in blocks matching some regular expressions.
+
+    `text`: ``str`` or ``unicode``
+        The input text.
+    """
+
+    # Characters to skip over.
+    skip_regexp = re.compile(r"(?: \s+ | [#] [^\r\n]* )+", re.X)
+
+    def __init__(self, text):
+        assert isinstance(text, (str, unicode))
+        # The input text.
+        self.text = text
+        # The head of the buffer.
+        self.index = 0
+        # Advance over whitespace and comments.
+        self.skip()
+
+    def reset(self):
+        """
+        Rewinds to the beginning of the text.
+        """
+        self.index = 0
+        self.skip()
+
+    def peek(self, pattern):
+        """
+        Checks if the head of the buffer matches the given pattern.
+
+        `pattern`: ``str`` or ``unicode``
+            A regular expression pattern.
+
+        *Returns*: ``bool``
+            ``True`` if the buffer head matches the given pattern; ``False``
+            otherwise.
+        """
+        # Match the given pattern against the buffer head.
+        regexp = re.compile(pattern, re.X)
+        match = regexp.match(self.text, self.index)
+        return (match is not None)
+
+    def pull(self, pattern):
+        """
+        Reads a text block matching the given pattern from the head of the
+        buffer.
+
+        `pattern`: ``str`` or ``unicode``
+            A regular expression pattern.
+
+        *Returns*: ``str`` or ``unicode`` or ``None``
+            A text block; ``None`` if the buffer head does not match the
+            pattern.
+
+        :meth:`pull` skips whitespace characters and comments at the head of
+        the buffer.
+        """
+        # The matching block of text.
+        block = None
+        # Match the given pattern against the buffer head.
+        regexp = re.compile(pattern, re.X)
+        match = regexp.match(self.text, self.index)
+        if match is not None:
+            # Extract the block that matched the pattern.
+            block = match.group()
+            # Move the buffer head.
+            self.index = match.end()
+            # Advance over whitespace characters and comments.
+            self.skip()
+        return block
+
+    def skip(self):
+        # Advance over whitespace characters and comments.
+        if self.skip_regexp is not None:
+            match = self.skip_regexp.match(self.text, self.index)
+            if match is not None:
+                self.index = match.end()
+
+    def fail(self, message):
+        """
+        Generates an exception with a fragment of the buffer at the current
+        position included in the error message.
+
+        `message`: ``str``
+            The error message.
+
+        *Returns*: :exc:`RuntimeError` instance
+        """
+        # The buffer from which we extract the fragment.
+        excerpt = self.text
+        # The head position.
+        index = self.index
+        # Convert the buffer to unicode and adjust the position.
+        if isinstance(excerpt, str):
+            excerpt = excerpt.decode('utf-8', 'replace')
+            index = len(excerpt[:index].decode('utf-8', 'replace'))
+        # Extract the line around the head position.
+        start = excerpt.rfind(u"\n", 0, index)+1
+        end = exceprt.find(u"\n", start)
+        if end == -1:
+            end = len(text)
+        excerpt = excerpt[start:end].encode('utf-8')
+        # Make a pointer to the buffer head.
+        indent = index-start
+        pointer = ' '*indent + '^'
+        # Generate an exception object.
+        return RuntimeError("\n".join([message, excerpt, pointer]))
+
+
+#
+# Topological sorting.
+#
+
+
+def toposort(elements, order, is_total=False):
+    """
+    Sorts elements with respect to the given partial order.
+
+    Takes a list of elements and a partial order relation.  Returns
+    the elements reordered to satisfy the given order.
+
+    `elements`
+        A list of elements.
+
+    `order`
+        A function which represents the partial order relation.  ``order(x)``
+        takes an element `x` and produces a list of elements that must
+        preceed `x`.
+
+    `is_total`: ``bool``
+        If set, validates that the given partial order is, in fact, total.
+
+    This function raises :exc:`RuntimeError` if `order` is not a valid
+    partial order (contains loops) or when `is_total` is set and `order`
+    is not a valid total order.
+    """
+    # For a description of the algorithm, see, for example,
+    #   http://en.wikipedia.org/wiki/Topological_sorting
+    # In short, we apply depth-first search to the DAG represented
+    # by the partial order.  As soon as the search finishes exploring
+    # some node, the node is added to the list.
+
+    # The sorted list.
+    ordered = []
+    # The set of nodes which the DFS has already processed.
+    visited = set()
+    # The set of nodes currently being processed by the DFS.
+    active = set()
+    # The path to the current node.  Note that `set(path) == active`.
+    path = []
+    # The map from a node to the position of the node in the original list.
+    positions = dict((element, index)
+                     for index, element in enumerate(elements))
+
+    # Implements the depth-first search.
+    def dfs(node):
+        # Check if the node has already been processed.
+        if node in visited:
+            return
+
+        # Update the path; check for cycles.
+        path.append(node)
+        if node in active:
+            raise RuntimeError("order is not valid: loop detected",
+                               path[path.index(node):])
+        active.add(node)
+
+        # Get the list of adjacent nodes.
+        adjacents = order(node)
+        # Sort the adjacent elements according to their order in the
+        # original list.  It helps to keep the original order when possible.
+        adjacents = sorted(adjacents, key=(lambda i: positions[i]))
+
+        # Visit the adjacent nodes.
+        for adjacent in adjacents:
+            dfs(adjacent)
+
+        # If requested, check that the order is total.
+        if is_total and ordered:
+            if ordered[-1] not in adjacents:
+                raise RuntimeError("order is not total",
+                                   [ordered[-1], node])
+
+        # Add the node to the sorted list.
+        ordered.append(node)
+
+        # Remove the node from the path; add it to the set of processed nodes.
+        path.pop()
+        active.remove(node)
+        visited.add(node)
+
+    # Apply the DFS to the whole DAG.
+    for element in elements:
+        dfs(element)
+
+    # Break the cycle created by a recursive nested function.
+    dfs = None
+
+    return ordered
+
+
+#
+# Cached property decorator.
+#
+
+
+class cachedproperty(object):
+    """
+    Implements a cached property decorator.
+
+    The decorator calls the `getter` function on the first access to the
+    property and saves the result.  Any subsequent access to the property
+    returns the saved value.
+
+    Usage::
+
+        class C(object):
+            @cachedproperty
+            def field(self):
+                # Called once to calculate the field value.
+                # [...]
+                return value
+    """
+
+    def __init__(self, getter):
+        self.getter = getter
+        # Steal the name and the docstring.
+        self.__name__ = getter.__name__
+        self.__doc__ = getter.__doc__
+
+    def __get__(self, obj, objtype=None):
+        # Access as a class attribute.
+        if obj is None:
+            return self
+
+        # Access as an instance attribute; invoke the getter.
+        value = self.getter(obj)
+        # Store the result in the instance dictionary.  Since for a non-data
+        # descriptor (i.e., without `__set__()`) `__dict__` takes the
+        # precedence, the descriptor will never be called again.
+        obj.__dict__[self.__name__] = value
+        return value
+
+
+#
+# Object types with special behavior.
+#
+
+
+class frozenomap(collections.Mapping):
+    """
+    An ordered immutable mapping.
+
+    This container behaves like an immutable ``dict`` object with one
+    exception: iterating over the container produces *values* (rather than
+    *keys*) in the order they were added to the container.
+    """
+
+    def __init__(self, iterable=None):
+        # List of keys in the order of insertion.
+        self._keys = []
+        # key -> value dictionary.
+        self._value_by_key = {}
+        # Initialize the mapping with elements from `iterable`.
+        if isinstance(iterable, collections.Mapping):
+            iterable = iterable.iteritems()
+        if iterable is not None:
+            for key, value in iterable:
+                if key not in self._value_by_key:
+                    self._keys.append(key)
+                self._value_by_key[key] = value
+
+    def __repr__(self):
+        # 'omap([(key, value), ...])'
+        return "%s([%s])" % (self.__class__.__name__,
+                             ", ".join(repr((key, self._value_by_key[key]))
+                                       for key in self._keys))
+
+    def __hash__(self):
+        return hash(tuple((key, self._value_by_key[key])
+                          for key in self._keys))
+
+    def __eq__(self, other):
+        # Respect both the mapping content and the order of insertion.
+        if not isinstance(other, frozenomap):
+            return NotImplemented
+        return (self._keys == other._keys and
+                self._value_by_key == other._value_by_key)
+
+    # `__ne__` is defined in `collections.Mapping`
+
+    # Implementation of `collections.Mapping` API.
+
+    def __iter__(self):
+        # Here we diverge from `dict` interface: `iter(omap)` yields *values*.
+        for key in self._keys:
+            yield self._value_by_key[key]
+
+    def __len__(self):
+        return len(self._keys)
+
+    def __contains__(self, key):
+        return (key in self._value_by_key)
+
+    def __getitem__(self, key):
+        return self._value_by_key[key]
+
+    def iterkeys(self):
+        return iter(self._keys)
+
+    def itervalues(self):
+        for key in self._keys:
+            yield self._value_by_key[key]
+
+    def iteritems(self):
+        for key in self._keys:
+            yield (key, self._value_by_key[key])
+
+    def keys(self):
+        return list(self._keys)
+
+    def items(self):
+        return [(key, self._value_by_key[key]) for key in self._keys]
+
+    def values(self):
+        return [self._value_by_key[key] for key in self._keys]
+
+
+class omap(frozenomap, collections.MutableMapping):
+    """
+    An ordered mutable mapping.
+
+    This container behaves like a ``dict`` object with one exception: iterating
+    over the container produces *values* (rather than *keys*) in the order they
+    were added to the container.
+
+    Overriding an entry does not change its position; delete and insert the
+    entry to move it to the end.
+    """
+
+    __hash__ = None
+
+    # Implementation of `collections.MutableMapping` API.
+
+    def __setitem__(self, key, value):
+        if key not in self._value_by_key:
+            self._keys.append(key)
+        self._value_by_key[key] = value
+
+    def __delitem__(self, key):
+        # FIXME: O(N) behavior.
+        del self._value_by_key[key]
+        self._keys.remove(key)
+
+    def popitem(self):
+        key = self._keys.pop()
+        value = self._value_by_key[key]
+        del self._value_by_key[key]
+        return value
+
+    def clear(self):
+        self._keys = []
+        self._value_by_key = {}
+
+    def update(iterable):
+        if isinstance(iterable, collections.Mapping):
+            iterable = iterable.iteritems()
+        for key, value in iterable:
+            if key not in self._value_by_key:
+                self._keys.append(key)
+            self._value_by_key[key] = value
+
+
+class Record(tuple):
+    """
+    A tuple with named fields.
+    """
+
+    # Forbid dynamic attributes.
+    __slots__ = ()
+    # List of field names (`None` when the field has no name).
+    __fields__ = ()
+    # Function generating a string representation from field values.
+    __dump__ = None
+
+    @classmethod
+    def make(cls, name, fields, dump=None):
+        """
+        Generates a :class:`Record` subclass with the given fields.
+
+        `name`: ``str``, ``unicode`` or ``None``.
+            The name of the new class.
+
+        `fields`: list of ``str``, ``unicode`` or ``None``.
+            List of desired field names (``None`` for a field to have no name).
+
+            A field may get no or another name assigned if the desired field
+            name is not available for some reason; e.g., if it is is already
+            taked by another field or if it coincides with a Python keyword.
+
+        `dump`
+            An implementation of ``__str__`` method.
+
+        *Returns*: subclass of :class:`Record`
+            A generated class.
+        """
+        assert isinstance(name, maybe(oneof(str, unicode)))
+        assert isinstance(fields, listof(maybe(oneof(str, unicode))))
+
+        # Process the class name; must be a regular string.
+        if isinstance(name, unicode):
+            name = name.encode('utf-8')
+        # Check if the name is a valid identifier.
+        if name is not None and not re.match(r'^(?!\d)\w+$', name):
+            name = None
+        # If the name is a Python keyword, prepend it with `_`.
+        if name is not None and keyword.iskeyword(name):
+            name = name+'_'
+        # If the name is not given or not available, use `'Record'`.
+        if name is None:
+            name = cls.__name__
+
+        # Names already taken.
+        duplicates = set()
+        # Process all field names.
+        for idx, field in enumerate(fields):
+            if field is None:
+                continue
+            # An attribute name must be a regular string.
+            if isinstance(field, unicode):
+                field = field.encode('utf-8')
+            # Only permit valid identifiers.
+            if not re.match(r'^(?!\d)\w+$', field):
+                field = None
+            # Do not allow special names (starting with `__`).
+            elif field.startswith('__'):
+                field = None
+            else:
+                # Python keywords are prepended with `_`.
+                if keyword.iskeyword(field):
+                    field = field+'_'
+                # Skip names already taken.
+                if field in duplicates:
+                    field = None
+                # Store the normalized name.
+                fields[idx] = field
+                duplicates.add(field)
+
+        # Prepare the class namespace and generate the class.
+        bases = (cls,)
+        # The class namespace.
+        content = {}
+        content['__slots__'] = ()
+        content['__fields__'] = tuple(fields)
+        # For each named field, add a respective descriptor to the class
+        # namespace.
+        for idx, field in enumerate(fields):
+            if field is None:
+                continue
+            content[field] = property(operator.itemgetter(idx))
+        # Store the `__str__` implementation.
+        if dump is not None:
+            content['__dump__'] = dump
+        # Generate and return the new class.
+        return type(name, bases, content)
+
+    def __new__(cls, *args, **kwds):
+        # Create a new record instance.
+
+        # Field values are specified via positional and keyword arguments.
+        if kwds:
+            # For each field not specified via a positional argument,
+            # find the value from a keyword argument.
+            args_tail = []
+            for field in cls.__fields__[len(args):]:
+                if field not in kwds:
+                    if field is not None:
+                        raise TypeError("Missing argument %r" % field)
+                    else:
+                        raise TypeError("Missing argument #%d"
+                                        % (len(args)+len(args_tail)+1))
+                args_tail.append(kwds.pop(field))
+            # Complain if there is an unexpected keyword argument.
+            if kwds:
+                field = sorted(kwds)[0]
+                if field in cls.__fields__:
+                    raise TypeError("Duplicate argument %r" % field)
+                else:
+                    raise TypeError("Unknown argument %r" % field)
+            # Merge processed keyword arguments.
+            args = args+tuple(args_tail)
+
+        # Complain if the number of arguments differs from the number of fields.
+        if len(args) != len(cls.__fields__):
+            raise TypeError("Expected %d arguments, got %d"
+                            % (len(cls.__fields__), len(args)))
+
+        # Create a record instance.
+        return tuple.__new__(cls, args)
+
+    def __getnewargs__(self):
+        # Pickle serialization.
+        return tuple(self)
+
+    def __str__(self):
+        # Use a custom `str()` implementation if provided,
+        # otherwise, use `repr()`.
+        if self.__class__.__dump__ is None:
+            return repr(self)
+        return self.__class__.__dump__(self)
+
+    def __repr__(self):
+        # Dump:
+        #   record_name(field_name=..., [N]=...)
+        return ("%s(%s)"
+                % (self.__class__.__name__,
+                   ", ".join("%s=%r" % (name or '[%s]' % idx, value)
+                             for idx, (name, value)
+                                in enumerate(zip(self.__fields__, self)))))
+
+
+class Clonable(object):
+    """
+    A clonable object.
+
+    Subclasses of :class:`Clonable` can use :meth:`clone` and :meth:`clone_to`
+    methods to create a clone of the given object with a specified set of
+    attributes replaced.
+
+    Subclasses of :class:`Clonable` must follow the following conventions:
+
+    (1) Clonable objects must be immutable.
+
+    (2) Each subclass must reimplement the `__init__` constructor.  All
+        arguments of ``__init__`` must be stored as instance attributes
+        unchanged (or, if changed, must still be in the form acceptable by the
+        constructor).
+
+    (3) The constructor must not expect a ``*``-wildcard argument.
+
+    (4) The constructor may take a ``**``-wildcard argument.  In this case,
+        the argument itself and all its entries must be stored as instance
+        attributes.
+    """
+
+    def __init__(self):
+        # Must be overriden in subclasses.
+        raise NotImplementedError()
+
+    def clone(self, **replacements):
+        """
+        Clones the object assigning new values to selected attributes.
+
+        `replacements`
+            New attribute values.
+
+        *Returns*
+            A new object of the same type that has the same attribute values
+            except those for which new values are specified.
+        """
+        # A shortcut: if there are no replacements, we could reuse
+        # the same object.
+        if not replacements:
+            return self
+        # Otherwise, reuse a more general method.
+        return self.clone_to(self.__class__, **replacements)
+
+    def clone_to(self, clone_type, **replacements):
+        """
+        Clones the object changing its type and assigning new values to
+        selected attributes.
+
+        `clone_type`: ``type``
+            The type of the new object.
+
+        `replacements`
+            New attribute values.
+
+        *Returns*
+            A new object of the specified type which has the same attribute
+            values as the original object except those for which new values are
+            provided.
+        """
+        # Get the list of constructor arguments.  We expect that for each
+        # constructor argument, the object has an attribute with the same name.
+        init_code = self.__init__.im_func.func_code
+        # Fetch the names of regular arguments, but skip `self`.
+        names = list(init_code.co_varnames[1:init_code.co_argcount])
+        # Check for * and ** arguments.  We cannot properly support
+        # * arguments, so just complain about it.
+        assert not (init_code.co_flags & 0x04)  # CO_VARARGS
+        # Check for ** arguments.  If present, they must adhere
+        # the following protocol:
+        # (1) The object must keep the ** dictionary as an attribute
+        #     with the same name and content.
+        # (2) The object must have an attribute for each entry in
+        #     the ** dictionary.
+        if init_code.co_flags & 0x08:           # CO_VARKEYWORDS
+            name = init_code.co_varnames[init_code.co_argcount]
+            names += sorted(getattr(self, name))
+        # Check that all replacements are, indeed, constructor parameters.
+        assert all(key in names for key in sorted(replacements))
+        # Arguments of a constructor call to generate a clone.
+        arguments = {}
+        # Indicates if at least one argument has changed.
+        is_modified = False
+        # If the target type differs from the object type, we need to
+        # generate a new object even when there are no modified attributes.
+        if self.__class__ is not clone_type:
+            is_modified = True
+        # For each argument, either extract the current value, or
+        # get a replacement.
+        for name in names:
+            value = getattr(self, name)
+            if name in replacements and replacements[name] is not value:
+                value = replacements[name]
+                is_modified = True
+            arguments[name] = value
+        # Even though we may have some replacements, in fact they all coincide
+        # with the object attributes, so we could reuse the same object.
+        if not is_modified:
+            return self
+        # Call the constructor and return a new object.
+        clone = clone_type(**arguments)
+        return clone
+
+
+class Comparable(object):
+    """
+    An object with by-value comparison semantics.
+
+    A subclass of :class:`Comparable` should reimplement :meth:`__basis__`
+    to produce a tuple of all object attributes which uniquely identify
+    the object.
+
+    Two :class:`Comparable` instances are considered equal if they are of
+    the same type and their basis vectors are equal.
+    """
+
+    def __hash__(self):
+        return self._hash
+
+    def __basis__(self):
+        """
+        Returns a vector of values uniquely identifying the object.
+        """
+        raise NotImplementedError()
+        ## By default, objects are compared by identity.  Reimplement
+        ## for by-value comparison.
+        #return id(self)
+
+    @cachedproperty
+    def _hash(self):
+        # Calculate and cache the object hash.
+        return hash(self._basis)
+
+    @cachedproperty
+    def _basis(self):
+        # Get the object basis vector.
+        _basis = self.__basis__()
+        # Flatten and return the vector.
+        if isinstance(_basis, tuple):
+            elements = []
+            for element in _basis:
+                if isinstance(element, Comparable):
+                    elements.append((element.__class__,
+                                     element._hash,
+                                     element._basis))
+                else:
+                    elements.append(element)
+            _basis = tuple(elements)
+        return _basis
+
+    def __eq__(self, other):
+        # We could just compare object basis vectors, but
+        # for performance, we start with faster checks.
+        return ((self is other) or
+                (isinstance(other, Comparable) and
+                 self.__class__ is other.__class__ and
+                 self._hash == other._hash and
+                 self._basis == other._basis))
+
+    def __ne__(self, other):
+        # Since we override `==`, we also need to override `!=`.
+        return ((self is not other) and
+                (not isinstance(other, Comparable) or
+                 self.__class__ is not other.__class__ or
+                 self._hash != other._hash and
+                 self._basis != other._basis))
+
+
+class Printable(object):
+    """
+    An object with default string representation.
+
+    A subclass of :class:`Printable` is expected to reimplement the
+    :meth:`__unicode__` method.
+    """
+
+    def __unicode__(self):
+        # Override in subclasses.
+        return u"-"
+
+    def __str__(self):
+        # Reuse implementation of `__unicode__`.
+        return unicode(self).encode('utf-8')
+
+    def __repr__(self):
+        return "<%s %s>" % (self.__class__.__name__, self)
 
 
 #
@@ -28,39 +1048,31 @@ import unicodedata
 #
 
 
-class DB(object):
+class DB(Clonable, Comparable, Printable):
     """
-    Represents parameters of a database connection.
+    Parameters of a database connection.
 
-    `engine`
-        The type of the database server; currently supported are ``'pgsql'``
-        and ``'sqlite'``.
+    `engine`: ``str``
+        The type of the database server; e.g., ``'pgsql'`` or ``'sqlite'``.
 
-    `username`
-        The user name used to authenticate; ``None`` to use the default.
+    `database`: ``str``
+        The name of the database; the path to the database file for SQLite.
 
-    `password`
-        The password used to authenticate; ``None`` to authenticate
+    `username`: ``str`` or ``None``
+        The user name used for authentication; ``None`` to use the default.
+
+    `password`: ``str`` or ``None``
+        The password used for authentication; ``None`` to authenticate
         without providing a password.
 
-    `host`
-        The host address; ``None`` to use the default.
+    `host`: ``str`` or ``None``
+        The host address; ``None`` to use the default or when not applicable.
 
-    `port`
-        The port number; ``None`` to use the default.
+    `port`: ``int`` or ``None``
+        The port number; ``None`` to use the default or when not applicable.
 
-    `database`
-        The database name.
-
-        For SQLite, the path to the database file, or `:memory:`.
-
-    `options`
-        A dictionary containing extra connection parameters.
-
-        Currently ignored by all engines.
-
-    The parameters `username`, `password`, `host`, `port` are
-    ignored by the SQLite engine.
+    `options`: ``dict`` or ``None``
+        A dictionary containing extra connection parameters; currently unused.
     """
 
     # Regular expression for parsing a connection URI of the form:
@@ -87,68 +1099,59 @@ class DB(object):
     ''' % vars()
     regexp = re.compile(pattern)
 
-    def __init__(self, engine, username, password, host, port, database,
-                 options=None):
-        # Sanity checking on the arguments.
+    def __init__(self, engine, database, username=None, password=None,
+                 host=None, port=None, options=None):
         assert isinstance(engine, str)
+        assert isinstance(database, str)
         assert isinstance(username, maybe(str))
         assert isinstance(password, maybe(str))
         assert isinstance(host, maybe(str))
         assert isinstance(port, maybe(int))
-        assert isinstance(database, str)
         assert isinstance(options, maybe(dictof(str, str)))
 
         self.engine = engine
+        self.database = database
         self.username = username
         self.password = password
         self.host = host
         self.port = port
-        self.database = database
         self.options = options
+
+    def __basis__(self):
+        return (self.engine, self.database,
+                self.username, self.password, self.host, self.port,
+                tuple(sorted(self.options))
+                    if self.options is not None else None)
 
     @classmethod
     def parse(cls, value):
         """
-        Parses a connection URI and returns a corresponding
-        :class:`DB` instance.
+        Parses a connection URI and returns a corresponding :class:`DB`
+        instance.
+
+        `value`: ``str``, ``unicode``, ``dict`` or :class:`DB`
+
+        *Returns*: :class:`DB`
 
         A connection URI is a string of the form::
 
             engine://username:password@host:port/database?options
 
-        `engine`
-            The type of the database server; supported values are ``pgsql``
-            and ``sqlite``.
+        The `engine` and `database` fragments are mandatory; the others could
+        be omitted.
 
-        `username:password`
-            Used for authentication.
-
-        `host:port`
-            The server address.
-
-        `database`
-            The name of the database.
-
-            For SQLite, the path to the database file.
-
-        `options`
-            A string of the form ``key=value&...`` providing extra
-            connection parameters.
-
-        The parameters `engine` and `database` are required, all the other
-        parameters are optional.
-
-        If a parameter contains a character which cannot be represented
-        literally (such as ``:``, ``/``, ``@`` or ``?``), it should be
-        escaped using ``%``-encoding.
+        If a fragment contains separator characters which cannot be represented
+        literally (such as ``:``, ``/``, ``@`` or ``?``), the characters should
+        be escaped using ``%``-encoding.
 
         If the connection URI is not in a valid format, :exc:`ValueError`
         is raised.
 
-        Besides a connection URI, the function also accepts instances
-        of :class:`DB` and dictionaries.  An instance of :class:`DB` is
-        returned as is.  A dictionary is assumed to contain connection
-        parameters.  The corresponding instance of :class:`DB` is returned.
+        :meth:`parse` also accepts:
+
+        - a dictionary with keys ``'engine'``, ``'database'``, ``'username'``,
+          ``'password'``, ``'host'``, ``'port'``, ``'options'``;
+        - an instance of :class:`DB`.
         """
         # `value` must be one of:
         #
@@ -156,7 +1159,7 @@ class DB(object):
         # - a connection URI in the form
         #   'engine://username:password@host:port/database?options';
         # - a dictionary with the keys:
-        #   'engine', 'username', 'password', 'host', 'port',
+        #   'engine', 'database', 'username', 'password', 'host', 'port',
         #   'database', 'options'.
         if not isinstance(value, (cls, str, unicode, dict)):
             raise ValueError("a connection URI is expected; got %r" % value)
@@ -218,11 +1221,11 @@ class DB(object):
             if 'database' not in value:
                 raise ValueError("key 'database' is not found in %r" % value)
             engine = value['engine']
+            database = value['database']
             username = value.get('username')
             password = value.get('password')
             host = value.get('host')
             port = value.get('port')
-            database = value['database']
             options = value.get('options')
 
             # Sanity check on the values.
@@ -230,6 +1233,11 @@ class DB(object):
                 engine = engine.encode('utf-8')
             if not isinstance(engine, str):
                 raise ValueError("engine must be a string; got %r" % engine)
+            if isinstance(database, unicode):
+                database = database.encode('utf-8')
+            if not isinstance(database, str):
+                raise ValueError("database must be a string; got %r"
+                                 % database)
             if isinstance(username, unicode):
                 username = username.encode('utf-8')
             if not isinstance(username, maybe(str)):
@@ -249,20 +1257,15 @@ class DB(object):
                     pass
             if not isinstance(port, maybe(int)):
                 raise ValueError("port must be an integer; got %r" % port)
-            if isinstance(database, unicode):
-                database = database.encode('utf-8')
-            if not isinstance(database, str):
-                raise ValueError("database must be a string; got %r"
-                                 % database)
             if not isinstance(options, maybe(dictof(str, str))):
                 raise ValueError("options must be a dictionary with"
                                  " string keys and values; got %r" % options)
 
         # We are done, produce an instance.
-        return cls(engine, username, password, host, port, database, options)
+        return cls(engine, database, username, password, host, port, options)
 
-    def __str__(self):
-        """Generate a connection URI corresponding to the instance."""
+    def __unicode__(self):
+        """Generate a connection URI corresponding to the parameters."""
         # The generated URI should only contain ASCII characters because
         # we want it to translate to Unicode without decoding errors.
         chunks = []
@@ -283,7 +1286,7 @@ class DB(object):
             chunks.append(str(self.port))
         chunks.append('/')
         chunks.append(urllib.quote(self.database))
-        if self.options is not None:
+        if self.options:
             chunks.append('?')
             is_first = True
             for key in sorted(self.options):
@@ -294,610 +1297,7 @@ class DB(object):
                 chunks.append(urllib.quote(key, safe=''))
                 chunks.append('=')
                 chunks.append(urllib.quote(self.options[key]))
-        return ''.join(chunks)
-
-    def __repr__(self):
-        return "<%s %s>" % (self.__class__.__name__, self)
-
-
-#
-# Type checking helpers.
-#
-
-
-class maybe(object):
-    """
-    Checks if a value is either ``None`` or an instance of the specified type.
-
-    Usage::
-
-        isinstance(value, maybe(T))
-    """
-
-    def __init__(self, value_type):
-        self.value_type = value_type
-
-    def __instancecheck__(self, value):
-        return (value is None or isinstance(value, self.value_type))
-
-
-class oneof(object):
-    """
-    Checks if a value is an instance of one of the specified types.
-
-    Usage::
-
-        isinstance(value, oneof(T1, T2, ...))
-    """
-
-    def __init__(self, *value_types):
-        self.value_types = value_types
-
-    def __instancecheck__(self, value):
-        return any(isinstance(value, value_type)
-                   for value_type in self.value_types)
-
-
-class listof(object):
-    """
-    Checks if a value is a list containing elements of the specified type.
-
-    Usage::
-    
-        isinstance(value, listof(T))
-    """
-
-    def __init__(self, item_type):
-        self.item_type = item_type
-
-    def __instancecheck__(self, value):
-        return (isinstance(value, list) and
-                all(isinstance(item, self.item_type) for item in value))
-
-
-class setof(object):
-    """
-    Checks if a value is a set containing elements of the specified type.
-
-    Usage::
-    
-        isinstance(value, setof(T))
-    """
-
-    def __init__(self, item_type):
-        self.item_type = item_type
-
-    def __instancecheck__(self, value):
-        return (isinstance(value, set) and
-                all(isinstance(item, self.item_type) for item in value))
-
-
-class tupleof(object):
-    """
-    Checks if a value is a tuple with the fixed number of elements
-    of the specified types.
-
-    Usage::
-
-        isinstance(value, tupleof(T1, T2, ..., TN))
-    """
-
-    def __init__(self, *item_types):
-        self.item_types = item_types
-
-    def __instancecheck__(self, value):
-        return (isinstance(value, tuple) and
-                len(value) == len(self.item_types) and
-                all(isinstance(item, item_type)
-                    for item, item_type in zip(value, self.item_types)))
-
-
-class dictof(object):
-    """
-    Checks if a value is a dictionary with keys and elements of
-    the specified types.
-
-    Usage::
-    
-        isinstance(value, dictof(T1, T2))
-    """
-
-    def __init__(self, key_type, item_type):
-        self.key_type = key_type
-        self.item_type = item_type
-
-    def __instancecheck__(self, value):
-        return (isinstance(value, dict) and
-                all(isinstance(key, self.key_type) and
-                    isinstance(value[key], self.item_type)
-                    for key in value))
-
-
-class subclassof(object):
-    """
-    Check if a value is a subclass of the specified class.
-
-    Usage::
-
-        isinstance(value, subclassof(T))
-    """
-
-    def __init__(self, class_type):
-        self.class_type = class_type
-
-    def __instancecheck__(self, value):
-        return (isinstance(value, type) and issubclass(value, self.class_type))
-
-
-class filelike(object):
-    """
-    Checks if a value is a file or a file-like object.
-
-    Usage::
-    
-        isinstance(value, filelike())
-    """
-
-    def __instancecheck__(self, value):
-        return (hasattr(value, 'read') or hasattr(value, 'write'))
-
-
-def aresubclasses(subclasses, superclasses):
-    """
-    Takes two lists; checks if each element of the first list is
-    a subclass of the corresponding element in the second list.
-
-    `subclasses` (a sequence of types)
-        A list of potential subclasses.
-
-    `superclasses` (a sequence of types)
-        A list of potential superclasses.
-
-    Returns ``True`` if the check succeeds; ``False`` otherwise.
-    """
-    return (len(subclasses) == len(superclasses) and
-            all(issubclass(subclass, superclass)
-                for subclass, superclass in zip(subclasses, superclasses)))
-
-
-def isfinite(value):
-    """
-    Verifies that the given value is a finite number.
-    """
-    return (isinstance(value, (int, long)) or
-            (isinstance(value, float) and not math.isinf(value)
-                                      and not math.isnan(value)) or
-            (isinstance(value, decimal) and value.is_finite()))
-
-
-#
-# Text formatting.
-#
-
-
-def trim_doc(doc):
-    """
-    Unindent and remove leading and trailing blank lines.
-
-    Useful for stripping indentation from docstrings.
-    """
-    assert isinstance(doc, maybe(str))
-    if doc is None:
-        return None
-    lines = doc.splitlines()
-    while lines and not lines[0].strip():
-        lines.pop(0)
-    while lines and not lines[-1].strip():
-        lines.pop(-1)
-    indent = None
-    for line in lines:
-        short_line = line.lstrip()
-        if short_line:
-            line_indent = len(line)-len(short_line)
-            if indent is None or line_indent < indent:
-                indent = line_indent
-    if indent:
-        lines = [line[indent:] for line in lines]
-    return "\n".join(lines)
-
-
-#
-# Name normalization.
-#
-
-
-def to_name(value):
-    """
-    Converts a non-empty string to a valid HTSQL identifier.
-
-    The given value is transformed as follows:
-
-    - translated to Unicode normal form C;
-    - converted to lowercase;
-    - has non-alphanumeric characters replaced with underscores;
-    - preceded with an underscore if it starts with a digit.
-    """
-    assert isinstance(value, unicode) and len(value) > 0
-    value = unicodedata.normalize('NFC', value).lower()
-    value = re.sub(ur"(?u)^(?=\d)|\W", u"_", value)
-    return value
-
-
-#
-# Topological sorting.
-#
-
-
-def toposort(elements, order, is_total=False):
-    """
-    Implements topological sort.
-
-    Takes a list of elements and a partial order relation.  Returns
-    the elements reordered to satisfy the given order.
-
-    A (finite) order relation is an acyclic directed graph.
-
-    `elements` (a list)
-        A list of elements.
-
-    `order` (a callable)
-        A function ``order(element) -> [list of elements]`` representing
-        the partial order relation.  For an element `x`, ``order(x)`` must
-        produce a list of elements less than `x`.
-
-    `is_total` (Boolean)
-        Ensures that the given partial order is, in fact, a total order.
-
-    This function raises :exc:`RuntimeError` if `order` is not a valid
-    partial order (contains loops) or if `is_total` is set and `order`
-    is not a valid total order.
-    """
-    # For a description of the algorithm, see, for example,
-    #   http://en.wikipedia.org/wiki/Topological_sorting
-    # In short, we apply depth-first search to the DAG represented
-    # by the partial order.  As soon as the search finishes exploring
-    # some node, the node is added to the list.
-
-    # The sorted list.
-    ordered = []
-    # The set of nodes which the DFS has already processed.
-    visited = set()
-    # The set of nodes currently being processed by the DFS.
-    active = set()
-    # The path to the current node.  Note that `set(path) == active`.
-    path = []
-    # The mapping: node -> position of the node in the original list.
-    positions = dict((element, index)
-                     for index, element in enumerate(elements))
-
-    # Implements the depth-first search.
-    def dfs(node):
-        # Check if the node has already been processed.
-        if node in visited:
-            return
-
-        # Update the path; check for cycles.
-        path.append(node)
-        if node in active:
-            raise RuntimeError("order is not valid: loop detected",
-                               path[path.index(node):])
-        active.add(node)
-
-        # Get the list of adjacent nodes.
-        adjacents = order(node)
-        # Sort the adjacent elements according to their order in the
-        # original list.  It helps to keep the original order when possible.
-        adjacents = sorted(adjacents, key=(lambda i: positions[i]))
-
-        # Visit the adjacent nodes.
-        for adjacent in adjacents:
-            dfs(adjacent)
-
-        # If requested, check that the order is total.
-        if is_total and ordered:
-            if ordered[-1] not in adjacents:
-                raise RuntimeError("order is not total",
-                                   [ordered[-1], node])
-
-        # Add the node to the sorted list.
-        ordered.append(node)
-
-        # Remove the node from the path; add it to the set of processed nodes.
-        path.pop()
-        active.remove(node)
-        visited.add(node)
-
-    # Apply the DFS to the whole DAG.
-    for element in elements:
-        dfs(element)
-
-    # Break the cycle created by recursive nested function.
-    dfs = None
-
-    return ordered
-
-
-#
-# Cached property decorator.
-#
-
-
-class cachedproperty(object):
-
-    def __init__(self, fget):
-        self.fget = fget
-
-    def __get__(self, obj, objtype=None):
-        if obj is None:
-            return self
-        value = self.fget(obj)
-        # It is a non-data descriptor (`__set__` is not defined),
-        # so `__dict__` takes the precedence.
-        obj.__dict__[self.fget.__name__] = value
-        return value
-
-
-#
-# Node types with special behavior.
-#
-
-
-class Record(tuple):
-
-    __slots__ = ()
-    __fields__ = ()
-    __dump__ = None
-
-    @classmethod
-    def make(cls, name, fields, dump=None):
-        assert isinstance(name, maybe(oneof(str, unicode)))
-        assert isinstance(fields, listof(maybe(oneof(str, unicode))))
-        if isinstance(name, unicode):
-            name = name.encode('utf-8')
-        if name is not None and not re.match(r'^(?!\d)\w+$', name):
-            name = None
-        if name is not None and keyword.iskeyword(name):
-            name = name+'_'
-        if name is None:
-            name = cls.__name__
-        duplicates = set()
-        for idx, field in enumerate(fields):
-            if field is None:
-                continue
-            if isinstance(field, unicode):
-                field = field.encode('utf-8')
-            if not re.match(r'^(?!\d)\w+$', field):
-                field = None
-            elif field.startswith('__'):
-                field = None
-            else:
-                if keyword.iskeyword(field):
-                    field = field+'_'
-                if field in duplicates:
-                    field = None
-                fields[idx] = field
-                duplicates.add(field)
-        bases = (cls,)
-        attributes = {}
-        attributes['__slots__'] = ()
-        attributes['__fields__'] = tuple(fields)
-        for idx, field in enumerate(fields):
-            if field is None:
-                continue
-            attributes[field] = property(operator.itemgetter(idx))
-        if dump is not None:
-            attributes['__dump__'] = dump
-        return type(name, bases, attributes)
-
-    def __new__(cls, *args, **kwds):
-        if kwds:
-            args_tail = []
-            for field in cls.__fields__[len(args):]:
-                if field not in kwds:
-                    if field is not None:
-                        raise TypeError("Missing argument %r" % field)
-                    else:
-                        raise TypeError("Missing argument #%d"
-                                        % (len(args)+len(args_tail)+1))
-                args_tail.append(kwds.pop(field))
-            if kwds:
-                field = sorted(kwds)[0]
-                if field in cls.__fields__:
-                    raise TypeError("Duplicate argument %r" % field)
-                else:
-                    raise TypeError("Unknown argument %r" % field)
-            args = args+tuple(args_tail)
-        if len(args) != len(cls.__fields__):
-            raise TypeError("Expected %d arguments, got %d"
-                            % (len(cls.__fields__), len(args)))
-        return tuple.__new__(cls, args)
-
-    def __getnewargs__(self):
-        return tuple(self)
-
-    def __str__(self):
-        if self.__class__.__dump__ is None:
-            return repr(self)
-        return self.__class__.__dump__(self)
-
-    def __repr__(self):
-        return ("%s(%s)"
-                % (self.__class__.__name__,
-                   ", ".join("%s=%r" % (name or '[%s]' % idx, value)
-                             for idx, (name, value)
-                                in enumerate(zip(self.__fields__, self)))))
-
-
-class Printable(object):
-    """
-    Implements default string representation.
-    """
-
-    def __str__(self):
-        # Default implementation; override in subclasses.
-        return "[%s]" % id(self)
-
-    def __repr__(self):
-        return "<%s %s>" % (self.__class__.__name__, self)
-
-
-class Clonable(object):
-    """
-    Implements an immutable clonable object.
-    """
-
-    def __init__(self):
-        # Subclasses must define the `__init__` method.  Moreover, the
-        # arguments of `__init__` must be assigned to respective object
-        # attributes unchanged (or if changed, must still be in the form
-        # acceptable by the constructor).
-        raise NotImplementedError()
-
-    def clone(self, **replacements):
-        """
-        Clones the node assigning new values to selected attributes.
-
-        Returns a new object of the same type keeping original attributes
-        except those for which new values are specified.
-
-        `replacements` (a dictionary)
-            A mapping: attribute -> value containing new attribute values.
-        """
-        # A shortcut: if there are no replacements, we could reuse
-        # the same object.
-        if not replacements:
-            return self
-        # Otherwise, reuse a more general method.
-        return self.clone_to(self.__class__, **replacements)
-
-    def clone_to(self, clone_type, **replacements):
-        """
-        Clones the node changing its type and assigning new values to
-        selected attributes.
-
-        Returns a new object of the specified type which keeps the
-        attributes of the original objects except those for which new
-        values are specified.
-
-        `clone_type` (a type)
-            The type of the cloned node.
-
-        `replacements` (a dictionary)
-            A mapping: attribute -> value containing new attribute values.
-        """
-        # Get the list of constructor arguments.  Note that we assume
-        # for each constructor argument, a node object has an attribute
-        # with the same name.
-        init_code = self.__init__.im_func.func_code
-        # Fetch the names of regular arguments, but skip `self`.
-        names = list(init_code.co_varnames[1:init_code.co_argcount])
-        # Check for * and ** arguments.  We cannot properly support
-        # * arguments, so just complain about it.
-        assert not (init_code.co_flags & 0x04)  # CO_VARARGS
-        # Check for ** arguments.  If present, they must adhere
-        # the following protocol:
-        # (1) The node must keep the ** dictionary as an attribute
-        #     with the same name and content.
-        # (2) The node must have an attribute for each entry in
-        #     the ** dictionary.
-        if init_code.co_flags & 0x08:           # CO_VARKEYWORDS
-            name = init_code.co_varnames[init_code.co_argcount]
-            names += sorted(getattr(self, name))
-        # Check that all replacements are, indeed, constructor parameters.
-        assert all(key in names for key in sorted(replacements))
-        # Arguments of a constructor call to generate a clone.
-        arguments = {}
-        # Indicates if at least one argument has changed.
-        is_modified = False
-        # If the target type differs from the node type, we need to
-        # generate a new object even when there are no modified attributes.
-        if self.__class__ is not clone_type:
-            is_modified = True
-        # For each argument, either extract the current value, or
-        # get a replacement.
-        for name in names:
-            value = getattr(self, name)
-            if name in replacements and replacements[name] is not value:
-                value = replacements[name]
-                is_modified = True
-            arguments[name] = value
-        # Even though we may have some replacements, in fact they all coincide
-        # with the object attributes, so we could reuse the same object.
-        if not is_modified:
-            return self
-        # Call the node constructor and return a new object.
-        clone = clone_type(**arguments)
-        return clone
-
-
-class Comparable(object):
-    """
-    Implements an object with by-value comparison semantics.
-
-    A subclass of :class:`Comparable` should reimplement :meth:`__basis__`
-    to produce a tuple of all object attributes which uniquely identify
-    the object.
-
-    Two :class:`Comparable` instances are considered equal if they are of
-    the same type and their basis vectors are equal.
-
-    Other attributes:
-
-    `_hash` (an integer)
-        The cached value of the object hash; computed lazily from the
-        basis.
-
-    `_basis` (a tuple)
-        The cached value of the object basis.
-    """
-
-
-    def __hash__(self):
-        return self._hash
-
-    def __basis__(self):
-        # By default, objects are compared by identity.  Reimplement
-        # for by-value comparison.
-        return id(self)
-
-    @cachedproperty
-    def _hash(self):
-        # Calculate and cache the object hash.
-        return hash(self._basis)
-
-    @cachedproperty
-    def _basis(self):
-        # Get the object basis vector.
-        _basis = self.__basis__()
-        # Flatten and return the vector.
-        if isinstance(_basis, tuple):
-            elements = []
-            for element in _basis:
-                if isinstance(element, Comparable):
-                    elements.append((element.__class__,
-                                     element._hash,
-                                     element._basis))
-                else:
-                    elements.append(element)
-            _basis = tuple(elements)
-        return _basis
-
-    def __eq__(self, other):
-        # We could just compare object basis vectors, but
-        # for performance, we start with faster checks.
-        return ((self is other) or
-                (isinstance(other, Comparable) and
-                 self.__class__ is other.__class__ and
-                 self._hash == other._hash and
-                 self._basis == other._basis))
-
-    def __ne__(self, other):
-        # Since we override `==`, we also need to override `!=`.
-        return ((self is not other) and
-                (not isinstance(other, Comparable) or
-                 self.__class__ is not other.__class__ or
-                 self._hash != other._hash and
-                 self._basis != other._basis))
+        return u''.join(chunks)
 
 
 #
@@ -909,139 +1309,20 @@ def autoimport(name):
     """
     Imports all modules (including subpackages) in a package.
 
-    `name` (a string)
+    `name`: ``str``
         The package name.
     """
     # Import the package itself.
     package = __import__(name, fromlist=['__name__'])
     # It must be the package we asked for.
     assert hasattr(package, '__name__') and package.__name__ == name
-    # Make sure it is indeed a package (has `__name__`).
+    # Make sure it is indeed a package (has `__path__`).
     assert hasattr(package, '__path__')
     # Get the list of modules in the package directory; prepend the module
-    # names with the package name.  That also includes any subpackages.
+    # names with the package name.  That also includes modules in subpackages.
     modules = pkgutil.walk_packages(package.__path__, name+'.')
-    # Import the modules in the package.
+    # Import all the modules.
     for importer, module_name, is_package in modules:
         __import__(module_name)
-
-
-#
-# Timezone implementations.
-#
-
-
-class UTC(datetime.tzinfo):
-
-    def utcoffset(self, dt):
-        return datetime.timedelta(0)
-
-    def dst(self, dt):
-        return datetime.timedelta(0)
-
-    def tzname(self, dt):
-        return "Z"
-
-
-class FixedTZ(datetime.tzinfo):
-
-    def __init__(self, offset):
-        self.offset = offset
-
-    def utcoffset(self, dt):
-        return datetime.timedelta(minutes=self.offset)
-
-    def dst(self, dt):
-        return datetime.timedelta(0)
-
-    def tzname(self, dt):
-        hour = abs(self.offset) / 60
-        minute = abs(self.offset) % 60
-        sign = '+'
-        if self.offset < 0:
-            sign = '-'
-        if minute:
-            return "%s%02d:%02d" % (sign, hour, minute)
-        else:
-            return "%s%d" % (sign, hour)
-
-
-class LocalTZ(datetime.tzinfo):
-
-    def utcoffset(self, dt):
-        if self.isdst(dt):
-            return datetime.timedelta(seconds=-time.altzone)
-        else:
-            return datetime.timedelta(seconds=-time.timezone)
-
-    def dst(self, dt):
-        if self.isdst(dt):
-            return datetime.timedelta(seconds=(time.timezone-time.altzone))
-        else:
-            return datetime.timedelta(0)
-
-    def tzname(self, dt):
-        if self.isdst(dt):
-            offset = -time.altzone/60
-        else:
-            offset = -time.timezone/60
-        hour = abs(offset) / 60
-        minute = abs(offset) % 60
-        sign = '+'
-        if offset < 0:
-            sign = '-'
-        if minute:
-            return "%s%02d:%02d" % (sign, hour, minute)
-        else:
-            return "%s%d" % (sign, hour)
-
-    def isdst(self, dt):
-        tt = (dt.year, dt.month, dt.day,
-              dt.hour, dt.minute, dt.second,
-              dt.weekday(), 0, 0)
-        stamp = time.mktime(tt)
-        tt = time.localtime(stamp)
-        return tt.tm_isdst > 0
-
-
-#
-# String similarity.
-#
-
-
-def similar(model, sample):
-    """
-    Checks if `sample` is similar to `model`.
-    """
-    assert isinstance(model, unicode)
-    assert isinstance(sample, unicode)
-    if not model or not sample:
-        return False
-    if len(model) > 1 and sample.startswith(model):
-        return True
-    M = len(model)
-    N = len(sample)
-    threshold = 1+M/5
-    INF = threshold+1
-    if abs(M-N) > threshold:
-        return False
-    distance = {}
-    for i in range(min(M, threshold)+1):
-        distance[i, 0] = i
-    for j in range(min(N, threshold)+1):
-        distance[0, j] = j
-    for i in range(1, M+1):
-        for j in range(max(1, i-threshold), min(N, i+threshold)+1):
-            k = distance.get((i-1, j-1), INF)
-            if model[i-1] != sample[j-1]:
-                k += 1
-            if (i > 1 and j > 1 and model[i-2] == sample[j-1]
-                                and model[i-1] == sample[j-2]):
-                k = min(k, distance.get((i-2, j-2), INF)+1)
-            k = min(k, distance.get((i-1, j), INF)+1,
-                       distance.get((i, j-1), INF)+1)
-            if k <= threshold:
-                distance[i, j] = k
-    return ((M, N) in distance)
 
 

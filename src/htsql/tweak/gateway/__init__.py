@@ -7,7 +7,7 @@ from . import command
 from ...core.util import DB
 from ...core.addon import Addon, Parameter
 from ...core.validator import AnyVal, UnionVal, MapVal, NameVal, StrVal, DBVal
-from .command import BindGateway
+from .command import SummonGateway
 
 
 class TweakGatewayAddon(Addon):
@@ -44,12 +44,12 @@ class TweakGatewayAddon(Addon):
                 instance = app.__class__(db)
             else:
                 instance = app.__class__(None, db)
-            class_name = "Bind%s" % name.title().replace('_', '').encode('utf-8')
+            class_name = "Summon%s" % name.title().replace('_', '').encode('utf-8')
             namespace = {
-                '__names__': [(name.encode('utf-8'), 1)],
+                '__names__': [name.encode('utf-8')],
                 'instance': instance,
             }
-            bind_class = type(class_name, (BindGateway,), namespace)
-            self.functions[name] = bind_class
+            summon_class = type(class_name, (SummonGateway,), namespace)
+            self.functions[name] = summon_class
 
 

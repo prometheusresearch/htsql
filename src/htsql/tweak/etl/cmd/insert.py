@@ -5,9 +5,8 @@
 
 from ....core.util import listof
 from ....core.adapter import Utility, Adapter, adapt, adapt_many
-from ....core.error import BadRequestError
+from ....core.error import BadRequestError, EmptyMark
 from ....core.connect import transaction, scramble, unscramble
-from ....core.mark import EmptyMark
 from ....core.domain import (Domain, ListDomain, RecordDomain, BooleanDomain,
         IntegerDomain, FloatDomain, DecimalDomain, StringDomain, DateDomain,
         TimeDomain, DateTimeDomain, IdentityDomain, UntypedDomain)
@@ -15,10 +14,10 @@ from ....core.classify import normalize, classify, relabel
 from ....core.model import (HomeNode, TableNode, Arc, TableArc, ColumnArc,
         ChainArc)
 from ....core.entity import TableEntity, ColumnEntity
-from ....core.cmd.act import Act, ProduceAction, produce
+from ....core.cmd.act import Act, ProduceAction, act
 from ....core.cmd.fetch import Product, RowStream, build_fetch
 from ....core.tr.bind import BindingState, Select
-from ....core.tr.syntax import VoidSyntax, IdentifierSyntax
+from ....core.syn.syntax import VoidSyntax, IdentifierSyntax
 from ....core.tr.binding import (VoidBinding, RootBinding, FormulaBinding,
         LocatorBinding, SelectionBinding, SieveBinding, AliasBinding,
         SegmentBinding, QueryBinding, FreeTableRecipe, ColumnRecipe)
@@ -534,7 +533,7 @@ class ProduceInsert(Act):
 
     def __call__(self):
         with transaction() as connection:
-            product = produce(self.command.feed)
+            product = act(self.command.feed, self.action)
             extract_node = BuildExtractNode.__invoke__(product.meta)
             extract_table = BuildExtractTable.__invoke__(
                     extract_node.node, extract_node.arcs)

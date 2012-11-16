@@ -13,8 +13,8 @@ from ...core.model import (Node, HomeNode, TableNode, TableArc, ColumnArc,
                            ChainArc, SyntaxArc)
 from ...core.introspect import introspect
 from ...core.classify import normalize
-from ...core.tr.parse import parse, GroupParser, TopParser
-from ...core.tr.syntax import Syntax
+from ...core.syn.parse import parse
+from ...core.syn.syntax import Syntax
 from ...core.tr.bind import BindByName
 from ...core.tr.binding import SubstitutionRecipe, ClosedRecipe
 from ...core.tr.error import TranslateError
@@ -431,12 +431,13 @@ class SyntaxArcPattern(ArcPattern):
     is_syntax = True
 
     def __init__(self, syntax):
-        assert isinstance(syntax, Syntax)
+        assert isinstance(syntax, unicode)
         self.syntax = syntax
 
     def extract(self, node, parameters):
         assert isinstance(node, Node)
-        return SyntaxArc(node, parameters, self.syntax)
+        syntax = parse(self.syntax, u'flow_pipe')
+        return SyntaxArc(node, parameters, syntax)
 
     def __unicode__(self):
         return unicode(self.syntax)
@@ -455,8 +456,9 @@ class BindGlobal(BindByName):
         return (component.__app__() is context.app)
 
     def __call__(self):
+        body = parse(self.body, u'flow_pipe')
         recipe = SubstitutionRecipe(self.state.scope, [],
-                                    self.parameters, self.body)
+                                    self.parameters, body)
         recipe = ClosedRecipe(recipe)
         return self.state.use(recipe, self.syntax)
 
@@ -464,7 +466,7 @@ class BindGlobal(BindByName):
 class GlobalPattern(ArcPattern):
 
     def __init__(self, syntax):
-        assert isinstance(syntax, Syntax)
+        assert isinstance(syntax, unicode)
         self.syntax = syntax
 
     def register(self, app, name, parameters):
@@ -690,11 +692,7 @@ class ClassPatternVal(Validator):
                 value = TableArcPattern(schema_pattern, table_pattern)
             elif match.group('is_syntax'):
                 input = match.group('syntax')
-                try:
-                    syntax = parse(input, GroupParser)
-                except TranslateError, exc:
-                    raise ValueError(str(exc))
-                value = SyntaxArcPattern(syntax)
+                value = SyntaxArcPattern(input)
             else:
                 assert False
         if not isinstance(value, ArcPattern):
@@ -801,11 +799,7 @@ class FieldPatternVal(Validator):
                 value = ChainArcPattern(join_patterns)
             elif match.group('is_syntax'):
                 input = match.group('syntax')
-                try:
-                    syntax = parse(input, GroupParser)
-                except TranslateError, exc:
-                    raise ValueError(str(exc))
-                value = SyntaxArcPattern(syntax)
+                value = SyntaxArcPattern(input)
             else:
                 assert False
         if not isinstance(value, ArcPattern):
@@ -821,11 +815,7 @@ class GlobalPatternVal(Validator):
         if isinstance(value, str):
             value = value.decode('utf-8', 'replace')
         if isinstance(value, unicode):
-            try:
-                syntax = parse(value, TopParser)
-            except TranslateError, exc:
-                raise ValueError(str(exc))
-            value = GlobalPattern(syntax)
+            value = GlobalPattern(value)
         if not isinstance(value, GlobalPattern):
             raise ValueError("expected global pattern, got %r" % value)
         return value

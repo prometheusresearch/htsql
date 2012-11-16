@@ -6,15 +6,9 @@
 from ...core.context import context
 from ...core.cache import once
 from ...core.adapter import adapt, call
-from ...core.cmd.command import ProducerCmd, DefaultCmd
-from ...core.cmd.act import Act, ProduceAction, act
-from ...core.tr.fn.bind import BindCommand
-from ...core.tr.signature import UnarySig
-from ...core.tr.bind import bind
-from ...core.tr.syntax import QuerySyntax, SegmentSyntax
-from ...core.tr.binding import CommandBinding
-from ...core.tr.error import BindError
-from ...core.tr.lookup import lookup_command
+from ...core.cmd.command import Command
+from ...core.cmd.act import Act, Action, RenderAction, act
+from ...core.cmd.summon import Summon, RecognizeError, recognize
 import weakref
 
 
@@ -26,29 +20,37 @@ def get_slave_app():
     return slave
 
 
-class MetaCmd(ProducerCmd):
+class MetaCmd(Command):
 
-    def __init__(self, syntax, environment=None):
-        self.syntax = syntax
-        self.environment = environment
+    def __init__(self, command, mark):
+        super(MetaCmd, self).__init__(mark)
+        self.command = command
 
 
-class BindMeta(BindCommand):
+class SummonMeta(Summon):
 
     call('meta')
-    signature = UnarySig
 
-    def expand(self, op):
-        if not isinstance(op, SegmentSyntax):
-            raise BindError("a segment is required", op.mark)
-        op = QuerySyntax(op, op.mark)
-        command = MetaCmd(op, environment=self.state.environment)
-        return CommandBinding(self.state.scope, command, self.syntax)
+    def __call__(self):
+        if len(self.arguments) != 1:
+            raise RecognizeError("expected 1 argument", self.syntax.mark)
+        [syntax] = self.arguments
+        slave_app = get_slave_app()
+        with slave_app:
+            command = recognize(syntax)
+        return MetaCmd(command, self.syntax.mark)
 
 
-class ProduceMeta(Act):
+class ActMeta(Act):
 
-    adapt(MetaCmd, ProduceAction)
+    adapt(MetaCmd, Action)
+
+    @classmethod
+    def __matches__(component, dispatch_key):
+        command_type, action_type = dispatch_key
+        if isinstance(action_type, RenderAction):
+            return False
+        return super(ActMeta, component).__matches__(dispatch_key)
 
     def __call__(self):
         can_read = context.env.can_read
@@ -57,12 +59,6 @@ class ProduceMeta(Act):
         with slave_app:
             with context.env(can_read=context.env.can_read and can_read,
                              can_write=context.env.can_write and can_write):
-                binding = bind(self.command.syntax,
-                               environment=self.command.environment)
-                command = lookup_command(binding)
-                if command is None:
-                    command = DefaultCmd(binding)
-                product = act(command, self.action)
-        return product
+                return act(self.command.command, self.action)
 
 

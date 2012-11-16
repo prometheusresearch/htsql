@@ -17,7 +17,7 @@ from ..entity import DirectJoin
 from ..model import (HomeNode, TableNode, Arc, TableArc, ChainArc, ColumnArc,
         SyntaxArc, InvalidArc, AmbiguousArc)
 from ..classify import classify, relabel, localize, normalize
-from .syntax import IdentifierSyntax
+from ..syn.syntax import IdentifierSyntax
 from .binding import (Binding, ScopingBinding, ChainingBinding,
         WrappingBinding, SegmentBinding, HomeBinding, RootBinding,
         TableBinding, FreeTableBinding, AttachedTableBinding, ColumnBinding,
@@ -353,7 +353,7 @@ class GuessName(Lookup):
         # If the binding was induced by an identifier node,
         # use the identifier name.
         if isinstance(self.binding.syntax, IdentifierSyntax):
-            return self.binding.syntax.value
+            return self.binding.syntax.name
         # Otherwise, fail to produce a name.
         return None
 
@@ -374,7 +374,7 @@ class GuessTag(Lookup):
 
     def __call__(self):
         if isinstance(self.binding.syntax, IdentifierSyntax):
-            return self.binding.syntax.value
+            return self.binding.syntax.text
         return None
 
 
@@ -455,7 +455,7 @@ class GuessNameFromChaining(Lookup):
         # If the binding was induced by an identifier node,
         # use the identifier name.
         if isinstance(self.binding.syntax, IdentifierSyntax):
-            return self.binding.syntax.value
+            return self.binding.syntax.name
         # Otherwise, pass the probe to the parent binding.
         return lookup(self.binding.base, self.probe)
 
@@ -466,7 +466,7 @@ class GuessTagFromChaining(Lookup):
 
     def __call__(self):
         if isinstance(self.binding.syntax, IdentifierSyntax):
-            return self.binding.syntax.value
+            return self.binding.syntax.text
         return lookup(self.binding.base, self.probe)
 
 
@@ -1244,7 +1244,9 @@ class GuessHeaderFromTitle(Lookup):
     adapt(TitleBinding, GuessHeaderProbe)
 
     def __call__(self):
-        return self.binding.title.value
+        if isinstance(self.binding.title, IdentifierSyntax):
+            return self.binding.title.text
+        return self.binding.title.text
 
 
 class GuessTagFromTitle(Lookup):
@@ -1253,7 +1255,7 @@ class GuessTagFromTitle(Lookup):
 
     def __call__(self):
         if isinstance(self.binding.title, IdentifierSyntax):
-            return self.binding.title.value
+            return self.binding.title.text
         return super(GuessTagFromTitle, self).__call__()
 
 
@@ -1266,7 +1268,7 @@ class GuessNameFromAlias(Lookup):
         # If the binding is associated with an identifier node,
         # use the identifier name.
         if isinstance(self.binding.syntax, IdentifierSyntax):
-            return self.binding.syntax.value
+            return self.binding.syntax.name
         # Otherwise, fail to produce a name.
         return None
 
@@ -1286,7 +1288,7 @@ class GuessTagFromAlias(Lookup):
 
     def __call__(self):
         if isinstance(self.binding.syntax, IdentifierSyntax):
-            return self.binding.syntax.value
+            return self.binding.syntax.text
         return None
 
 

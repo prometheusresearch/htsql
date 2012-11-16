@@ -7,9 +7,12 @@ from ..adapter import adapt, Utility
 from ..util import Record, listof
 from ..context import context
 from ..domain import ListDomain, RecordDomain, Profile
-from .command import FetchCmd, SQLCmd
+from .command import FetchCmd, SkipCmd, SQLCmd
 from .act import (analyze, Act, ProduceAction, SafeProduceAction,
                   AnalyzeAction, RenderAction)
+from ..tr.embed import embed
+from ..tr.bind import bind
+from ..tr.binding import Binding
 from ..tr.encode import encode
 from ..tr.flow import OrderedFlow
 from ..tr.rewrite import rewrite
@@ -18,6 +21,7 @@ from ..tr.assemble import assemble
 from ..tr.reduce import reduce
 from ..tr.dump import serialize
 from ..tr.plan import Plan, Statement
+from ..tr.decorate import decorate_void
 from ..connect import transaction, scramble, unscramble
 from ..error import PermissionError
 
@@ -144,12 +148,28 @@ class FetchPipe(object):
 
 class BuildFetch(Utility):
 
-    def __init__(self, binding, limit=None):
-        self.binding = binding
+    def __init__(self, syntax, parameters=None, limit=None):
+        self.syntax = syntax
+        self.parameters = parameters
         self.limit = limit
 
     def __call__(self):
-        expression = encode(self.binding)
+        if not isinstance(self.syntax, Binding):
+            environment = []
+            if self.parameters is not None:
+                if isinstance(self.parameters, dict):
+                    for name in sorted(self.parameters):
+                        value = self.parameters[name]
+                        if isinstance(name, str):
+                            name = name.decode('utf-8')
+                        recipe = embed(value)
+                        environment.append((name, recipe))
+                else:
+                    environment = self.parameters[:]
+            binding = bind(self.syntax, environment=environment)
+        else:
+            binding = self.syntax
+        expression = encode(binding)
         if self.limit is not None:
             expression = self.safe_patch(expression, self.limit)
         expression = rewrite(expression)
@@ -185,10 +205,10 @@ class ProduceFetch(Act):
     adapt(FetchCmd, ProduceAction)
 
     def __call__(self):
-        limit = None
+        cut = None
         if isinstance(self.action, SafeProduceAction):
-            limit = self.action.limit
-        pipe = build_fetch(self.command.binding, limit)
+            cut = self.action.cut
+        pipe = build_fetch(self.command.syntax, self.action.parameters, cut)
         return pipe()
 
 
@@ -197,15 +217,25 @@ class AnalyzeFetch(Act):
     adapt(FetchCmd, AnalyzeAction)
 
     def __call__(self):
-        pipe = build_fetch(self.command.binding)
+        pipe = build_fetch(self.command.syntax, self.action.parameters)
         return pipe.plan
+
+
+class ProduceSkip(Act):
+
+    adapt(SkipCmd, ProduceAction)
+
+    def __call__(self):
+        profile = decorate_void()
+        return Product(profile, None)
 
 
 class RenderSQL(Act):
 
     adapt(SQLCmd, RenderAction)
+
     def __call__(self):
-        plan = analyze(self.command.producer)
+        plan = analyze(self.command.feed)
         status = '200 OK'
         headers = [('Content-Type', 'text/plain; charset=UTF-8')]
         body = []

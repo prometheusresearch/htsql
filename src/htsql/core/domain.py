@@ -11,8 +11,7 @@ This module defines HTSQL domains.
 """
 
 
-from .util import (maybe, oneof, listof, UTC, FixedTZ,
-                   Printable, Clonable, Comparable)
+from .util import maybe, oneof, listof, Printable, Clonable, Comparable
 import re
 import math
 import decimal
@@ -637,6 +636,45 @@ class EnumDomain(Domain):
             return None
         # No conversion is required.
         return value
+
+
+#
+# Timezone implementations.
+#
+
+class UTC(datetime.tzinfo):
+
+    def utcoffset(self, dt):
+        return datetime.timedelta(0)
+
+    def dst(self, dt):
+        return datetime.timedelta(0)
+
+    def tzname(self, dt):
+        return "Z"
+
+
+class FixedTZ(datetime.tzinfo):
+
+    def __init__(self, offset):
+        self.offset = offset
+
+    def utcoffset(self, dt):
+        return datetime.timedelta(minutes=self.offset)
+
+    def dst(self, dt):
+        return datetime.timedelta(0)
+
+    def tzname(self, dt):
+        hour = abs(self.offset) / 60
+        minute = abs(self.offset) % 60
+        sign = '+'
+        if self.offset < 0:
+            sign = '-'
+        if minute:
+            return "%s%02d:%02d" % (sign, hour, minute)
+        else:
+            return "%s%d" % (sign, hour)
 
 
 class DateDomain(Domain):

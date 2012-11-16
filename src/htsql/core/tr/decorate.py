@@ -7,7 +7,7 @@ from ..adapter import Protocol, call
 from ..domain import Profile
 from .lookup import guess_tag, guess_header, guess_path
 from .binding import Binding, VoidBinding
-from .syntax import VoidSyntax
+from ..syn.syntax import VoidSyntax
 
 
 class Decorate(Protocol):
@@ -88,5 +88,9 @@ def decorate(binding):
         value = Decorate.__invoke__(name, binding)
         decorations[name] = value
     return Profile(**decorations)
+
+
+def decorate_void():
+    return decorate(VoidBinding())
 
 

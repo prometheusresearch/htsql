@@ -5,12 +5,10 @@
 
 from ..adapter import Adapter, adapt
 from ..error import BadRequestError
-from .command import (Command, UniversalCmd, DefaultCmd, FetchCmd, ProducerCmd,
-        RendererCmd)
-from ..tr.lookup import lookup_command
-from ..tr.parse import parse
-from ..tr.bind import bind
-from ..tr.embed import embed
+from ..util import Clonable
+from .command import Command, UniversalCmd, DefaultCmd, FormatCmd, FetchCmd
+from .summon import recognize
+from ..syn.parse import parse
 from ..fmt.format import emit, emit_headers
 from ..fmt.accept import accept
 
@@ -19,23 +17,29 @@ class UnsupportedActionError(BadRequestError):
     pass
 
 
-class Action(object):
+class Action(Clonable):
     pass
 
 
 class ProduceAction(Action):
-    pass
+
+    def __init__(self, parameters=None):
+        self.parameters = parameters
 
 
 class SafeProduceAction(ProduceAction):
 
-    def __init__(self, limit):
-        assert isinstance(limit, int) and limit > 0
-        self.limit = limit
+    def __init__(self, parameters=None, cut=None):
+        self.parameters = parameters
+        self.cut = cut
 
 
 class AnalyzeAction(Action):
-    pass
+
+    def __init__(self, parameters=None):
+        self.parameters = parameters
+
+
 
 
 class RenderAction(Action):
@@ -64,18 +68,7 @@ class ActUniversal(Act):
 
     def __call__(self):
         syntax = parse(self.command.query)
-        environment = []
-        if self.command.parameters is not None:
-            for name in sorted(self.command.parameters):
-                value = self.command.parameters[name]
-                if isinstance(name, str):
-                    name = name.decode('utf-8')
-                recipe = embed(value)
-                environment.append((name, recipe))
-        binding = bind(syntax, environment=environment)
-        command = lookup_command(binding)
-        if command is None:
-            command = DefaultCmd(binding)
+        command = recognize(syntax)
         return act(command, self.action)
 
 
@@ -84,13 +77,30 @@ class ActDefault(Act):
     adapt(DefaultCmd, Action)
 
     def __call__(self):
-        command = FetchCmd(self.command.binding)
+        command = FetchCmd(self.command.syntax, self.command.mark)
         return act(command, self.action)
+
+
+class RenderFormat(Act):
+
+    adapt(FormatCmd, RenderAction)
+
+    def __call__(self):
+        format = self.command.format
+        product = produce(self.command.feed)
+        status = "200 OK"
+        headers = emit_headers(format, product)
+        body = emit(format, product)
+        return (status, headers, body)
 
 
 class RenderProducer(Act):
 
-    adapt(ProducerCmd, RenderAction)
+    adapt(Command, RenderAction)
+
+    @classmethod
+    def __follows__(component, other):
+        return True
 
     def __call__(self):
         format = accept(self.action.environ)
@@ -101,34 +111,21 @@ class RenderProducer(Act):
         return (status, headers, body)
 
 
-class RenderRenderer(Act):
-
-    adapt(RendererCmd, RenderAction)
-
-    def __call__(self):
-        format = self.command.format
-        product = produce(self.command.producer)
-        status = "200 OK"
-        headers = emit_headers(format, product)
-        body = emit(format, product)
-        return (status, headers, body)
-
-
 act = Act.__invoke__
 
 
-def produce(command):
-    action = ProduceAction()
+def produce(command, parameters=None):
+    action = ProduceAction(parameters)
     return act(command, action)
 
 
-def safe_produce(command, limit):
-    action = SafeProduceAction(limit)
+def safe_produce(command, parameters=None, cut=None):
+    action = SafeProduceAction(parameters, cut)
     return act(command, action)
 
 
-def analyze(command):
-    action = AnalyzeAction()
+def analyze(command, parameters=None):
+    action = AnalyzeAction(parameters)
     return act(command, action)
 
 
