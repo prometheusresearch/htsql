@@ -36218,6 +36218,341 @@ tests:
 
             </html>
 
+        - uri: /complete()
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          body: |
+            {
+              "type": "complete",
+              "names": [
+                "course",
+                "department",
+                "program",
+                "school",
+                "class",
+                "semester",
+                "enrollment",
+                "student",
+                "appointment",
+                "confidential",
+                "instructor",
+                "classification",
+                "course_classification",
+                "prerequisite",
+                "program_requirement"
+              ]
+            }
+        - uri: /complete(school)
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          body: |
+            {
+              "type": "complete",
+              "names": [
+                "code",
+                "name",
+                "campus",
+                "department",
+                "program"
+              ]
+            }
+        - uri: /complete(department, course)
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          body: |
+            {
+              "type": "complete",
+              "names": [
+                "department_code",
+                "no",
+                "title",
+                "credits",
+                "description",
+                "department",
+                "class",
+                "prerequisite_via_on_course",
+                "prerequisite_via_of_course",
+                "course_classification"
+              ]
+            }
+        - uri: /produce('/school')
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          body: |
+            {
+              "type": "product",
+              "meta": {
+                "domain": {
+                  "type": "list",
+                  "item": {
+                    "domain": {
+                      "type": "record",
+                      "fields": [
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "code",
+                          "path": "school.code",
+                          "syntax": "code",
+                          "tag": "code"
+                        },
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "name",
+                          "path": "school.name",
+                          "syntax": "name",
+                          "tag": "name"
+                        },
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "campus",
+                          "path": "school.campus",
+                          "syntax": "campus",
+                          "tag": "campus"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "header": "school",
+                "path": "school",
+                "syntax": "\/school",
+                "tag": "school"
+              },
+              "data": [
+                [
+                  "art",
+                  "School of Art & Design",
+                  "old"
+                ],
+                [
+                  "bus",
+                  "School of Business",
+                  "south"
+                ],
+                [
+                  "edu",
+                  "College of Education",
+                  "old"
+                ],
+                [
+                  "eng",
+                  "School of Engineering",
+                  "north"
+                ],
+                [
+                  "la",
+                  "School of Arts and Humanities",
+                  "old"
+                ],
+                [
+                  "mus",
+                  "School of Music & Dance",
+                  "south"
+                ],
+                [
+                  "ns",
+                  "School of Natural Sciences",
+                  "old"
+                ],
+                [
+                  "ph",
+                  "Public Honorariums",
+                  null
+                ],
+                [
+                  "sc",
+                  "School of Continuing Studies",
+                  null
+                ]
+              ],
+              "more": false
+            }
+        - uri: /produce('/school', 3)
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          body: |
+            {
+              "type": "product",
+              "meta": {
+                "domain": {
+                  "type": "list",
+                  "item": {
+                    "domain": {
+                      "type": "record",
+                      "fields": [
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "code",
+                          "path": "school.code",
+                          "syntax": "code",
+                          "tag": "code"
+                        },
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "name",
+                          "path": "school.name",
+                          "syntax": "name",
+                          "tag": "name"
+                        },
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "campus",
+                          "path": "school.campus",
+                          "syntax": "campus",
+                          "tag": "campus"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "header": "school",
+                "path": "school",
+                "syntax": "\/school",
+                "tag": "school"
+              },
+              "data": [
+                [
+                  "art",
+                  "School of Art & Design",
+                  "old"
+                ],
+                [
+                  "bus",
+                  "School of Business",
+                  "south"
+                ],
+                [
+                  "edu",
+                  "College of Education",
+                  "old"
+                ],
+                [
+                  "eng",
+                  "School of Engineering",
+                  "north"
+                ],
+                [
+                  "la",
+                  "School of Arts and Humanities",
+                  "old"
+                ],
+                [
+                  "mus",
+                  "School of Music & Dance",
+                  "south"
+                ],
+                [
+                  "ns",
+                  "School of Natural Sciences",
+                  "old"
+                ],
+                [
+                  "ph",
+                  "Public Honorariums",
+                  null
+                ],
+                [
+                  "sc",
+                  "School of Continuing Studies",
+                  null
+                ]
+              ],
+              "more": false
+            }
+        - uri: /analyze('/school')
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          body: |
+            {
+              "type": "sql",
+              "sql": "SELECT [school].[code],\n       [school].[name],\n       [school].[campus]\nFROM [ad].[school]\nORDER BY 1 ASC\n"
+            }
+        - uri: /with_permissions(/produce('/school:top'), 'true', 'false')
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          body: |
+            {
+              "type": "product",
+              "meta": {
+                "domain": {
+                  "type": "list",
+                  "item": {
+                    "domain": {
+                      "type": "record",
+                      "fields": [
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "code",
+                          "path": "school.code",
+                          "syntax": "code",
+                          "tag": "code"
+                        },
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "name",
+                          "path": "school.name",
+                          "syntax": "name",
+                          "tag": "name"
+                        },
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "campus",
+                          "path": "school.campus",
+                          "syntax": "campus",
+                          "tag": "campus"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "header": "school",
+                "path": "school",
+                "syntax": "\/school :top",
+                "tag": "school"
+              },
+              "data": [
+                [
+                  "art",
+                  "School of Art & Design",
+                  "old"
+                ]
+              ],
+              "more": false
+            }
+        - uri: /with_permissions(/produce('/school:top'), 'false', 'false')
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          body: |
+            {
+              "type": "permissions",
+              "detail": "not enough permissions to execute the query"
+            }
         - uri: /
           status: 200 OK
           headers:

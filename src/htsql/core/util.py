@@ -59,7 +59,7 @@ class listof(object):
     Checks if a value is a list containing elements of the specified type.
 
     Use with ``isinstance()`` as in::
-    
+
         isinstance(X, listof(T))
     """
 
@@ -76,7 +76,7 @@ class setof(object):
     Checks if a value is a set containing elements of the specified type.
 
     Use with ``isinstance()`` as in::
-    
+
         isinstance(X, setof(T))
     """
 
@@ -114,7 +114,7 @@ class dictof(object):
     the specified types.
 
     Use with ``isinstance()`` as in::
-    
+
         isinstance(X, dictof(T1, T2))
     """
 
@@ -135,7 +135,7 @@ class omapof(object):
     type.
 
     Use with ``isinstance()`` as in::
-    
+
         isinstance(X, omapof(T))
     """
 

@@ -667,7 +667,15 @@ tests:
   - uri: /shell()
     ignore: true
 
-  # FIXME: add tests for auxiliary commands
+  # Auxiliary commands
+  - uri: /complete()
+  - uri: /complete(school)
+  - uri: /complete(department, course)
+  - uri: /produce('/school')
+  - uri: /produce('/school', 3)
+  - uri: /analyze('/school')
+  - uri: /with_permissions(/produce('/school:top'), 'true', 'false')
+  - uri: /with_permissions(/produce('/school:top'), 'false', 'false')
 
   # Using `/shell()` as the default command
   - load: demo

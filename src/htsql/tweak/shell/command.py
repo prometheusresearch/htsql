@@ -12,7 +12,7 @@ from ...core.domain import (Domain, BooleanDomain, NumberDomain, DateTimeDomain,
                             ListDomain, RecordDomain)
 from ...core.syn.syntax import StringSyntax, IntegerSyntax, IdentifierSyntax
 from ...core.cmd.command import UniversalCmd, Command, DefaultCmd
-from ...core.cmd.summon import Summon, RecognizeError
+from ...core.cmd.summon import Summon, RecognizeError, recognize
 from ...core.cmd.act import (Act, Action, RenderAction, UnsupportedActionError,
                              act, produce, safe_produce, analyze)
 from ...core.model import HomeNode, InvalidNode, InvalidArc
@@ -76,44 +76,6 @@ class WithPermissionsCmd(Command):
         self.command = command
         self.can_read = can_read
         self.can_write = can_write
-
-
-class ShellSig(Signature):
-
-    slots = [
-            Slot('query', is_mandatory=False),
-    ]
-
-
-class CompleteSig(Signature):
-
-    slots = [
-            Slot('names', is_mandatory=False, is_singular=False),
-    ]
-
-
-class ProduceSig(Signature):
-
-    slots = [
-            Slot('query'),
-            Slot('page', is_mandatory=False),
-    ]
-
-
-class AnalyzeSig(Signature):
-
-    slots = [
-            Slot('query'),
-    ]
-
-
-class WithPermissionsSig(Signature):
-
-    slots = [
-            Slot('query'),
-            Slot('can_read'),
-            Slot('can_write'),
-    ]
 
 
 class SummonShell(Summon):
@@ -349,7 +311,7 @@ class RenderProduceAnalyze(Act):
                 if page is not None and page > 0 and addon.limit is not None:
                     limit = page*addon.limit
                 if limit is not None:
-                    product = safe_produce(command, limit+1)
+                    product = safe_produce(command, cut=limit+1)
                 else:
                     product = produce(command)
         except UnsupportedActionError, exc:
