@@ -10,6 +10,7 @@ from ....core.cmd.command import DefaultCmd
 from ....core.cmd.act import Act, ProduceAction, act
 from ....core.cmd.fetch import Product
 from ....core.tr.bind import BindingState
+from ....core.tr.embed import embed
 from ....core.tr.binding import LiteralRecipe, IdentityRecipe, ClosedRecipe
 from .command import DoCmd
 
