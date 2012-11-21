@@ -101,6 +101,12 @@ class SpecifySyntax(Syntax):
 
     `rarms`: [:class:`IdentifierSyntax` or :class:`ReferenceSyntax`] or ``None``
         Formal parameters; ``None`` if no ``()``.
+
+    `identifier`: :class:`IdentifierSyntax`
+        Set only if the specifier is an identifier.
+
+    `reference`: :class:`ReferenceSyntax`
+        Set only if the specifier is a reference.
     """
 
     def __init__(self, larms, rarms, mark):
@@ -112,6 +118,16 @@ class SpecifySyntax(Syntax):
         super(SpecifySyntax, self).__init__(mark)
         self.larms = larms
         self.rarms = rarms
+        # Unpack the specifier for common cases:
+        #   <identifier> := ...
+        #   $ <reference> := ...
+        self.identifier = None
+        self.reference = None
+        if rarms is None and len(larms) == 1:
+            if isinstance(larms[0], IdentifierSyntax):
+                self.identifier = larms[0]
+            if isinstance(larms[0], ReferenceSyntax):
+                self.reference = larms[0]
 
     def __basis__(self):
         return (tuple(self.larms), tuple(self.rarms)

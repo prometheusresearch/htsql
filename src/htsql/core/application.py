@@ -207,9 +207,8 @@ class Application(object):
             for chunk in body:
                 yield chunk
 
-    def produce(self, uri, **parameters):
+    def produce(self, command, environment=None, **parameters):
         with self:
-            command = UniversalCmd(uri)
-            return produce(command, parameters)
+            return produce(command, environment, **parameters)
 
 

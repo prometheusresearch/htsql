@@ -87,12 +87,10 @@ class SummonDo(Summon):
             syntax = argument
             if isinstance(argument, AssignSyntax):
                 specifier = argument.larm
-                if not (len(specifier.larms) == 1 and
-                        isinstance(specifier.larms[0], ReferenceSyntax) and
-                        specifier.rarms is None):
+                if specifier.reference is None:
                     raise RecognizeError("a reference is expected",
                                          specifier.mark)
-                name = specifier.larms[0].identifier.name
+                name = specifier.reference.name
                 syntax = argument.rarm
             command = recognize(syntax)
             blocks.append((name, command))

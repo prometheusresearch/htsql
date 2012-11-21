@@ -3,6 +3,6 @@
 #
 
 
-from . import act, command, fetch, summon
+from . import act, command, embed, fetch, summon
 
 

@@ -1334,7 +1334,30 @@ def bind(syntax, state=None, scope=None, environment=None):
             state.pop_scope()
         return binding
     else:
-        state = BindingState(environment)
+        recipes = []
+        if environment is not None:
+            for name in sorted(environment):
+                value = environment[name]
+                if isinstance(value.domain, ListDomain):
+                    item_recipes = [LiteralRecipe(item,
+                                                  value.domain.item_domain)
+                                    for item in value.data]
+                    recipe = SelectionRecipe(item_recipes)
+                elif isinstance(value.domain, IdentityDomain):
+                    def convert(domain, data):
+                        items = []
+                        for element, item in zip(domain.labels, data):
+                            if isinstance(element, IdentityDomain):
+                                item = convert(element, item)
+                            else:
+                                item = LiteralRecipe(item, element)
+                            items.append(item)
+                        return IdentityRecipe(items)
+                    recipe = convert(value.domain, value.data)
+                else:
+                    recipe = LiteralRecipe(value.data, value.domain)
+                recipes.append((name, recipe))
+        state = BindingState(recipes)
         root = RootBinding(syntax)
         state.set_root(root)
         if isinstance(syntax, AssignSyntax):

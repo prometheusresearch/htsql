@@ -8,6 +8,7 @@ from ..error import BadRequestError
 from ..util import Clonable
 from .command import Command, UniversalCmd, DefaultCmd, FormatCmd, FetchCmd
 from .summon import recognize
+from .embed import embed
 from ..syn.parse import parse
 from ..syn.syntax import Syntax
 from ..fmt.emit import emit, emit_headers
@@ -24,21 +25,21 @@ class Action(Clonable):
 
 class ProduceAction(Action):
 
-    def __init__(self, parameters=None):
-        self.parameters = parameters
+    def __init__(self, environment=None):
+        self.environment = environment
 
 
 class SafeProduceAction(ProduceAction):
 
-    def __init__(self, parameters=None, cut=None):
-        self.parameters = parameters
+    def __init__(self, environment=None, cut=None):
+        self.environment = environment
         self.cut = cut
 
 
 class AnalyzeAction(Action):
 
-    def __init__(self, parameters=None):
-        self.parameters = parameters
+    def __init__(self, environment=None):
+        self.environment = environment
 
 
 class RenderAction(Action):
@@ -116,17 +117,20 @@ def act(command, action):
     return Act.__invoke__(command, action)
 
 
-def produce(command, parameters=None):
-    action = ProduceAction(parameters)
+def produce(command, environment=None, **parameters):
+    environment = embed(environment, **parameters)
+    action = ProduceAction(environment)
     return act(command, action)
 
 
-def safe_produce(command, parameters=None, cut=None):
-    action = SafeProduceAction(parameters, cut)
+def safe_produce(command, cut, environment=None, **parameters):
+    environment = embed(environment, **parameters)
+    action = SafeProduceAction(environment, cut)
     return act(command, action)
 
 
-def analyze(command, parameters=None):
+def analyze(command, environment=None, **parameters):
+    environment = embed(environment, **parameters)
     action = AnalyzeAction(parameters)
     return act(command, action)
 

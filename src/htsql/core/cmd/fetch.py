@@ -10,7 +10,6 @@ from ..domain import ListDomain, RecordDomain, Profile, Product
 from .command import FetchCmd, SkipCmd, SQLCmd
 from .act import (analyze, Act, ProduceAction, SafeProduceAction,
                   AnalyzeAction, RenderAction)
-from ..tr.embed import embed
 from ..tr.bind import bind
 from ..tr.binding import Binding
 from ..tr.encode import encode
@@ -131,25 +130,14 @@ class FetchPipe(object):
 
 class BuildFetch(Utility):
 
-    def __init__(self, syntax, parameters=None, limit=None):
+    def __init__(self, syntax, environment=None, limit=None):
         self.syntax = syntax
-        self.parameters = parameters
+        self.environment = environment
         self.limit = limit
 
     def __call__(self):
         if not isinstance(self.syntax, Binding):
-            environment = []
-            if self.parameters is not None:
-                if isinstance(self.parameters, dict):
-                    for name in sorted(self.parameters):
-                        value = self.parameters[name]
-                        if isinstance(name, str):
-                            name = name.decode('utf-8')
-                        recipe = embed(value)
-                        environment.append((name, recipe))
-                else:
-                    environment = self.parameters[:]
-            binding = bind(self.syntax, environment=environment)
+            binding = bind(self.syntax, environment=self.environment)
         else:
             binding = self.syntax
         expression = encode(binding)
@@ -191,7 +179,7 @@ class ProduceFetch(Act):
         cut = None
         if isinstance(self.action, SafeProduceAction):
             cut = self.action.cut
-        pipe = build_fetch(self.command.syntax, self.action.parameters, cut)
+        pipe = build_fetch(self.command.syntax, self.action.environment, cut)
         return pipe()
 
 
@@ -200,7 +188,7 @@ class AnalyzeFetch(Act):
     adapt(FetchCmd, AnalyzeAction)
 
     def __call__(self):
-        pipe = build_fetch(self.command.syntax, self.action.parameters)
+        pipe = build_fetch(self.command.syntax, self.action.environment)
         return pipe.plan
 
 
