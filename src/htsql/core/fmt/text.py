@@ -14,7 +14,8 @@ This module implements the plain text renderer.
 from ..adapter import Adapter, adapt, adapt_many
 from ..util import maybe, oneof
 from ..context import context
-from .format import TextFormat, EmitHeaders, Emit
+from .format import TextFormat
+from .emit import EmitHeaders, Emit
 from ..domain import (Domain, BooleanDomain, NumberDomain, IntegerDomain,
         DecimalDomain, FloatDomain, StringDomain, EnumDomain, DateDomain,
         TimeDomain, DateTimeDomain, ListDomain, RecordDomain, UntypedDomain,

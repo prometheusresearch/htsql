@@ -11,6 +11,6 @@ This package implements product formatters.
 """
 
 
-from . import accept, format, html, json, tabular, text, xml
+from . import accept, emit, format, html, json, tabular, text, xml
 
 

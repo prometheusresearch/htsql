@@ -13,7 +13,8 @@ This module implements the HTML renderer.
 
 from ..util import listof, tupleof, maybe, Printable
 from ..adapter import Adapter, adapt, adapt_many
-from .format import HTMLFormat, EmitHeaders, Emit
+from .format import HTMLFormat
+from .emit import EmitHeaders, Emit
 from ..error import InternalServerError, Mark
 from ..domain import (Domain, BooleanDomain, NumberDomain, DecimalDomain,
         StringDomain, EnumDomain, DateDomain, TimeDomain, DateTimeDomain,

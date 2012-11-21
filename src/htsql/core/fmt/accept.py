@@ -3,15 +3,14 @@
 #
 
 
-from ..adapter import Protocol, call, adapt
-from .format import (HTMLFormat, RawFormat, JSONFormat, CSVFormat, TSVFormat,
-                     XMLFormat, ProxyFormat, TextFormat, Emit, EmitHeaders,
-                     emit, emit_headers)
+from ..adapter import Protocol, call
+from .format import (DefaultFormat, HTMLFormat, RawFormat, JSONFormat,
+        CSVFormat, TSVFormat, XMLFormat, ProxyFormat, TextFormat)
 
 
 class Accept(Protocol):
 
-    format = TextFormat
+    format = DefaultFormat
 
     def __init__(self, content_type):
         self.content_type = content_type
@@ -73,24 +72,6 @@ class AcceptText(Accept):
     call("text/plain",
          "x-htsql/txt")
     format = TextFormat
-
-
-class EmitProxyHeaders(EmitHeaders):
-
-    adapt(ProxyFormat)
-
-    def __call__(self):
-        for header in emit_headers(self.format.format, self.product):
-            yield header
-        yield ('Vary', 'Accept')
-
-
-class EmitProxy(Emit):
-
-    adapt(ProxyFormat)
-
-    def __call__(self):
-        return emit(self.format.format, self.product)
 
 
 def accept(environ):

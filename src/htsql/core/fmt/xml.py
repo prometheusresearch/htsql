@@ -9,7 +9,8 @@ from ..domain import (Domain, BooleanDomain, NumberDomain, DecimalDomain,
         StringDomain, EnumDomain, DateDomain, TimeDomain, DateTimeDomain,
         ListDomain, RecordDomain, UntypedDomain, VoidDomain, OpaqueDomain,
         Profile)
-from .format import XMLFormat, EmitHeaders, Emit
+from .format import XMLFormat
+from .emit import EmitHeaders, Emit
 import re
 import decimal
 

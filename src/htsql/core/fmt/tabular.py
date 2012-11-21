@@ -13,7 +13,8 @@ This module implements the CSV and TSV renderers.
 
 from ..util import listof
 from ..adapter import Adapter, adapt, adapt_many
-from .format import Emit, EmitHeaders, CSVFormat
+from .format import CSVFormat
+from .emit import EmitHeaders, Emit
 from ..domain import (Domain, BooleanDomain, NumberDomain, FloatDomain,
         DecimalDomain, StringDomain, EnumDomain, DateDomain, TimeDomain,
         DateTimeDomain, ListDomain, RecordDomain, UntypedDomain, VoidDomain,

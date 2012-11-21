@@ -17,7 +17,8 @@ from ..domain import (Domain, BooleanDomain, NumberDomain, FloatDomain,
         StringDomain, EnumDomain, DateDomain, TimeDomain, DateTimeDomain,
         ListDomain, RecordDomain, IdentityDomain, UntypedDomain, VoidDomain,
         OpaqueDomain, Profile)
-from .format import RawFormat, JSONFormat, EmitHeaders, Emit
+from .format import RawFormat, JSONFormat
+from .emit import EmitHeaders, Emit
 import re
 import math
 import decimal

@@ -9,7 +9,8 @@ from ..util import Clonable
 from .command import Command, UniversalCmd, DefaultCmd, FormatCmd, FetchCmd
 from .summon import recognize
 from ..syn.parse import parse
-from ..fmt.format import emit, emit_headers
+from ..syn.syntax import Syntax
+from ..fmt.emit import emit, emit_headers
 from ..fmt.accept import accept
 
 
@@ -40,8 +41,6 @@ class AnalyzeAction(Action):
         self.parameters = parameters
 
 
-
-
 class RenderAction(Action):
 
     def __init__(self, environ):
@@ -67,9 +66,7 @@ class ActUniversal(Act):
     adapt(UniversalCmd, Action)
 
     def __call__(self):
-        syntax = parse(self.command.query)
-        command = recognize(syntax)
-        return act(command, self.action)
+        return act(self.command.query, self.action)
 
 
 class ActDefault(Act):
@@ -111,7 +108,12 @@ class RenderProducer(Act):
         return (status, headers, body)
 
 
-act = Act.__invoke__
+def act(command, action):
+    assert isinstance(command, (Command, Syntax, unicode, str))
+    assert isinstance(action, Action)
+    if not isinstance(command, Command):
+        command = recognize(command)
+    return Act.__invoke__(command, action)
 
 
 def produce(command, parameters=None):

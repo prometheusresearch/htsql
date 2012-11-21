@@ -8,6 +8,7 @@ from ..error import MarkedError
 from ..util import to_name
 from ..syn.syntax import (Syntax, SkipSyntax, FunctionSyntax, PipeSyntax,
         ApplySyntax, CollectSyntax)
+from ..syn.parse import parse
 from ..fmt.format import (TextFormat, HTMLFormat, RawFormat, JSONFormat,
         CSVFormat, TSVFormat, XMLFormat)
 from .command import SkipCmd, FetchCmd, FormatCmd, SQLCmd, DefaultCmd
@@ -168,6 +169,9 @@ class SummonSQL(Summon):
 
 
 def recognize(syntax):
+    assert isinstance(syntax, (Syntax, unicode, str))
+    if not isinstance(syntax, Syntax):
+        syntax = parse(syntax)
     command = Recognize.__invoke__(syntax)
     if command is None:
         command = DefaultCmd(syntax)
