@@ -4,7 +4,7 @@
 
 
 from htsql.core.adapter import adapt
-from htsql.core.domain import StringDomain, EnumDomain
+from htsql.core.domain import TextDomain, EnumDomain
 from htsql.core.connect import (Connect, DBError, UnscrambleError, Unscramble,
         Scramble)
 from htsql.core.context import context
@@ -70,9 +70,9 @@ class UnscramblePGSQLError(UnscrambleError):
         return super(UnscramblePGSQLError, self).__call__()
 
 
-class UnscramblePGSQLString(Unscramble):
+class UnscramblePGSQLText(Unscramble):
 
-    adapt(StringDomain)
+    adapt(TextDomain)
 
     @staticmethod
     def convert(value):

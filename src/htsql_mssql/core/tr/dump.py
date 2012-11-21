@@ -4,7 +4,7 @@
 
 
 from htsql.core.adapter import adapt
-from htsql.core.domain import (BooleanDomain, StringDomain, IntegerDomain,
+from htsql.core.domain import (BooleanDomain, TextDomain, IntegerDomain,
                                DecimalDomain, DateDomain, TimeDomain,
                                DateTimeDomain)
 from htsql.core.tr.error import SerializeError
@@ -15,7 +15,7 @@ from htsql.core.tr.dump import (FormatName, FormatPlaceholder,
                                 DumpIsTotallyEqual, DumpBoolean, DumpInteger,
                                 DumpDecimal, DumpFloat, DumpDate, DumpTime,
                                 DumpDateTime, DumpToInteger,
-                                DumpToFloat, DumpToDecimal, DumpToString,
+                                DumpToFloat, DumpToDecimal, DumpToText,
                                 DumpToDate, DumpToTime, DumpToDateTime)
 from htsql.core.tr.fn.dump import (DumpRound, DumpRoundTo, DumpTrunc,
                                    DumpTruncTo, DumpLength, DumpConcatenate,
@@ -200,15 +200,15 @@ class MSSQLDumpIntegerToDecimal(MSSQLDumpToDecimal):
         self.format("CAST({base} AS DECIMAL(38))", base=self.base)
 
 
-class MSSQLDumpToString(DumpToString):
+class MSSQLDumpToText(DumpToText):
 
     def __call__(self):
         self.format("CAST({base} AS VARCHAR(MAX))", base=self.base)
 
 
-class MSSQLDumpBooleanToString(DumpToString):
+class MSSQLDumpBooleanToText(DumpToText):
 
-    adapt(BooleanDomain, StringDomain)
+    adapt(BooleanDomain, TextDomain)
 
     def __call__(self):
         if self.base.is_nullable:
@@ -220,35 +220,35 @@ class MSSQLDumpBooleanToString(DumpToString):
                         base=self.base)
 
 
-class MSSQLDumpDateToString(DumpToString):
+class MSSQLDumpDateToText(DumpToText):
 
-    adapt(DateDomain, StringDomain)
+    adapt(DateDomain, TextDomain)
 
     def __call__(self):
         self.format("SUBSTRING(CONVERT(VARCHAR, {base}, 21), 1, 10)",
                     base=self.base)
 
 
-class MSSQLDumpTimeToString(DumpToString):
+class MSSQLDumpTimeToText(DumpToText):
 
-    adapt(TimeDomain, StringDomain)
+    adapt(TimeDomain, TextDomain)
 
     def __call__(self):
         self.format("SUBSTRING(CONVERT(VARCHAR, CAST({base} AS DATETIME), 21),"
                     " 12, 12)", base=self.base)
 
 
-class MSSQLDumpDateTimeToString(DumpToString):
+class MSSQLDumpDateTimeToText(DumpToText):
 
-    adapt(DateTimeDomain, StringDomain)
+    adapt(DateTimeDomain, TextDomain)
 
     def __call__(self):
         self.format("CONVERT(VARCHAR, {base}, 21)", base=self.base)
 
 
-class MSSQLDumpStringToDate(DumpToDate):
+class MSSQLDumpTextToDate(DumpToDate):
 
-    adapt(StringDomain, DateDomain)
+    adapt(TextDomain, DateDomain)
 
     def __call__(self):
         self.format("CAST(FLOOR(CAST(CAST({base} AS DATETIME) AS FLOAT))"
@@ -264,9 +264,9 @@ class MSSQLDumpDateTimeToDate(DumpToDate):
                     base=self.base)
 
 
-class MSSQLDumpStringToTime(DumpToTime):
+class MSSQLDumpTextToTime(DumpToTime):
 
-    adapt(StringDomain, TimeDomain)
+    adapt(TextDomain, TimeDomain)
 
     def __call__(self):
         self.format("CAST(CAST('1900-01-01 ' + {base} AS DATETIME) AS FLOAT)",
@@ -282,9 +282,9 @@ class MSSQLDumpDateTimeToTime(DumpToTime):
                     base=self.base)
 
 
-class MSSQLDumpStringToDateTime(DumpToDateTime):
+class MSSQLDumpTextToDateTime(DumpToDateTime):
 
-    adapt(StringDomain, DateTimeDomain)
+    adapt(TextDomain, DateTimeDomain)
 
     def __call__(self):
         self.format("CAST({base} AS DATETIME)", base=self.base)

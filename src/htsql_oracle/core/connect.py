@@ -7,7 +7,7 @@ from htsql.core.connect import (Connect, Scramble, Unscramble, UnscrambleError,
         DBError)
 from htsql.core.adapter import adapt
 from htsql.core.context import context
-from htsql.core.domain import (BooleanDomain, DecimalDomain, StringDomain,
+from htsql.core.domain import (BooleanDomain, DecimalDomain, TextDomain,
         DateDomain, TimeDomain)
 import datetime
 import decimal
@@ -101,9 +101,9 @@ class UnscrambleOracleDecimal(Unscramble):
         return decimal.Decimal(value)
 
 
-class UnscrambleOracleString(Unscramble):
+class UnscrambleOracleText(Unscramble):
 
-    adapt(StringDomain)
+    adapt(TextDomain)
 
     @staticmethod
     def convert(value):

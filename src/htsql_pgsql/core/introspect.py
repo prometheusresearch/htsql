@@ -7,7 +7,7 @@ from htsql.core.adapter import Protocol, call
 from htsql.core.introspect import Introspect
 from htsql.core.entity import make_catalog
 from htsql.core.domain import (BooleanDomain, IntegerDomain, FloatDomain,
-                               DecimalDomain, StringDomain, EnumDomain,
+                               DecimalDomain, TextDomain, EnumDomain,
                                DateDomain, TimeDomain, DateTimeDomain,
                                OpaqueDomain)
 from htsql.core.connect import connect
@@ -237,7 +237,7 @@ class IntrospectPGSQLCharDomain(IntrospectPGSQLDomain):
 
     def __call__(self):
         length = self.modifier-4 if self.modifier != -1 else None
-        return StringDomain(length=length, is_varying=False)
+        return TextDomain(length=length, is_varying=False)
 
 
 class IntrospectPGSQLVarCharDomain(IntrospectPGSQLDomain):
@@ -246,7 +246,7 @@ class IntrospectPGSQLVarCharDomain(IntrospectPGSQLDomain):
 
     def __call__(self):
         length = self.modifier-4 if self.modifier != -1 else None
-        return StringDomain(length=length, is_varying=True)
+        return TextDomain(length=length, is_varying=True)
 
 
 class IntrospectPGSQLTextDomain(IntrospectPGSQLDomain):
@@ -254,7 +254,7 @@ class IntrospectPGSQLTextDomain(IntrospectPGSQLDomain):
     call(('pg_catalog', 'text'))
 
     def __call__(self):
-        return StringDomain()
+        return TextDomain()
 
 
 class IntrospectPGSQLDateDomain(IntrospectPGSQLDomain):

@@ -50,3 +50,11 @@ Scanner and parser generators
 .. automodule:: htsql.core.syn.grammar
    :members:
 
+
+Data Types
+==========
+
+.. automodule:: htsql.core.domain
+   :members:
+
+

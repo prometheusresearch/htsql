@@ -7,7 +7,7 @@ from htsql.core.connect import (Connect, Scramble, Unscramble, UnscrambleError,
         DBError)
 from htsql.core.adapter import adapt
 from htsql.core.context import context
-from htsql.core.domain import (BooleanDomain, StringDomain, DateDomain,
+from htsql.core.domain import (BooleanDomain, TextDomain, DateDomain,
         TimeDomain)
 import datetime
 import pymssql
@@ -67,9 +67,9 @@ class UnscrambleMSSQLBoolean(Unscramble):
         return (value != 0)
 
 
-class UnscrambleMSSQLString(Unscramble):
+class UnscrambleMSSQLText(Unscramble):
 
-    adapt(StringDomain)
+    adapt(TextDomain)
 
     @staticmethod
     def convert(value):

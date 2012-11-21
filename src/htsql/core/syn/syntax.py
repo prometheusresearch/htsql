@@ -4,13 +4,13 @@
 
 
 from ..error import Mark, EmptyMark
-from ..util import (maybe, listof, oneof, Printable, Clonable, Comparable,
-        to_name)
+from ..util import (maybe, listof, oneof, Clonable, Hashable, Printable,
+        to_name, to_literal)
 import re
 import decimal
 
 
-class Syntax(Clonable, Comparable, Printable):
+class Syntax(Clonable, Hashable, Printable):
     """
     A syntax node.
 
@@ -438,7 +438,7 @@ class ComposeSyntax(Syntax):
     def __basis__(self):
         return (self.larm, self.rarm)
 
-    endswithint_regexp = re.compile(r'(?:\W|\A)\d+$', re.U)
+    endswithint_regexp = re.compile(r'(?:\W|\A)\d+\Z', re.U)
 
     def __unicode__(self):
         chunks = []
@@ -751,13 +751,6 @@ class LiteralSyntax(Syntax):
         The value of the literal.
     """
 
-    @staticmethod
-    def escape(text,
-               regexp=re.compile(r"[\x00-\x1F%\x7F]", re.U),
-               replace=(lambda m: u"%%%02X" % ord(m.group()))):
-        # %-encode non-printable characters.
-        return regexp.sub(replace, text)
-
     def __init__(self, text, mark):
         assert isinstance(text, unicode)
         super(LiteralSyntax, self).__init__(mark)
@@ -778,7 +771,7 @@ class StringSyntax(LiteralSyntax):
     """
 
     def __unicode__(self):
-        return u"'%s'" % self.escape(self.text.replace(u"'", u"''"))
+        return to_literal(self.text)
 
 
 class LabelSyntax(LiteralSyntax):
@@ -790,7 +783,8 @@ class LabelSyntax(LiteralSyntax):
     """
 
     def __unicode__(self):
-        return self.escape(self.text)
+        # Should be safe without escaping?
+        return self.text
 
 
 class NumberSyntax(LiteralSyntax):

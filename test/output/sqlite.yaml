@@ -12400,32 +12400,32 @@ tests:
             invalid Boolean literal: expected 'true' or 'false'; got 'yes':
                 /boolean('yes')
                  ^^^^^^^^^^^^^^
-        - uri: /{string(''), string('HTSQL'), string('O''Reilly'), string('%ce%bb%cf%8c%ce%b3%ce%bf%cf%82'),
-            string('$-b \pm \sqrt{b^2 - 4ac} \over 2a$')}
+        - uri: /{text(''), text('HTSQL'), text('O''Reilly'), text('%ce%bb%cf%8c%ce%b3%ce%bf%cf%82'),
+            text('$-b \pm \sqrt{b^2 - 4ac} \over 2a$')}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
-          body: " | string('') | string('HTSQL') | string('O''Reilly') | string('\u03BB\u03CC\u03B3\u03BF\u03C2')
-            | string('$-b \\pm \\sqrt{b^2 - 4ac} \\over 2a$') |\n-+------------+-----------------+---------------------+-----------------+----------------------------------------------+-\n
-            | \"\"         | HTSQL           | O'Reilly            | \u03BB\u03CC\u03B3\u03BF\u03C2
-            \          | $-b \\pm \\sqrt{b^2 - 4ac} \\over 2a$           |\n\n ----\n
-            /{string(''),string('HTSQL'),string('O''Reilly'),string('\u03BB\u03CC\u03B3\u03BF\u03C2'),string('$-b
+          body: " | text('') | text('HTSQL') | text('O''Reilly') | text('\u03BB\u03CC\u03B3\u03BF\u03C2')
+            | text('$-b \\pm \\sqrt{b^2 - 4ac} \\over 2a$') |\n-+----------+---------------+-------------------+---------------+--------------------------------------------+-\n
+            | \"\"       | HTSQL         | O'Reilly          | \u03BB\u03CC\u03B3\u03BF\u03C2
+            \        | $-b \\pm \\sqrt{b^2 - 4ac} \\over 2a$         |\n\n ----\n
+            /{text(''),text('HTSQL'),text('O''Reilly'),text('\u03BB\u03CC\u03B3\u03BF\u03C2'),text('$-b
             \\pm \\sqrt{b^2 - 4ac} \\over 2a$')}\n SELECT '',\n        'HTSQL',\n
             \       'O''Reilly',\n        '\u03BB\u03CC\u03B3\u03BF\u03C2',\n        '$-b
             \\pm \\sqrt{b^2 - 4ac} \\over 2a$'\n"
-        - uri: /{string('832040')}
+        - uri: /{text('832040')}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | string('832040') |
-            -+------------------+-
-             | 832040           |
+             | text('832040') |
+            -+----------------+-
+             | 832040         |
 
              ----
-             /{string('832040')}
+             /{text('832040')}
              SELECT '832040'
         - uri: /{0, 7, -97, 3571}
           status: 200 OK
@@ -12710,18 +12710,18 @@ tests:
              SELECT 0,
                     1,
                     1
-        - uri: /{boolean(string(null())), boolean(string('')), boolean(string('FALSE'))}
+        - uri: /{boolean(text(null())), boolean(text('')), boolean(text('FALSE'))}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | boolean(string(null())) | boolean(string('')) | boolean(string('FALSE')) |
-            -+-------------------------+---------------------+--------------------------+-
-             | false                   | false               | true                     |
+             | boolean(text(null())) | boolean(text('')) | boolean(text('FALSE')) |
+            -+-----------------------+-------------------+------------------------+-
+             | false                 | false             | true                   |
 
              ----
-             /{boolean(string(null())),boolean(string('')),boolean(string('FALSE'))}
+             /{boolean(text(null())),boolean(text('')),boolean(text('FALSE'))}
              SELECT 0,
                     0,
                     1
@@ -13080,7 +13080,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types ('boolean', 'integer') to a common type:
+            cannot coerce values of types (boolean, integer) to a common type:
                 /{true()=1}
                   ^^^^^^^^
         - uri: /{'cinq'!=4.9}
@@ -13096,7 +13096,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types ('date', 'integer') to a common type:
+            cannot coerce values of types (date, integer) to a common type:
                 /{date('2010-04-15')==1991}
                   ^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{date('2010-04-15')=datetime('2010-04-15')}
@@ -13104,7 +13104,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types ('date', 'datetime') to a common type:
+            cannot coerce values of types (date, datetime) to a common type:
                 /{date('2010-04-15')=datetime('2010-04-15')}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{datetime('2010-04-15 20:13')!==time('02:01')}
@@ -13112,7 +13112,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types ('datetime', 'time') to a common type:
+            cannot coerce values of types (datetime, time) to a common type:
                 /{datetime('2010-04-15 20:13')!==time('02:01')}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{1<10, 7.0<=7.0, 'omega'>'alpha'}
@@ -13211,7 +13211,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            values of type 'boolean' are not comparable:
+            values of type boolean are not comparable:
                 /{false()<true()}
                   ^^^^^^^^^^^^^^
         - uri: /{'cinq'>4.9}
@@ -13227,7 +13227,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types ('date', 'integer') to a common type:
+            cannot coerce values of types (date, integer) to a common type:
                 /{date('2010-04-15')>=1991}
                   ^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{datetime('2010-04-15 20:13')>time('02:01')}
@@ -13235,7 +13235,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types ('datetime', 'time') to a common type:
+            cannot coerce values of types (datetime, time) to a common type:
                 /{datetime('2010-04-15 20:13')>time('02:01')}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{if_null('Victor', 'William'), if_null(null(), 'William'), if_null('Victor',
@@ -13308,7 +13308,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types ('date', 'integer') to a common type:
+            cannot coerce values of types (date, integer) to a common type:
                 /{if_null(date('2010-04-15'),1991)}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{null_if(datetime('2010-04-15 20:13'),time('02:01'))}
@@ -13316,7 +13316,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types ('datetime', 'time') to a common type:
+            cannot coerce values of types (datetime, time) to a common type:
                 /{null_if(datetime('2010-04-15 20:13'),time('02:01'))}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{if(true(), 'then'), if(false(), 'then'), if(null(), 'then')}
@@ -13434,7 +13434,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types ('integer', 'date', 'date') to a common type:
+            cannot coerce values of types (integer, date, date) to a common type:
                 /{switch(1, date('2010-04-15'), 1, date('1991-08-20'), 2)}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{switch(1, 1, 'George', 2, false())}
@@ -13531,44 +13531,44 @@ tests:
              /{float(60),float(2.125)}
              SELECT 60.0,
                     2.125
-        - uri: /{integer(string('60'))}
+        - uri: /{integer(text('60'))}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | integer(string('60')) |
-            -+-----------------------+-
-             |                    60 |
+             | integer(text('60')) |
+            -+---------------------+-
+             |                  60 |
 
              ----
-             /{integer(string('60'))}
+             /{integer(text('60'))}
              SELECT CAST('60' AS INTEGER)
-        - uri: /{decimal(string('2.125'))}
+        - uri: /{decimal(text('2.125'))}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | decimal(string('2.125')) |
-            -+--------------------------+-
-             |                    2.125 |
+             | decimal(text('2.125')) |
+            -+------------------------+-
+             |                  2.125 |
 
              ----
-             /{decimal(string('2.125'))}
+             /{decimal(text('2.125'))}
              SELECT CAST('2.125' AS REAL)
-        - uri: /{float(string('271828e-5'))}
+        - uri: /{float(text('271828e-5'))}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | float(string('271828e-5')) |
-            -+----------------------------+-
-             |                    2.71828 |
+             | float(text('271828e-5')) |
+            -+--------------------------+-
+             |                  2.71828 |
 
              ----
-             /{float(string('271828e-5'))}
+             /{float(text('271828e-5'))}
              SELECT CAST('271828e-5' AS REAL)
         - uri: /{integer('cinq')}
           status: 400 Bad Request
@@ -13583,7 +13583,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot convert a value of type 'boolean' to 'float':
+            cannot convert a value of type boolean to float:
                 /{decimal(true())}
                   ^^^^^^^^^^^^^^^
         - uri: /{float(date('2010-04-15'))}
@@ -13591,34 +13591,34 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot convert a value of type 'date' to 'float':
+            cannot convert a value of type date to float:
                 /{float(date('2010-04-15'))}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^
-        - uri: /{integer(string('zero'))}
+        - uri: /{integer(text('zero'))}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | integer(string('zero')) |
-            -+-------------------------+-
-             |                       0 |
-
-             ----
-             /{integer(string('zero'))}
-             SELECT CAST('zero' AS INTEGER)
-        - uri: /{float(string('zero'))}
-          status: 200 OK
-          headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          - [Vary, Accept]
-          body: |2
-             | float(string('zero')) |
+             | integer(text('zero')) |
             -+-----------------------+-
-             |                   0.0 |
+             |                     0 |
 
              ----
-             /{float(string('zero'))}
+             /{integer(text('zero'))}
+             SELECT CAST('zero' AS INTEGER)
+        - uri: /{float(text('zero'))}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | float(text('zero')) |
+            -+---------------------+-
+             |                 0.0 |
+
+             ----
+             /{float(text('zero'))}
              SELECT CAST('zero' AS REAL)
         - uri: /{integer(4294967296.0), integer(1.8446744073709552e+19)}
           status: 200 OK
@@ -13777,28 +13777,28 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function '+' cannot be applied to values of types ('untyped', 'integer'):
+            operator '+' cannot be applied to values of types (untyped, integer):
                 /{'cinq'+7}
                   ^^^^^^^^
-            (valid types: ('integer', 'integer'), ('integer', 'decimal'), ('decimal', 'integer'), ('decimal', 'decimal'), ('integer', 'float'), ('decimal', 'float'), ('float', 'integer'), ('float', 'decimal'), ('float', 'float'), ('date', 'integer'), ('datetime', 'integer'), ('datetime', 'decimal'), ('datetime', 'float'), ('string', 'string'))
+            (valid types: (integer, integer), (integer, decimal), (decimal, integer), (decimal, decimal), (integer, float), (decimal, float), (float, integer), (float, decimal), (float, float), (date, integer), (datetime, integer), (datetime, decimal), (datetime, float), (text, text))
         - uri: /{2.125-date('2010-04-15')}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function '-' cannot be applied to values of types ('float', 'date'):
+            operator '-' cannot be applied to values of types (float, date):
                 /{2.125-date('2010-04-15')}
                   ^^^^^^^^^^^^^^^^^^^^^^^^
-            (valid types: ('integer', 'integer'), ('integer', 'decimal'), ('decimal', 'integer'), ('decimal', 'decimal'), ('integer', 'float'), ('decimal', 'float'), ('float', 'integer'), ('float', 'decimal'), ('float', 'float'), ('date', 'integer'), ('datetime', 'integer'), ('datetime', 'decimal'), ('datetime', 'float'), ('date', 'date'))
+            (valid types: (integer, integer), (integer, decimal), (decimal, integer), (decimal, decimal), (integer, float), (decimal, float), (float, integer), (float, decimal), (float, float), (date, integer), (datetime, integer), (datetime, decimal), (datetime, float), (date, date))
         - uri: /{true()/271828e-5}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function '/' cannot be applied to values of types ('boolean', 'float'):
+            operator '/' cannot be applied to values of types (boolean, float):
                 /{true()/271828e-5}
                   ^^^^^^^^^^^^^^^^
-            (valid types: ('integer', 'integer'), ('integer', 'decimal'), ('decimal', 'integer'), ('decimal', 'decimal'), ('integer', 'float'), ('decimal', 'float'), ('float', 'integer'), ('float', 'decimal'), ('float', 'float'))
+            (valid types: (integer, integer), (integer, decimal), (decimal, integer), (decimal, decimal), (integer, float), (decimal, float), (float, integer), (float, decimal), (float, float))
         - uri: /{7*2147483647, 9223372036854775807+1}
           status: 200 OK
           headers:
@@ -13971,89 +13971,89 @@ tests:
              ----
              /{round(9973,-2)}
              SELECT (ROUND(9973.0 / 100.0) * 100.0)
-      - id: string-functions-and-operators
+      - id: text-functions-and-operators
         tests:
-        - uri: /{string(null()), string('OMGWTFBBQ')}
+        - uri: /{text(null()), text('OMGWTFBBQ')}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | string(null()) | string('OMGWTFBBQ') |
-            -+----------------+---------------------+-
-             |                | OMGWTFBBQ           |
+             | text(null()) | text('OMGWTFBBQ') |
+            -+--------------+-------------------+-
+             |              | OMGWTFBBQ         |
 
              ----
-             /{string(null()),string('OMGWTFBBQ')}
+             /{text(null()),text('OMGWTFBBQ')}
              SELECT NULL,
                     'OMGWTFBBQ'
-        - uri: /{string(true()), string(false())}
+        - uri: /{text(true()), text(false())}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | string(true()) | string(false()) |
-            -+----------------+-----------------+-
-             | true           | false           |
+             | text(true()) | text(false()) |
+            -+--------------+---------------+-
+             | true         | false         |
 
              ----
-             /{string(true()),string(false())}
+             /{text(true()),text(false())}
              SELECT (CASE WHEN 1 THEN 'true' WHEN NOT 1 THEN 'false' END),
                     (CASE WHEN 0 THEN 'true' WHEN NOT 0 THEN 'false' END)
-        - uri: /{string(60), string(2.125), string(-57721e-5)}
+        - uri: /{text(60), text(2.125), text(-57721e-5)}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | string(60) | string(2.125) | string(-57721e-5) |
-            -+------------+---------------+-------------------+-
-             | 60         | 2.125         | -0.57721          |
+             | text(60) | text(2.125) | text(-57721e-5) |
+            -+----------+-------------+-----------------+-
+             | 60       | 2.125       | -0.57721        |
 
              ----
-             /{string(60),string(2.125),string(-57721e-5)}
+             /{text(60),text(2.125),text(-57721e-5)}
              SELECT CAST(60 AS TEXT),
                     CAST(2.125 AS TEXT),
                     CAST((-0.57721) AS TEXT)
-        - uri: /{string(date('2010-04-15'))}
+        - uri: /{text(date('2010-04-15'))}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | string(date('2010-04-15')) |
-            -+----------------------------+-
-             | 2010-04-15                 |
+             | text(date('2010-04-15')) |
+            -+--------------------------+-
+             | 2010-04-15               |
 
              ----
-             /{string(date('2010-04-15'))}
+             /{text(date('2010-04-15'))}
              SELECT CAST('2010-04-15' AS TEXT)
-        - uri: /{string(time('20:03'))}
+        - uri: /{text(time('20:03'))}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | string(time('20:03')) |
-            -+-----------------------+-
-             | 20:03:00              |
+             | text(time('20:03')) |
+            -+---------------------+-
+             | 20:03:00            |
 
              ----
-             /{string(time('20:03'))}
+             /{text(time('20:03'))}
              SELECT CAST('20:03:00' AS TEXT)
-        - uri: /{string(datetime('2010-04-15 20:13'))}
+        - uri: /{text(datetime('2010-04-15 20:13'))}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | string(datetime('2010-04-15 20:13')) |
-            -+--------------------------------------+-
-             | 2010-04-15 20:13:00                  |
+             | text(datetime('2010-04-15 20:13')) |
+            -+------------------------------------+-
+             | 2010-04-15 20:13:00                |
 
              ----
-             /{string(datetime('2010-04-15 20:13'))}
+             /{text(datetime('2010-04-15 20:13'))}
              SELECT CAST('2010-04-15 20:13:00' AS TEXT)
         - uri: /{length(''), length('OMGWTFBBQ')}
           status: 200 OK
@@ -14087,10 +14087,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'length' cannot be applied to a value of type 'date':
+            function 'length' cannot be applied to a value of type date:
                 /{length(date(2010-04-15))}
                   ^^^^^^^^^^^^^^^^^^^^^^^^
-            (valid type: 'string')
+            (valid type: text)
         - uri: /{'OMG'+'WTF'+'BBQ'}
           status: 200 OK
           headers:
@@ -14104,30 +14104,30 @@ tests:
              ----
              /{'OMG'+'WTF'+'BBQ'}
              SELECT (('OMG' || 'WTF') || 'BBQ')
-        - uri: /{null()+'LOL', 'LOL'+null(), string(null())+string(null())}
+        - uri: /{null()+'LOL', 'LOL'+null(), text(null())+text(null())}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | null()+'LOL' | 'LOL'+null() | string(null())+string(null()) |
-            -+--------------+--------------+-------------------------------+-
-             | LOL          | LOL          | ""                            |
+             | null()+'LOL' | 'LOL'+null() | text(null())+text(null()) |
+            -+--------------+--------------+---------------------------+-
+             | LOL          | LOL          | ""                        |
 
              ----
-             /{null()+'LOL','LOL'+null(),string(null())+string(null())}
+             /{null()+'LOL','LOL'+null(),text(null())+text(null())}
              SELECT ('' || 'LOL'),
                     ('LOL' || ''),
                     ('' || '')
-        - uri: /{string('LOL')+7}
+        - uri: /{text('LOL')+7}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function '+' cannot be applied to values of types ('string', 'integer'):
-                /{string('LOL')+7}
-                  ^^^^^^^^^^^^^^^
-            (valid types: ('integer', 'integer'), ('integer', 'decimal'), ('decimal', 'integer'), ('decimal', 'decimal'), ('integer', 'float'), ('decimal', 'float'), ('float', 'integer'), ('float', 'decimal'), ('float', 'float'), ('date', 'integer'), ('datetime', 'integer'), ('datetime', 'decimal'), ('datetime', 'float'), ('string', 'string'))
+            operator '+' cannot be applied to values of types (text, integer):
+                /{text('LOL')+7}
+                  ^^^^^^^^^^^^^
+            (valid types: (integer, integer), (integer, decimal), (decimal, integer), (decimal, decimal), (integer, float), (decimal, float), (float, integer), (float, decimal), (float, float), (date, integer), (datetime, integer), (datetime, decimal), (datetime, float), (text, text))
         - uri: /{'OMGWTFBBQ'~'wtf', 'OMGWTFBBQ'!~'LOL'}
           status: 200 OK
           headers:
@@ -14455,18 +14455,18 @@ tests:
              /{date(null()),date('2010-04-15')}
              SELECT NULL,
                     '2010-04-15'
-        - uri: /{date(string('2010-04-15'))}
+        - uri: /{date(text('2010-04-15'))}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | date(string('2010-04-15')) |
-            -+----------------------------+-
-             | 2010-04-15                 |
+             | date(text('2010-04-15')) |
+            -+--------------------------+-
+             | 2010-04-15               |
 
              ----
-             /{date(string('2010-04-15'))}
+             /{date(text('2010-04-15'))}
              SELECT DATE('2010-04-15')
         - uri: /{date(datetime('2010-04-15 20:13'))}
           status: 200 OK
@@ -14494,7 +14494,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot convert a value of type 'boolean' to 'date':
+            cannot convert a value of type boolean to date:
                 /{date(true())}
                   ^^^^^^^^^^^^
         - uri: /{date(7)}
@@ -14502,7 +14502,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot convert a value of type 'integer' to 'date':
+            cannot convert a value of type integer to date:
                 /{date(7)}
                   ^^^^^^^
         - uri: /{date(time('20:13'))}
@@ -14510,21 +14510,21 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot convert a value of type 'time' to 'date':
+            cannot convert a value of type time to date:
                 /{date(time('20:13'))}
                   ^^^^^^^^^^^^^^^^^^^
-        - uri: /{date(string('birthday')), date(string('2010-13-07'))}
+        - uri: /{date(text('birthday')), date(text('2010-13-07'))}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | date(string('birthday')) | date(string('2010-13-07')) |
-            -+--------------------------+----------------------------+-
-             |                          |                            |
+             | date(text('birthday')) | date(text('2010-13-07')) |
+            -+------------------------+--------------------------+-
+             |                        |                          |
 
              ----
-             /{date(string('birthday')),date(string('2010-13-07'))}
+             /{date(text('birthday')),date(text('2010-13-07'))}
              SELECT DATE('birthday'),
                     DATE('2010-13-07')
         - uri: /{today()}
@@ -14601,18 +14601,18 @@ tests:
              /{time(null()),time('20:03')}
              SELECT NULL,
                     '20:03:00'
-        - uri: /{time(string('20:03'))}
+        - uri: /{time(text('20:03'))}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | time(string('20:03')) |
-            -+-----------------------+-
-             | 20:03:00              |
+             | time(text('20:03')) |
+            -+---------------------+-
+             | 20:03:00            |
 
              ----
-             /{time(string('20:03'))}
+             /{time(text('20:03'))}
              SELECT TIME('20:03')
         - uri: /{time(datetime('2010-04-15 20:13'))}
           status: 200 OK
@@ -14640,7 +14640,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot convert a value of type 'boolean' to 'time':
+            cannot convert a value of type boolean to time:
                 /{time(true())}
                   ^^^^^^^^^^^^
         - uri: /{time(7)}
@@ -14648,7 +14648,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot convert a value of type 'integer' to 'time':
+            cannot convert a value of type integer to time:
                 /{time(7)}
                   ^^^^^^^
         - uri: /{time(date('2010-04-15'))}
@@ -14656,21 +14656,21 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot convert a value of type 'date' to 'time':
+            cannot convert a value of type date to time:
                 /{time(date('2010-04-15'))}
                   ^^^^^^^^^^^^^^^^^^^^^^^^
-        - uri: /{time(string('just a moment ago')), time(string('29:04'))}
+        - uri: /{time(text('just a moment ago')), time(text('29:04'))}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | time(string('just a moment ago')) | time(string('29:04')) |
-            -+-----------------------------------+-----------------------+-
-             |                                   |                       |
+             | time(text('just a moment ago')) | time(text('29:04')) |
+            -+---------------------------------+---------------------+-
+             |                                 |                     |
 
              ----
-             /{time(string('just a moment ago')),time(string('29:04'))}
+             /{time(text('just a moment ago')),time(text('29:04'))}
              SELECT TIME('just a moment ago'),
                     TIME('29:04')
         - uri: /{hour(time('20:13:04.5')), minute(time('20:13:04.5')), second(time('20:13:04.5'))}
@@ -14704,18 +14704,18 @@ tests:
              /{datetime(null()),datetime('2010-04-15 20:13')}
              SELECT NULL,
                     '2010-04-15 20:13:00'
-        - uri: /{datetime(string('2010-04-15 20:13'))}
+        - uri: /{datetime(text('2010-04-15 20:13'))}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | datetime(string('2010-04-15 20:13')) |
-            -+--------------------------------------+-
-             | 2010-04-15 20:13:00                  |
+             | datetime(text('2010-04-15 20:13')) |
+            -+------------------------------------+-
+             | 2010-04-15 20:13:00                |
 
              ----
-             /{datetime(string('2010-04-15 20:13'))}
+             /{datetime(text('2010-04-15 20:13'))}
              SELECT DATETIME('2010-04-15 20:13')
         - uri: /{datetime(date('2010-04-15'))}
           status: 200 OK
@@ -14743,7 +14743,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot convert a value of type 'boolean' to 'datetime':
+            cannot convert a value of type boolean to datetime:
                 /{datetime(true())}
                   ^^^^^^^^^^^^^^^^
         - uri: /{datetime(7)}
@@ -14751,7 +14751,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot convert a value of type 'integer' to 'datetime':
+            cannot convert a value of type integer to datetime:
                 /{datetime(7)}
                   ^^^^^^^^^^^
         - uri: /{datetime(time('20:13'))}
@@ -14759,22 +14759,21 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot convert a value of type 'time' to 'datetime':
+            cannot convert a value of type time to datetime:
                 /{datetime(time('20:13'))}
                   ^^^^^^^^^^^^^^^^^^^^^^^
-        - uri: /{datetime(string('just a moment ago')), datetime(string('2010-13-07
-            17:43'))}
+        - uri: /{datetime(text('just a moment ago')), datetime(text('2010-13-07 17:43'))}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | datetime(string('just a moment ago')) | datetime(string('2010-13-07 17:43')) |
-            -+---------------------------------------+--------------------------------------+-
-             |                                       |                                      |
+             | datetime(text('just a moment ago')) | datetime(text('2010-13-07 17:43')) |
+            -+-------------------------------------+------------------------------------+-
+             |                                     |                                    |
 
              ----
-             /{datetime(string('just a moment ago')),datetime(string('2010-13-07 17:43'))}
+             /{datetime(text('just a moment ago')),datetime(text('2010-13-07 17:43'))}
              SELECT DATETIME('just a moment ago'),
                     DATETIME('2010-13-07 17:43')
         - uri: /{now()}
@@ -15432,10 +15431,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'min' cannot be applied to a value of type 'boolean':
+            function 'min' cannot be applied to a value of type boolean:
                 /{min(student.is_active), max(student.is_active)}
                   ^^^^^^^^^^^^^^^^^^^^^^
-            (valid type: 'integer', 'decimal', 'float', 'string', 'date', 'time', 'datetime')
+            (valid type: integer, decimal, float, text, date, time, datetime)
         - uri: /{sum(course{credits}?department_code='be'), count(course{credits}?department_code='be'),
             avg(course{credits}?department_code='be')}
           status: 200 OK
@@ -15477,19 +15476,19 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'sum' cannot be applied to a value of type 'date':
+            function 'sum' cannot be applied to a value of type date:
                 /{sum(student.dob)}
                   ^^^^^^^^^^^^^^^^
-            (valid type: 'integer', 'decimal', 'float')
+            (valid type: integer, decimal, float)
         - uri: /{avg(student.name)}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'avg' cannot be applied to a value of type 'string':
+            function 'avg' cannot be applied to a value of type text:
                 /{avg(student.name)}
                   ^^^^^^^^^^^^^^^^^
-            (valid type: 'integer', 'decimal', 'float')
+            (valid type: integer, decimal, float)
       - id: table-functions-and-operators
         tests:
         - uri: /school.program
@@ -28047,7 +28046,7 @@ tests:
                       "fields": [
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "text"
                           },
                           "header": "code",
                           "path": "school.code",
@@ -28056,7 +28055,7 @@ tests:
                         },
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "text"
                           },
                           "header": "name",
                           "path": "school.name",
@@ -28065,7 +28064,7 @@ tests:
                         },
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "text"
                           },
                           "header": "campus",
                           "path": "school.campus",
@@ -28295,15 +28294,15 @@ tests:
             <tr><th class="htsql-empty-header"></th><th>code</th><th>name</th><th>campus</th></tr>
             </thead>
             <tbody>
-            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-string-type">art</td><td class="htsql-string-type">School of Art &amp; Design</td><td class="htsql-string-type">old</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-string-type">bus</td><td class="htsql-string-type">School of Business</td><td class="htsql-string-type">south</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">3</td><td class="htsql-string-type">edu</td><td class="htsql-string-type">College of Education</td><td class="htsql-string-type">old</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">4</td><td class="htsql-string-type">eng</td><td class="htsql-string-type">School of Engineering</td><td class="htsql-string-type">north</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-string-type">la</td><td class="htsql-string-type">School of Arts and Humanities</td><td class="htsql-string-type">old</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">6</td><td class="htsql-string-type">mus</td><td class="htsql-string-type">School of Music &amp; Dance</td><td class="htsql-string-type">south</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">7</td><td class="htsql-string-type">ns</td><td class="htsql-string-type">School of Natural Sciences</td><td class="htsql-string-type">old</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">8</td><td class="htsql-string-type">ph</td><td class="htsql-string-type">Public Honorariums</td><td class="htsql-string-type htsql-null-value"></td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">9</td><td class="htsql-string-type">sc</td><td class="htsql-string-type">School of Continuing Studies</td><td class="htsql-string-type htsql-null-value"></td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-text-type">art</td><td class="htsql-text-type">School of Art &amp; Design</td><td class="htsql-text-type">old</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-text-type">bus</td><td class="htsql-text-type">School of Business</td><td class="htsql-text-type">south</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">3</td><td class="htsql-text-type">edu</td><td class="htsql-text-type">College of Education</td><td class="htsql-text-type">old</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">4</td><td class="htsql-text-type">eng</td><td class="htsql-text-type">School of Engineering</td><td class="htsql-text-type">north</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-text-type">la</td><td class="htsql-text-type">School of Arts and Humanities</td><td class="htsql-text-type">old</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">6</td><td class="htsql-text-type">mus</td><td class="htsql-text-type">School of Music &amp; Dance</td><td class="htsql-text-type">south</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">7</td><td class="htsql-text-type">ns</td><td class="htsql-text-type">School of Natural Sciences</td><td class="htsql-text-type">old</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">8</td><td class="htsql-text-type">ph</td><td class="htsql-text-type">Public Honorariums</td><td class="htsql-text-type htsql-null-value"></td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">9</td><td class="htsql-text-type">sc</td><td class="htsql-text-type">School of Continuing Studies</td><td class="htsql-text-type htsql-null-value"></td></tr>
             </tbody>
             </table>
             </body>
@@ -28361,7 +28360,7 @@ tests:
                       "fields": [
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "text"
                           },
                           "header": "code",
                           "path": "school.code",
@@ -28370,7 +28369,7 @@ tests:
                         },
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "text"
                           },
                           "header": "name",
                           "path": "school.name",
@@ -28379,7 +28378,7 @@ tests:
                         },
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "text"
                           },
                           "header": "campus",
                           "path": "school.campus",
@@ -28614,15 +28613,15 @@ tests:
             <tr><th class="htsql-empty-header"></th><th>code</th><th>name</th><th>campus</th></tr>
             </thead>
             <tbody>
-            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-string-type">art</td><td class="htsql-string-type">School of Art &amp; Design</td><td class="htsql-string-type">old</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-string-type">bus</td><td class="htsql-string-type">School of Business</td><td class="htsql-string-type">south</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">3</td><td class="htsql-string-type">edu</td><td class="htsql-string-type">College of Education</td><td class="htsql-string-type">old</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">4</td><td class="htsql-string-type">eng</td><td class="htsql-string-type">School of Engineering</td><td class="htsql-string-type">north</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-string-type">la</td><td class="htsql-string-type">School of Arts and Humanities</td><td class="htsql-string-type">old</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">6</td><td class="htsql-string-type">mus</td><td class="htsql-string-type">School of Music &amp; Dance</td><td class="htsql-string-type">south</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">7</td><td class="htsql-string-type">ns</td><td class="htsql-string-type">School of Natural Sciences</td><td class="htsql-string-type">old</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">8</td><td class="htsql-string-type">ph</td><td class="htsql-string-type">Public Honorariums</td><td class="htsql-string-type htsql-null-value"></td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">9</td><td class="htsql-string-type">sc</td><td class="htsql-string-type">School of Continuing Studies</td><td class="htsql-string-type htsql-null-value"></td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-text-type">art</td><td class="htsql-text-type">School of Art &amp; Design</td><td class="htsql-text-type">old</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-text-type">bus</td><td class="htsql-text-type">School of Business</td><td class="htsql-text-type">south</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">3</td><td class="htsql-text-type">edu</td><td class="htsql-text-type">College of Education</td><td class="htsql-text-type">old</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">4</td><td class="htsql-text-type">eng</td><td class="htsql-text-type">School of Engineering</td><td class="htsql-text-type">north</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-text-type">la</td><td class="htsql-text-type">School of Arts and Humanities</td><td class="htsql-text-type">old</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">6</td><td class="htsql-text-type">mus</td><td class="htsql-text-type">School of Music &amp; Dance</td><td class="htsql-text-type">south</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">7</td><td class="htsql-text-type">ns</td><td class="htsql-text-type">School of Natural Sciences</td><td class="htsql-text-type">old</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">8</td><td class="htsql-text-type">ph</td><td class="htsql-text-type">Public Honorariums</td><td class="htsql-text-type htsql-null-value"></td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">9</td><td class="htsql-text-type">sc</td><td class="htsql-text-type">School of Continuing Studies</td><td class="htsql-text-type htsql-null-value"></td></tr>
             </tbody>
             </table>
             </body>
@@ -28755,7 +28754,7 @@ tests:
                       "fields": [
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "text"
                           },
                           "header": "Name",
                           "path": "school.name",
@@ -28972,15 +28971,15 @@ tests:
             <tr><th class="htsql-empty-header"></th><th>Name</th><th># of Departments</th></tr>
             </thead>
             <tbody>
-            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-string-type">School of Art &amp; Design</td><td class="htsql-integer-type">1</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-string-type">School of Business</td><td class="htsql-integer-type">3</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">3</td><td class="htsql-string-type">College of Education</td><td class="htsql-integer-type">2</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">4</td><td class="htsql-string-type">School of Engineering</td><td class="htsql-integer-type">4</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-string-type">School of Arts and Humanities</td><td class="htsql-integer-type">6</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">6</td><td class="htsql-string-type">School of Music &amp; Dance</td><td class="htsql-integer-type">4</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">7</td><td class="htsql-string-type">School of Natural Sciences</td><td class="htsql-integer-type">4</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">8</td><td class="htsql-string-type">Public Honorariums</td><td class="htsql-integer-type">0</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">9</td><td class="htsql-string-type">School of Continuing Studies</td><td class="htsql-integer-type">0</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-text-type">School of Art &amp; Design</td><td class="htsql-integer-type">1</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-text-type">School of Business</td><td class="htsql-integer-type">3</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">3</td><td class="htsql-text-type">College of Education</td><td class="htsql-integer-type">2</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">4</td><td class="htsql-text-type">School of Engineering</td><td class="htsql-integer-type">4</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-text-type">School of Arts and Humanities</td><td class="htsql-integer-type">6</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">6</td><td class="htsql-text-type">School of Music &amp; Dance</td><td class="htsql-integer-type">4</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">7</td><td class="htsql-text-type">School of Natural Sciences</td><td class="htsql-integer-type">4</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">8</td><td class="htsql-text-type">Public Honorariums</td><td class="htsql-integer-type">0</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">9</td><td class="htsql-text-type">School of Continuing Studies</td><td class="htsql-integer-type">0</td></tr>
             </tbody>
             </table>
             </body>
@@ -29018,9 +29017,9 @@ tests:
              ORDER BY "school"."code" ASC
       - id: data-types
         tests:
-        - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5, string(null()),
-            string(''), string('OMGWTFBBQ'), date('2010-04-15'), time('20:13:04.5'),
-            datetime('2010-04-15 20:13')} /:raw
+        - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5, text(null()),
+            text(''), text('OMGWTFBBQ'), date('2010-04-15'), time('20:13:04.5'), datetime('2010-04-15
+            20:13')} /:raw
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
@@ -29085,24 +29084,24 @@ tests:
                         },
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "text"
                           },
-                          "header": "string(null())",
-                          "syntax": "string(null())"
+                          "header": "text(null())",
+                          "syntax": "text(null())"
                         },
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "text"
                           },
-                          "header": "string('')",
-                          "syntax": "string('')"
+                          "header": "text('')",
+                          "syntax": "text('')"
                         },
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "text"
                           },
-                          "header": "string('OMGWTFBBQ')",
-                          "syntax": "string('OMGWTFBBQ')"
+                          "header": "text('OMGWTFBBQ')",
+                          "syntax": "text('OMGWTFBBQ')"
                         },
                         {
                           "domain": {
@@ -29130,7 +29129,7 @@ tests:
                   }
                 },
                 "path": "",
-                "syntax": "\/{null(),'HTSQL',true(),false(),60,2.125,271828e-5,string(null()),string(''),string('OMGWTFBBQ'),date('2010-04-15'),time('20:13:04.5'),datetime('2010-04-15 20:13')}"
+                "syntax": "\/{null(),'HTSQL',true(),false(),60,2.125,271828e-5,text(null()),text(''),text('OMGWTFBBQ'),date('2010-04-15'),time('20:13:04.5'),datetime('2010-04-15 20:13')}"
               },
               "data": [
                 [
@@ -29150,9 +29149,9 @@ tests:
                 ]
               ]
             }
-        - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5, string(null()),
-            string(''), string('OMGWTFBBQ'), date('2010-04-15'), time('20:13:04.5'),
-            datetime('2010-04-15 20:13')} /:json
+        - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5, text(null()),
+            text(''), text('OMGWTFBBQ'), date('2010-04-15'), time('20:13:04.5'), datetime('2010-04-15
+            20:13')} /:json
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
@@ -29175,29 +29174,29 @@ tests:
                 }
               ]
             }
-        - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5, string(null()),
-            string(''), string('OMGWTFBBQ'), date('2010-04-15'), time('20:13:04.5'),
-            datetime('2010-04-15 20:13')} /:csv
+        - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5, text(null()),
+            text(''), text('OMGWTFBBQ'), date('2010-04-15'), time('20:13:04.5'), datetime('2010-04-15
+            20:13')} /:csv
           status: 200 OK
           headers:
           - [Content-Type, text/csv; charset=UTF-8]
           - [Content-Disposition, attachment; filename="_.csv"]
-          body: "null(),'HTSQL',true(),false(),60,2.125,271828e-5,string(null()),string(''),string('OMGWTFBBQ'),date('2010-04-15'),time('20:13:04.5'),datetime('2010-04-15
+          body: "null(),'HTSQL',true(),false(),60,2.125,271828e-5,text(null()),text(''),text('OMGWTFBBQ'),date('2010-04-15'),time('20:13:04.5'),datetime('2010-04-15
             20:13')\r\n,HTSQL,1,0,60,2.125,2.71828,,,OMGWTFBBQ,2010-04-15,20:13:04.500000,2010-04-15
             20:13:00\r\n"
-        - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5, string(null()),
-            string(''), string('OMGWTFBBQ'), date('2010-04-15'), time('20:13:04.5'),
-            datetime('2010-04-15 20:13')} /:tsv
+        - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5, text(null()),
+            text(''), text('OMGWTFBBQ'), date('2010-04-15'), time('20:13:04.5'), datetime('2010-04-15
+            20:13')} /:tsv
           status: 200 OK
           headers:
           - [Content-Type, text/tab-separated-values; charset=UTF-8]
           - [Content-Disposition, attachment; filename="_.tsv"]
-          body: "null()\t'HTSQL'\ttrue()\tfalse()\t60\t2.125\t271828e-5\tstring(null())\tstring('')\tstring('OMGWTFBBQ')\tdate('2010-04-15')\ttime('20:13:04.5')\tdatetime('2010-04-15
+          body: "null()\t'HTSQL'\ttrue()\tfalse()\t60\t2.125\t271828e-5\ttext(null())\ttext('')\ttext('OMGWTFBBQ')\tdate('2010-04-15')\ttime('20:13:04.5')\tdatetime('2010-04-15
             20:13')\r\n\tHTSQL\t1\t0\t60\t2.125\t2.71828\t\t\tOMGWTFBBQ\t2010-04-15\t20:13:04.500000\t2010-04-15
             20:13:00\r\n"
-        - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5, string(null()),
-            string(''), string('OMGWTFBBQ'), date('2010-04-15'), time('20:13:04.5'),
-            datetime('2010-04-15 20:13')} /:xml
+        - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5, text(null()),
+            text(''), text('OMGWTFBBQ'), date('2010-04-15'), time('20:13:04.5'), datetime('2010-04-15
+            20:13')} /:xml
           status: 200 OK
           headers:
           - [Content-Type, application/xml]
@@ -29219,9 +29218,9 @@ tests:
                 <_13>2010-04-15 20:13:00</_13>
               </_>
             </htsql:result>
-        - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5, string(null()),
-            string(''), string('OMGWTFBBQ'), date('2010-04-15'), time('20:13:04.5'),
-            datetime('2010-04-15 20:13')} /:html
+        - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5, text(null()),
+            text(''), text('OMGWTFBBQ'), date('2010-04-15'), time('20:13:04.5'), datetime('2010-04-15
+            20:13')} /:html
           status: 200 OK
           headers:
           - [Content-Type, text/html; charset=UTF-8]
@@ -29258,27 +29257,27 @@ tests:
             <body>
             <table class="htsql-output" summary="">
             <thead>
-            <tr><th class="htsql-empty-header"></th><th>null()</th><th>'HTSQL'</th><th>true()</th><th>false()</th><th>60</th><th>2.125</th><th>271828e-5</th><th>string(null())</th><th>string('')</th><th>string('OMGWTFBBQ')</th><th>date('2010-04-15')</th><th>time('20:13:04.5')</th><th>datetime('2010-04-15 20:13')</th></tr>
+            <tr><th class="htsql-empty-header"></th><th>null()</th><th>'HTSQL'</th><th>true()</th><th>false()</th><th>60</th><th>2.125</th><th>271828e-5</th><th>text(null())</th><th>text('')</th><th>text('OMGWTFBBQ')</th><th>date('2010-04-15')</th><th>time('20:13:04.5')</th><th>datetime('2010-04-15 20:13')</th></tr>
             </thead>
             <tbody>
-            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-untyped-type htsql-null-value"></td><td class="htsql-untyped-type">HTSQL</td><td class="htsql-boolean-type htsql-true-value">true</td><td class="htsql-boolean-type htsql-false-value">false</td><td class="htsql-integer-type">60</td><td class="htsql-float-type">2.125</td><td class="htsql-float-type">2.71828</td><td class="htsql-string-type htsql-null-value"></td><td class="htsql-string-type htsql-empty-value"></td><td class="htsql-string-type">OMGWTFBBQ</td><td class="htsql-date-type">2010-04-15</td><td class="htsql-time-type">20:13:04.500000</td><td class="htsql-datetime-type">2010-04-15 20:13:00</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-untyped-type htsql-null-value"></td><td class="htsql-untyped-type">HTSQL</td><td class="htsql-boolean-type htsql-true-value">true</td><td class="htsql-boolean-type htsql-false-value">false</td><td class="htsql-integer-type">60</td><td class="htsql-float-type">2.125</td><td class="htsql-float-type">2.71828</td><td class="htsql-text-type htsql-null-value"></td><td class="htsql-text-type htsql-empty-value"></td><td class="htsql-text-type">OMGWTFBBQ</td><td class="htsql-date-type">2010-04-15</td><td class="htsql-time-type">20:13:04.500000</td><td class="htsql-datetime-type">2010-04-15 20:13:00</td></tr>
             </tbody>
             </table>
             </body>
             </html>
-        - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5, string(null()),
-            string(''), string('OMGWTFBBQ'), date('2010-04-15'), time('20:13:04.5'),
-            datetime('2010-04-15 20:13')} /:txt
+        - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5, text(null()),
+            text(''), text('OMGWTFBBQ'), date('2010-04-15'), time('20:13:04.5'), datetime('2010-04-15
+            20:13')} /:txt
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | null() | 'HTSQL' | true() | false() | 60 | 2.125 | 271828e-5 | string(null()) | string('') | string('OMGWTFBBQ') | date('2010-04-15') | time('20:13:04.5') | datetime('2010-04-15 20:13') |
-            -+--------+---------+--------+---------+----+-------+-----------+----------------+------------+---------------------+--------------------+--------------------+------------------------------+-
-             |        | HTSQL   | true   | false   | 60 | 2.125 |   2.71828 |                | ""         | OMGWTFBBQ           | 2010-04-15         | 20:13:04.500000    | 2010-04-15 20:13:00          |
+             | null() | 'HTSQL' | true() | false() | 60 | 2.125 | 271828e-5 | text(null()) | text('') | text('OMGWTFBBQ') | date('2010-04-15') | time('20:13:04.5') | datetime('2010-04-15 20:13') |
+            -+--------+---------+--------+---------+----+-------+-----------+--------------+----------+-------------------+--------------------+--------------------+------------------------------+-
+             |        | HTSQL   | true   | false   | 60 | 2.125 |   2.71828 |              | ""       | OMGWTFBBQ         | 2010-04-15         | 20:13:04.500000    | 2010-04-15 20:13:00          |
 
              ----
-             /{null(),'HTSQL',true(),false(),60,2.125,271828e-5,string(null()),string(''),string('OMGWTFBBQ'),date('2010-04-15'),time('20:13:04.5'),datetime('2010-04-15 20:13')}
+             /{null(),'HTSQL',true(),false(),60,2.125,271828e-5,text(null()),text(''),text('OMGWTFBBQ'),date('2010-04-15'),time('20:13:04.5'),datetime('2010-04-15 20:13')}
              SELECT 1,
                     0,
                     60,
@@ -29505,7 +29504,7 @@ tests:
                       "fields": [
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "text"
                           },
                           "header": "code",
                           "path": "school.code",
@@ -29514,7 +29513,7 @@ tests:
                         },
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "text"
                           },
                           "header": "name",
                           "path": "school.name",
@@ -29523,7 +29522,7 @@ tests:
                         },
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "text"
                           },
                           "header": "campus",
                           "path": "school.campus",
@@ -29874,7 +29873,7 @@ tests:
                       "fields": [
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "text"
                           },
                           "header": "name",
                           "path": "department.name",
@@ -30057,13 +30056,13 @@ tests:
             <tr><th class="htsql-empty-header"></th><th>name</th></tr>
             </thead>
             <tbody>
-            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-string-type">Bioengineering</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-string-type">Bursar's Office</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">3</td><td class="htsql-string-type">Career Development</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">4</td><td class="htsql-string-type">Computer Science</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-string-type">Electrical Engineering</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">6</td><td class="htsql-string-type">Mechanical Engineering</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">7</td><td class="htsql-string-type">Parents &amp; Alumni</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-text-type">Bioengineering</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-text-type">Bursar's Office</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">3</td><td class="htsql-text-type">Career Development</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">4</td><td class="htsql-text-type">Computer Science</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-text-type">Electrical Engineering</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">6</td><td class="htsql-text-type">Mechanical Engineering</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">7</td><td class="htsql-text-type">Parents &amp; Alumni</td></tr>
             </tbody>
             </table>
             </body>
@@ -30257,7 +30256,7 @@ tests:
                                 "fields": [
                                   {
                                     "domain": {
-                                      "type": "string"
+                                      "type": "text"
                                     },
                                     "header": "code",
                                     "path": "school.code",
@@ -30266,7 +30265,7 @@ tests:
                                   },
                                   {
                                     "domain": {
-                                      "type": "string"
+                                      "type": "text"
                                     },
                                     "header": "name",
                                     "path": "school.name",
@@ -30275,7 +30274,7 @@ tests:
                                   },
                                   {
                                     "domain": {
-                                      "type": "string"
+                                      "type": "text"
                                     },
                                     "header": "campus",
                                     "path": "school.campus",
@@ -30300,7 +30299,7 @@ tests:
                                 "fields": [
                                   {
                                     "domain": {
-                                      "type": "string"
+                                      "type": "text"
                                     },
                                     "header": "code",
                                     "path": "department.code",
@@ -30309,7 +30308,7 @@ tests:
                                   },
                                   {
                                     "domain": {
-                                      "type": "string"
+                                      "type": "text"
                                     },
                                     "header": "name",
                                     "path": "department.name",
@@ -30318,7 +30317,7 @@ tests:
                                   },
                                   {
                                     "domain": {
-                                      "type": "string"
+                                      "type": "text"
                                     },
                                     "header": "school_code",
                                     "path": "department.school_code",
@@ -30556,11 +30555,11 @@ tests:
             <tr><th class="htsql-empty-header"></th><th>code</th><th>name</th><th>campus</th><th class="htsql-empty-header"></th><th>code</th><th>name</th><th>school_code</th></tr>
             </thead>
             <tbody>
-            <tr class="htsql-odd-row"><td rowspan="5" class="htsql-section htsql-index">1</td><td rowspan="5" class="htsql-section htsql-index htsql-null-record-value"></td><td rowspan="5" class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-index">1</td><td class="htsql-section htsql-string-type">art</td><td class="htsql-section htsql-string-type">School of Art &amp; Design</td><td class="htsql-section htsql-string-type">old</td><td class="htsql-section htsql-index">1</td><td class="htsql-section htsql-string-type">acc</td><td class="htsql-section htsql-string-type">Accounting</td><td class="htsql-section htsql-string-type">bus</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-string-type">bus</td><td class="htsql-string-type">School of Business</td><td class="htsql-string-type">south</td><td class="htsql-index">2</td><td class="htsql-string-type">arthis</td><td class="htsql-string-type">Art History</td><td class="htsql-string-type">la</td></tr>
-            <tr class="htsql-odd-row"><td rowspan="3" class="htsql-index">3</td><td rowspan="3" class="htsql-string-type">edu</td><td rowspan="3" class="htsql-string-type">College of Education</td><td rowspan="3" class="htsql-string-type">old</td><td class="htsql-index">3</td><td class="htsql-string-type">astro</td><td class="htsql-string-type">Astronomy</td><td class="htsql-string-type">ns</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">4</td><td class="htsql-string-type">be</td><td class="htsql-string-type">Bioengineering</td><td class="htsql-string-type">eng</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-string-type">bursar</td><td class="htsql-string-type">Bursar's Office</td><td class="htsql-string-type htsql-null-value"></td></tr>
+            <tr class="htsql-odd-row"><td rowspan="5" class="htsql-section htsql-index">1</td><td rowspan="5" class="htsql-section htsql-index htsql-null-record-value"></td><td rowspan="5" class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-index">1</td><td class="htsql-section htsql-text-type">art</td><td class="htsql-section htsql-text-type">School of Art &amp; Design</td><td class="htsql-section htsql-text-type">old</td><td class="htsql-section htsql-index">1</td><td class="htsql-section htsql-text-type">acc</td><td class="htsql-section htsql-text-type">Accounting</td><td class="htsql-section htsql-text-type">bus</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-text-type">bus</td><td class="htsql-text-type">School of Business</td><td class="htsql-text-type">south</td><td class="htsql-index">2</td><td class="htsql-text-type">arthis</td><td class="htsql-text-type">Art History</td><td class="htsql-text-type">la</td></tr>
+            <tr class="htsql-odd-row"><td rowspan="3" class="htsql-index">3</td><td rowspan="3" class="htsql-text-type">edu</td><td rowspan="3" class="htsql-text-type">College of Education</td><td rowspan="3" class="htsql-text-type">old</td><td class="htsql-index">3</td><td class="htsql-text-type">astro</td><td class="htsql-text-type">Astronomy</td><td class="htsql-text-type">ns</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">4</td><td class="htsql-text-type">be</td><td class="htsql-text-type">Bioengineering</td><td class="htsql-text-type">eng</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-text-type">bursar</td><td class="htsql-text-type">Bursar's Office</td><td class="htsql-text-type htsql-null-value"></td></tr>
             </tbody>
             </table>
             </body>
@@ -30617,7 +30616,7 @@ tests:
                       "fields": [
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "text"
                           },
                           "header": "name",
                           "path": "school.name",
@@ -30633,7 +30632,7 @@ tests:
                                 "fields": [
                                   {
                                     "domain": {
-                                      "type": "string"
+                                      "type": "text"
                                     },
                                     "header": "degree",
                                     "path": "school.program.degree",
@@ -30642,7 +30641,7 @@ tests:
                                   },
                                   {
                                     "domain": {
-                                      "type": "string"
+                                      "type": "text"
                                     },
                                     "header": "title",
                                     "path": "school.program.title",
@@ -30667,7 +30666,7 @@ tests:
                                 "fields": [
                                   {
                                     "domain": {
-                                      "type": "string"
+                                      "type": "text"
                                     },
                                     "header": "name",
                                     "path": "school.department.name",
@@ -30692,7 +30691,7 @@ tests:
                                             },
                                             {
                                               "domain": {
-                                                "type": "string"
+                                                "type": "text"
                                               },
                                               "header": "title",
                                               "path": "school.department.course.title",
@@ -31475,46 +31474,46 @@ tests:
             <tr><th class="htsql-empty-header"></th><th>no</th><th>title</th></tr>
             </thead>
             <tbody>
-            <tr class="htsql-odd-row"><td rowspan="35" class="htsql-section htsql-index">1</td><td rowspan="35" class="htsql-section htsql-string-type">College of Education</td><td class="htsql-section htsql-index">1</td><td class="htsql-section htsql-string-type">ma</td><td class="htsql-section htsql-string-type">Master of Arts in Education Leadership</td><td rowspan="16" class="htsql-section htsql-index">1</td><td rowspan="16" class="htsql-section htsql-string-type">Educational Policy</td><td class="htsql-section htsql-index">1</td><td class="htsql-section htsql-integer-type">102</td><td class="htsql-section htsql-string-type">Introduction to Education</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-string-type">ms</td><td class="htsql-string-type">M.S. in Education</td><td class="htsql-index">2</td><td class="htsql-integer-type">117</td><td class="htsql-string-type">Contemporary Society</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">3</td><td class="htsql-string-type">ma</td><td class="htsql-string-type">Master of Arts in Literacy Education</td><td class="htsql-index">3</td><td class="htsql-integer-type">131</td><td class="htsql-string-type">Sociology of Childhood</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">4</td><td class="htsql-string-type">ma</td><td class="htsql-string-type">Master of Arts in Teaching</td><td class="htsql-index">4</td><td class="htsql-integer-type">202</td><td class="htsql-string-type">Technology in the Classroom</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-string-type">ct</td><td class="htsql-string-type">Certificate in Science Teaching</td><td class="htsql-index">5</td><td class="htsql-integer-type">213</td><td class="htsql-string-type">Technology, Society and Schools</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">6</td><td class="htsql-string-type">ba</td><td class="htsql-string-type">Bachelor of Arts in Math Education</td><td class="htsql-index">6</td><td class="htsql-integer-type">229</td><td class="htsql-string-type">Economics and Education Policy</td></tr>
-            <tr class="htsql-odd-row"><td rowspan="29" class="htsql-index">7</td><td rowspan="29" class="htsql-string-type">ba</td><td rowspan="29" class="htsql-string-type">Bachelor of Arts in Science Education</td><td class="htsql-index">7</td><td class="htsql-integer-type">231</td><td class="htsql-string-type">Politics and Education Policy</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">8</td><td class="htsql-integer-type">236</td><td class="htsql-string-type">Education Policy Analysis</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">9</td><td class="htsql-integer-type">301</td><td class="htsql-string-type">Children's Literature</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">10</td><td class="htsql-integer-type">316</td><td class="htsql-string-type">Education Policy and Practice</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">11</td><td class="htsql-integer-type">337</td><td class="htsql-string-type">Social Analysis of Education Policy</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">12</td><td class="htsql-integer-type">351</td><td class="htsql-string-type">Classroom Visit</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">13</td><td class="htsql-integer-type">413</td><td class="htsql-string-type">Organizational Analysis of Education Policy</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">14</td><td class="htsql-integer-type">431</td><td class="htsql-string-type">Seminar in Education Policy I</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">15</td><td class="htsql-integer-type">432</td><td class="htsql-string-type">Seminar in Education Policy II</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">16</td><td class="htsql-integer-type">505</td><td class="htsql-string-type">Qualitative Research in Education Policy</td></tr>
-            <tr class="htsql-odd-row"><td rowspan="19" class="htsql-section htsql-index">2</td><td rowspan="19" class="htsql-section htsql-string-type">Teacher Education</td><td class="htsql-section htsql-index">1</td><td class="htsql-section htsql-integer-type">110</td><td class="htsql-section htsql-string-type">Teaching Methodology</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-integer-type">122</td><td class="htsql-string-type">Theory and Practice of Early Childhood Education</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">3</td><td class="htsql-integer-type">155</td><td class="htsql-string-type">Methods of Early Science Education</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">4</td><td class="htsql-integer-type">179</td><td class="htsql-string-type">Play as Education Method</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-integer-type">208</td><td class="htsql-string-type">Developmental Psychology</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">6</td><td class="htsql-integer-type">211</td><td class="htsql-string-type">Selection of Learning Resources</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">7</td><td class="htsql-integer-type">256</td><td class="htsql-string-type">Teacher Identity</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">8</td><td class="htsql-integer-type">367</td><td class="htsql-string-type">Problems in Education Management</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">9</td><td class="htsql-integer-type">401</td><td class="htsql-string-type">Challenges of Teaching the Gifted and Talented</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">10</td><td class="htsql-integer-type">430</td><td class="htsql-string-type">Techniques of Mathematics Teaching</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">11</td><td class="htsql-integer-type">435</td><td class="htsql-string-type">Techniques of Science Teaching</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">12</td><td class="htsql-integer-type">440</td><td class="htsql-string-type">Techniques of Language Teaching</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">13</td><td class="htsql-integer-type">500</td><td class="htsql-string-type">Problems in Education</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">14</td><td class="htsql-integer-type">509</td><td class="htsql-string-type">Public School Internship</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">15</td><td class="htsql-integer-type">510</td><td class="htsql-string-type">Preschool Internship</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">16</td><td class="htsql-integer-type">520</td><td class="htsql-string-type">Special Topics in Teacher Education</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">17</td><td class="htsql-integer-type">630</td><td class="htsql-string-type">Practice of Mathematics Teaching</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">18</td><td class="htsql-integer-type">635</td><td class="htsql-string-type">Practice of Science Teaching</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">19</td><td class="htsql-integer-type">640</td><td class="htsql-string-type">Practice of Language Teaching</td></tr>
-            <tr class="htsql-even-row"><td rowspan="4" class="htsql-section htsql-index">2</td><td rowspan="4" class="htsql-section htsql-string-type">School of Music &amp; Dance</td><td rowspan="4" class="htsql-section htsql-index htsql-null-record-value"></td><td rowspan="4" class="htsql-section htsql-null-record-value"></td><td rowspan="4" class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-index">1</td><td class="htsql-section htsql-string-type">Piano</td><td class="htsql-section htsql-index htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-section htsql-index">2</td><td class="htsql-section htsql-string-type">Strings</td><td class="htsql-section htsql-index htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td></tr>
-            <tr class="htsql-even-row"><td class="htsql-section htsql-index">3</td><td class="htsql-section htsql-string-type">Vocals</td><td class="htsql-section htsql-index htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-section htsql-index">4</td><td class="htsql-section htsql-string-type">Wind</td><td class="htsql-section htsql-index htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td></tr>
-            <tr class="htsql-even-row"><td class="htsql-section htsql-index">3</td><td class="htsql-section htsql-string-type">School of Continuing Studies</td><td class="htsql-section htsql-index htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-index htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td></tr>
+            <tr class="htsql-odd-row"><td rowspan="35" class="htsql-section htsql-index">1</td><td rowspan="35" class="htsql-section htsql-text-type">College of Education</td><td class="htsql-section htsql-index">1</td><td class="htsql-section htsql-text-type">ma</td><td class="htsql-section htsql-text-type">Master of Arts in Education Leadership</td><td rowspan="16" class="htsql-section htsql-index">1</td><td rowspan="16" class="htsql-section htsql-text-type">Educational Policy</td><td class="htsql-section htsql-index">1</td><td class="htsql-section htsql-integer-type">102</td><td class="htsql-section htsql-text-type">Introduction to Education</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-text-type">ms</td><td class="htsql-text-type">M.S. in Education</td><td class="htsql-index">2</td><td class="htsql-integer-type">117</td><td class="htsql-text-type">Contemporary Society</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">3</td><td class="htsql-text-type">ma</td><td class="htsql-text-type">Master of Arts in Literacy Education</td><td class="htsql-index">3</td><td class="htsql-integer-type">131</td><td class="htsql-text-type">Sociology of Childhood</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">4</td><td class="htsql-text-type">ma</td><td class="htsql-text-type">Master of Arts in Teaching</td><td class="htsql-index">4</td><td class="htsql-integer-type">202</td><td class="htsql-text-type">Technology in the Classroom</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-text-type">ct</td><td class="htsql-text-type">Certificate in Science Teaching</td><td class="htsql-index">5</td><td class="htsql-integer-type">213</td><td class="htsql-text-type">Technology, Society and Schools</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">6</td><td class="htsql-text-type">ba</td><td class="htsql-text-type">Bachelor of Arts in Math Education</td><td class="htsql-index">6</td><td class="htsql-integer-type">229</td><td class="htsql-text-type">Economics and Education Policy</td></tr>
+            <tr class="htsql-odd-row"><td rowspan="29" class="htsql-index">7</td><td rowspan="29" class="htsql-text-type">ba</td><td rowspan="29" class="htsql-text-type">Bachelor of Arts in Science Education</td><td class="htsql-index">7</td><td class="htsql-integer-type">231</td><td class="htsql-text-type">Politics and Education Policy</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">8</td><td class="htsql-integer-type">236</td><td class="htsql-text-type">Education Policy Analysis</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">9</td><td class="htsql-integer-type">301</td><td class="htsql-text-type">Children's Literature</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">10</td><td class="htsql-integer-type">316</td><td class="htsql-text-type">Education Policy and Practice</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">11</td><td class="htsql-integer-type">337</td><td class="htsql-text-type">Social Analysis of Education Policy</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">12</td><td class="htsql-integer-type">351</td><td class="htsql-text-type">Classroom Visit</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">13</td><td class="htsql-integer-type">413</td><td class="htsql-text-type">Organizational Analysis of Education Policy</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">14</td><td class="htsql-integer-type">431</td><td class="htsql-text-type">Seminar in Education Policy I</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">15</td><td class="htsql-integer-type">432</td><td class="htsql-text-type">Seminar in Education Policy II</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">16</td><td class="htsql-integer-type">505</td><td class="htsql-text-type">Qualitative Research in Education Policy</td></tr>
+            <tr class="htsql-odd-row"><td rowspan="19" class="htsql-section htsql-index">2</td><td rowspan="19" class="htsql-section htsql-text-type">Teacher Education</td><td class="htsql-section htsql-index">1</td><td class="htsql-section htsql-integer-type">110</td><td class="htsql-section htsql-text-type">Teaching Methodology</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-integer-type">122</td><td class="htsql-text-type">Theory and Practice of Early Childhood Education</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">3</td><td class="htsql-integer-type">155</td><td class="htsql-text-type">Methods of Early Science Education</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">4</td><td class="htsql-integer-type">179</td><td class="htsql-text-type">Play as Education Method</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-integer-type">208</td><td class="htsql-text-type">Developmental Psychology</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">6</td><td class="htsql-integer-type">211</td><td class="htsql-text-type">Selection of Learning Resources</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">7</td><td class="htsql-integer-type">256</td><td class="htsql-text-type">Teacher Identity</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">8</td><td class="htsql-integer-type">367</td><td class="htsql-text-type">Problems in Education Management</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">9</td><td class="htsql-integer-type">401</td><td class="htsql-text-type">Challenges of Teaching the Gifted and Talented</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">10</td><td class="htsql-integer-type">430</td><td class="htsql-text-type">Techniques of Mathematics Teaching</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">11</td><td class="htsql-integer-type">435</td><td class="htsql-text-type">Techniques of Science Teaching</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">12</td><td class="htsql-integer-type">440</td><td class="htsql-text-type">Techniques of Language Teaching</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">13</td><td class="htsql-integer-type">500</td><td class="htsql-text-type">Problems in Education</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">14</td><td class="htsql-integer-type">509</td><td class="htsql-text-type">Public School Internship</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">15</td><td class="htsql-integer-type">510</td><td class="htsql-text-type">Preschool Internship</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">16</td><td class="htsql-integer-type">520</td><td class="htsql-text-type">Special Topics in Teacher Education</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">17</td><td class="htsql-integer-type">630</td><td class="htsql-text-type">Practice of Mathematics Teaching</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">18</td><td class="htsql-integer-type">635</td><td class="htsql-text-type">Practice of Science Teaching</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">19</td><td class="htsql-integer-type">640</td><td class="htsql-text-type">Practice of Language Teaching</td></tr>
+            <tr class="htsql-even-row"><td rowspan="4" class="htsql-section htsql-index">2</td><td rowspan="4" class="htsql-section htsql-text-type">School of Music &amp; Dance</td><td rowspan="4" class="htsql-section htsql-index htsql-null-record-value"></td><td rowspan="4" class="htsql-section htsql-null-record-value"></td><td rowspan="4" class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-index">1</td><td class="htsql-section htsql-text-type">Piano</td><td class="htsql-section htsql-index htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-section htsql-index">2</td><td class="htsql-section htsql-text-type">Strings</td><td class="htsql-section htsql-index htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td></tr>
+            <tr class="htsql-even-row"><td class="htsql-section htsql-index">3</td><td class="htsql-section htsql-text-type">Vocals</td><td class="htsql-section htsql-index htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-section htsql-index">4</td><td class="htsql-section htsql-text-type">Wind</td><td class="htsql-section htsql-index htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td></tr>
+            <tr class="htsql-even-row"><td class="htsql-section htsql-index">3</td><td class="htsql-section htsql-text-type">School of Continuing Studies</td><td class="htsql-section htsql-index htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-index htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td><td class="htsql-section htsql-null-record-value"></td></tr>
             </tbody>
             </table>
             </body>
@@ -32058,7 +32057,7 @@ tests:
                   "fields": [
                     {
                       "domain": {
-                        "type": "string"
+                        "type": "text"
                       },
                       "header": "code",
                       "path": "school.code",
@@ -32067,7 +32066,7 @@ tests:
                     },
                     {
                       "domain": {
-                        "type": "string"
+                        "type": "text"
                       },
                       "header": "name",
                       "path": "school.name",
@@ -32076,7 +32075,7 @@ tests:
                     },
                     {
                       "domain": {
-                        "type": "string"
+                        "type": "text"
                       },
                       "header": "campus",
                       "path": "school.campus",
@@ -32176,7 +32175,7 @@ tests:
             <tr><th>code</th><th>name</th><th>campus</th></tr>
             </thead>
             <tbody>
-            <tr class="htsql-odd-row"><td class="htsql-string-type">art</td><td class="htsql-string-type">School of Art &amp; Design</td><td class="htsql-string-type">old</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-text-type">art</td><td class="htsql-text-type">School of Art &amp; Design</td><td class="htsql-text-type">old</td></tr>
             </tbody>
             </table>
             </body>
@@ -32213,7 +32212,7 @@ tests:
                   "fields": [
                     {
                       "domain": {
-                        "type": "string"
+                        "type": "text"
                       },
                       "header": "code",
                       "path": "school.code",
@@ -32222,7 +32221,7 @@ tests:
                     },
                     {
                       "domain": {
-                        "type": "string"
+                        "type": "text"
                       },
                       "header": "name",
                       "path": "school.name",
@@ -32231,7 +32230,7 @@ tests:
                     },
                     {
                       "domain": {
-                        "type": "string"
+                        "type": "text"
                       },
                       "header": "campus",
                       "path": "school.campus",
@@ -32312,7 +32311,7 @@ tests:
                             "fields": [
                               {
                                 "domain": {
-                                  "type": "string"
+                                  "type": "text"
                                 },
                                 "header": "code",
                                 "path": "school.code",
@@ -32321,7 +32320,7 @@ tests:
                               },
                               {
                                 "domain": {
-                                  "type": "string"
+                                  "type": "text"
                                 },
                                 "header": "name",
                                 "path": "school.name",
@@ -32330,7 +32329,7 @@ tests:
                               },
                               {
                                 "domain": {
-                                  "type": "string"
+                                  "type": "text"
                                 },
                                 "header": "campus",
                                 "path": "school.campus",
@@ -32355,7 +32354,7 @@ tests:
                             "fields": [
                               {
                                 "domain": {
-                                  "type": "string"
+                                  "type": "text"
                                 },
                                 "header": "code",
                                 "path": "department.code",
@@ -32364,7 +32363,7 @@ tests:
                               },
                               {
                                 "domain": {
-                                  "type": "string"
+                                  "type": "text"
                                 },
                                 "header": "name",
                                 "path": "department.name",
@@ -32373,7 +32372,7 @@ tests:
                               },
                               {
                                 "domain": {
-                                  "type": "string"
+                                  "type": "text"
                                 },
                                 "header": "school_code",
                                 "path": "department.school_code",
@@ -32746,19 +32745,19 @@ tests:
             <tr><th class="htsql-empty-header"></th><th>code</th><th>name</th><th>campus</th><th class="htsql-empty-header"></th><th>code</th><th>name</th><th>school_code</th></tr>
             </thead>
             <tbody>
-            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-string-type">art</td><td class="htsql-string-type">School of Art &amp; Design</td><td class="htsql-string-type">old</td><td class="htsql-index">1</td><td class="htsql-string-type">arthis</td><td class="htsql-string-type">Art History</td><td class="htsql-string-type">la</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-string-type">edu</td><td class="htsql-string-type">College of Education</td><td class="htsql-string-type">old</td><td class="htsql-index">2</td><td class="htsql-string-type">astro</td><td class="htsql-string-type">Astronomy</td><td class="htsql-string-type">ns</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">3</td><td class="htsql-string-type">la</td><td class="htsql-string-type">School of Arts and Humanities</td><td class="htsql-string-type">old</td><td class="htsql-index">3</td><td class="htsql-string-type">chem</td><td class="htsql-string-type">Chemistry</td><td class="htsql-string-type">ns</td></tr>
-            <tr class="htsql-even-row"><td rowspan="10" class="htsql-index">4</td><td rowspan="10" class="htsql-string-type">ns</td><td rowspan="10" class="htsql-string-type">School of Natural Sciences</td><td rowspan="10" class="htsql-string-type">old</td><td class="htsql-index">4</td><td class="htsql-string-type">edpol</td><td class="htsql-string-type">Educational Policy</td><td class="htsql-string-type">edu</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-string-type">eng</td><td class="htsql-string-type">English</td><td class="htsql-string-type">la</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">6</td><td class="htsql-string-type">hist</td><td class="htsql-string-type">History</td><td class="htsql-string-type">la</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">7</td><td class="htsql-string-type">lang</td><td class="htsql-string-type">Foreign Languages</td><td class="htsql-string-type">la</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">8</td><td class="htsql-string-type">mth</td><td class="htsql-string-type">Mathematics</td><td class="htsql-string-type">ns</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">9</td><td class="htsql-string-type">phys</td><td class="htsql-string-type">Physics</td><td class="htsql-string-type">ns</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">10</td><td class="htsql-string-type">poli</td><td class="htsql-string-type">Political Science</td><td class="htsql-string-type">la</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">11</td><td class="htsql-string-type">psych</td><td class="htsql-string-type">Psychology</td><td class="htsql-string-type">la</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">12</td><td class="htsql-string-type">stdart</td><td class="htsql-string-type">Studio Art</td><td class="htsql-string-type">art</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">13</td><td class="htsql-string-type">tched</td><td class="htsql-string-type">Teacher Education</td><td class="htsql-string-type">edu</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-text-type">art</td><td class="htsql-text-type">School of Art &amp; Design</td><td class="htsql-text-type">old</td><td class="htsql-index">1</td><td class="htsql-text-type">arthis</td><td class="htsql-text-type">Art History</td><td class="htsql-text-type">la</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-text-type">edu</td><td class="htsql-text-type">College of Education</td><td class="htsql-text-type">old</td><td class="htsql-index">2</td><td class="htsql-text-type">astro</td><td class="htsql-text-type">Astronomy</td><td class="htsql-text-type">ns</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">3</td><td class="htsql-text-type">la</td><td class="htsql-text-type">School of Arts and Humanities</td><td class="htsql-text-type">old</td><td class="htsql-index">3</td><td class="htsql-text-type">chem</td><td class="htsql-text-type">Chemistry</td><td class="htsql-text-type">ns</td></tr>
+            <tr class="htsql-even-row"><td rowspan="10" class="htsql-index">4</td><td rowspan="10" class="htsql-text-type">ns</td><td rowspan="10" class="htsql-text-type">School of Natural Sciences</td><td rowspan="10" class="htsql-text-type">old</td><td class="htsql-index">4</td><td class="htsql-text-type">edpol</td><td class="htsql-text-type">Educational Policy</td><td class="htsql-text-type">edu</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-text-type">eng</td><td class="htsql-text-type">English</td><td class="htsql-text-type">la</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">6</td><td class="htsql-text-type">hist</td><td class="htsql-text-type">History</td><td class="htsql-text-type">la</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">7</td><td class="htsql-text-type">lang</td><td class="htsql-text-type">Foreign Languages</td><td class="htsql-text-type">la</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">8</td><td class="htsql-text-type">mth</td><td class="htsql-text-type">Mathematics</td><td class="htsql-text-type">ns</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">9</td><td class="htsql-text-type">phys</td><td class="htsql-text-type">Physics</td><td class="htsql-text-type">ns</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">10</td><td class="htsql-text-type">poli</td><td class="htsql-text-type">Political Science</td><td class="htsql-text-type">la</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">11</td><td class="htsql-text-type">psych</td><td class="htsql-text-type">Psychology</td><td class="htsql-text-type">la</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">12</td><td class="htsql-text-type">stdart</td><td class="htsql-text-type">Studio Art</td><td class="htsql-text-type">art</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">13</td><td class="htsql-text-type">tched</td><td class="htsql-text-type">Teacher Education</td><td class="htsql-text-type">edu</td></tr>
             </tbody>
             </table>
             </body>
@@ -32877,7 +32876,7 @@ tests:
                       "fields": [
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "text"
                           },
                           "header": "code",
                           "path": "school.code",
@@ -32886,7 +32885,7 @@ tests:
                         },
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "text"
                           },
                           "header": "name",
                           "path": "school.name",
@@ -32895,7 +32894,7 @@ tests:
                         },
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "text"
                           },
                           "header": "campus",
                           "path": "school.campus",
@@ -34264,73 +34263,73 @@ tests:
              +-----------------------+---------------------+---------+--------------+
              | table_name            | name                | domain  | is_mandatory |
             -+-----------------------+---------------------+---------+--------------+-
-             | appointment           | department_code     | string  | true         |
+             | appointment           | department_code     | text    | true         |
              | appointment           | fraction            | float   | false        |
-             | appointment           | instructor_code     | string  | true         |
+             | appointment           | instructor_code     | text    | true         |
              | class                 | class_seq           | integer | true         |
              | class                 | course_no           | integer | true         |
-             | class                 | department_code     | string  | true         |
-             | class                 | instructor_code     | string  | false        |
-             | class                 | season              | string  | true         |
-             | class                 | section             | string  | true         |
+             | class                 | department_code     | text    | true         |
+             | class                 | instructor_code     | text    | false        |
+             | class                 | season              | text    | true         |
+             | class                 | section             | text    | true         |
              | class                 | year                | integer | true         |
-             | classification        | code                | string  | true         |
-             | classification        | description         | string  | false        |
-             | classification        | part_of_code        | string  | false        |
-             | classification        | title               | string  | true         |
-             | classification        | type                | string  | false        |
-             | confidential          | home_phone          | string  | false        |
-             | confidential          | instructor_code     | string  | true         |
+             | classification        | code                | text    | true         |
+             | classification        | description         | text    | false        |
+             | classification        | part_of_code        | text    | false        |
+             | classification        | title               | text    | true         |
+             | classification        | type                | text    | false        |
+             | confidential          | home_phone          | text    | false        |
+             | confidential          | instructor_code     | text    | true         |
              | confidential          | pay_grade           | integer | true         |
-             | confidential          | ssn                 | string  | true         |
+             | confidential          | ssn                 | text    | true         |
              | course                | credits             | integer | false        |
-             | course                | department_code     | string  | true         |
-             | course                | description         | string  | false        |
+             | course                | department_code     | text    | true         |
+             | course                | description         | text    | false        |
              | course                | no                  | integer | true         |
-             | course                | title               | string  | true         |
-             | course_classification | classification_code | string  | true         |
+             | course                | title               | text    | true         |
+             | course_classification | classification_code | text    | true         |
              | course_classification | course_no           | integer | true         |
-             | course_classification | department_code     | string  | true         |
-             | department            | code                | string  | true         |
-             | department            | name                | string  | true         |
-             | department            | school_code         | string  | false        |
+             | course_classification | department_code     | text    | true         |
+             | department            | code                | text    | true         |
+             | department            | name                | text    | true         |
+             | department            | school_code         | text    | false        |
              | enrollment            | class_seq           | integer | true         |
              | enrollment            | grade               | float   | false        |
-             | enrollment            | status              | string  | true         |
+             | enrollment            | status              | text    | true         |
              | enrollment            | student_id          | integer | true         |
-             | instructor            | code                | string  | true         |
-             | instructor            | email               | string  | false        |
-             | instructor            | full_name           | string  | true         |
-             | instructor            | phone               | string  | false        |
-             | instructor            | title               | string  | true         |
+             | instructor            | code                | text    | true         |
+             | instructor            | email               | text    | false        |
+             | instructor            | full_name           | text    | true         |
+             | instructor            | phone               | text    | false        |
+             | instructor            | title               | text    | true         |
              | prerequisite          | of_course_no        | integer | true         |
-             | prerequisite          | of_department_code  | string  | true         |
+             | prerequisite          | of_department_code  | text    | true         |
              | prerequisite          | on_course_no        | integer | true         |
-             | prerequisite          | on_department_code  | string  | true         |
-             | program               | code                | string  | true         |
-             | program               | degree              | string  | false        |
-             | program               | part_of_code        | string  | false        |
-             | program               | school_code         | string  | true         |
-             | program               | title               | string  | true         |
-             | program_requirement   | classification_code | string  | true         |
+             | prerequisite          | on_department_code  | text    | true         |
+             | program               | code                | text    | true         |
+             | program               | degree              | text    | false        |
+             | program               | part_of_code        | text    | false        |
+             | program               | school_code         | text    | true         |
+             | program               | title               | text    | true         |
+             | program_requirement   | classification_code | text    | true         |
              | program_requirement   | credit_hours        | integer | true         |
-             | program_requirement   | program_code        | string  | true         |
-             | program_requirement   | rationale           | string  | false        |
-             | program_requirement   | school_code         | string  | true         |
-             | school                | campus              | string  | false        |
-             | school                | code                | string  | true         |
-             | school                | name                | string  | true         |
+             | program_requirement   | program_code        | text    | true         |
+             | program_requirement   | rationale           | text    | false        |
+             | program_requirement   | school_code         | text    | true         |
+             | school                | campus              | text    | false        |
+             | school                | code                | text    | true         |
+             | school                | name                | text    | true         |
              | semester              | begin_date          | date    | true         |
              | semester              | end_date            | date    | true         |
-             | semester              | season              | string  | true         |
+             | semester              | season              | text    | true         |
              | semester              | year                | integer | true         |
              | student               | dob                 | date    | true         |
-             | student               | gender              | string  | true         |
+             | student               | gender              | text    | true         |
              | student               | id                  | integer | true         |
              | student               | is_active           | boolean | true         |
-             | student               | name                | string  | true         |
-             | student               | program_code        | string  | false        |
-             | student               | school_code         | string  | false        |
+             | student               | name                | text    | true         |
+             | student               | program_code        | text    | false        |
+             | student               | school_code         | text    | false        |
              | student               | start_date          | date    | true         |
 
              ----
@@ -34439,9 +34438,9 @@ tests:
              +------------+-------------+--------+--------------+
              | table_name | name        | domain | is_mandatory |
             -+------------+-------------+--------+--------------+-
-             | department | code        | string | true         |
-             | department | name        | string | true         |
-             | department | school_code | string | false        |
+             | department | code        | text   | true         |
+             | department | name        | text   | true         |
+             | department | school_code | text   | false        |
 
              ----
              /(table?name='department').column
@@ -34540,9 +34539,9 @@ tests:
              +------------+--------+--------+--------------+
              | table_name | name   | domain | is_mandatory |
             -+------------+--------+--------+--------------+-
-             | school     | campus | string | false        |
-             | school     | code   | string | true         |
-             | school     | name   | string | true         |
+             | school     | campus | text   | false        |
+             | school     | code   | text   | true         |
+             | school     | name   | text   | true         |
 
              ----
              /(field?table_name='school').column
@@ -34803,10 +34802,10 @@ tests:
              +--------+            |        +--------+-------------+
              | name   | name       | kind   | domain | is_singular |
             -+--------+------------+--------+--------+-------------+-
-             | school | campus     | column | string |             :
-             | school | code       | column | string |             :
+             | school | campus     | column | text   |             :
+             | school | code       | column | text   |             :
              | school | department | link   |        | false       |
-             | school | name       | column | string |             :
+             | school | name       | column | text   |             :
              | school | program    | link   |        | false       |
 
              ----
@@ -35009,20 +35008,20 @@ tests:
              +------------+--------------+---------+--------------+
              | table_name | name         | domain  | is_mandatory |
             -+------------+--------------+---------+--------------+-
-             | column     | domain       | string  | true         |
+             | column     | domain       | text    | true         |
              | column     | is_mandatory | boolean | true         |
-             | column     | name         | string  | true         |
-             | column     | table_name   | string  | true         |
-             | field      | kind         | string  | true         |
-             | field      | name         | string  | true         |
+             | column     | name         | text    | true         |
+             | column     | table_name   | text    | true         |
+             | field      | kind         | text    | true         |
+             | field      | name         | text    | true         |
              | field      | sort         | integer | false        |
-             | field      | table_name   | string  | true         |
+             | field      | table_name   | text    | true         |
              | link       | is_singular  | boolean | true         |
-             | link       | name         | string  | true         |
-             | link       | reverse_name | string  | false        |
-             | link       | table_name   | string  | true         |
-             | link       | target_name  | string  | true         |
-             | table      | name         | string  | true         |
+             | link       | name         | text    | true         |
+             | link       | reverse_name | text    | false        |
+             | link       | table_name   | text    | true         |
+             | link       | target_name  | text    | true         |
+             | table      | name         | text    | true         |
 
              ----
              /column
@@ -35105,26 +35104,26 @@ tests:
           - [Vary, Accept]
           body: " | column                                              |\n +---------------+-----------+----------+--------------+\n
             | table_name    | name      | domain   | is_mandatory |\n-+---------------+-----------+----------+--------------+-\n
-            | boolean       | code      | string   | true         |\n | boolean       |
+            | boolean       | code      | text     | true         |\n | boolean       |
             boolean   | boolean  | false        |\n | date          | code      |
-            string   | true         |\n | date          | date      | date     | false
-            \       |\n | datetime      | code      | string   | true         |\n
+            text     | true         |\n | date          | date      | date     | false
+            \       |\n | datetime      | code      | text     | true         |\n
             | datetime      | datetime  | datetime | false        |\n | decimal       |
-            code      | string   | true         |\n | enum          | code      |
-            string   | true         |\n | float         | code      | string   | true
+            code      | text     | true         |\n | enum          | code      |
+            text     | true         |\n | float         | code      | text     | true
             \        |\n | float         | real      | float    | false        |\n
-            | integer       | code      | string   | true         |\n | integer       |
+            | integer       | code      | text     | true         |\n | integer       |
             integer   | integer  | false        |\n | other         | code      |
-            string   | true         |\n | other         | blob      | opaque   | false
-            \       |\n | string        | code      | string   | true         |\n
-            | string        | text      | string   | false        |\n | time          |
-            code      | string   | true         |\n | time          | time      |
+            text     | true         |\n | other         | blob      | opaque   | false
+            \       |\n | string        | code      | text     | true         |\n
+            | string        | text      | text     | false        |\n | time          |
+            code      | text     | true         |\n | time          | time      |
             time     | false        |\n | \u0442\u0440\u0438_\u043F\u043E\u0440\u043E\u0441\u0435\u043D\u043A\u0430
-            | _\u043D\u0438\u0444_\u043D\u0438\u0444_ | string   | false        |\n
+            | _\u043D\u0438\u0444_\u043D\u0438\u0444_ | text     | false        |\n
             | \u0442\u0440\u0438_\u043F\u043E\u0440\u043E\u0441\u0435\u043D\u043A\u0430
-            | _\u043D\u0443\u0444_\u043D\u0443\u0444_ | string   | false        |\n
+            | _\u043D\u0443\u0444_\u043D\u0443\u0444_ | text     | false        |\n
             | \u0442\u0440\u0438_\u043F\u043E\u0440\u043E\u0441\u0435\u043D\u043A\u0430
-            | _\u043D\u0430\u0444_\u043D\u0430\u0444_ | string   | false        |\n\n
+            | _\u043D\u0430\u0444_\u043D\u0430\u0444_ | text     | false        |\n\n
             ----\n /column.sort(table.name,field.sort)\n SELECT \"column\".\"table_name\",\n
             \       \"column\".\"name\",\n        \"column\".\"domain\",\n        \"column\".\"is_mandatory\"\n
             FROM \"column\"\n      INNER JOIN \"field\"\n                 ON ((\"column\".\"table_name\"
@@ -36373,7 +36372,7 @@ tests:
                       "fields": [
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "text"
                           },
                           "header": "code",
                           "path": "school.code",
@@ -36382,7 +36381,7 @@ tests:
                         },
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "text"
                           },
                           "header": "name",
                           "path": "school.name",
@@ -36391,7 +36390,7 @@ tests:
                         },
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "text"
                           },
                           "header": "campus",
                           "path": "school.campus",
@@ -36472,7 +36471,7 @@ tests:
                       "fields": [
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "text"
                           },
                           "header": "code",
                           "path": "school.code",
@@ -36481,7 +36480,7 @@ tests:
                         },
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "text"
                           },
                           "header": "name",
                           "path": "school.name",
@@ -36490,7 +36489,7 @@ tests:
                         },
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "text"
                           },
                           "header": "campus",
                           "path": "school.campus",
@@ -36580,7 +36579,7 @@ tests:
                       "fields": [
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "text"
                           },
                           "header": "code",
                           "path": "school.code",
@@ -36589,7 +36588,7 @@ tests:
                         },
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "text"
                           },
                           "header": "name",
                           "path": "school.name",
@@ -36598,7 +36597,7 @@ tests:
                         },
                         {
                           "domain": {
-                            "type": "string"
+                            "type": "text"
                           },
                           "header": "campus",
                           "path": "school.campus",
@@ -37603,7 +37602,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types ('entity', 'untyped') to a common type:
+            cannot coerce values of types (entity, untyped) to a common type:
                 /department{code, school :if_null 'none'}
                                   ^^^^^^^^^^^^^^^^^^^^^^
         - uri: /department{code, is_null(school)}
@@ -37619,7 +37618,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types ('string', 'date') to a common type:
+            cannot coerce values of types (text, date) to a common type:
                 /school?code=today()
                         ^^^^^^^^^^^^
         - uri: /school?code==today()
@@ -37627,7 +37626,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types ('string', 'date') to a common type:
+            cannot coerce values of types (text, date) to a common type:
                 /school?code==today()
                         ^^^^^^^^^^^^^
         - uri: /school?code={'art',5,today()}
@@ -37635,7 +37634,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types ('string', 'untyped', 'integer', 'date') to a common type:
+            cannot coerce values of types (text, untyped, integer, date) to a common type:
                 /school?code={'art',5,today()}
                         ^^^^^^^^^^^^^^^^^^^^^^
         - uri: /school?code<today()
@@ -37643,7 +37642,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types ('string', 'date') to a common type:
+            cannot coerce values of types (text, date) to a common type:
                 /school?code<today()
                         ^^^^^^^^^^^^
         - uri: /department{code, if(school,school.code,today())}
@@ -37651,7 +37650,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types ('string', 'date') to a common type:
+            cannot coerce values of types (text, date) to a common type:
                 /department{code, if(school,school.code,today())}
                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /department{code, if(school.code,school)}
@@ -37667,7 +37666,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types ('string', 'date') to a common type:
+            cannot coerce values of types (text, date) to a common type:
                 /department{code, switch(school.code,today(),now())}
                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /department{code, switch(school.code,'art',today(),now())}
@@ -37675,7 +37674,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types ('date', 'datetime') to a common type:
+            cannot coerce values of types (date, datetime) to a common type:
                 /department{code, switch(school.code,'art',today(),now())}
                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /department{code, switch(school.code,'art',school)}
@@ -37691,7 +37690,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            values of type 'boolean' are not comparable:
+            values of type boolean are not comparable:
                 /student?is_active<true()
                          ^^^^^^^^^^^^^^^^
         - uri: /trunc(school)
@@ -37699,37 +37698,37 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'trunc' cannot be applied to a value of type 'entity':
+            function 'trunc' cannot be applied to a value of type entity:
                 /trunc(school)
                  ^^^^^^^^^^^^^
-            (valid type: 'integer', 'decimal', 'float')
+            (valid type: integer, decimal, float)
         - uri: /trunc(school,department)
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'trunc' cannot be applied to values of types ('entity', 'entity'):
+            function 'trunc' cannot be applied to values of types (entity, entity):
                 /trunc(school,department)
                  ^^^^^^^^^^^^^^^^^^^^^^^^
-            (valid types: ('integer', 'integer'), ('decimal', 'integer'), ('float', 'integer'))
+            (valid types: (integer, integer), (decimal, integer), (float, integer))
         - uri: /-school
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unary operator '-' cannot be applied to a value of type 'entity':
+            unary operator '-' cannot be applied to a value of type entity:
                 /-school
                  ^^^^^^^
-            (valid type: 'integer', 'decimal', 'float')
+            (valid type: integer, decimal, float)
         - uri: /school*department
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function '*' cannot be applied to values of types ('entity', 'entity'):
+            operator '*' cannot be applied to values of types (entity, entity):
                 /school*department
                  ^^^^^^^^^^^^^^^^^
-            (valid types: ('integer', 'integer'), ('integer', 'decimal'), ('decimal', 'integer'), ('decimal', 'decimal'), ('integer', 'float'), ('decimal', 'float'), ('float', 'integer'), ('float', 'decimal'), ('float', 'float'))
+            (valid types: (integer, integer), (integer, decimal), (decimal, integer), (decimal, decimal), (integer, float), (decimal, float), (float, integer), (float, decimal), (float, float))
         - uri: /fetch(school)
           status: 400 Bad Request
           headers:
@@ -37889,7 +37888,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot convert a value of type 'boolean' to 'date':
+            cannot convert a value of type boolean to date:
                 /date(true())
                  ^^^^^^^^^^^^
         - uri: /boolean('!')

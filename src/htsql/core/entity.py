@@ -11,7 +11,7 @@ This module implements the HTSQL catalog and catalog entities.
 """
 
 
-from .util import listof, Printable, Comparable
+from .util import listof, Printable, Hashable
 from .domain import Domain
 import weakref
 
@@ -459,7 +459,7 @@ class MutableForeignKeyEntity(ForeignKeyEntity, MutableEntity):
         self.__class__ = RemovedEntity
 
 
-class Join(Printable, Comparable):
+class Join(Printable, Hashable):
     """
     Represents a join condition between two tables.
 

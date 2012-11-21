@@ -4,11 +4,11 @@
 
 
 from ..error import Mark
-from ..util import Clonable, Comparable, Printable
+from ..util import Clonable, Hashable, Printable
 import urllib
 
 
-class Token(Clonable, Comparable, Printable):
+class Token(Clonable, Hashable, Printable):
     """
     A lexical token.
 

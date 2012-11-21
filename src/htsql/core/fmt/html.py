@@ -17,7 +17,7 @@ from .format import HTMLFormat
 from .emit import EmitHeaders, Emit
 from ..error import InternalServerError, Mark
 from ..domain import (Domain, BooleanDomain, NumberDomain, DecimalDomain,
-        StringDomain, EnumDomain, DateDomain, TimeDomain, DateTimeDomain,
+        TextDomain, EnumDomain, DateDomain, TimeDomain, DateTimeDomain,
         ListDomain, RecordDomain, UntypedDomain, VoidDomain, OpaqueDomain,
         Profile)
 import pkg_resources
@@ -420,7 +420,7 @@ class ToHTML(Adapter):
     def cells(self, value, height):
         assert height > 0
         classes = []
-        classes.append(u"htsql-%s-type" % self.domain.family)
+        classes.append(u"htsql-%s-type" % self.domain.__class__)
         content = self.dump(value)
         if content is None:
             content = u""
@@ -590,7 +590,7 @@ class ListToHTML(ToHTML):
 class NativeToHTML(ToHTML):
 
     adapt_many(UntypedDomain,
-               StringDomain,
+               TextDomain,
                EnumDomain)
 
     def dump(self, value):

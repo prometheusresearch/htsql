@@ -3,7 +3,7 @@
 #
 
 
-from htsql.core.domain import StringDomain
+from htsql.core.domain import TextDomain
 from htsql.core.tr.signature import isformula, ToPredicateSig, FromPredicateSig
 from htsql.core.tr.frame import ScalarFrame, NullPhrase, LeadingAnchor
 from htsql.core.tr.reduce import (ReduceScalar, ReduceBranch, ReduceLiteral,
@@ -37,7 +37,7 @@ class OracleReduceBranch(ReduceBranch):
 class OracleReduceLiteral(ReduceLiteral):
 
     def __call__(self):
-        if (isinstance(self.phrase.domain, StringDomain) and
+        if (isinstance(self.phrase.domain, TextDomain) and
             self.phrase.value == ""):
             return NullPhrase(self.phrase.domain, self.phrase.expression)
         return super(OracleReduceLiteral, self).__call__()

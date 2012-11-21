@@ -4,9 +4,9 @@
 
 
 from ..adapter import adapt, Utility
-from ..util import Record, listof
+from ..util import listof
 from ..context import context
-from ..domain import ListDomain, RecordDomain, Profile
+from ..domain import ListDomain, RecordDomain, Profile, Product
 from .command import FetchCmd, SkipCmd, SQLCmd
 from .act import (analyze, Act, ProduceAction, SafeProduceAction,
                   AnalyzeAction, RenderAction)
@@ -24,23 +24,6 @@ from ..tr.plan import Plan, Statement
 from ..tr.decorate import decorate_void
 from ..connect import transaction, scramble, unscramble
 from ..error import PermissionError
-
-
-class Product(object):
-
-    def __init__(self, meta, data=None):
-        assert isinstance(meta, Profile)
-        self.meta = meta
-        self.data = data
-
-    def __iter__(self):
-        if self.data is None:
-            return iter([])
-        else:
-            return iter(self.data)
-
-    def __nonzero__(self):
-        return (self.data is not None)
 
 
 class RowStream(object):

@@ -17,7 +17,7 @@ class TweakINetAddon(Addon):
     - `inet()` constructor which accepts literals in standard IPv4
       dotted notation;
     - standard comparison operators for `inet` values;
-    - conversion of `inet` values from/to `string` and `integer` values;
+    - conversion of `inet` values from/to `text` and `integer` values;
     - arithmetic operations: `inet-integer`, `inet+integer`,
       `inet-inet`.
 

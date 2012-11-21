@@ -7,7 +7,7 @@ from htsql.core.adapter import Protocol, call
 from htsql.core.introspect import Introspect
 from htsql.core.entity import make_catalog
 from htsql.core.domain import (BooleanDomain, IntegerDomain, DecimalDomain,
-                               FloatDomain, StringDomain, DateTimeDomain,
+                               FloatDomain, TextDomain, DateTimeDomain,
                                OpaqueDomain)
 from htsql.core.connect import connect
 import itertools
@@ -199,7 +199,7 @@ class IntrospectMSSQLCharDomain(IntrospectMSSQLDomain):
     call(('sys', 'char'), ('sys', 'nchar'))
 
     def __call__(self):
-        return StringDomain(length=self.length, is_varying=False)
+        return TextDomain(length=self.length, is_varying=False)
 
 
 class IntrospectMSSQLVarCharDomain(IntrospectMSSQLDomain):
@@ -207,7 +207,7 @@ class IntrospectMSSQLVarCharDomain(IntrospectMSSQLDomain):
     call(('sys', 'varchar'), ('sys', 'nvarchar'))
 
     def __call__(self):
-        return StringDomain(length=self.length, is_varying=False)
+        return TextDomain(length=self.length, is_varying=False)
 
 
 class IntrospectMSSQLBitDomain(IntrospectMSSQLDomain):

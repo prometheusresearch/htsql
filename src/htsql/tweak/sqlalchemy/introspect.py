@@ -8,7 +8,7 @@ from ...core.adapter import Adapter, rank, adapt, adapt_many
 from ...core.introspect import Introspect
 from ...core.entity import make_catalog
 from ...core.domain import (BooleanDomain, IntegerDomain, FloatDomain,
-                            DecimalDomain, StringDomain, DateDomain,
+                            DecimalDomain, TextDomain, DateDomain,
                             TimeDomain, DateTimeDomain, OpaqueDomain)
 from sqlalchemy import types
 from sqlalchemy.schema import (PrimaryKeyConstraint, ForeignKeyConstraint,
@@ -141,7 +141,7 @@ class IntrospectSAStringDomain(IntrospectSADomain):
     adapt(types.String)
 
     def __call__(self):
-        return StringDomain(self.type.length, True)
+        return TextDomain(self.type.length, True)
 
 
 class IntrospectSACharDomain(IntrospectSADomain):
@@ -149,7 +149,7 @@ class IntrospectSACharDomain(IntrospectSADomain):
     adapt_many(types.CHAR, types.NCHAR)
 
     def __call__(self):
-        return StringDomain(self.type.length, False)
+        return TextDomain(self.type.length, False)
 
 
 class IntrospectSAFloatDomain(IntrospectSADomain):

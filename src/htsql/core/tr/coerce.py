@@ -16,7 +16,7 @@ from ..adapter import Adapter, adapt, adapt_many
 from ..domain import (Domain, VoidDomain, ListDomain, RecordDomain,
                       EntityDomain, IdentityDomain, UntypedDomain,
                       BooleanDomain, IntegerDomain, DecimalDomain, FloatDomain,
-                      StringDomain, EnumDomain, DateDomain, TimeDomain,
+                      TextDomain, EnumDomain, DateDomain, TimeDomain,
                       DateTimeDomain, OpaqueDomain)
 
 
@@ -115,7 +115,7 @@ class UnaryCoerceUntyped(UnaryCoerce):
 
     def __call__(self):
         # Specializes untyped top-level expressions to the string type.
-        return StringDomain()
+        return TextDomain()
 
 
 class BinaryCoerceBoolean(BinaryCoerce):
@@ -182,20 +182,20 @@ class BinaryCoerceFloat(BinaryCoerce):
         return FloatDomain()
 
 
-class BinaryCoerceString(BinaryCoerce):
+class BinaryCoerceText(BinaryCoerce):
     """
-    Coerces untyped values to :class:`StringDomain`.
+    Coerces untyped values to :class:`TextDomain`.
     """
 
-    adapt_many((StringDomain, StringDomain),
-               (StringDomain, UntypedDomain),
-               (UntypedDomain, StringDomain))
+    adapt_many((TextDomain, TextDomain),
+               (TextDomain, UntypedDomain),
+               (UntypedDomain, TextDomain))
 
     def __call__(self):
         # Note that we use the generic version of the domain.  Engine addons
         # may override this implementation to provide an engine-specific
         # version of the domain.
-        return StringDomain()
+        return TextDomain()
 
 
 class BinaryCoerceEnum(BinaryCoerce):

@@ -8,7 +8,6 @@ from ....core.connect import transaction
 from ....core.domain import IdentityDomain
 from ....core.cmd.command import DefaultCmd
 from ....core.cmd.act import Act, ProduceAction, act
-from ....core.cmd.fetch import Product
 from ....core.tr.bind import BindingState
 from ....core.tr.embed import embed
 from ....core.tr.binding import LiteralRecipe, IdentityRecipe, ClosedRecipe
@@ -42,7 +41,7 @@ class ProduceDo(Act):
                             product.data is not None):
                         def convert(domain, data):
                             items = []
-                            for element, item in zip(domain.fields, data):
+                            for element, item in zip(domain.labels, data):
                                 if isinstance(element, IdentityDomain):
                                     item = convert(element, item)
                                 else:

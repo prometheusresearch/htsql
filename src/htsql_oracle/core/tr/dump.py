@@ -4,7 +4,7 @@
 
 
 from htsql.core.adapter import adapt
-from htsql.core.domain import (BooleanDomain, StringDomain, DateDomain,
+from htsql.core.domain import (BooleanDomain, TextDomain, DateDomain,
                                TimeDomain, DateTimeDomain)
 from htsql.core.tr.frame import ScalarFrame, TableFrame
 from htsql.core.tr.dump import (SerializeSegment, FormatPlaceholder,
@@ -12,7 +12,7 @@ from htsql.core.tr.dump import (SerializeSegment, FormatPlaceholder,
                                 DumpLeadingAnchor, DumpFromPredicate,
                                 DumpToPredicate, DumpBoolean, DumpInteger,
                                 DumpFloat, DumpTime, DumpDateTime,
-                                DumpToFloat, DumpToDecimal, DumpToString,
+                                DumpToFloat, DumpToDecimal, DumpToText,
                                 DumpToDate, DumpToTime, DumpToDateTime,
                                 DumpIsTotallyEqual, DumpBySignature,
                                 DumpSortDirection)
@@ -181,15 +181,15 @@ class OracleDumpToDecimal(DumpToDecimal):
         self.format("CAST({base} AS NUMBER)", base=self.base)
 
 
-class OracleDumpToString(DumpToString):
+class OracleDumpToText(DumpToText):
 
     def __call__(self):
         self.format("TO_CHAR({base})", base=self.base)
 
 
-class OracleDumpBooleanToString(DumpToString):
+class OracleDumpBooleanToText(DumpToText):
 
-    adapt(BooleanDomain, StringDomain)
+    adapt(BooleanDomain, TextDomain)
 
     def __call__(self):
         if self.base.is_nullable:
@@ -201,35 +201,35 @@ class OracleDumpBooleanToString(DumpToString):
                         base=self.base)
 
 
-class OracleDumpDateToString(DumpToString):
+class OracleDumpDateToText(DumpToText):
 
-    adapt(DateDomain, StringDomain)
+    adapt(DateDomain, TextDomain)
 
     def __call__(self):
         self.format("TO_CHAR({base}, 'YYYY-MM-DD')", base=self.base)
 
 
-class OracleDumpTimeToString(DumpToString):
+class OracleDumpTimeToText(DumpToText):
 
-    adapt(TimeDomain, StringDomain)
+    adapt(TimeDomain, TextDomain)
 
     def __call__(self):
         self.format("TO_CHAR(TIMESTAMP '2001-01-01 00:00:00' + {base},"
                     " 'HH24:MI:SS.FF')", base=self.base)
 
 
-class OracleDumpDateTimeToString(DumpToString):
+class OracleDumpDateTimeToText(DumpToText):
 
-    adapt(DateTimeDomain, StringDomain)
+    adapt(DateTimeDomain, TextDomain)
 
     def __call__(self):
         self.format("TO_CHAR({base}, 'YYYY-MM-DD HH24:MI:SS.FF')",
                     base=self.base)
 
 
-class OracleDumpStringToDate(DumpToDate):
+class OracleDumpTextToDate(DumpToDate):
 
-    adapt(StringDomain, DateDomain)
+    adapt(TextDomain, DateDomain)
 
     def __call__(self):
         self.format("TO_DATE({base}, 'YYYY-MM-DD')", base=self.base)
@@ -243,9 +243,9 @@ class OracleDumpDateTimeToDate(DumpToDate):
         self.format("TRUNC({base}, 'DD')", base=self.base)
 
 
-class OracleDumpStringToTime(DumpToTime):
+class OracleDumpTextToTime(DumpToTime):
 
-    adapt(StringDomain, TimeDomain)
+    adapt(TextDomain, TimeDomain)
 
     def __call__(self):
         self.format("TO_DSINTERVAL('0 ' || {base})", base=self.base)
@@ -259,9 +259,9 @@ class OracleDumpDateTimeToTime(DumpToTime):
         self.format("({base} - TRUNC({base}, 'DD'))", base=self.base)
 
 
-class OracleDumpStringToDateTime(DumpToDateTime):
+class OracleDumpTextToDateTime(DumpToDateTime):
 
-    adapt(StringDomain, DateTimeDomain)
+    adapt(TextDomain, DateTimeDomain)
 
     def __call__(self):
         self.format("TO_TIMESTAMP({base}, 'YYYY-MM-DD HH24:MI:SS')",

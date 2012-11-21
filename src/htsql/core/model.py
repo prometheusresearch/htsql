@@ -3,13 +3,13 @@
 #
 
 
-from .util import Comparable, Printable, Clonable, maybe, listof, tupleof
+from .util import Hashable, Printable, Clonable, maybe, listof, tupleof
 from .domain import Domain
 from .entity import TableEntity, ColumnEntity, Join
 from .syn.syntax import Syntax
 
 
-class Model(Comparable, Clonable, Printable):
+class Model(Hashable, Clonable, Printable):
 
     def __init__(self):
         pass

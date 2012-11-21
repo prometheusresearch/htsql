@@ -305,8 +305,8 @@ tests:
       describe [table]\n\nType `describe` to list all tables or `describe <table>`
       to list\nall columns and links for a given table.\n\ndescribe\nTables introspected
       for this database are:\n\tappointment\n\tclass\n\tclassification\n\tconfidential\n\tcourse\n\tcourse_classification\n\tdepartment\n\tenrollment\n\tinstructor\n\tprerequisite\n\tprogram\n\tprogram_requirement\n\tschool\n\tsemester\n\tstudent\n\ndescribe
-      school\nSlots for `school` are:\n\t code       string\n\t name       string\n\t
-      campus     string\n\t department PLURAL(department)\n\t program    PLURAL(program)\n\ndescribe
+      school\nSlots for `school` are:\n\t code       text\n\t name       text\n\t
+      campus     text\n\t department PLURAL(department)\n\t program    PLURAL(program)\n\ndescribe
       school.code\nUnable to find table: school.code\n\ndescribe error\nUnable to
       find table: error\n\n"
     exit: 0

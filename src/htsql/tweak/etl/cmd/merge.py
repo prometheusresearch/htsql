@@ -9,8 +9,8 @@ from ....core.error import BadRequestError
 from ....core.entity import TableEntity, ColumnEntity
 from ....core.classify import localize, relabel
 from ....core.connect import transaction, scramble, unscramble
-from ....core.domain import IdentityDomain, RecordDomain, ListDomain
-from ....core.cmd.fetch import Product, build_fetch
+from ....core.domain import IdentityDomain, RecordDomain, ListDomain, Product
+from ....core.cmd.fetch import build_fetch
 from ....core.cmd.act import Act, ProduceAction, act
 from ....core.tr.bind import BindingState, Select
 from ....core.syn.syntax import VoidSyntax
@@ -115,7 +115,7 @@ class BuildResolveKey(Utility):
         count = itertools.count()
         def make_value(domain):
             value = []
-            for field in domain.fields:
+            for field in domain.labels:
                 if isinstance(field, IdentityDomain):
                     item = make_value(field)
                 else:

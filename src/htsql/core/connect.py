@@ -11,9 +11,8 @@ This module declares the database connection adapter.
 """
 
 
-from .util import Record
 from .adapter import Adapter, Utility, adapt
-from .domain import Domain
+from .domain import Domain, Record
 from .error import EngineError
 from .context import context
 
@@ -228,7 +227,7 @@ class CursorProxy(object):
                 return rows
             fields = [kind[0].lower() for kind in self.description]
         Row = Record.make(None, fields)
-        return [Row(*row) for row in rows]
+        return [Row(row) for row in rows]
 
     def __iter__(self):
         """

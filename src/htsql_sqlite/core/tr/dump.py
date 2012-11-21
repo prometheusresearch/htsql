@@ -4,11 +4,11 @@
 
 
 from htsql.core.adapter import adapt
-from htsql.core.domain import BooleanDomain, StringDomain
+from htsql.core.domain import BooleanDomain, TextDomain
 from htsql.core.tr.frame import LiteralPhrase
 from htsql.core.tr.dump import (DumpBoolean, DumpDecimal, DumpDate,
                                 DumpTime, DumpDateTime,
-                                DumpToFloat, DumpToDecimal, DumpToString,
+                                DumpToFloat, DumpToDecimal, DumpToText,
                                 DumpToDate, DumpToTime, DumpToDateTime,
                                 DumpIsTotallyEqual)
 from htsql.core.tr.fn.dump import (DumpRoundTo, DumpTrunc, DumpTruncTo,
@@ -76,15 +76,15 @@ class SQLiteDumpToDecimal(DumpToDecimal):
                              self.phrase.mark)
 
 
-class SQLiteDumpToString(DumpToString):
+class SQLiteDumpToText(DumpToText):
 
     def __call__(self):
         self.format("CAST({base} AS TEXT)", base=self.base)
 
 
-class SQLiteDumpBooleanToString(SQLiteDumpToString):
+class SQLiteDumpBooleanToText(SQLiteDumpToText):
 
-    adapt(BooleanDomain, StringDomain)
+    adapt(BooleanDomain, TextDomain)
 
     def __call__(self):
         self.format("(CASE WHEN {base} THEN 'true'"

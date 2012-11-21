@@ -11,7 +11,7 @@ This module declares binding nodes and recipe objects.
 """
 
 
-from ..util import maybe, listof, tupleof, Clonable, Printable, Comparable
+from ..util import maybe, listof, tupleof, Clonable, Printable, Hashable
 from ..entity import TableEntity, ColumnEntity, Join
 from ..domain import (Domain, VoidDomain, BooleanDomain, ListDomain,
         RecordDomain, EntityDomain, IdentityDomain, Profile)
@@ -76,7 +76,7 @@ class Binding(Clonable, Printable):
         return str(self.syntax)
 
 
-class Recipe(Comparable, Printable):
+class Recipe(Hashable, Printable):
     """
     Represents a recipe object.
 
@@ -475,7 +475,7 @@ class IdentityBinding(Binding):
         domain = IdentityDomain([element.domain for element in elements])
         super(IdentityBinding, self).__init__(base, domain, syntax)
         self.elements = elements
-        self.arity = domain.arity
+        self.width = domain.width
 
 
 class AssignmentBinding(Binding):

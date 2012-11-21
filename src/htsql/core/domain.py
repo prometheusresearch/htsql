@@ -3,130 +3,163 @@
 #
 
 
-"""
-:mod:`htsql.core.domain`
-========================
-
-This module defines HTSQL domains.
-"""
-
-
-from .util import maybe, oneof, listof, Printable, Clonable, Comparable
+from .util import (maybe, oneof, listof, Clonable, Hashable, Printable,
+        TextBuffer, to_literal, urlquote, isfinite)
 import re
-import math
 import decimal
 import datetime
+import weakref
+import keyword
+import operator
 
 
-class Domain(Comparable, Clonable, Printable):
+class Domain(Clonable, Hashable, Printable):
     """
-    Represents an HTSQL domain (data type).
+    An HTSQL data type.
 
-    A domain indicates the type of an object.  Most HTSQL domains correspond
-    to SQL data types; some domains are special and used when the actual
-    SQL data type is unknown or nonsensical.
+    A domain specifies the type of a value.  Most HTSQL domains correspond to
+    SQL data types, others represent HTSQL containers (record, list) or
+    used only in special circumstances.
 
     A value of a specific domain could be represented in two forms:
 
-    - as an HTSQL literal;
+    - as an HTSQL literal (``text``);
 
-    - as a native Python object.
+    - as a native Python object (``data``).
 
     Methods :meth:`parse` and :meth:`dump` translate values from one form
     to the other.
     """
 
-    family = 'unknown'
+    # Make sure `str(domain.__class__)` produces a usable domain family name.
+    class __metaclass__(type):
+
+        def __str__(cls):
+            name = cls.__name__.lower()
+            if name != 'domain' and name.endswith('domain'):
+                name = name[:-len('domain')]
+            return name
+
+        def __unicode__(cls):
+            return str(cls).decode('utf-8')
 
     def __init__(self):
+        # Required by `Clonable` interface.
         pass
 
     def __basis__(self):
         return ()
 
-    def parse(self, data):
+    @staticmethod
+    def parse(text):
         """
         Converts an HTSQL literal to a native Python object.
 
         Raises :exc:`ValueError` if the literal is not in a valid format.
 
-        `data` (a Unicode string or ``None``)
+        `text`: ``unicode`` or ``None``
             An HTSQL literal representing a value of the given domain.
 
-        Returns a native Python object representing the same value.
+        *Returns*
+            A native Python object representing the same value.
         """
-        # Sanity check on the argument.
-        assert isinstance(data, maybe(unicode))
+        assert isinstance(text, maybe(unicode))
 
         # `None` values are passed through.
-        if data is None:
+        if text is None:
             return None
-        # By default, we do not accept any literals; subclasses should
+        # By default, a domain has no valid literals; subclasses should
         # override this method.
         raise ValueError("invalid literal")
 
-    def dump(self, value):
+    @staticmethod
+    def dump(data):
         """
         Converts a native Python object to an HTSQL literal.
 
-        `value` (acceptable types depend on the domain)
+        `data`: (acceptable types depend on the domain)
             A native Python object representing a value of the given domain.
 
-        Returns an HTSQL literal representing the same value.
+        *Returns*: ``unicode`` or ``None``
+            An HTSQL literal representing the same value.
         """
-        # Sanity check on the argument.
-        assert value is None
-        # By default, only accept `None`; subclasses should override
-        # this method.
+        # By default, we do not accept any values except `None`; subclasses
+        # should override this method.
+        assert data is None
         return None
 
-    def __str__(self):
-        # Domains corresponding to concrete SQL data types may override
-        # this method to return the name of the type.
-        return self.family
+    def __unicode__(self):
+        # The class name with `Domain` suffix stripped, in lower case.
+        return unicode(self.__class__)
 
 
-class VoidDomain(Domain):
+#
+# Value representation.
+#
+
+
+class Value(Clonable, Printable):
     """
-    Represents a domain without any valid values.
+    Represents data and its type.
 
-    This domain is assigned to objects when the domain is structurally
-    required, but does not have any semantics.
+    `domain`: :class:`Domain`
+        The data type.
+
+    `data`
+        The data value.
+
+    Instances of :class:`Value` are iterable and permit ``len()``
+    operator when the data type is :class:`ListDomain`.
+
+    In Boolean context, an instance of :class:`Value` evaluates
+    to ``False`` if and only if ``data`` is ``None``.
     """
-    family = 'void'
+
+    def __init__(self, domain, data):
+        assert isinstance(domain, Domain)
+        self.domain = domain
+        self.data = data
+
+    def __unicode__(self):
+        # Dump:
+        #   'text': domain
+
+        # Convert to literal form and wrap with quotes when appropriate.
+        text = ContainerDomain.dump_entry(self.data, self.domain)
+        # Make sure the output is printable.
+        text = urlquote(text, "")
+        return u"%s: %s" % (text, self.meta)
+
+    def __iter__(self):
+        if not (isinstance(self.domain, ListDomain) and self.data is not None):
+            raise TypeError("not a list value")
+        return iter(self.data)
+
+    def __len__(self):
+        if not (isinstance(self.domain, ListDomain) and self.data is not None):
+            raise TypeError("not a list value")
+        return len(self.data)
+
+    def __getitem__(self, key):
+        if not (isinstance(self.domain, ListDomain) and self.data is not None):
+            raise TypeError("not a list value")
+        return self.data[key]
+
+    def __nonzero__(self):
+        return bool(self.data)
 
 
-class UntypedDomain(Domain):
+class Profile(Clonable, Printable):
     """
-    Represents an unknown type.
+    Describes the structure of data.
 
-    This domain is assigned to HTSQL literals temporarily until the actual
-    domain could be derived from the context.
+    `domain`: :class:`Domain`
+        The data type.
+
+    `attributes`
+        Extra stuctural metadata.  Each entry of ``attributes`` becomes
+        an attribute of the :class:`Profile` instance.
     """
-    family = 'untyped'
-
-    def parse(self, data):
-        # Sanity check on the argument.
-        assert isinstance(data, maybe(unicode))
-        # `None` represents `NULL` both in literal and native format.
-        if data is None:
-            return None
-        # No conversion is required for string values.
-        return data
-
-    def dump(self, value):
-        # Sanity check on the argument.
-        assert isinstance(value, maybe(unicode))
-        if value is not None:
-            assert u'\0' not in value
-        # `None` represents `NULL` both in literal and native format.
-        if value is None:
-            return None
-        # No conversion is required for string values.
-        return value
-
-
-class Profile(Comparable, Clonable, Printable):
 
     def __init__(self, domain, **attributes):
         assert isinstance(domain, Domain)
@@ -135,374 +168,264 @@ class Profile(Comparable, Clonable, Printable):
             setattr(self, key, attributes[key])
         self.attributes = attributes
 
-    def __basis__(self):
-        return (self.domain,)
-
-    def __str__(self):
-        return str(self.domain)
+    def __unicode__(self):
+        return unicode(self.domain)
 
 
-class EntityDomain(Domain):
-
-    family = 'entity'
-
-
-class RecordDomain(Domain):
-
-    family = 'record'
-
-    def __init__(self, fields):
-        assert isinstance(fields, listof(Profile))
-        self.fields = fields
-
-    def __basis__(self):
-        return (tuple(self.fields),)
-
-    def __str__(self):
-        return "{%s}" % ", ".join(str(field) for field in self.fields)
-
-
-class ListDomain(Domain):
-
-    family = 'list'
-
-    def __init__(self, item_domain):
-        assert isinstance(item_domain, Domain)
-        self.item_domain = item_domain
-
-    def __basis__(self):
-        return (self.item_domain,)
-
-    def __str__(self):
-        return "/%s" % self.item_domain
-
-
-class IdentityDomain(Domain):
-
-    family = 'identity'
-
-    pattern = r"""
-        (?P<ws> \s+ ) |
-        (?P<symbol> \. | \[ | \( | \] | \) ) |
-        (?P<unquoted> [\w-]+ ) |
-        (?P<quoted> ' (?: [^'\0] | '')* ' )
+class Product(Value):
     """
-    regexp = re.compile(pattern, re.X|re.U)
+    Represents data and associated metadata.
 
-    def __init__(self, fields):
-        assert isinstance(fields, listof(Domain))
-        self.fields = fields
-        self.arity = 0
-        self.leaves = []
-        for idx, field in enumerate(fields):
-            if isinstance(field, IdentityDomain):
-                self.arity += field.arity
-                for leaf in field.leaves:
-                    self.leaves.append([idx]+leaf)
-            else:
-                self.arity += 1
-                self.leaves.append([idx])
+    `meta`: :class:`Profile`
+        Structure of the data.
 
-    def __basis__(self):
-        return (tuple(self.fields),)
+    `data`
+        The data value.
 
-    def __str__(self):
-        return "[%s]" % ".".join(str(field) for field in self.fields)
+    `attributes`
+        Extra runtime metadata.  Each entry of ``attributes``
+        becomes an attribute of the :class:`Product` instance.
+    """
 
-    def parse(self, data):
-        # Sanity check on the arguments.
+    def __init__(self, meta, data, **attributes):
+        assert isinstance(meta, Profile)
+        super(Product, self).__init__(meta.domain, data)
+        self.meta = meta
+        for key in attributes:
+            setattr(self, key, attributes[key])
+        self.attributes = attributes
+
+
+#
+# Domains with no values.
+#
+
+
+class NullDomain(Domain):
+    """
+    A domain with no values (except ``null``).
+
+    This is an abstract class.
+    """
+
+
+class VoidDomain(NullDomain):
+    """
+    A domain without any valid values.
+
+    This domain is could be used when a domain object is required structurally,
+    but has no semantics.
+    """
+
+
+class EntityDomain(NullDomain):
+    """
+    The type of class entities.
+
+    Since class entities are not observable directly in HTSQL model,
+    this domain does not support any values.
+    """
+
+
+#
+# Scalar domains.
+#
+
+
+class UntypedDomain(Domain):
+    """
+    Represents a yet undetermined type.
+
+    This domain is assigned to HTSQL literals temporarily until the actual
+    domain could be derived from the context.
+    """
+
+    @staticmethod
+    def parse(text):
+        # Sanity check on the argument.
         assert isinstance(data, maybe(unicode))
-        # `None` represents `NULL` both in literal and native format.
-        if data is None:
-            return None
-        tokens = []
-        start = 0
-        while start < len(data):
-            match = self.regexp.match(data, start)
-            if match is None:
-                raise ValueError("unexpected character %r" % data[start])
-            start = match.end()
-            if match.group('ws'):
-                continue
-            token = match.group()
-            tokens.append(token)
-        tokens.append(None)
-        stack = []
-        value = []
-        arity = 0
-        while tokens:
-            token = tokens.pop(0)
-            while token is not None and token in u'[(':
-                stack.append((value, arity, token))
-                value = []
-                arity = 0
-                token = tokens.pop(0)
-            if token is None or token in u'[(]).':
-                raise ValueError("ill-formed locator")
-            if token.startswith(u'\'') and token.endswith(u'\''):
-                token = token[1:-1].replace(u'\'\'', u'\'')
-            value.append((token, None))
-            arity += 1
-            token = tokens.pop(0)
-            while token is not None and token in u'])':
-                if not stack:
-                    raise ValueError("ill-formed locator")
-                parent_value, parent_arity, parent_bracket = stack.pop()
-                if ((token == u']' and parent_bracket != u'[') or
-                    (token == u')' and parent_bracket != u'(')):
-                    raise ValueError("ill-formed locator")
-                parent_value.append((value, arity))
-                value = parent_value
-                arity += parent_arity
-                token = tokens.pop(0)
-            if (token is not None or stack) and token != u'.':
-                raise ValueError("ill-formed locator")
-        def collect(raw, arity, identity):
-            value = []
-            if arity != identity.arity:
-                raise ValueError("ill-formed locator")
-            for field in identity.fields:
-                if isinstance(field, IdentityDomain):
-                    total_arity = 0
-                    items = []
-                    while total_arity < field.arity:
-                        assert raw
-                        item, item_arity = raw.pop(0)
-                        if total_arity == 0 and item_arity == field.arity:
-                            items = item
-                            total_arity = item_arity
-                        elif item_arity is None:
-                            total_arity += 1
-                            items.append((item, None))
-                        else:
-                            total_arity += item_arity
-                            items.append((item, item_arity))
-                    if total_arity > field.arity:
-                        raise ValueError("ill-formed locator")
-                    item = collect(items, total_arity, field)
-                    value.append(item)
-                else:
-                    if not raw:
-                        raise ValueError("ill-formed locator")
-                    item, item_arity = raw.pop(0)
-                    if item_arity is not None:
-                        raise ValueError("ill-formed locator")
-                    item = field.parse(item)
-                    assert item is not None
-                    value.append(item)
-            return tuple(value)
-        return collect(value, arity, self)
+        # No conversion is required.
+        return text
 
-    def dump(self, value):
-        assert isinstance(value, maybe(tuple))
-        if value is None:
-            return None
-        def convert(value, fields, is_flattened=True):
-            assert isinstance(value, tuple) and len(value) == len(fields)
-            chunks = []
-            is_simple = all(not isinstance(field, IdentityDomain)
-                            for field in fields[1:])
-            for item, field in zip(value, fields):
-                if isinstance(field, IdentityDomain):
-                    is_label_flattened = False
-                    if len(field.fields) == 1:
-                        is_label_flattened = True
-                    if is_simple:
-                        is_label_flattened = True
-                    chunk = convert(item, field.fields, is_label_flattened)
-                    chunks.append(chunk)
-                else:
-                    chunk = field.dump(item)
-                    chunks.append(chunk)
-            data = u".".join(chunks)
-            if not is_flattened:
-                data = u"(%s)" % data
-            return data
-        return convert(value, self.fields)
+    @staticmethod
+    def dump(data):
+        # Sanity check on the argument.
+        assert isinstance(data, maybe(unicode))
+        # No conversion is required.
+        return data
 
 
 class BooleanDomain(Domain):
     """
-    Represents Boolean data type.
+    A Boolean data type.
 
-    Valid literal values: ``true``, ``false``.
+    Valid literals: ``'true'``, ``'false'``.
 
-    Valid native values: `bool` objects.
+    Valid native objects: ``bool`` values.
     """
-    family = 'boolean'
 
-    def parse(self, data):
-        # Sanity check on the argument.
-        assert isinstance(data, maybe(unicode))
+    @staticmethod
+    def parse(text):
+        assert isinstance(text, maybe(unicode))
 
-        # Convert: `None` -> `None`, `'true'` -> `True`, `'false'` -> `False`.
-        if data is None:
+        # `None` -> `None`, `'true'` -> `True`, `'false'` -> `False`.
+        if text is None:
             return None
-        if data == u'true':
+        if text == u'true':
             return True
-        if data == u'false':
+        if text == u'false':
             return False
         raise ValueError("invalid Boolean literal: expected 'true' or 'false';"
-                         " got %r" % data.encode('utf-8'))
+                         " got %r" % text.encode('utf-8'))
 
-    def dump(self, value):
-        # Sanity check on the argument.
-        assert isinstance(value, maybe(bool))
+    @staticmethod
+    def dump(data):
+        assert isinstance(data, maybe(bool))
 
-        # Convert `None` -> `None`, `True` -> `'true'`, `False` -> `'false'`.
-        if value is None:
+        # `None` -> `None`, `True` -> `'true'`, `False` -> `'false'`.
+        if data is None:
             return None
-        if value is True:
+        if data is True:
             return u'true'
-        if value is False:
+        if data is False:
             return u'false'
 
 
 class NumberDomain(Domain):
     """
-    Represents a numeric data type.
+    A numeric data type.
 
-    This is an abstract data type, see :class:`IntegerDomain`,
-    :class:`FloatDomain`, :class:`DecimalDomain` for concrete subtypes.
+    This is an abstract superclass for integer, float and decimal numbers.
 
     Class attributes:
 
-    `is_exact` (Boolean)
+    `is_exact`: ``bool``
         Indicates whether the domain represents exact values.
 
-    `radix` (``2`` or ``10``)
+    `radix`: ``2`` or ``10``
         Indicates whether the values are stored in binary or decimal form.
     """
 
-    family = 'number'
     is_exact = None
     radix = None
 
 
 class IntegerDomain(NumberDomain):
     """
-    Represents a binary integer data type.
+    A binary integer data type.
 
-    Valid literal values: integers (in base 2) with an optional sign.
+    Valid literals: integers (in base 10) with an optional sign.
 
-    Valid native values: `int` or `long` objects.
+    Valid native objects: ``int`` or ``long`` values.
 
-    `size` (an integer or ``None``)
+    `size`: ``int`` or ``None``
         Number of bits used to store a value; ``None`` if not known.
     """
 
-    family = 'integer'
     is_exact = True
     radix = 2
 
     def __init__(self, size=None):
-        # Sanity check on the arguments.
         assert isinstance(size, maybe(int))
         self.size = size
 
     def __basis__(self):
         return (self.size,)
 
-    def parse(self, data):
-        # Sanity check on the arguments.
-        assert isinstance(data, maybe(unicode))
-        # `None` represents `NULL` both in literal and native format.
-        if data is None:
+    @staticmethod
+    def parse(text):
+        assert isinstance(text, maybe(unicode))
+        # `null` is represented by `None` in both forms.
+        if text is None:
             return None
         # Expect an integer value in base 10.
         try:
-            value = int(data, 10)
+            data = int(text, 10)
         except ValueError:
             raise ValueError("invalid integer literal: expected an integer"
                              " in a decimal format; got %r"
-                             % data.encode('utf-8'))
-        return value
+                             % text.encode('utf-8'))
+        return data
 
-    def dump(self, value):
-        # Sanity check on the arguments.
-        assert isinstance(value, maybe(oneof(int, long)))
-        # `None` represents `NULL` both in literal and native format.
-        if value is None:
+    def dump(self, data):
+        assert isinstance(data, maybe(oneof(int, long)))
+        # `null` is represented by `None` in both forms.
+        if data is None:
             return None
-        # Represent an integer value as a decimal number.
-        return unicode(value)
+        # Represent the value as a decimal number.
+        return unicode(data)
 
 
 class FloatDomain(NumberDomain):
     """
-    Represents an IEEE 754 float data type.
+    An IEEE 754 float data type.
 
-    Valid literal values: floating-point numbers in decimal or scientific
-    format.
+    Valid literals: floating-point numbers in decimal or exponential format.
 
-    Valid native values: `float` objects.
+    Valid native objects: ``float`` values.
 
-    `size` (an integer or ``None``)
+    `size`: ``int`` or ``None``
         Number of bits used to store a value; ``None`` if not known.
     """
 
-    family = 'float'
     is_exact = False
     radix = 2
 
     def __init__(self, size=None):
-        # Sanity check on the arguments.
         assert isinstance(size, maybe(int))
         self.size = size
 
     def __basis__(self):
         return (self.size,)
 
-    def parse(self, data):
-        # Sanity check on the argument.
-        assert isinstance(data, maybe(unicode))
-        # `None` represents `NULL` both in literal and native format.
-        if data is None:
+    @staticmethod
+    def parse(text):
+        assert isinstance(text, maybe(unicode))
+        # `None` represents `null` both in literal and native formats.
+        if text is None:
             return None
-        # Parse the numeric value.
+        # Parse the numeric data.
         try:
-            value = float(data)
+            data = float(text)
         except ValueError:
             raise ValueError("invalid float literal: %s"
-                             % data.encode('utf-8'))
+                             % text.encode('utf-8'))
         # Check if we got a finite number.
-        if math.isinf(value) or math.isnan(value):
-            raise ValueError("invalid float literal: %s" % value)
-        return value
+        if not isfinite(data):
+            raise ValueError("invalid float literal: %s" % data)
+        return data
 
-    def dump(self, value):
-        # Sanity check on the argument.
-        assert isinstance(value, maybe(float))
-        # `None` represents `NULL` both in literal and native format.
-        if value is None:
+    def dump(self, data):
+        assert isinstance(data, maybe(float))
+        # `None` represents `null` both in literal and native format.
+        if data is None:
             return None
+        # Check that we got a real number.
+        assert isfinite(data)
         # Use `repr` to avoid loss of precision.
-        return unicode(repr(value))
+        return unicode(repr(data))
 
 
 class DecimalDomain(NumberDomain):
     """
-    Represents an exact decimal data type.
+    An exact decimal data type.
 
-    Valid literal values: floating-point numbers in decimal or scientific
-    format.
+    Valid literals: floating-point numbers in decimal or exponential format.
 
-    Valid native values: `decimal.Decimal` objects.
+    Valid native objects: ``decimal.Decimal`` objects.
 
-    `precision` (an integer or ``None``)
+    `precision`: ``int`` or ``None``
         Number of significant digits; ``None`` if infinite or not known.
 
-    `scale` (an integer or ``None``)
-        Number of significant digits in the fractional part; zero for
-        integers, ``None`` if infinite or not known.
+    `scale`: ``int`` or ``None``
+        Number of significant digits in the fractional part; zero for integers,
+        ``None`` if infinite or not known.
     """
 
-    family = 'decimal'
     is_exact = True
     radix = 10
 
     def __init__(self, precision=None, scale=None):
-        # Sanity check on the arguments.
         assert isinstance(precision, maybe(int))
         assert isinstance(scale, maybe(int))
         self.precision = precision
@@ -511,59 +434,52 @@ class DecimalDomain(NumberDomain):
     def __basis__(self):
         return (self.precision, self.scale)
 
-    def parse(self, data):
-        # Sanity check on the arguments.
-        assert isinstance(data, maybe(unicode))
+    @staticmethod
+    def parse(text):
+        assert isinstance(text, maybe(unicode))
+        # `None` represents `NULL` both in literal and native format.
+        if text is None:
+            return None
+        # Parse the literal (NB: accepts `inf` and `nan` too).
+        try:
+            data = decimal.Decimal(text)
+        except decimal.InvalidOperation:
+            raise ValueError("invalid decimal literal: %s"
+                             % text.encode('utf-8'))
+        # Verify that we got a finite number.
+        if not isfinite(data):
+            raise ValueError("invalid decimal literal: %s"
+                             % text.encode('utf-8'))
+        return data
+
+    @staticmethod
+    def dump(data):
+        assert isinstance(data, maybe(decimal.Decimal))
         # `None` represents `NULL` both in literal and native format.
         if data is None:
             return None
-        # Parse the literal (NB: it handles `inf` and `nan` values too).
-        try:
-            value = decimal.Decimal(data)
-        except decimal.InvalidOperation:
-            raise ValueError("invalid decimal literal: %s"
-                             % data.encode('utf-8'))
-        # Verify that we got a finite number.
-        if not value.is_finite():
-            raise ValueError("invalid decimal literal: %s"
-                             % data.encode('utf-8'))
-        return value
-
-    def dump(self, value):
-        # Sanity check on the argument.
-        assert isinstance(value, maybe(decimal.Decimal))
-        # `None` represents `NULL` both in literal and native format.
-        if value is None:
-            return None
-        # Handle `inf` and `nan` values.
-        if value.is_nan():
-            return u'nan'
-        elif value.is_infinite() and value > 0:
-            return u'inf'
-        elif value.is_infinite() and value < 0:
-            return u'-inf'
+        # Check that we got a real number.
+        assert isfinite(data)
         # Produce a decimal representation of the number.
-        return unicode(value)
+        return unicode(data)
 
 
-class StringDomain(Domain):
+class TextDomain(Domain):
     """
-    Represents a string data type.
+    A text data type.
 
-    Valid literal values: all literal values.
+    Valid literals: any.
 
-    Valid native values: `unicode` objects; the `NUL` character is not allowed.
+    Valid native object: `unicode` values; the `NUL` character is not allowed.
 
-    `length` (an integer or ``None``)
+    `length`: ``int`` or ``None``
         The maximum length of the value; ``None`` if infinite or not known.
 
-    `is_varying` (Boolean)
+    `is_varying`: ``int``
         Indicates whether values are fixed-length or variable-length.
     """
-    family = 'string'
 
     def __init__(self, length=None, is_varying=True):
-        # Sanity check on the arguments.
         assert isinstance(length, maybe(int))
         assert isinstance(is_varying, bool)
         self.length = length
@@ -572,37 +488,41 @@ class StringDomain(Domain):
     def __basis__(self):
         return (self.length, self.is_varying)
 
-    def parse(self, data):
-        # Sanity check on the argument.
+    @staticmethod
+    def parse(text):
+        assert isinstance(text, maybe(unicode))
+        # `None` represents `null` both in literal and native format.
+        if text is None:
+            return None
+        # No conversion is required for text values.
+        return text
+
+    @staticmethod
+    def dump(data):
         assert isinstance(data, maybe(unicode))
-        # `None` represents `NULL` both in literal and native format.
+        if data is not None:
+            assert u'\0' not in data
+        # `None` represents `null` both in literal and native format.
         if data is None:
             return None
         # No conversion is required for string values.
         return data
 
-    def dump(self, value):
-        # Sanity check on the argument.
-        assert isinstance(value, maybe(unicode))
-        if value is not None:
-            assert u'\0' not in value
-        # `None` represents `NULL` both in literal and native format.
-        if value is None:
-            return None
-        # No conversion is required for string values.
-        return value
-
 
 class EnumDomain(Domain):
     """
-    Represents an enumeration data type.
+    An enumeration data type.
 
-    An enumeration domain has a predefined set of valid string values.
+    An enumeration domain has a predefined finite set of valid text values.
 
-    `labels` (a list of Unicode strings)
+    `labels`: [``unicode``]
         List of valid values.
     """
-    family = 'enum'
+
+    # NOTE: HTSQL enum type is structural, but some SQL databases implement
+    # enums as nominal types (e.g. PostgreSQL).  In practice, it should not be
+    # a problem since it is unlikely that two nominally different enum types
+    # would have the same set of labels.
 
     def __init__(self, labels):
         assert isinstance(labels, listof(unicode))
@@ -611,38 +531,44 @@ class EnumDomain(Domain):
     def __basis__(self):
         return (tuple(self.labels),)
 
-    def parse(self, data):
-        # Sanity check on the argument.
-        assert isinstance(data, maybe(unicode))
-        # `None` represents `NULL` both in literal and native format.
-        if data is None:
+    def parse(self, text):
+        assert isinstance(text, maybe(unicode))
+        # `None` represents `null` both in literal and native format.
+        if text is None:
             return None
-        # Check if the value belongs to the fixed list of valid values.
-        if data not in self.labels:
+        # Check if the input belongs to the fixed list of valid values.
+        if text not in self.labels:
             raise ValueError("invalid enum literal: expected one of %s; got %r"
                              % (", ".join(repr(label.encode('utf-8'))
                                           for label in self.labels),
-                                data.encode('utf-8')))
+                                text.encode('utf-8')))
+        # No conversion is required.
+        return text
+
+    def dump(self, data):
+        assert isinstance(data, maybe(unicode))
+        if data is not None:
+            assert data in self.labels
+        # `None` represents `NULL` both in literal and native format.
+        if data is None:
+            return None
         # No conversion is required.
         return data
 
-    def dump(self, value):
-        # Sanity check on the argument.
-        assert isinstance(value, maybe(unicode))
-        if value is not None:
-            assert value in self.labels
-        # `None` represents `NULL` both in literal and native format.
-        if value is None:
-            return None
-        # No conversion is required.
-        return value
+    def __unicode__(self):
+        # enum('label', ...)
+        return u"%s(%s)" % (self.__class__,
+                            u", ".join(to_literal(label)
+                                       for label in self.labels))
 
 
 #
-# Timezone implementations.
+# Date/time domains.
 #
+
 
 class UTC(datetime.tzinfo):
+    # The UTC timezone.
 
     def utcoffset(self, dt):
         return datetime.timedelta(0)
@@ -655,9 +581,10 @@ class UTC(datetime.tzinfo):
 
 
 class FixedTZ(datetime.tzinfo):
+    # A timezone with a fixed offset.
 
     def __init__(self, offset):
-        self.offset = offset
+        self.offset = offset    # in minutes
 
     def utcoffset(self, dt):
         return datetime.timedelta(minutes=self.offset)
@@ -679,89 +606,85 @@ class FixedTZ(datetime.tzinfo):
 
 class DateDomain(Domain):
     """
-    Represents a date data type.
+    A date data type.
 
-    Valid literal values: valid date values in the form `YYYY-MM-DD`.
+    Valid literals: valid dates in the form ``YYYY-MM-DD``.
 
-    Valid native values: `datetime.date` objects.
+    Valid native objects: ``datetime.date`` values.
     """
-    family = 'date'
 
     # Regular expression to match YYYY-MM-DD.
-    pattern = r'''(?x)
+    regexp = re.compile(r'''(?x)
         ^ \s*
         (?P<year> \d{4} )
         - (?P<month> \d{2} )
         - (?P<day> \d{2} )
         \s* $
-    '''
-    regexp = re.compile(pattern)
+    ''')
 
-    def parse(self, data):
-        # Sanity check on the argument.
-        assert isinstance(data, maybe(unicode))
-        # `None` represents `NULL` both in literal and native format.
-        if data is None:
+    @staticmethod
+    def parse(text, regexp=regexp):
+        assert isinstance(text, maybe(unicode))
+        # `None` represents `null` both in literal and native format.
+        if text is None:
             return None
-        # Parse `data` as YYYY-MM-DD.
-        match = self.regexp.match(data)
+        # Parse `text` as YYYY-MM-DD.
+        match = regexp.match(text)
         if match is None:
             raise ValueError("invalid date literal: expected a valid date"
                              " in a 'YYYY-MM-DD' format; got %r"
-                             % data.encode('utf-8'))
+                             % text.encode('utf-8'))
         year = int(match.group('year'))
         month = int(match.group('month'))
         day = int(match.group('day'))
         # Generate a `datetime.date` value; may fail if the date is not valid.
         try:
-            value = datetime.date(year, month, day)
+            data = datetime.date(year, month, day)
         except ValueError, exc:
             raise ValueError("invalid date literal: %s" % exc.args[0])
-        return value
+        return data
 
-    def dump(self, value):
-        # Sanity check on the argument.
-        assert isinstance(value, maybe(datetime.date))
-        # `None` represents `NULL` both in literal and native format.
-        if value is None:
+    @staticmethod
+    def dump(data):
+        assert isinstance(data, maybe(datetime.date))
+        # `None` represents `null` both in literal and native format.
+        if data is None:
             return None
         # `unicode` on `datetime.date` gives us the date in YYYY-MM-DD format.
-        return unicode(value)
+        return unicode(data)
 
 
 class TimeDomain(Domain):
     """
-    Represents a time data type.
+    A time data type.
 
-    Valid literal values: valid time values in the form `HH:MM[:SS[.SSSSSS]]`.
+    Valid literals: valid time values in the form ``HH:MM[:SS[.SSSSSS]]``.
 
-    Valid native values: `datetime.time` objects.
+    Valid native objects: ``datetime.time`` values.
     """
-    family = 'time'
 
     # Regular expression to match HH:MM:SS.SSSSSS.
-    pattern = r'''(?x)
+    regexp = re.compile(r'''(?x)
         ^ \s*
         (?P<hour> \d{1,2} )
         : (?P<minute> \d{2} )
         (?: : (?P<second> \d{2} )
             (?: \. (?P<microsecond> \d+ ) )? )?
         \s* $
-    '''
-    regexp = re.compile(pattern)
+    ''')
 
-    def parse(self, data):
-        # Sanity check on the argument.
-        assert isinstance(data, maybe(unicode))
-        # `None` represents `NULL` both in literal and native format.
-        if data is None:
+    @staticmethod
+    def parse(text, regexp=regexp):
+        assert isinstance(text, maybe(unicode))
+        # `None` represents `null` both in literal and native format.
+        if text is None:
             return None
-        # Parse `data` as HH:MM:SS.SSS.
-        match = self.regexp.match(data)
+        # Parse `text` as HH:MM:SS.SSS.
+        match = regexp.match(text)
         if match is None:
             raise ValueError("invalid time literal: expected a valid time"
                              " in a 'HH:SS:MM.SSSSSS' format; got %r"
-                             % data.encode('utf-8'))
+                             % text.encode('utf-8'))
         hour = int(match.group('hour'))
         minute = int(match.group('minute'))
         second = match.group('second')
@@ -779,35 +702,34 @@ class TimeDomain(Domain):
             microsecond = 0
         # Generate a `datetime.time` value; may fail if the time is not valid.
         try:
-            value = datetime.time(hour, minute, second, microsecond)
+            data = datetime.time(hour, minute, second, microsecond)
         except ValueError, exc:
             raise ValueError("invalid time literal: %s" % exc.args[0])
-        return value
+        return data
 
-    def dump(self, value):
-        # Sanity check on the argument.
-        assert isinstance(value, maybe(datetime.time))
-        # `None` represents `NULL` both in literal and native format.
-        if value is None:
+    @staticmethod
+    def dump(data):
+        assert isinstance(data, maybe(datetime.time))
+        # `None` represents `null` both in literal and native format.
+        if data is None:
             return None
         # `unicode` on `datetime.date` gives us the date in HH:MM:SS.SSSSSS
         # format.
-        return unicode(value)
+        return unicode(data)
 
 
 class DateTimeDomain(Domain):
     """
-    Represents a date and time data type.
+    A date+time data type.
 
-    Valid literal values: valid date and time values in the form
-    `YYYY-MM-DD HH:MM[:SS[.SSSSSS]]`.
+    Valid literals: valid date+time values in the form
+    ``YYYY-MM-DD HH:MM[:SS[.SSSSSS]]``.
 
-    Valid native values: `datetime.datetime` objects.
+    Valid native objects: ``datetime.datetime`` values.
     """
-    family = 'datetime'
 
     # Regular expression to match YYYY-MM-DD HH:MM:SS.SSSSSS.
-    pattern = r'''(?x)
+    regexp = re.compile(r'''(?x)
         ^ \s*
         (?P<year> \d{4} )
         - (?P<month> \d{2} )
@@ -829,21 +751,20 @@ class DateTimeDomain(Domain):
               )? )
         )?
         \s* $
-    '''
-    regexp = re.compile(pattern)
+    ''')
 
-    def parse(self, data):
-        # Sanity check on the argument.
-        assert isinstance(data, maybe(unicode))
-        # `None` represents `NULL` both in literal and native format.
-        if data is None:
+    @staticmethod
+    def parse(text, regexp=regexp):
+        assert isinstance(text, maybe(unicode))
+        # `None` represents `null` both in literal and native format.
+        if text is None:
             return None
-        # Parse `data` as YYYY-DD-MM HH:MM:SS.SSSSSS.
-        match = self.regexp.match(data)
+        # Parse `text` as YYYY-DD-MM HH:MM:SS.SSSSSS.
+        match = regexp.match(text)
         if match is None:
             raise ValueError("invalid datetime literal: expected a valid"
                              " date/time in a 'YYYY-MM-DD HH:SS:MM.SSSSSS'"
-                             " format; got %r" % data.encode('utf-8'))
+                             " format; got %r" % text.encode('utf-8'))
         year = int(match.group('year'))
         month = int(match.group('month'))
         day = int(match.group('day'))
@@ -876,32 +797,710 @@ class DateTimeDomain(Domain):
             tz = FixedTZ(offset)
         else:
             tz = None
-        # Generate a `datetime.datetime` value; may fail if the value is
+        # Generate a `datetime.datetime` value; may fail if the input is
         # invalid.
         try:
-            value = datetime.datetime(year, month, day, hour, minute, second,
+            data = datetime.datetime(year, month, day, hour, minute, second,
                                       microsecond, tz)
         except ValueError, exc:
             raise ValueError("invalid datetime literal: %s" % exc.args[0])
-        return value
+        return data
 
-    def dump(self, value):
-        # Sanity check on the argument.
-        assert isinstance(value, maybe(datetime.datetime))
-        # `None` represents `NULL` both in literal and native format.
-        if value is None:
+    @staticmethod
+    def dump(data):
+        assert isinstance(data, maybe(datetime.datetime))
+        # `None` represents `null` both in literal and native format.
+        if data is None:
             return None
         # `unicode` on `datetime.datetime` gives us the value in ISO format.
-        return unicode(value)
+        return unicode(data)
 
 
 class OpaqueDomain(Domain):
     """
-    Represents an unsupported SQL data type.
+    An unsupported SQL data type.
 
-    Note: this is the only SQL domain with values that cannot be serialized
-    using :meth:`dump`.
+    This domain is used for SQL data types not supported by HTSQL.
+
+    Valid literals: any.
+
+    Valid native objects: any.
     """
-    family = 'opaque'
+
+    @staticmethod
+    def parse(text):
+        assert isinstance(text, maybe(unicode))
+        # We do not know what to do with the input, so pass it through and
+        # hope for the best.
+        return text
+
+    @staticmethod
+    def dump(data, regexp=re.compile(r"[\0-\x1F\x7F]")):
+        # `None` represents `null` both in literal and native format.
+        if data is None:
+            return None
+        # Try to produce a passable textual representation; no guarantee
+        # it could be given back to the database.
+        if isinstance(data, str):
+            text = data.decode('utf-8', 'replace')
+        elif isinstance(data, unicode):
+            text = data
+        else:
+            try:
+                text = unicode(data)
+            except UnicodeDecodeError:
+                text = str(data).decode('utf-8', 'replace')
+        # Make sure the output is printable.
+        if regexp.search(text) is not None:
+            text = re.escape(text)
+        return text
+
+
+#
+# Containers.
+#
+
+
+class Record(tuple):
+    """
+    A record value.
+
+    :class:`Record` is implemented as a tuple with named fields.
+    """
+
+    # Forbid dynamic attributes.
+    __slots__ = ()
+    # List of field names (`None` when the field has no name).
+    __fields__ = ()
+
+    @classmethod
+    def make(cls, name, fields, _cache=weakref.WeakValueDictionary()):
+        """
+        Generates a :class:`Record` subclass with the given fields.
+
+        `name`: ``str``, ``unicode`` or ``None``.
+            The name of the new class.
+
+        `fields`: list of ``str``, ``unicode`` or ``None``.
+            List of desired field names (``None`` for a field to have no name).
+
+            A field may get no or another name assigned if the desired field
+            name is not available for some reason; e.g., if it is is already
+            taked by another field or if it coincides with a Python keyword.
+
+        *Returns*: subclass of :class:`Record`
+            The generated class.
+        """
+        assert isinstance(name, maybe(oneof(str, unicode)))
+        assert isinstance(fields, listof(maybe(oneof(str, unicode))))
+
+        # Check if the type has been generated already.
+        cache_key = (name, tuple(fields))
+        try:
+            return _cache[cache_key]
+        except KeyError:
+            pass
+        # Process the class name; must be a regular string.
+        if isinstance(name, unicode):
+            name = name.encode('utf-8')
+        # Check if the name is a valid identifier.
+        if name is not None and not re.match(r'\A(?!\d)\w+\Z', name):
+            name = None
+        # If the name is a Python keyword, prepend it with `_`.
+        if name is not None and keyword.iskeyword(name):
+            name = name+'_'
+        # If the name is not given or not available, use `'Record'`.
+        if name is None:
+            name = cls.__name__
+
+        # Names already taken.
+        duplicates = set()
+        # Process all field names.
+        for idx, field in enumerate(fields):
+            if field is None:
+                continue
+            # An attribute name must be a regular string.
+            if isinstance(field, unicode):
+                field = field.encode('utf-8')
+            # Only permit valid identifiers.
+            if not re.match(r'\A(?!\d)\w+\Z', field):
+                field = None
+            # Do not allow special names (starting with `__`).
+            elif field.startswith('__'):
+                field = None
+            else:
+                # Python keywords are prefixed with `_`.
+                if keyword.iskeyword(field):
+                    field = field+'_'
+                # Skip names already taken.
+                if field in duplicates:
+                    field = None
+                # Store the normalized name.
+                fields[idx] = field
+                duplicates.add(field)
+
+        # Prepare the class namespace and generate the class.
+        bases = (cls,)
+        content = {}
+        content['__slots__'] = ()
+        content['__fields__'] = tuple(fields)
+        # For each named field, add a respective descriptor to the class
+        # namespace.
+        for idx, field in enumerate(fields):
+            if field is None:
+                continue
+            content[field] = property(operator.itemgetter(idx))
+        # Generate and return the new class.
+        record_class = type(name, bases, content)
+        _cache[cache_key] = record_class
+        return record_class
+
+    def __repr__(self):
+        # Dump:
+        #   record_name(field_name=..., [N]=...)
+        return ("%s(%s)"
+                % (self.__class__.__name__,
+                   ", ".join("%s=%r" % (name or '[%s]' % idx, value)
+                             for idx, (name, value)
+                                in enumerate(zip(self.__fields__, self)))))
+
+    def __getnewargs__(self):
+        # Pickle serialization.
+        return tuple(self)
+
+
+class EntryBuffer(TextBuffer):
+    # Parser for container literals.
+
+    # Disable automatic whitespace recognition.
+    skip_regexp = None
+
+    def pull_entries(self, left, right):
+        # Parse a container literal with the given brackets.
+
+        # Container entries.
+        entries = []
+        # Skip whitespace.
+        self.pull(r"[\s]+")
+        # Get the left bracket.
+        if self.pull(left) is None:
+            raise self.fail()
+        # Skip whitespace.
+        self.pull(r"[\s]+")
+        # Until we pull the right bracket.
+        while self.pull(right) is None:
+            # Pull a [,] separator.
+            if entries:
+                if not self.pull(r"[,]"):
+                    raise self.fail()
+                self.pull(r"[\s]+")
+            # Permit orphan [,] followed by the right bracket.
+            if not self.peek(right):
+                # Try an atomic entry:
+                #   `null`, `true`, `false`, an unquoted number or
+                #   a quoted literal.
+                block = self.pull(r" ['] (?: [^'\0] | [']['] )* ['] |"
+                                  r" null | true | false |"
+                                  r" [+-]? (?: \d+ (?: [.] \d* )? | [.] \d+ )"
+                                  r" (?: [eE] [+-]? \d+ )?")
+                if block is not None:
+                    entries.append(block)
+                else:
+                    # Otherwise, must be a nested container.
+                    chunks = self.pull_chunks()
+                    entries.append(u"".join(chunks))
+                # Skip whitespace.
+                self.pull(r"[\s]+")
+        # Skip trailing whitespace.
+        self.pull(r"[\s]+")
+        # Make sure no garbage after the closing bracket.
+        if self:
+            raise self.fail()
+
+        return entries
+
+    def pull_chunks(self):
+        # Parse a nested container as a series of text blocks.
+        chunks = []
+        # Get the left bracket.
+        left = self.pull(r"[({\[]")
+        if left is None:
+            raise self.fail()
+        chunks.append(left)
+        # Until we find the right bracket.
+        while not self.peek(r"[)}\]]"):
+            # Extract any unquoted characters.
+            chunk = self.pull(r"[^(){}\[\]']+")
+            if chunk is not None:
+                chunks.append(chunk)
+            # Extract a quoted literal.
+            if self.peek(r"[']"):
+                chunk = self.pull(r" ['] (?: [^'\0] | [']['] )* [']")
+                if chunk is None:
+                    raise self.fail()
+                chunks.append(chunk)
+            # Extract a nested container.
+            elif self.peek(r"[({\["):
+                chunks.extend(self.pull_chunks())
+        # Pull the right bracket.
+        if left == u"(":
+            right = self.pull(r"[)]")
+        elif left == u"{":
+            right = self.pull(r"[}]")
+        elif left == r"[":
+            right = self.pull(r"[\]]")
+        if right is None:
+            raise self.fail()
+        chunks.append(right)
+        return chunks
+
+    def fail(self):
+        raise ValueError("ill-formed container literal: %s"
+                         % self.text.encode('utf-8'))
+
+
+class ContainerDomain(Domain):
+    """
+    A container type.
+
+    This is an abstract superclass for container domains.
+    """
+
+    @staticmethod
+    def parse_entry(text, domain):
+        # Unquotes and parses a container entry.
+
+        # Unquote a quoted literal.
+        if text[0] == text[-1] == u"'":
+            text = text[1:-1].replace(u"''", u"'")
+        # Verify that nested container entries are indeed containers.
+        elif text[0] == u"(" and text[-1] == u")":
+            if not isinstance(domain, (ListDomain, UntypedDomain)):
+                raise ValueError("list entry for %s: %s"
+                                 % (domain, text))
+        elif text[0] == u"{" and text[-1] == u"}":
+            if not isinstance(domain, (RecordDomain, UntypedDomain)):
+                raise ValueError("record entry for %s: %s"
+                                 % (domain, text))
+        elif text[0] == u"[" and text[-1] == u"]":
+            if not isinstance(domain, (IdentityDomain, UntypedDomain)):
+                raise ValueError("identity entry for %s: %s"
+                                 % (domain, text))
+        # Validate unquoted values.
+        elif text == u"true" or text == u"false":
+            if not isinstance(domain, (BooleanDomain, UntypedDomain)):
+                raise ValueError("boolean entry for %s: %s"
+                                 % (domain, text))
+        elif text == u"null":
+            text = None
+        else:
+            # Must be an unquoted number.
+            if not isinstance(domain, (NumberDomain, UntypedDomain)):
+                raise ValueError("numeric entry for %s: %s"
+                                 % (domain, text))
+        # Parse the entry.
+        return domain.parse(text)
+
+    @staticmethod
+    def dump_entry(data, domain):
+        # Serializes an individual container entry.
+
+        # Start with the regular literal.
+        text = domain.dump(data)
+        if text is None:
+            # Using unquoted `null` string is safe here because a regular text
+            # value will be quoted.
+            return u"null"
+        elif isinstance(domain, (BooleanDomain, NumberDomain,
+                                 ListDomain, RecordDomain)):
+            # Boolean and numeric literals are safe because they
+            # do not contain special characters.  Lists and records
+            # are recognized by counting the brackets.
+            return text
+        elif isinstance(domain, IdentityDomain):
+            # Identity values are wrapped with `[]`; the outer
+            # brackets will be stripped by `IdentityDomain.parse()`.
+            return u"[%s]" % text
+        else:
+            # All the others are wrapped in single quotes.
+            return u"'%s'" % text.replace(u"'", u"''")
+
+
+class ListDomain(ContainerDomain):
+    """
+    A variable-size collection of homogenous entries.
+
+    Valid literals: quoted entries, comma-separated and wrapped in
+    ``(`` and ``)``.
+
+    Valid native objects: ``list`` values.
+
+    `item_domain`: :class:`Domain`
+        The type of entries.
+    """
+
+    def __init__(self, item_domain):
+        assert isinstance(item_domain, Domain)
+        self.item_domain = item_domain
+
+    def __basis__(self):
+        return (self.item_domain,)
+
+    def __unicode__(self):
+        # list(item)
+        return u"%s(%s)" % (self.__class__, self.item_domain)
+
+    def parse(self, text):
+        assert isinstance(text, maybe(unicode))
+        # `None` means `null` both in literal and native forms.
+        if text is None:
+            return None
+        # Extract raw entries.
+        buffer = EntryBuffer(text)
+        entries = buffer.pull_entries(r"[(]", r"[)]")
+        # Parse the entries.
+        return [self.parse_entry(entry, self.item_domain) for entry in entries]
+
+    def dump(self, data):
+        assert isinstance(data, maybe(list))
+        # `None` means `null` both in literal and native forms.
+        if data is None:
+            return None
+        # Serialize individual entries and wrap with `()`.
+        if len(data) == 1:
+            return u"(%s,)" % self.dump_entry(data[0], self.item_domain)
+        return u"(%s)" % u", ".join(self.dump_entry(entry, self.item_domain)
+                                    for entry in data)
+
+
+class RecordDomain(ContainerDomain):
+    """
+    A fixed-size collection of heterogenous entries.
+
+    Valid literals: quoted entries, comma-separated and wrapped in
+    ``{`` and ``}``.
+
+    Valid native objects: ``tuple`` values.
+
+    `fields`: [:class:`Profile`]
+        The types and other structural metadata of the record fields.
+    """
+
+    def __init__(self, fields):
+        assert isinstance(fields, listof(Profile))
+        self.fields = fields
+    def __basis__(self):
+        return (tuple(self.fields),)
+
+    def __unicode__(self):
+        # record(field, ...)
+        return u"%s(%s)" % (self.__class__,
+                            ", ".join(unicode(field)
+                                      for field in self.fields))
+
+    def parse(self, text):
+        assert isinstance(text, maybe(unicode))
+        # `None` means `null` both in literal and native forms.
+        if text is None:
+            return None
+        # Extract raw entries.
+        buffer = EntryBuffer(text)
+        entries = buffer.pull_entries(r"[{]", r"[}]")
+        # Verify that we got the correct number of them.
+        if len(entries) < len(self.fields):
+            raise ValueError("not enough fields: expected %s, got %s"
+                             % (len(self.fields), len(entries)))
+        if len(entries) > len(self.fields):
+            raise ValueError("too many fields: expected %s, got %s"
+                             % (len(self.fields), len(entries)))
+        # Prepare the record constructor.
+        field_tags = [getattr(field, 'tag') for field in self.fields]
+        record_class = Record.make(None, field_tags)
+        # Parse the entries and return them as a record.
+        return record_class(self.parse_entry(entry, field.domain)
+                            for field, entry in zip(self.fields, entries))
+
+    def dump(self, data):
+        assert isinstance(data, maybe(tuple))
+        assert data is None or len(data) == len(self.fields)
+        # `None` means `null` both in literal and native forms.
+        if data is None:
+            return None
+        # Serialize individual fields and wrap with `{}`.
+        return u"{%s}" % u", ".join(self.dump_entry(entry, field.domain)
+                                    for entry, field in zip(data, self.fields))
+
+
+#
+# Identity domain.
+#
+
+
+class ID(tuple):
+    """
+    An identity value.
+
+    :class:`ID` is a tuple with a string representation that produces
+    the identity value in literal form.
+    """
+
+    __slots__ = ()
+
+    @classmethod
+    def make(cls, dump, _cache=weakref.WeakValueDictionary()):
+        """
+        Generates a :class:`ID` subclass with the given string serialization.
+
+        `dump`
+            Implementation of ``unicode()`` operator.
+
+        *Returns*: subclass of :class:`ID`
+            The generated class.
+        """
+        # Check if the type was already generated.
+        try:
+            return _cache[dump]
+        except KeyError:
+            pass
+
+        # Generate a subclass with custom `__str__` implementation.
+        name = cls.__name__
+        bases = (cls,)
+        content = {}
+        content['__slots__'] = ()
+        content['__unicode__'] = (lambda self, dump=dump: dump(self))
+        content['__str__'] = (lambda self, dump=dump:
+                                    dump(self).encode('utf-8'))
+        id_class = type(name, bases, content)
+        # Cache and return the result.
+        _cache[dump] = id_class
+        return id_class
+
+    def __repr__(self):
+        # ID(...)
+        return "%s(%s)" % (self.__class__.__name__,
+                           ", ".join(repr(item) for item in self))
+
+    def __getnewargs__(self):
+        # Pickle serialization.
+        return tuple(self)
+
+
+class LabelGroup(list):
+    # Represents a raw identity value; that is, not aligned with
+    # the label structure.  Used for parsing identity literals.
+
+    __slots__ = ('width',)
+
+    def __init__(self, iterable):
+        list.__init__(self, iterable)
+        # Calculate the number of leaf labels.
+        width = 0
+        for item in self:
+            if isinstance(item, LabelGroup):
+                width += item.width
+            else:
+                width += 1
+        self.width = width
+
+    def __unicode__(self):
+        # Serialize back to the literal form.
+        return u".".join(u"(%s)" % item if isinstance(item, LabelGroup) else
+                         unicode(item) if re.match(r"(?u)\A[\w-]+\Z", item) else
+                         u"'%s'" % item.replace("'", "''")
+                         for item in self)
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
+
+class LabelBuffer(TextBuffer):
+    # Parser for identity literals.
+
+    # Whitespace characters to strip.
+    skip_regexp = re.compile(r"\s+")
+
+    def pull_identity(self):
+        # Parse `.`-separated labels.
+        group = self.pull_label_group()
+        # Make sure nothing left.
+        if self:
+            raise self.fail()
+        # Unwrap outer `[]`.
+        if len(group) == 1 and isinstance(group[0], LabelGroup):
+            group = group[0]
+        return group
+
+    def pull_label_group(self):
+        # Parse a group of `.`-separated labels.
+        labels = [self.pull_label()]
+        while self.pull(r"[.]") is not None:
+            labels.append(self.pull_label())
+        return LabelGroup(labels)
+
+    def pull_label(self):
+        # Parse unquoted, quoted and composite labels.
+        block = self.pull(r"[\[(] | [\w-]+ | ['] (?: [^'\0] | [']['] )* [']")
+        if block is None:
+            raise self.fail()
+        # Composite labels.
+        if block == u"[":
+            label = self.pull_label_group()
+            if self.pull(r"]") is None:
+                raise self.fail()
+        elif block == u"(":
+            label = self.pull_label_group()
+            if self.pull(r")") is None:
+                raise self.fail()
+        # Quoted labels.
+        elif block[0] == block[-1] == u"'":
+            label = block[1:-1].replace(u"''", u"'")
+        # Unquoted labels.
+        else:
+            label = block
+        return label
+
+    def fail(self):
+        raise ValueError("ill-formed identity literal: %s"
+                         % self.text.encode('utf-8'))
+
+
+class IdentityDomain(ContainerDomain):
+    """
+    A unique identifier of a database entity.
+
+    Valid literals: identity constructors as in HTSQL grammar; outer brackets
+    are optional and always stripped.
+
+    Valid native objects: ``tuple`` values.
+
+    `labels`: [:class:`Domain`]
+        The type of labels that form the identity value.
+
+    `width`: ``int``
+        The number of leaf labels.
+
+    `leaves`: [[``int``]]
+        Paths (as tuple indexes) to leaf labels.
+    """
+
+    def __init__(self, labels):
+        assert isinstance(labels, listof(Domain))
+        self.labels = labels
+        # Find the number of and the paths to leaf labels.
+        self.width = 0
+        self.leaves = []
+        for idx, label in enumerate(labels):
+            if isinstance(label, IdentityDomain):
+                self.width += label.width
+                for leaf in label.leaves:
+                    self.leaves.append([idx]+leaf)
+            else:
+                self.width += 1
+                self.leaves.append([idx])
+
+    def __basis__(self):
+        return (tuple(self.labels),)
+
+    def __unicode__(self):
+        # identity(label, ...)
+        return u"%s(%s)" % (self.__class__,
+                            u", ".join(unicode(label)
+                                       for label in self.labels))
+
+    def parse(self, text):
+        # Sanity check on the arguments.
+        assert isinstance(text, maybe(unicode))
+        # `None` represents `NULL` both in literal and native format.
+        if text is None:
+            return None
+        # Parse a raw identity value.
+        buffer = LabelBuffer(text)
+        group = buffer.pull_label_group()
+        # Make sure we got the right number of labels.
+        if group.width < self.width:
+            raise ValueError("not enough labels: expected %s, got %s"
+                             % (self.width, group.width))
+        if group.width > self.width:
+            raise ValueError("too many labels: expected %s, got %s"
+                             % (self.width, group.width))
+        # Reconcile the raw entries with the identity structure.
+        return self.align(group)
+
+    def align(self, group):
+        # Aligns a group of raw entries with the identity structure and
+        # parses leaf entries.
+        assert isinstance(group, LabelGroup)
+        assert group.width == self.width
+        # The position of the next entry to process.
+        idx = 0
+        # Processed entries.
+        data = []
+        # For each label in the identity.
+        for label in self.labels:
+            assert idx < len(group)
+            # For a composite label, gather enough entries to fit the label
+            # and align them with the nested identity.
+            if isinstance(label, IdentityDomain):
+                subgroup = []
+                subwidth = 0
+                while subwidth < label.width:
+                    entry = group[idx]
+                    idx += 1
+                    subgroup.append(entry)
+                    if isinstance(entry, LabelGroup):
+                        subwidth += entry.width
+                    else:
+                        subwidth += 1
+                if subwidth > label.width:
+                    raise ValueError("misshapen %s: %s" % (self, group))
+                # Unwrap a single composite entry; or wrap multiple entries
+                # in a single group.
+                if len(subgroup) == 1 and isinstance(subgroup[0], LabelGroup):
+                    subgroup = subgroup[0]
+                else:
+                    subgroup = LabelGroup(subgroup)
+                # Process a nested identity.
+                data.append(label.align(subgroup))
+            else:
+                # Process a leaf label.
+                entry = group[idx]
+                idx += 1
+                if isinstance(entry, LabelGroup):
+                    raise ValueError("misshapen %s: %s" % (self, group))
+                data.append(label.parse(entry))
+        # Generate an `ID` instance.
+        id_class = ID.make(self.dump)
+        return id_class(data)
+
+    def dump(self, data, regexp=re.compile(r'\A [\w-]+ \Z', re.X|re.U)):
+        assert isinstance(data, maybe(tuple))
+        # `None` means `null` both in literal and native forms.
+        if data is None:
+            return None
+        # Sanity check on the value.  Note that a label value cannot be `None`.
+        assert len(data) == len(self.labels)
+        assert all(entry is not None for entry in data)
+        # Serialize the labels.
+        chunks = []
+        is_simple = all(not isinstance(label, IdentityDomain)
+                        for label in self.labels[1:])
+        for entry, label in zip(data, self.labels):
+            if isinstance(label, IdentityDomain):
+                # Composite label values are generally wrapped with `()` unless
+                # there is just one composite label and it is at the head,
+                # or if the nested identity contains only one label.
+                is_flattened = (is_simple or len(label.labels) == 1)
+                chunk = label.dump(entry)
+                if not is_flattened:
+                    chunk = u"(%s)" % chunk
+            else:
+                # Leaf labels are converted to literal form and quoted
+                # if the literal contains a non-alphanumeric character.
+                chunk = label.dump(entry)
+                if regexp.match(chunk) is None:
+                    chunk = u"'%s'" % chunk.replace("'", "''")
+            chunks.append(chunk)
+        return u".".join(chunks)
 
 

@@ -8,7 +8,7 @@ from ....core.adapter import Utility, adapt
 from ....core.error import BadRequestError
 from ....core.entity import TableEntity, ColumnEntity
 from ....core.connect import transaction, scramble
-from ....core.cmd.fetch import Product
+from ....core.domain import Product
 from ....core.cmd.act import Act, ProduceAction, act
 from ....core.tr.binding import VoidBinding
 from ....core.tr.decorate import decorate

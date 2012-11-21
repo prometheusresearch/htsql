@@ -23,18 +23,18 @@ tests:
   - uri: /boolean('yes')
     expect: 400
 
-  # String values
-  - uri: /{string(''), string('HTSQL'), string('O''Reilly'),
-           string('%ce%bb%cf%8c%ce%b3%ce%bf%cf%82'),
-           string('$-b \pm \sqrt{b^2 - 4ac} \over 2a$')}
+  # Text values
+  - uri: /{text(''), text('HTSQL'), text('O''Reilly'),
+           text('%ce%bb%cf%8c%ce%b3%ce%bf%cf%82'),
+           text('$-b \pm \sqrt{b^2 - 4ac} \over 2a$')}
     ifndef: mssql
   # The regression database for MS SQL Server uses Latin1 locale and therefore
   # is unable to represent greek characters.
-  - uri: /{string(''), string('HTSQL'), string('O''Reilly'),
-           string('zo%c3%b6logy'),
-           string('$-b \pm \sqrt{b^2 - 4ac} \over 2a$')}
+  - uri: /{text(''), text('HTSQL'), text('O''Reilly'),
+           text('zo%c3%b6logy'),
+           text('$-b \pm \sqrt{b^2 - 4ac} \over 2a$')}
     ifdef: mssql
-  - uri: /{string('832040')}
+  - uri: /{text('832040')}
 
   # Integer values
   - uri: /{0, 7, -97, 3571}
@@ -107,9 +107,9 @@ tests:
   # Boolean conversion
   - uri: /{boolean(null()), boolean('true'), boolean('false')}
   - uri: /{boolean(integer(null())), boolean(0.0), boolean(1e0)}
-  - uri: /{boolean(string(null())),
-           boolean(string('')),
-           boolean(string('FALSE'))}
+  - uri: /{boolean(text(null())),
+           boolean(text('')),
+           boolean(text('FALSE'))}
   - uri: /{boolean(date(null())), boolean(date('2010-04-15'))}
   # AND, OR, NOT
   - uri: /{true()&true(), true()&false(), false()&true(), false()&false()}
@@ -246,9 +246,9 @@ tests:
   - uri: /{integer(2.125), integer(271828e-5)}
   - uri: /{decimal(60), decimal(271828e-5)}
   - uri: /{float(60), float(2.125)}
-  - uri: /{integer(string('60'))}
-  - uri: /{decimal(string('2.125'))}
-  - uri: /{float(string('271828e-5'))}
+  - uri: /{integer(text('60'))}
+  - uri: /{decimal(text('2.125'))}
+  - uri: /{float(text('271828e-5'))}
   # Inadmissible operand
   - uri: /{integer('cinq')}
     expect: 400
@@ -257,11 +257,11 @@ tests:
   - uri: /{float(date('2010-04-15'))}
     expect: 400
   # Not a number
-  - uri: /{integer(string('zero'))}
+  - uri: /{integer(text('zero'))}
     ifdef: [sqlite, mysql]
-  - uri: /{float(string('zero'))}
+  - uri: /{float(text('zero'))}
     ifdef: [sqlite, mysql]
-  - uri: /{integer(string('cinq'))}
+  - uri: /{integer(text('cinq'))}
     expect: 409
     ignore: true
     ifndef: [sqlite, mysql]
@@ -355,16 +355,16 @@ tests:
 
 ########################################################################
 
-- title: String Functions and Operators
+- title: Text Functions and Operators
   tests:
 
   # Conversion
-  - uri: /{string(null()), string('OMGWTFBBQ')}
-  - uri: /{string(true()), string(false())}
-  - uri: /{string(60), string(2.125), string(-57721e-5)}
-  - uri: /{string(date('2010-04-15'))}
-  - uri: /{string(time('20:03'))}
-  - uri: /{string(datetime('2010-04-15 20:13'))}
+  - uri: /{text(null()), text('OMGWTFBBQ')}
+  - uri: /{text(true()), text(false())}
+  - uri: /{text(60), text(2.125), text(-57721e-5)}
+  - uri: /{text(date('2010-04-15'))}
+  - uri: /{text(time('20:03'))}
+  - uri: /{text(datetime('2010-04-15 20:13'))}
 
   # Length
   - uri: /{length(''), length('OMGWTFBBQ')}
@@ -376,9 +376,9 @@ tests:
   # Concatenation
   - uri: /{'OMG'+'WTF'+'BBQ'}
   - uri: /{null()+'LOL', 'LOL'+null(),
-           string(null())+string(null())}
+           text(null())+text(null())}
   # Inadmissible operands
-  - uri: /{string('LOL')+7}
+  - uri: /{text('LOL')+7}
     expect: 400
 
   # Contains
@@ -439,7 +439,7 @@ tests:
 
   # Conversion
   - uri: /{date(null()), date('2010-04-15')}
-  - uri: /{date(string('2010-04-15'))}
+  - uri: /{date(text('2010-04-15'))}
   - uri: /{date(datetime('2010-04-15 20:13'))}
   # Inadmissible operand
   - uri: /{date('2010-13-07')}
@@ -451,16 +451,16 @@ tests:
   - uri: /{date(time('20:13'))}
     expect: 400
   # Not a date
-  - uri: /{date(string('birthday'))}
+  - uri: /{date(text('birthday'))}
     expect: 409
     ignore: true
     ifndef: [sqlite, mysql]
-  - uri: /{date(string('2010-13-07'))}
+  - uri: /{date(text('2010-13-07'))}
     expect: 409
     ignore: true
     ifndef: [sqlite, mysql]
-  - uri: /{date(string('birthday')),
-           date(string('2010-13-07'))}
+  - uri: /{date(text('birthday')),
+           date(text('2010-13-07'))}
     ifdef: [sqlite, mysql]
 
   # Construction
@@ -485,9 +485,9 @@ tests:
 
   # Conversion
   - uri: /{time(null()), time('20:03')}
-  - uri: /{time(string('20:03'))}
+  - uri: /{time(text('20:03'))}
     ifndef: oracle
-  - uri: /{time(string('20:03:00'))}
+  - uri: /{time(text('20:03:00'))}
     ifdef: oracle
   - uri: /{time(datetime('2010-04-15 20:13'))}
   # Inadmissible operand
@@ -500,16 +500,16 @@ tests:
   - uri: /{time(date('2010-04-15'))}
     expect: 400
   # Not a datetime value
-  - uri: /{time(string('just a moment ago'))}
+  - uri: /{time(text('just a moment ago'))}
     expect: 409
     ignore: true
     ifndef: [sqlite, mysql]
-  - uri: /{time(string('29:04'))}
+  - uri: /{time(text('29:04'))}
     expect: 409
     ignore: true
     ifndef: [sqlite, mysql]
-  - uri: /{time(string('just a moment ago')),
-           time(string('29:04'))}
+  - uri: /{time(text('just a moment ago')),
+           time(text('29:04'))}
     ifdef: [sqlite, mysql]
 
   # Components
@@ -524,9 +524,9 @@ tests:
 
   # Conversion
   - uri: /{datetime(null()), datetime('2010-04-15 20:13')}
-  - uri: /{datetime(string('2010-04-15 20:13'))}
+  - uri: /{datetime(text('2010-04-15 20:13'))}
     ifndef: oracle
-  - uri: /{datetime(string('2010-04-15 20:13:00'))}
+  - uri: /{datetime(text('2010-04-15 20:13:00'))}
     ifdef: oracle
   - uri: /{datetime(date('2010-04-15'))}
   # Inadmissible operand
@@ -539,16 +539,16 @@ tests:
   - uri: /{datetime(time('20:13'))}
     expect: 400
   # Not a datetime value
-  - uri: /{datetime(string('just a moment ago'))}
+  - uri: /{datetime(text('just a moment ago'))}
     expect: 409
     ignore: true
     ifndef: [sqlite, mysql]
-  - uri: /{datetime(string('2010-13-07 17:43'))}
+  - uri: /{datetime(text('2010-13-07 17:43'))}
     expect: 409
     ignore: true
     ifndef: [sqlite, mysql]
-  - uri: /{datetime(string('just a moment ago')),
-           datetime(string('2010-13-07 17:43'))}
+  - uri: /{datetime(text('just a moment ago')),
+           datetime(text('2010-13-07 17:43'))}
     ifdef: [sqlite, mysql]
 
   # Construction

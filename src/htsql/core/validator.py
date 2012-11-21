@@ -11,7 +11,8 @@ This module provides utilities for data validation and conversion.
 """
 
 
-from util import Record, DB, maybe, oneof, listof, tupleof, dictof, to_name
+from .util import DB, maybe, oneof, listof, tupleof, dictof, to_name
+from .domain import Record
 import re
 
 
@@ -150,7 +151,7 @@ class WordVal(Validator):
     hint = """a word"""
 
     # A regular expression for matching words.
-    regexp = re.compile(r'^[0-9a-zA-Z_ -]+$')
+    regexp = re.compile(r'\A[0-9a-zA-Z_ -]+\Z')
 
     def __init__(self, is_nullable=False):
         # Sanity check on the arguments.
@@ -203,7 +204,7 @@ class NameVal(Validator):
     hint = """a name"""
 
     # A regular expression for matching words.
-    regexp = re.compile(r'^(?!\d)\w+$', re.U)
+    regexp = re.compile(r'\A(?!\d)\w+\Z', re.U)
 
     def __init__(self, is_nullable=False):
         # Sanity check on the arguments.
@@ -880,7 +881,7 @@ class RecordVal(Validator):
                 field_value = default
             field_values.append(field_value)
 
-        return self.record_type(*field_values)
+        return self.record_type(field_values)
 
 
 class ExtensionVal(Validator):
@@ -894,16 +895,16 @@ class ExtensionVal(Validator):
     """
     regexp = re.compile(pattern, re.X)
     name_pattern = r"""
-        ^
+        \A
         [a-zA-Z_-][0-9a-zA-Z_-]*
-        $
+        \Z
     """
     name_regexp = re.compile(name_pattern, re.X)
     dotted_name_pattern = r"""
-        ^
+        \A
         [a-zA-Z_-][0-9a-zA-Z_-]*
         (?: \. [a-zA-Z_-][0-9a-zA-Z_-]* )*
-        $
+        \Z
     """
     dotted_name_regexp = re.compile(dotted_name_pattern, re.X)
 
@@ -1093,10 +1094,10 @@ class ClassVal(Validator):
     hint = """a class instance (%s)"""
 
     pattern = r"""
-        ^
+        \A
         [a-zA-Z_][0-9a-zA-Z_]*
         (\. [a-zA-Z_][0-9a-zA-Z_]*)+
-        $
+        \Z
     """
     regexp = re.compile(pattern, re.X)
 

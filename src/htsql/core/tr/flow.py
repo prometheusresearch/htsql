@@ -11,7 +11,7 @@ This module declares flow and code nodes.
 """
 
 
-from ..util import (maybe, listof, tupleof, Clonable, Comparable, Printable,
+from ..util import (maybe, listof, tupleof, Clonable, Hashable, Printable,
                     cachedproperty)
 from ..entity import TableEntity, ColumnEntity, Join
 from ..domain import Domain, BooleanDomain, ListDomain, IdentityDomain
@@ -19,7 +19,7 @@ from .binding import Binding, QueryBinding, SegmentBinding
 from .signature import Signature, Bag, Formula
 
 
-class Expression(Comparable, Clonable, Printable):
+class Expression(Hashable, Clonable, Printable):
     """
     Represents an expression node.
 

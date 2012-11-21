@@ -7,7 +7,7 @@ from htsql.core.connect import (Connect, Scramble, Unscramble, UnscrambleError,
         DBError)
 from htsql.core.adapter import adapt
 from htsql.core.context import context
-from htsql.core.domain import (BooleanDomain, StringDomain, DateDomain,
+from htsql.core.domain import (BooleanDomain, TextDomain, DateDomain,
         TimeDomain, DateTimeDomain)
 import sqlite3
 import datetime
@@ -82,9 +82,9 @@ class UnscrambleSQLiteBoolean(Unscramble):
         return (value != 0)
 
 
-class UnscrambleSQLiteString(Unscramble):
+class UnscrambleSQLiteText(Unscramble):
 
-    adapt(StringDomain)
+    adapt(TextDomain)
 
     @staticmethod
     def convert(value):

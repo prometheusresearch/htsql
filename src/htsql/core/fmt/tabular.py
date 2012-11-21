@@ -16,7 +16,7 @@ from ..adapter import Adapter, adapt, adapt_many
 from .format import CSVFormat
 from .emit import EmitHeaders, Emit
 from ..domain import (Domain, BooleanDomain, NumberDomain, FloatDomain,
-        DecimalDomain, StringDomain, EnumDomain, DateDomain, TimeDomain,
+        DecimalDomain, TextDomain, EnumDomain, DateDomain, TimeDomain,
         DateTimeDomain, ListDomain, RecordDomain, UntypedDomain, VoidDomain,
         OpaqueDomain, Profile)
 import csv
@@ -226,10 +226,10 @@ class DecimalToCSV(ToCSV):
             yield [unicode(value)]
 
 
-class StringToCSV(ToCSV):
+class TextToCSV(ToCSV):
 
     adapt_many(UntypedDomain,
-               StringDomain,
+               TextDomain,
                EnumDomain)
 
     def cells(self, value):

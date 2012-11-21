@@ -11,7 +11,7 @@ This module defines formula nodes and formula signatures.
 """
 
 
-from ..util import maybe, listof, Comparable, Clonable, Printable
+from ..util import maybe, listof, Hashable, Clonable, Printable
 
 
 class Slot(object):
@@ -42,7 +42,7 @@ class Slot(object):
         self.is_singular = is_singular
 
 
-class Signature(Comparable, Clonable, Printable):
+class Signature(Hashable, Clonable, Printable):
     """
     Represents a formula signature.
 

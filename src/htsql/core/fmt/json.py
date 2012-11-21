@@ -14,7 +14,7 @@ This module implements the JSON renderer.
 from ..util import Printable
 from ..adapter import Adapter, Protocol, adapt, adapt_many, call
 from ..domain import (Domain, BooleanDomain, NumberDomain, FloatDomain,
-        StringDomain, EnumDomain, DateDomain, TimeDomain, DateTimeDomain,
+        TextDomain, EnumDomain, DateDomain, TimeDomain, DateTimeDomain,
         ListDomain, RecordDomain, IdentityDomain, UntypedDomain, VoidDomain,
         OpaqueDomain, Profile)
 from .format import RawFormat, JSONFormat
@@ -274,7 +274,7 @@ class NativeToRaw(ToRaw):
     adapt_many(UntypedDomain,
                BooleanDomain,
                NumberDomain,
-               StringDomain,
+               TextDomain,
                EnumDomain)
 
     @staticmethod
@@ -407,7 +407,7 @@ class DomainToRaw(Adapter):
     def __call__(self):
         yield JS_MAP
         yield u"type"
-        yield unicode(self.domain.family)
+        yield unicode(self.domain.__class__)
         yield JS_END
 
 
@@ -426,7 +426,7 @@ class ListDomainToRaw(DomainToRaw):
     def __call__(self):
         yield JS_MAP
         yield u"type"
-        yield unicode(self.domain.family)
+        yield unicode(self.domain.__class__)
         yield u"item"
         yield JS_MAP
         yield u"domain"
@@ -443,7 +443,7 @@ class RecordDomainToRaw(DomainToRaw):
     def __call__(self):
         yield JS_MAP
         yield u"type"
-        yield unicode(self.domain.family)
+        yield unicode(self.domain.__class__)
         yield u"fields"
         yield JS_SEQ
         for field in self.domain.fields:
@@ -460,7 +460,7 @@ class IdentityDomainToRaw(DomainToRaw):
     def __call__(self):
         yield JS_MAP
         yield u"type"
-        yield unicode(self.domain.family)
+        yield unicode(self.domain.__class__)
         #yield u"fields"
         #yield JS_SEQ
         #for field in self.domain.fields:

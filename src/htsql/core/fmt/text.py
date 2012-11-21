@@ -17,7 +17,7 @@ from ..context import context
 from .format import TextFormat
 from .emit import EmitHeaders, Emit
 from ..domain import (Domain, BooleanDomain, NumberDomain, IntegerDomain,
-        DecimalDomain, FloatDomain, StringDomain, EnumDomain, DateDomain,
+        DecimalDomain, FloatDomain, TextDomain, EnumDomain, DateDomain,
         TimeDomain, DateTimeDomain, ListDomain, RecordDomain, UntypedDomain,
         VoidDomain, OpaqueDomain, Profile)
 import re
@@ -201,10 +201,10 @@ class ToText(Adapter):
         return self.domain.dump(value)
 
 
-class StringToText(ToText):
+class TextToText(ToText):
 
     adapt_many(UntypedDomain,
-               StringDomain,
+               TextDomain,
                EnumDomain)
 
     threshold = 32
@@ -212,7 +212,7 @@ class StringToText(ToText):
     boundary_pattern = u"""(?<=\S) (?=\S)"""
     boundary_regexp = re.compile(boundary_pattern)
 
-    unescaped_pattern = ur"""^(?=[^ "])[^\x00-\x1F]+(?<=[^ "])$"""
+    unescaped_pattern = ur"""\A(?=[^ "])[^\x00-\x1F]+(?<=[^ "])\Z"""
     unescaped_regexp = re.compile(unescaped_pattern)
 
     escape_pattern = ur"""[\x00-\x1F"\\]"""

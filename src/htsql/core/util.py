@@ -11,8 +11,6 @@ import urllib
 import pkgutil
 import datetime, time
 import collections
-import keyword
-import operator
 import unicodedata
 
 
@@ -203,7 +201,7 @@ def isfinite(value):
     return (isinstance(value, (int, long)) or
             (isinstance(value, float) and not math.isinf(value)
                                       and not math.isnan(value)) or
-            (isinstance(value, decimal) and value.is_finite()))
+            (isinstance(value, decimal.Decimal) and value.is_finite()))
 
 
 #
@@ -249,18 +247,46 @@ def trim_doc(doc):
 
 def to_name(text):
     """
-    Converts a non-empty string to a valid HTSQL identifier.
+    Converts a string to a valid HTSQL identifier.
 
-    The given `text`: ``unicode`` value is transformed as follows:
+    The given `text` value is transformed as follows:
 
     - translated to Unicode normal form C;
     - converted to lowercase;
     - has non-alphanumeric characters replaced with underscores;
-    - preceded with an underscore if it starts with a digit.
+    - preceded with an underscore if it starts with a digit;
+    - an empty string is replaced with ``'_'``.
     """
-    assert isinstance(text, unicode) and len(text) > 0
+    assert isinstance(text, (str, unicode))
+    if isinstance(text, str):
+        text = text.decode('utf-8', 'replace')
+    if not text:
+        text = u"_"
     text = unicodedata.normalize('NFC', text).lower()
     text = re.sub(ur"(?u)^(?=\d)|\W", u"_", text)
+    return text
+
+
+def urlquote(text, reserved=";/?:@&=+$,"):
+    """
+    Replaces non-printable and reserved characters with ``%XX`` sequences.
+    """
+    assert isinstance(text, unicode)
+    text = re.sub(r"[\x00-\x1F%%\x7F%s]" % reserved,
+                  (lambda m: u"%%%02X" % ord(m.group())),
+                  text)
+    return text
+
+
+def to_literal(text):
+    """
+    Converts the text value to a valid string literal.
+
+    This function escapes all non-printable characters and
+    wraps the text value in single quotes.
+    """
+    assert isinstance(text, unicode)
+    text = u"'%s'" % urlquote(text, "").replace(u"'", u"''")
     return text
 
 
@@ -351,6 +377,9 @@ class TextBuffer(object):
         # Advance over whitespace and comments.
         self.skip()
 
+    def __nonzero__(self):
+        return (self.index < len(self.text))
+
     def reset(self):
         """
         Rewinds to the beginning of the text.
@@ -430,7 +459,7 @@ class TextBuffer(object):
             index = len(excerpt[:index].decode('utf-8', 'replace'))
         # Extract the line around the head position.
         start = excerpt.rfind(u"\n", 0, index)+1
-        end = exceprt.find(u"\n", start)
+        end = excerpt.find(u"\n", start)
         if end == -1:
             end = len(text)
         excerpt = excerpt[start:end].encode('utf-8')
@@ -577,7 +606,7 @@ class cachedproperty(object):
 
 
 #
-# Object types with special behavior.
+# Ordered mapping.
 #
 
 
@@ -705,152 +734,9 @@ class omap(frozenomap, collections.MutableMapping):
             self._value_by_key[key] = value
 
 
-class Record(tuple):
-    """
-    A tuple with named fields.
-    """
-
-    # Forbid dynamic attributes.
-    __slots__ = ()
-    # List of field names (`None` when the field has no name).
-    __fields__ = ()
-    # Function generating a string representation from field values.
-    __dump__ = None
-
-    @classmethod
-    def make(cls, name, fields, dump=None):
-        """
-        Generates a :class:`Record` subclass with the given fields.
-
-        `name`: ``str``, ``unicode`` or ``None``.
-            The name of the new class.
-
-        `fields`: list of ``str``, ``unicode`` or ``None``.
-            List of desired field names (``None`` for a field to have no name).
-
-            A field may get no or another name assigned if the desired field
-            name is not available for some reason; e.g., if it is is already
-            taked by another field or if it coincides with a Python keyword.
-
-        `dump`
-            An implementation of ``__str__`` method.
-
-        *Returns*: subclass of :class:`Record`
-            A generated class.
-        """
-        assert isinstance(name, maybe(oneof(str, unicode)))
-        assert isinstance(fields, listof(maybe(oneof(str, unicode))))
-
-        # Process the class name; must be a regular string.
-        if isinstance(name, unicode):
-            name = name.encode('utf-8')
-        # Check if the name is a valid identifier.
-        if name is not None and not re.match(r'^(?!\d)\w+$', name):
-            name = None
-        # If the name is a Python keyword, prepend it with `_`.
-        if name is not None and keyword.iskeyword(name):
-            name = name+'_'
-        # If the name is not given or not available, use `'Record'`.
-        if name is None:
-            name = cls.__name__
-
-        # Names already taken.
-        duplicates = set()
-        # Process all field names.
-        for idx, field in enumerate(fields):
-            if field is None:
-                continue
-            # An attribute name must be a regular string.
-            if isinstance(field, unicode):
-                field = field.encode('utf-8')
-            # Only permit valid identifiers.
-            if not re.match(r'^(?!\d)\w+$', field):
-                field = None
-            # Do not allow special names (starting with `__`).
-            elif field.startswith('__'):
-                field = None
-            else:
-                # Python keywords are prepended with `_`.
-                if keyword.iskeyword(field):
-                    field = field+'_'
-                # Skip names already taken.
-                if field in duplicates:
-                    field = None
-                # Store the normalized name.
-                fields[idx] = field
-                duplicates.add(field)
-
-        # Prepare the class namespace and generate the class.
-        bases = (cls,)
-        # The class namespace.
-        content = {}
-        content['__slots__'] = ()
-        content['__fields__'] = tuple(fields)
-        # For each named field, add a respective descriptor to the class
-        # namespace.
-        for idx, field in enumerate(fields):
-            if field is None:
-                continue
-            content[field] = property(operator.itemgetter(idx))
-        # Store the `__str__` implementation.
-        if dump is not None:
-            content['__dump__'] = dump
-        # Generate and return the new class.
-        return type(name, bases, content)
-
-    def __new__(cls, *args, **kwds):
-        # Create a new record instance.
-
-        # Field values are specified via positional and keyword arguments.
-        if kwds:
-            # For each field not specified via a positional argument,
-            # find the value from a keyword argument.
-            args_tail = []
-            for field in cls.__fields__[len(args):]:
-                if field not in kwds:
-                    if field is not None:
-                        raise TypeError("Missing argument %r" % field)
-                    else:
-                        raise TypeError("Missing argument #%d"
-                                        % (len(args)+len(args_tail)+1))
-                args_tail.append(kwds.pop(field))
-            # Complain if there is an unexpected keyword argument.
-            if kwds:
-                field = sorted(kwds)[0]
-                if field in cls.__fields__:
-                    raise TypeError("Duplicate argument %r" % field)
-                else:
-                    raise TypeError("Unknown argument %r" % field)
-            # Merge processed keyword arguments.
-            args = args+tuple(args_tail)
-
-        # Complain if the number of arguments differs from the number of fields.
-        if len(args) != len(cls.__fields__):
-            raise TypeError("Expected %d arguments, got %d"
-                            % (len(cls.__fields__), len(args)))
-
-        # Create a record instance.
-        return tuple.__new__(cls, args)
-
-    def __getnewargs__(self):
-        # Pickle serialization.
-        return tuple(self)
-
-    def __str__(self):
-        # Use a custom `str()` implementation if provided,
-        # otherwise, use `repr()`.
-        if self.__class__.__dump__ is None:
-            return repr(self)
-        return self.__class__.__dump__(self)
-
-    def __repr__(self):
-        # Dump:
-        #   record_name(field_name=..., [N]=...)
-        return ("%s(%s)"
-                % (self.__class__.__name__,
-                   ", ".join("%s=%r" % (name or '[%s]' % idx, value)
-                             for idx, (name, value)
-                                in enumerate(zip(self.__fields__, self)))))
+#
+# Object types with special behavior.
+#
 
 
 class Clonable(object):
@@ -959,15 +845,15 @@ class Clonable(object):
         return clone
 
 
-class Comparable(object):
+class Hashable(object):
     """
-    An object with by-value comparison semantics.
+    An immutable object with by-value comparison semantics.
 
-    A subclass of :class:`Comparable` should reimplement :meth:`__basis__`
+    A subclass of :class:`Hashable` should reimplement :meth:`__basis__`
     to produce a tuple of all object attributes which uniquely identify
     the object.
 
-    Two :class:`Comparable` instances are considered equal if they are of
+    Two :class:`Hashable` instances are considered equal if they are of
     the same type and their basis vectors are equal.
     """
 
@@ -996,7 +882,7 @@ class Comparable(object):
         if isinstance(_basis, tuple):
             elements = []
             for element in _basis:
-                if isinstance(element, Comparable):
+                if isinstance(element, Hashable):
                     elements.append((element.__class__,
                                      element._hash,
                                      element._basis))
@@ -1009,7 +895,7 @@ class Comparable(object):
         # We could just compare object basis vectors, but
         # for performance, we start with faster checks.
         return ((self is other) or
-                (isinstance(other, Comparable) and
+                (isinstance(other, Hashable) and
                  self.__class__ is other.__class__ and
                  self._hash == other._hash and
                  self._basis == other._basis))
@@ -1017,7 +903,7 @@ class Comparable(object):
     def __ne__(self, other):
         # Since we override `==`, we also need to override `!=`.
         return ((self is not other) and
-                (not isinstance(other, Comparable) or
+                (not isinstance(other, Hashable) or
                  self.__class__ is not other.__class__ or
                  self._hash != other._hash and
                  self._basis != other._basis))
@@ -1048,7 +934,7 @@ class Printable(object):
 #
 
 
-class DB(Clonable, Comparable, Printable):
+class DB(Clonable, Hashable, Printable):
     """
     Parameters of a database connection.
 

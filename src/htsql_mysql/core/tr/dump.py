@@ -5,12 +5,12 @@
 
 from htsql.core.adapter import adapt
 from htsql.core.domain import (BooleanDomain, NumberDomain, IntegerDomain,
-                               StringDomain)
+                               TextDomain)
 from htsql.core.tr.dump import (FormatName, FormatLiteral, FormatPlaceholder,
                                 DumpDecimal, DumpFloat, DumpDate,
                                 DumpTime, DumpDateTime,
                                 DumpToDomain, DumpToInteger, DumpToFloat,
-                                DumpToDecimal, DumpToString, DumpToDateTime,
+                                DumpToDecimal, DumpToText, DumpToDateTime,
                                 DumpIsTotallyEqual)
 from htsql.core.tr.fn.dump import (DumpTrunc, DumpTruncTo,
                                    DumpDateIncrement, DumpDateTimeIncrement,
@@ -112,7 +112,7 @@ class MySQLDumpToDecimal(DumpToDecimal):
         self.format("CAST({base} AS DECIMAL(65,30))", base=self.base)
 
 
-class MySQLDumpToString(DumpToString):
+class MySQLDumpToText(DumpToText):
 
     def __call__(self):
         self.format("CAST({base} AS CHAR)", base=self.base)
@@ -124,9 +124,9 @@ class MySQLDumpToDateTime(DumpToDateTime):
         self.format("CAST({base} AS DATETIME)", base=self.base)
 
 
-class MySQLDumpBooleanToString(DumpToDomain):
+class MySQLDumpBooleanToText(DumpToDomain):
 
-    adapt(BooleanDomain, StringDomain)
+    adapt(BooleanDomain, TextDomain)
 
     def __call__(self):
         if self.base.is_nullable:

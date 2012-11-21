@@ -7,7 +7,7 @@ from htsql.core.adapter import Protocol, call
 from htsql.core.introspect import Introspect
 from htsql.core.entity import make_catalog
 from htsql.core.domain import (BooleanDomain, IntegerDomain, DecimalDomain,
-                               FloatDomain, StringDomain, DateTimeDomain,
+                               FloatDomain, TextDomain, DateTimeDomain,
                                OpaqueDomain)
 from htsql.core.connect import connect
 import re
@@ -203,7 +203,7 @@ class IntrospectOracleCharDomain(IntrospectOracleDomain):
     call('CHAR', 'NCHAR')
 
     def __call__(self):
-        return StringDomain(length=self.length, is_varying=False)
+        return TextDomain(length=self.length, is_varying=False)
 
 
 class IntrospectOracleVarCharDomain(IntrospectOracleDomain):
@@ -211,7 +211,7 @@ class IntrospectOracleVarCharDomain(IntrospectOracleDomain):
     call('VARCHAR2', 'NVARCHAR2', 'CLOB', 'NCLOB', 'LONG')
 
     def __call__(self):
-        return StringDomain(length=self.length, is_varying=True)
+        return TextDomain(length=self.length, is_varying=True)
 
 
 class IntrospectOracleNumberDomain(IntrospectOracleDomain):

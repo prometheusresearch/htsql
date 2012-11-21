@@ -8,14 +8,14 @@ from ....core.adapter import Utility, Adapter, adapt, adapt_many
 from ....core.error import BadRequestError, EmptyMark
 from ....core.connect import transaction, scramble, unscramble
 from ....core.domain import (Domain, ListDomain, RecordDomain, BooleanDomain,
-        IntegerDomain, FloatDomain, DecimalDomain, StringDomain, DateDomain,
-        TimeDomain, DateTimeDomain, IdentityDomain, UntypedDomain)
+        IntegerDomain, FloatDomain, DecimalDomain, TextDomain, DateDomain,
+        TimeDomain, DateTimeDomain, IdentityDomain, UntypedDomain, Product)
 from ....core.classify import normalize, classify, relabel
 from ....core.model import (HomeNode, TableNode, Arc, TableArc, ColumnArc,
         ChainArc)
 from ....core.entity import TableEntity, ColumnEntity
 from ....core.cmd.act import Act, ProduceAction, act
-from ....core.cmd.fetch import Product, RowStream, build_fetch
+from ....core.cmd.fetch import RowStream, build_fetch
 from ....core.tr.bind import BindingState, Select
 from ....core.syn.syntax import VoidSyntax, IdentifierSyntax
 from ....core.tr.binding import (VoidBinding, RootBinding, FormulaBinding,
@@ -60,7 +60,7 @@ class ClarifyFromSelf(Clarify):
                (IntegerDomain, IntegerDomain),
                (FloatDomain, FloatDomain),
                (DecimalDomain, DecimalDomain),
-               (StringDomain, StringDomain),
+               (TextDomain, TextDomain),
                (DateDomain, DateDomain),
                (TimeDomain, TimeDomain),
                (DateTimeDomain, DateTimeDomain))
@@ -103,11 +103,11 @@ class ClarifyIdentity(Clarify):
     def __call__(self):
         if self.origin_domain == self.domain:
             return (lambda v: v)
-        if self.origin_domain.arity != self.domain.arity:
+        if self.origin_domain.width != self.domain.width:
             return None
         converts = []
-        for origin_field, field in zip(self.origin_domain.fields,
-                                           self.domain.fields):
+        for origin_field, field in zip(self.origin_domain.labels,
+                                       self.domain.labels):
             convert = Clarify.__invoke__(origin_field, field)
             if convert is None:
                 return None
@@ -149,11 +149,8 @@ class BuildExtractNode(Utility):
         if not ((isinstance(domain, ListDomain) and
                  isinstance(domain.item_domain, RecordDomain)) or
                 isinstance(domain, RecordDomain)):
-            feed_type = domain.family
-            if isinstance(domain, ListDomain):
-                feed_type += " of " + domain.item_domain.family
             raise BadRequestError("unexpected feed type: expected"
-                                  " a list of records; got %s" % feed_type)
+                                  " a list of records; got %s" % domain)
         if is_list:
             fields = domain.item_domain.fields
         else:
@@ -253,7 +250,7 @@ class BuildExtractNode(Utility):
                                               " expected %s; got %s"
                                               % (field.tag.encode('utf-8'),
                                                  arc_domain,
-                                                 field.domain.family))
+                                                 field.domain))
                     convert = (lambda v, i=idx, c=clarify: c(v[i]))
                     converts.append(convert)
         return ExtractNodePipe(node, arcs, id_convert, converts, is_list)
@@ -491,7 +488,7 @@ class BuildResolveChain(Utility):
         count = itertools.count()
         def make_value(domain):
             value = []
-            for field in domain.fields:
+            for field in domain.labels:
                 if isinstance(field, IdentityDomain):
                     item = make_value(field)
                 else:

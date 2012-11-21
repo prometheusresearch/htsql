@@ -12,12 +12,12 @@ This module declares term nodes.
 
 
 from ..util import (listof, dictof, tupleof, maybe,
-                    Clonable, Printable, Comparable)
+                    Clonable, Printable, Hashable)
 from ..domain import BooleanDomain
 from .flow import Expression, Flow, Code, Unit, QueryExpr, SegmentCode
 
 
-class Joint(Comparable, Clonable, Printable):
+class Joint(Hashable, Clonable, Printable):
     """
     Represents a join condition.
 

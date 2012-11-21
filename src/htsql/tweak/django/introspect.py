@@ -7,7 +7,7 @@ from ...core.adapter import Protocol, rank, call
 from ...core.introspect import Introspect
 from ...core.entity import make_catalog
 from ...core.domain import (BooleanDomain, IntegerDomain, FloatDomain,
-                            DecimalDomain, StringDomain, DateDomain,
+                            DecimalDomain, TextDomain, DateDomain,
                             TimeDomain, DateTimeDomain, OpaqueDomain)
 
 
@@ -122,12 +122,12 @@ class IntrospectDjangoDecimalDomain(IntrospectDjangoDomain):
         return DecimalDomain()
 
 
-class IntrospectDjangoStringDomain(IntrospectDjangoDomain):
+class IntrospectDjangoTextDomain(IntrospectDjangoDomain):
 
     call('CharField', 'FilePathField', 'TextField')
 
     def __call__(self):
-        return StringDomain()
+        return TextDomain()
 
 
 class IntrospectDjangoDateDomain(IntrospectDjangoDomain):

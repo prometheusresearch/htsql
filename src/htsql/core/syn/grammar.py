@@ -270,7 +270,7 @@ class PatternBuffer(TextBuffer):
     def pull_seq(self, symbol_pattern, to_symbol=None):
         # Reads a concatenation pattern.
         arms = [self.pull_mod(symbol_pattern, to_symbol)]
-        while not self.peek(r"[|] | [)] | $"):
+        while self.peek(symbol_pattern) or self.peek(r"[(]"):
             arms.append(self.pull_mod(symbol_pattern, to_symbol))
         return SeqPat(arms) if len(arms) > 1 else arms[0]
 
@@ -351,7 +351,7 @@ class LexicalGrammar(Printable):
         pattern = buffer.pull_alt(r"[%] \w+ | [`] (?: [^`] | [`][`] )* [`]",
                                   lambda s: s[1:] if s[0] == '%'
                                             else s[1:-1].replace("``", "`"))
-        if buffer.pull(r"$") is None:
+        if buffer:
             raise buffer.fail("expected rule end")
         doc = trim_doc(descriptor)
 
@@ -464,7 +464,7 @@ class LexicalRule(Printable):
             raise buffer.fail("expected ':'")
         pattern = buffer.pull_alt(r"[\[] (?: [^\\\]] | \\. )+ [\]] |"
                                   r" [\^] | [$]")
-        if buffer.pull(r"$") is None:
+        if buffer:
             raise buffer.fail("expected rule end")
         doc = trim_doc(descriptor)
 
@@ -721,7 +721,7 @@ class SyntaxGrammar(Printable):
                                     (s[1:-1].replace("``", "`"), True)
                                         if s[0] == s[-1] == "`" else
                                     (s, False))
-        if buffer.pull(r"$") is None:
+        if buffer:
             raise buffer.fail("expected rule end")
         dfa = pattern.dfa()
         doc = trim_doc(descriptor)

@@ -7,7 +7,7 @@ from htsql.core.connect import (Connect, Scramble, Unscramble, UnscrambleError,
         DBError)
 from htsql.core.adapter import adapt
 from htsql.core.context import context
-from htsql.core.domain import (BooleanDomain, StringDomain, EnumDomain,
+from htsql.core.domain import (BooleanDomain, TextDomain, EnumDomain,
         TimeDomain)
 import MySQLdb, MySQLdb.connections
 import datetime
@@ -72,9 +72,9 @@ class UnscrambleMySQLBoolean(Unscramble):
         return (value != 0)
 
 
-class UnscrambleMySQLString(Unscramble):
+class UnscrambleMySQLText(Unscramble):
 
-    adapt(StringDomain)
+    adapt(TextDomain)
 
     @staticmethod
     def convert(value):

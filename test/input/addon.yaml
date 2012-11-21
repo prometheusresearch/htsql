@@ -323,17 +323,17 @@ tests:
       tweak.inet: {}
 
   # Introspection and conversion
-  - uri: /other{code, inet+, inet(inet), string(inet), integer(inet)}
+  - uri: /other{code, inet+, inet(inet), text(inet), integer(inet)}
 
   # Conversions
   - uri: /{inet('127.0.0.1')}
-  - uri: /{inet(string('127.0.0.1')), inet(2130706433)}
-  - uri: /{string(inet('127.0.0.1')), integer(inet('127.0.0.1'))}
+  - uri: /{inet(text('127.0.0.1')), inet(2130706433)}
+  - uri: /{text(inet('127.0.0.1')), integer(inet('127.0.0.1'))}
 
   # Invalid literals and conversions
   - uri: /{inet('HTSQL')}
     expect: 400
-  - uri: /{inet(string('HTSQL'))}
+  - uri: /{inet(text('HTSQL'))}
     expect: 409
   - uri: /{inet(-1)}
     expect: 409

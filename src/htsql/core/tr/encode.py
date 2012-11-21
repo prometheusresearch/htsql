@@ -14,7 +14,7 @@ This module implements the encoding process.
 from ..adapter import Adapter, adapt, adapt_many
 from ..domain import (Domain, UntypedDomain, EntityDomain, RecordDomain,
         BooleanDomain, NumberDomain, IntegerDomain, DecimalDomain, FloatDomain,
-        StringDomain, EnumDomain, DateDomain, TimeDomain, DateTimeDomain,
+        TextDomain, EnumDomain, DateDomain, TimeDomain, DateTimeDomain,
         OpaqueDomain)
 from .error import EncodeError
 from .coerce import coerce
@@ -591,8 +591,8 @@ class Convert(Adapter):
             return self.state.encode(self.base)
         # The default implementation complains that the conversion is
         # not admissible.
-        raise EncodeError("cannot convert a value of type '%s' to '%s'"
-                          % (self.base.domain.family, self.domain.family),
+        raise EncodeError("cannot convert a value of type %s to %s"
+                          % (self.base.domain, self.domain),
                           self.binding.mark)
 
 
@@ -642,7 +642,7 @@ class ConvertToItself(Convert):
                (IntegerDomain, IntegerDomain),
                (FloatDomain, FloatDomain),
                (DecimalDomain, DecimalDomain),
-               (StringDomain, StringDomain),
+               (TextDomain, TextDomain),
                (DateDomain, DateDomain),
                (TimeDomain, TimeDomain),
                (DateTimeDomain, DateTimeDomain))
@@ -678,10 +678,10 @@ class ConvertEntityToBoolean(Convert):
                            self.binding, op=unit)
 
 
-class ConvertStringToBoolean(Convert):
+class ConvertTextToBoolean(Convert):
     # Convert a string expression to a conditional expression.
 
-    adapt(StringDomain, BooleanDomain)
+    adapt(TextDomain, BooleanDomain)
 
     def __call__(self):
         # A `NULL` value and an empty string are converted to `FALSE`,
@@ -723,16 +723,16 @@ class ConvertToBoolean(Convert):
                            op=self.state.encode(self.base))
 
 
-class ConvertToString(Convert):
+class ConvertToText(Convert):
     # Convert an expression to a string.
 
-    adapt_many((BooleanDomain, StringDomain),
-               (NumberDomain, StringDomain),
-               (EnumDomain, StringDomain),
-               (DateDomain, StringDomain),
-               (TimeDomain, StringDomain),
-               (DateTimeDomain, StringDomain),
-               (OpaqueDomain, StringDomain))
+    adapt_many((BooleanDomain, TextDomain),
+               (NumberDomain, TextDomain),
+               (EnumDomain, TextDomain),
+               (DateDomain, TextDomain),
+               (TimeDomain, TextDomain),
+               (DateTimeDomain, TextDomain),
+               (OpaqueDomain, TextDomain))
     # Note: we assume we could convert any opaque data type to string;
     # it is risky but convenient.
 
@@ -748,7 +748,7 @@ class ConvertToInteger(Convert):
 
     adapt_many((DecimalDomain, IntegerDomain),
                (FloatDomain, IntegerDomain),
-               (StringDomain, IntegerDomain))
+               (TextDomain, IntegerDomain))
 
     def __call__(self):
         # We leave conversion from literal values to the database
@@ -763,7 +763,7 @@ class ConvertToDecimal(Convert):
 
     adapt_many((IntegerDomain, DecimalDomain),
                (FloatDomain, DecimalDomain),
-               (StringDomain, DecimalDomain))
+               (TextDomain, DecimalDomain))
 
     def __call__(self):
         # Encode the operand of the cast.
@@ -787,7 +787,7 @@ class ConvertToFloat(Convert):
 
     adapt_many((IntegerDomain, FloatDomain),
                (DecimalDomain, FloatDomain),
-               (StringDomain, FloatDomain))
+               (TextDomain, FloatDomain))
 
     def __call__(self):
         # Encode the operand of the cast.
@@ -809,7 +809,7 @@ class ConvertToFloat(Convert):
 class ConvertToDate(Convert):
     # Convert an expression to a date value.
 
-    adapt_many((StringDomain, DateDomain),
+    adapt_many((TextDomain, DateDomain),
                (DateTimeDomain, DateDomain))
 
     def __call__(self):
@@ -823,7 +823,7 @@ class ConvertToDate(Convert):
 class ConvertToTime(Convert):
     # Convert an expression to a time value.
 
-    adapt_many((StringDomain, TimeDomain),
+    adapt_many((TextDomain, TimeDomain),
                (DateTimeDomain, TimeDomain))
 
     def __call__(self):
@@ -835,7 +835,7 @@ class ConvertToTime(Convert):
 class ConvertToDateTime(Convert):
     # Convert an expression to a datetime value.
 
-    adapt_many((StringDomain, DateTimeDomain),
+    adapt_many((TextDomain, DateTimeDomain),
                (DateDomain, DateTimeDomain))
 
     def __call__(self):

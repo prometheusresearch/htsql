@@ -569,7 +569,7 @@ def prepare_parse():
 
     # Atomic label expressions.
     label = grammar.add_rule('''
-        label:  %LABEL | label_group | reference
+        label:  %LABEL | %STRING | label_group | reference
     ''')
 
     @label.set_match
@@ -577,6 +577,10 @@ def prepare_parse():
         if stream.peek(LABEL):
             label = stream.pull()   # %LABEL
             syntax = LabelSyntax(label.text, stream.mark())
+            yield syntax
+        elif stream.peek(STRING):
+            literal = stream.pull() # %STRING
+            syntax = StringSyntax(literal.text, stream.mark())
             yield syntax
         else:
             yield stream.pull()     # label_group | reference

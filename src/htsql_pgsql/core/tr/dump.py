@@ -7,7 +7,7 @@ from htsql.core.domain import IntegerDomain
 from htsql.core.tr.dump import (FormatLiteral, FormatPlaceholder,
                                 DumpFloat, DumpDecimal, DumpDate,
                                 DumpTime, DumpDateTime, DumpToDecimal,
-                                DumpToFloat, DumpToString, DumpSortDirection)
+                                DumpToFloat, DumpToText, DumpSortDirection)
 from htsql.core.tr.fn.dump import (DumpLike, DumpDateIncrement,
                                    DumpDateDecrement, DumpDateDifference,
                                    DumpMakeDate, DumpExtractYear,
@@ -98,7 +98,7 @@ class PGSQLDumpToDecimal(DumpToDecimal):
         self.format("CAST({base} AS NUMERIC)", base=self.base)
 
 
-class PGSQLDumpToString(DumpToString):
+class PGSQLDumpToText(DumpToText):
 
     def __call__(self):
         self.format("CAST({base} AS TEXT)", base=self.base)

@@ -11,7 +11,7 @@
 
 from ...util import aresubclasses
 from ...adapter import Adapter, Component, adapt, adapt_many, call
-from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
+from ...domain import (Domain, UntypedDomain, BooleanDomain, TextDomain,
         IntegerDomain, DecimalDomain, FloatDomain, DateDomain, TimeDomain,
         DateTimeDomain, EnumDomain, ListDomain, RecordDomain)
 from ...syn.syntax import (NumberSyntax, StringSyntax, IdentifierSyntax,
@@ -199,7 +199,7 @@ class BindHomoFunction(BindFunction):
             if len(domains) > 1:
                 raise BindError("cannot coerce values of types (%s)"
                                 " to a common type"
-                                % (", ".join("'%s'" % domain.family
+                                % (", ".join(str(domain)
                                              for domain in domains)),
                                 self.syntax.mark)
             else:
@@ -281,7 +281,7 @@ class Correlate(Component):
     def __call__(self):
         if isinstance(self.binding.syntax, OperatorSyntax):
             name = "operator '%s'" % self.binding.syntax.symbol.encode('utf-8')
-        if isinstance(self.binding.syntax, PrefixSyntax):
+        elif isinstance(self.binding.syntax, PrefixSyntax):
             name = "unary operator '%s'" \
                     % self.binding.syntax.symbol.encode('utf-8')
         elif isinstance(self.binding.syntax, ApplySyntax):
@@ -295,7 +295,7 @@ class Correlate(Component):
         else:
             types = "type"
             values = "a value"
-        families = ", ".join("'%s'" % domain_class.family
+        families = ", ".join("%s" % domain_class
                              for domain_class in domain_vector)
         if len(domain_vector) > 1:
             families = "(%s)" % families
@@ -309,7 +309,7 @@ class Correlate(Component):
                 if any(issubclass(domain_class, UntypedDomain)
                        for domain_class in domain_vector):
                     continue
-                valid_families = ", ".join("'%s'" % domain_class.family
+                valid_families = ", ".join("%s" % domain_class
                                            for domain_class in domain_vector)
                 if len(domain_vector) > 1:
                     valid_families = "(%s)" % valid_families
@@ -796,10 +796,10 @@ class BindBooleanCast(BindCast):
     hint = """boolean(expr) -> expression converted to Boolean"""
 
 
-class BindStringCast(BindCast):
+class BindTextCast(BindCast):
 
-    call('string', 'str')
-    codomain = StringDomain()
+    call('text', 'string', 'str')
+    codomain = TextDomain()
     hint = """string(expr) -> expression converted to a string"""
 
 
@@ -883,7 +883,7 @@ class BindAmongBase(BindFunction):
         if domain is None:
             raise BindError("cannot coerce values of types (%s)"
                             " to a common type"
-                            % (", ".join("'%s'" % domain.family
+                            % (", ".join(str(domain)
                                          for domain in domains)),
                             self.syntax.mark)
         lop = ImplicitCastBinding(lop, domain, lop.syntax)
@@ -925,7 +925,7 @@ class BindTotallyEqualBase(BindFunction):
         if domain is None:
             raise BindError("cannot coerce values of types (%s)"
                             " to a common type"
-                            % (", ".join("'%s'" % domain.family
+                            % (", ".join(str(domain)
                                          for domain in domains)),
                             self.syntax.mark)
         lop = ImplicitCastBinding(lop, domain, lop.syntax)
@@ -1002,15 +1002,15 @@ class BindCompare(BindFunction):
         if domain is None:
             raise BindError("cannot coerce values of types (%s)"
                             " to a common type"
-                            % (", ".join("'%s'" % domain.family
+                            % (", ".join(str(domain)
                                          for domain in domains)),
                             self.syntax.mark)
         lop = ImplicitCastBinding(lop, domain, lop.syntax)
         rop = ImplicitCastBinding(rop, domain, rop.syntax)
         is_comparable = Comparable.__invoke__(domain)
         if not is_comparable:
-            raise BindError("values of type '%s' are not comparable"
-                            % domain.family, self.syntax.mark)
+            raise BindError("values of type %s are not comparable"
+                            % domain, self.syntax.mark)
         return FormulaBinding(self.state.scope,
                               self.signature(self.relation),
                               coerce(BooleanDomain()),
@@ -1059,7 +1059,7 @@ class Comparable(Adapter):
 class ComparableDomains(Comparable):
 
     adapt_many(IntegerDomain, DecimalDomain, FloatDomain,
-               StringDomain, EnumDomain, DateDomain, TimeDomain,
+               TextDomain, EnumDomain, DateDomain, TimeDomain,
                DateTimeDomain)
 
     def __call__(self):
@@ -1124,12 +1124,12 @@ class CorrelateDateTimeIncrement(CorrelateFunction):
 class CorrelateConcatenate(CorrelateFunction):
 
     match(AddSig, (UntypedDomain, UntypedDomain),
-                  (UntypedDomain, StringDomain),
-                  (StringDomain, UntypedDomain),
-                  (StringDomain, StringDomain))
+                  (UntypedDomain, TextDomain),
+                  (TextDomain, UntypedDomain),
+                  (TextDomain, TextDomain))
     signature = ConcatenateSig
-    domains = [StringDomain(), StringDomain()]
-    codomain = StringDomain()
+    domains = [TextDomain(), TextDomain()]
+    codomain = TextDomain()
 
 
 class BindSubtract(BindPolyFunction):
@@ -1409,12 +1409,12 @@ class BindLength(BindPolyFunction):
     hint = """length(s) -> length of s"""
 
 
-class CorrelateStringLength(CorrelateFunction):
+class CorrelateTextLength(CorrelateFunction):
 
-    match(LengthSig, StringDomain,
+    match(LengthSig, TextDomain,
                      UntypedDomain)
     signature = LengthSig
-    domains = [StringDomain()]
+    domains = [TextDomain()]
     codomain = IntegerDomain()
 
 
@@ -1444,14 +1444,14 @@ class BindNotContains(BindContainsBase):
     hint = """(s !~ sub) -> TRUE if s does not contain sub"""
 
 
-class CorrelateStringContains(CorrelateFunction):
+class CorrelateTextContains(CorrelateFunction):
 
-    match(ContainsSig, (StringDomain, StringDomain),
-                       (StringDomain, UntypedDomain),
-                       (UntypedDomain, StringDomain),
+    match(ContainsSig, (TextDomain, TextDomain),
+                       (TextDomain, UntypedDomain),
+                       (UntypedDomain, TextDomain),
                        (UntypedDomain, UntypedDomain))
     signature = ContainsSig
-    domains = [StringDomain(), StringDomain()]
+    domains = [TextDomain(), TextDomain()]
     codomain = BooleanDomain()
 
 
@@ -1486,17 +1486,17 @@ class BindTail(BindPolyFunction):
 class CorrelateHead(CorrelateFunction):
 
     match(HeadSig, UntypedDomain,
-                   StringDomain)
-    domains = [StringDomain()]
-    codomain = StringDomain()
+                   TextDomain)
+    domains = [TextDomain()]
+    codomain = TextDomain()
 
 
 class CorrelateTail(CorrelateFunction):
 
     match(TailSig, UntypedDomain,
-                   StringDomain)
-    domains = [StringDomain()]
-    codomain = StringDomain()
+                   TextDomain)
+    domains = [TextDomain()]
+    codomain = TextDomain()
 
 
 class BindSlice(BindPolyFunction):
@@ -1521,9 +1521,9 @@ class BindSlice(BindPolyFunction):
 class CorrelateSlice(CorrelateFunction):
 
     match(SliceSig, UntypedDomain,
-                    StringDomain)
-    domains = [StringDomain()]
-    codomain = StringDomain()
+                    TextDomain)
+    domains = [TextDomain()]
+    codomain = TextDomain()
 
 
 class BindAt(BindPolyFunction):
@@ -1547,9 +1547,9 @@ class BindAt(BindPolyFunction):
 class CorrelateAt(CorrelateFunction):
 
     match(AtSig, UntypedDomain,
-                 StringDomain)
-    domains = [StringDomain()]
-    codomain = StringDomain()
+                 TextDomain)
+    domains = [TextDomain()]
+    codomain = TextDomain()
 
 
 class BindReplace(BindPolyFunction):
@@ -1562,9 +1562,9 @@ class BindReplace(BindPolyFunction):
 class CorrelateReplace(CorrelateFunction):
 
     match(ReplaceSig, UntypedDomain,
-                      StringDomain)
-    domains = [StringDomain(), StringDomain(), StringDomain()]
-    codomain = StringDomain()
+                      TextDomain)
+    domains = [TextDomain(), TextDomain(), TextDomain()]
+    codomain = TextDomain()
 
 
 class BindUpper(BindPolyFunction):
@@ -1577,9 +1577,9 @@ class BindUpper(BindPolyFunction):
 class CorrelateUpper(CorrelateFunction):
 
     match(UpperSig, UntypedDomain,
-                    StringDomain)
-    domains = [StringDomain()]
-    codomain = StringDomain()
+                    TextDomain)
+    domains = [TextDomain()]
+    codomain = TextDomain()
 
 
 class BindLower(BindPolyFunction):
@@ -1592,9 +1592,9 @@ class BindLower(BindPolyFunction):
 class CorrelateLower(CorrelateFunction):
 
     match(LowerSig, UntypedDomain,
-                    StringDomain)
-    domains = [StringDomain()]
-    codomain = StringDomain()
+                    TextDomain)
+    domains = [TextDomain()]
+    codomain = TextDomain()
 
 
 class BindTrimBase(BindPolyFunction):
@@ -1774,9 +1774,9 @@ class CorrelateExtractSecondFromDateTime(CorrelateFunction):
 class CorrelateTrim(CorrelateFunction):
 
     match(TrimSig, UntypedDomain,
-                   StringDomain)
-    domains = [StringDomain()]
-    codomain = StringDomain()
+                   TextDomain)
+    domains = [TextDomain()]
+    codomain = TextDomain()
 
 
 class BindIsNull(BindHomoFunction):
@@ -1840,7 +1840,7 @@ class BindIf(BindFunction):
             if len(domains) > 1:
                 raise BindError("cannot coerce values of types (%s)"
                                 " to a common type"
-                                % (", ".join("'%s'" % domain.family
+                                % (", ".join(str(domain)
                                              for domain in domains)),
                                 self.syntax.mark)
             else:
@@ -1896,7 +1896,7 @@ class BindSwitch(BindFunction):
         if domain is None:
             raise BindError("cannot coerce values of types (%s)"
                             " to a common type"
-                            % (", ".join("'%s'" % domain.family
+                            % (", ".join(str(domain)
                                          for domain in domains)),
                             self.syntax.mark)
         variable = ImplicitCastBinding(variable, domain, variable.syntax)
@@ -1910,7 +1910,7 @@ class BindSwitch(BindFunction):
             if len(domains) > 1:
                 raise BindError("cannot coerce values of types (%s)"
                                 " to a common type"
-                                % (", ".join("'%s'" % domain.family
+                                % (", ".join(str(domain)
                                              for domain in domains)),
                                 self.syntax.mark)
             else:
@@ -2083,12 +2083,12 @@ class CorrelateFloatMinMax(CorrelateFunction):
     codomain = FloatDomain()
 
 
-class CorrelateStringMinMax(CorrelateFunction):
+class CorrelateTextMinMax(CorrelateFunction):
 
-    match(MinMaxSig, StringDomain)
+    match(MinMaxSig, TextDomain)
     signature = MinMaxSig
-    domains = [StringDomain()]
-    codomain = StringDomain()
+    domains = [TextDomain()]
+    codomain = TextDomain()
 
 
 class CorrelateDateMinMax(CorrelateFunction):

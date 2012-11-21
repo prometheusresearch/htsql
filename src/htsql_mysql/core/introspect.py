@@ -7,7 +7,7 @@ from htsql.core.adapter import Protocol, call
 from htsql.core.introspect import Introspect
 from htsql.core.entity import make_catalog
 from htsql.core.domain import (BooleanDomain, IntegerDomain,
-                               DecimalDomain, FloatDomain, StringDomain,
+                               DecimalDomain, FloatDomain, TextDomain,
                                EnumDomain, DateDomain, TimeDomain,
                                DateTimeDomain, OpaqueDomain)
 from htsql.core.connect import connect
@@ -173,7 +173,7 @@ class IntrospectMySQLCharDomain(IntrospectMySQLDomain):
     call('char')
 
     def __call__(self):
-        return StringDomain(length=self.length, is_varying=False)
+        return TextDomain(length=self.length, is_varying=False)
 
 
 class IntrospectMySQLVarCharDomain(IntrospectMySQLDomain):
@@ -181,7 +181,7 @@ class IntrospectMySQLVarCharDomain(IntrospectMySQLDomain):
     call('varchar', 'tinytext', 'text', 'mediumtext', 'longtext')
 
     def __call__(self):
-        return StringDomain(length=self.length, is_varying=True)
+        return TextDomain(length=self.length, is_varying=True)
 
 
 class IntrospectMySQLEnumDomain(IntrospectMySQLDomain):

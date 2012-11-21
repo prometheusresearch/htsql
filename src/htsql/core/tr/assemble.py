@@ -11,9 +11,9 @@ This module implements the assembling process.
 """
 
 
-from ..util import Printable, Comparable, Record, listof, maybe
+from ..util import Printable, Hashable, listof, maybe
 from ..adapter import Adapter, adapt, adapt_many
-from ..domain import BooleanDomain, UntypedDomain
+from ..domain import BooleanDomain, UntypedDomain, Record, ID
 from .coerce import coerce
 from .binding import WeakSegmentBinding
 from .flow import (Code, SegmentCode, LiteralCode, FormulaCode, CastCode,
@@ -34,7 +34,7 @@ from .signature import (Signature, IsEqualSig, IsTotallyEqualSig, IsInSig,
                         FromPredicateSig)
 
 
-class Claim(Comparable, Printable):
+class Claim(Hashable, Printable):
     """
     Represents an export request.
 
@@ -1613,8 +1613,8 @@ class DecomposeRecord(Decompose):
         record_class = Record.make(self.state.name, field_names)
         def compose_record(row, stream, record_class=record_class,
                            compose_fields=compose_fields):
-            return record_class(*[compose_field(row, stream)
-                                  for compose_field in compose_fields])
+            return record_class(compose_field(row, stream)
+                                for compose_field in compose_fields)
         return compose_record
 
 
@@ -1628,12 +1628,11 @@ class DecomposeIdentity(Decompose):
             compose_field = self.state.decompose(field)
             compose_fields.append(compose_field)
         # FIXME: a reference leak?
-        record_class = Record.make(None, [None]*len(self.code.fields),
-                                   self.code.domain.dump)
+        id_class = ID.make(self.code.domain.dump)
         def compose_identity(row, stream, compose_fields=compose_fields,
-                             record_class=record_class):
-            return record_class(*[compose_field(row, stream)
-                                  for compose_field in compose_fields])
+                             id_class=id_class):
+            return id_class(compose_field(row, stream)
+                            for compose_field in compose_fields)
         return compose_identity
 
 

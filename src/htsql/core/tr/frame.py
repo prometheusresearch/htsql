@@ -11,7 +11,7 @@ This module declares frame and phrase nodes.
 """
 
 
-from ..util import listof, tupleof, maybe, Clonable, Comparable, Printable
+from ..util import listof, tupleof, maybe, Clonable, Hashable, Printable
 from ..entity import TableEntity, ColumnEntity
 from ..domain import Domain, BooleanDomain
 from .coerce import coerce
@@ -20,7 +20,7 @@ from .term import Term, QueryTerm
 from .signature import Signature, Bag, Formula
 
 
-class Clause(Comparable, Clonable, Printable):
+class Clause(Hashable, Clonable, Printable):
     """
     Represents a SQL clause.
 

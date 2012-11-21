@@ -12,7 +12,7 @@ This module implements the reducing process.
 
 
 from ..adapter import Adapter, adapt
-from ..domain import BooleanDomain, StringDomain, IntegerDomain
+from ..domain import BooleanDomain, TextDomain, IntegerDomain
 from .coerce import coerce
 from .stitch import arrange
 from .term import PermanentTerm
@@ -1069,7 +1069,7 @@ class ReduceNullIf(ReduceBySignature):
                 return lop
             # In general, we can't rely on comparison for string values,
             # but we could assume that an empty string is only equal to itself.
-            elif isinstance(self.phrase.domain, StringDomain):
+            elif isinstance(self.phrase.domain, TextDomain):
                 if len(lop.value) > 0 and len(rop.value) == 0:
                     return lop
 

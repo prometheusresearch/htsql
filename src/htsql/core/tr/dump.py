@@ -11,10 +11,10 @@ This module implements the SQL serialization process.
 """
 
 
-from ..util import listof, maybe, Record
+from ..util import listof, maybe
 from ..adapter import Adapter, Protocol, adapt, call
 from ..domain import (Domain, BooleanDomain, IntegerDomain, DecimalDomain,
-                      FloatDomain, StringDomain, EnumDomain, DateDomain,
+                      FloatDomain, TextDomain, EnumDomain, DateDomain,
                       TimeDomain, DateTimeDomain, ListDomain, RecordDomain)
 from .error import SerializeError
 from ..syn.syntax import IdentifierSyntax, ApplySyntax, LiteralSyntax
@@ -1559,12 +1559,12 @@ class DumpDecimal(DumpByDomain):
             self.write(u"(%s)" % self.value)
 
 
-class DumpString(DumpByDomain):
+class DumpText(DumpByDomain):
     """
     Serializes a string literal.
     """
 
-    adapt(StringDomain)
+    adapt(TextDomain)
 
     def __call__(self):
         # Dump the value as a quoted literal.
@@ -1732,14 +1732,14 @@ class DumpToDecimal(DumpToDomain):
         self.format("CAST({base} AS DECIMAL)", base=self.base)
 
 
-class DumpToString(DumpToDomain):
+class DumpToText(DumpToDomain):
     """
     Serializes conversion to a string.
 
     Handles conversion from other data types to a string.
     """
 
-    adapt(Domain, StringDomain)
+    adapt(Domain, TextDomain)
 
     def __call__(self):
         # Dump:

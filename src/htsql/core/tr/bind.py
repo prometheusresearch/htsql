@@ -653,29 +653,29 @@ class BindLocate(Bind):
             raise BindError("cannot determine identity", seed.mark)
         identity = self.state.use(recipe, self.syntax.rarm, scope=seed)
         location = self.state.bind(self.syntax.rarm, scope=seed)
-        if identity.domain.arity != location.arity:
+        if identity.domain.width != location.width:
             raise BindError("ill-formed locator", self.syntax.rarm.mark)
         def convert(identity, elements):
             value = []
-            for field in identity.fields:
+            for field in identity.labels:
                 if isinstance(field, IdentityDomain):
-                    total_arity = 0
+                    total_width = 0
                     items = []
-                    while total_arity < field.arity:
+                    while total_width < field.width:
                         assert elements
                         element = elements.pop(0)
-                        if (total_arity == 0 and
+                        if (total_width == 0 and
                                 isinstance(element, IdentityBinding) and
-                                element.arity == field.arity):
+                                element.width == field.width):
                             items = element.elements[:]
-                            total_arity = element.arity
+                            total_width = element.width
                         elif isinstance(element, IdentityBinding):
                             items.append(element)
-                            total_arity += element.arity
+                            total_width += element.width
                         else:
                             items.append(element)
-                            total_arity += 1
-                    if total_arity > field.arity:
+                            total_width += 1
+                    if total_width > field.width:
                         raise BindError("ill-formed locator",
                                         self.syntax.rarm.mark)
                     item = convert(field, items)

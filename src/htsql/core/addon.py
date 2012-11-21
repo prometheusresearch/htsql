@@ -69,7 +69,7 @@ class Parameter(object):
     def __init__(self, attribute, validator, default=None,
                  value_name=None, hint=None):
         assert isinstance(attribute, str)
-        assert re.match(r'^[a-zA-Z_][0-9a-zA-Z_]*$', attribute)
+        assert re.match(r'\A[a-zA-Z_][0-9a-zA-Z_]*\Z', attribute)
         assert isinstance(validator, Validator)
         assert isinstance(value_name, maybe(str))
         assert isinstance(hint, maybe(str))
@@ -103,7 +103,7 @@ class Variable(object):
 
     def __init__(self, attribute, default=None):
         assert isinstance(attribute, str)
-        assert re.match(r'^[a-zA-Z_][0-9a-zA-Z_]*$', attribute)
+        assert re.match(r'\A[a-zA-Z_][0-9a-zA-Z_]*\Z', attribute)
         self.attribute = attribute
         self.default = default
 
