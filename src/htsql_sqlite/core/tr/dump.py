@@ -4,25 +4,20 @@
 
 
 from htsql.core.adapter import adapt
+from htsql.core.error import Error
 from htsql.core.domain import BooleanDomain, TextDomain
 from htsql.core.tr.frame import LiteralPhrase
-from htsql.core.tr.dump import (DumpBoolean, DumpDecimal, DumpDate,
-                                DumpTime, DumpDateTime,
-                                DumpToFloat, DumpToDecimal, DumpToText,
-                                DumpToDate, DumpToTime, DumpToDateTime,
-                                DumpIsTotallyEqual)
+from htsql.core.tr.dump import (DumpBoolean, DumpDecimal, DumpDate, DumpTime,
+        DumpDateTime, DumpToFloat, DumpToDecimal, DumpToText, DumpToDate,
+        DumpToTime, DumpToDateTime, DumpIsTotallyEqual)
 from htsql.core.tr.fn.dump import (DumpRoundTo, DumpTrunc, DumpTruncTo,
-                                   DumpLength, DumpSubstring, DumpTrim,
-                                   DumpDateIncrement, DumpDateTimeIncrement,
-                                   DumpDateDecrement, DumpDateTimeDecrement,
-                                   DumpDateDifference, DumpMakeDate,
-                                   DumpMakeDateTime, DumpCombineDateTime,
-                                   DumpExtractYear, DumpExtractMonth,
-                                   DumpExtractDay, DumpExtractHour,
-                                   DumpExtractMinute, DumpExtractSecond,
-                                   DumpToday, DumpNow, DumpFunction)
+        DumpLength, DumpSubstring, DumpTrim, DumpDateIncrement,
+        DumpDateTimeIncrement, DumpDateDecrement, DumpDateTimeDecrement,
+        DumpDateDifference, DumpMakeDate, DumpMakeDateTime,
+        DumpCombineDateTime, DumpExtractYear, DumpExtractMonth, DumpExtractDay,
+        DumpExtractHour, DumpExtractMinute, DumpExtractSecond, DumpToday,
+        DumpNow, DumpFunction)
 from .signature import IsAnySig
-from htsql.core.tr.error import SerializeError
 
 
 class SQLiteDumpBoolean(DumpBoolean):
@@ -39,8 +34,8 @@ class SQLiteDumpBoolean(DumpBoolean):
 class SQLiteDumpDecimal(DumpDecimal):
 
     def __call__(self):
-        raise SerializeError("decimal data type is not supported",
-                             self.phrase.mark)
+        raise Error("decimal data type is not supported",
+                    self.phrase.mark)
 
 
 class SQLiteDumpDate(DumpDate):
@@ -72,8 +67,8 @@ class SQLiteDumpToFloat(DumpToFloat):
 class SQLiteDumpToDecimal(DumpToDecimal):
 
     def __call__(self):
-        raise SerializeError("decimal data type is not supported",
-                             self.phrase.mark)
+        raise Error("decimal data type is not supported",
+                    self.phrase.mark)
 
 
 class SQLiteDumpToText(DumpToText):

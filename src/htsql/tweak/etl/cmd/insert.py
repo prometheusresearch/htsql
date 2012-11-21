@@ -424,7 +424,7 @@ class BuildResolveIdentity(Utility):
         state.push_scope(scope)
         recipe = identify(scope)
         if recipe is None:
-            raise BindRequestError("cannot determine table identity")
+            raise BadRequestError("cannot determine table identity")
         binding = state.use(recipe, syntax)
         labels = relabel(TableArc(self.table))
         if labels:

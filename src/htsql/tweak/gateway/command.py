@@ -4,9 +4,10 @@
 
 
 from ...core.adapter import adapt
+from ...core.error import Error
 from ...core.cmd.command import Command
 from ...core.cmd.act import Act, Action, RenderAction, act
-from ...core.cmd.summon import Summon, recognize, RecognizeError
+from ...core.cmd.summon import Summon, recognize
 
 
 class GatewayCmd(Command):
@@ -23,7 +24,7 @@ class SummonGateway(Summon):
 
     def __call__(self):
         if len(self.arguments) != 1:
-            raise RecognizeError("expected 1 argument", self.syntax.mark)
+            raise Error("expected 1 argument", self.syntax.mark)
         [syntax] = self.arguments
         with self.instance:
             command = recognize(syntax)

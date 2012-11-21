@@ -3,16 +3,9 @@
 #
 
 
-from ..error import MarkedError, Mark
+from ..error import Error, Mark
 import re
 import urllib2
-
-
-class DecodeError(MarkedError):
-    """
-    Represents a decoding error.
-    """
-
 
 _escape_regexp = re.compile(r"""%(?P<code>[0-9A-Fa-f]{2})?""")
 
@@ -28,8 +21,8 @@ def _escape_replace(match):
         start = len(match.string[:start].decode('utf-8', 'ignore'))
         end = len(match.string[:end].decode('utf-8', 'ignore'))
         mark = Mark(text, start, end)
-        raise DecodeError("symbol '%' must be followed by two hexdecimal"
-                          " digits", mark)
+        raise Error("symbol '%' must be followed by two hexdecimal"
+                    " digits", mark)
     # Return the character corresponding to the escape sequence.
     return chr(int(code, 16))
 
@@ -64,9 +57,9 @@ def decode(text):
         start = len(text[:exc.start].decode('utf-8', 'ignore'))
         end = len(text[:exc.end].decode('utf-8', 'ignore'))
         mark = Mark(text.decode('utf-8', 'replace'), start, end)
-        raise DecodeError("cannot convert a byte sequence %s to UTF-8: %s"
-                          % (urllib2.quote(exc.object[exc.start:exc.end]),
-                             exc.reason), mark)
+        raise Error("cannot convert a byte sequence %s to UTF-8: %s"
+                    % (urllib2.quote(exc.object[exc.start:exc.end]),
+                       exc.reason), mark)
 
     return text
 

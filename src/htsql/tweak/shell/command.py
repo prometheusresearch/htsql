@@ -7,12 +7,12 @@ from ... import __version__, __legal__
 from ...core.util import maybe, listof
 from ...core.context import context
 from ...core.adapter import Adapter, adapt, adapt_many, call
-from ...core.error import HTTPError, PermissionError, MarkedError
+from ...core.error import PermissionError, StackedError, Error
 from ...core.domain import (Domain, BooleanDomain, NumberDomain, DateTimeDomain,
                             ListDomain, RecordDomain)
 from ...core.syn.syntax import StringSyntax, IntegerSyntax, IdentifierSyntax
 from ...core.cmd.command import UniversalCmd, Command, DefaultCmd
-from ...core.cmd.summon import Summon, RecognizeError, recognize
+from ...core.cmd.summon import Summon, recognize
 from ...core.cmd.act import (Act, Action, RenderAction, UnsupportedActionError,
                              act, produce, safe_produce, analyze)
 from ...core.model import HomeNode, InvalidNode, InvalidArc
@@ -86,8 +86,8 @@ class SummonShell(Summon):
         query = None
         if self.arguments:
             if len(self.arguments) != 1:
-                raise RecognizeError("expected no or 1 argument",
-                                     self.syntax.mark)
+                raise Error("expected no or 1 argument",
+                            self.syntax.mark)
             [syntax] = self.arguments
             if isinstance(syntax, StringSyntax):
                 query = syntax.text
@@ -105,7 +105,7 @@ class SummonComplete(Summon):
         names = []
         for syntax in self.arguments:
             if not isinstance(syntax, (IdentifierSyntax, StringSyntax)):
-                raise RecognizeError("an identifier is required", syntax.mark)
+                raise Error("an identifier is required", syntax.mark)
             if isinstance(syntax, IdentifierSyntax):
                 name = syntax.name
             else:
@@ -121,17 +121,17 @@ class SummonProduce(Summon):
 
     def __call__(self):
         if not (1 <= len(self.arguments) <= 2):
-            raise RecognizeError("expected 1 or 2 arguments",
+            raise Error("expected 1 or 2 arguments",
                                  self.syntax.mark)
         query = self.arguments[0]
         if not isinstance(query, StringSyntax):
-            raise RecognizeError("a string literal is required", query.mark)
+            raise Error("a string literal is required", query.mark)
         query = query.text
         page = None
         if len(self.arguments) == 2:
             page = self.arguments[1]
             if not isinstance(page, IntegerSyntax):
-                raise RecognizeError("an integer literal is required", page.mark)
+                raise Error("an integer literal is required", page.mark)
             page = page.value
         command = ProduceCmd(query, page, self.syntax.mark)
         return command
@@ -143,11 +143,11 @@ class SummonAnalyze(Summon):
 
     def __call__(self):
         if len(self.arguments) != 1:
-            raise RecognizeError("expected 1 argument",
-                                 self.syntax.mark)
+            raise Error("expected 1 argument",
+                        self.syntax.mark)
         query = self.arguments[0]
         if not isinstance(query, StringSyntax):
-            raise RecognizeError("a string literal is required", query.mark)
+            raise Error("a string literal is required", query.mark)
         query = query.text
         command = AnalyzeCmd(query, self.syntax.mark)
         return command
@@ -159,19 +159,19 @@ class SummonWithPermissions(Summon):
 
     def __call__(self):
         if len(self.arguments) != 3:
-            raise RecognizeError("expected 3 arguments", self.syntax.mark)
+            raise Error("expected 3 arguments", self.syntax.mark)
         query, can_read, can_write = self.arguments
         literals = [can_read, can_write]
         values = []
         domain = BooleanDomain()
         for literal in literals:
             if not isinstance(literal, StringSyntax):
-                raise RecognizeError("a string literal is required",
+                raise Error("a string literal is required",
                                      literal.mark)
             try:
                 value = domain.parse(literal.text)
             except ValueError, exc:
-                raise RecognizeError(str(exc), literal.mark)
+                raise Error(str(exc), literal.mark)
             values.append(value)
         can_read, can_write = values
         with context.env(can_read=context.env.can_read and can_read,
@@ -318,7 +318,7 @@ class RenderProduceAnalyze(Act):
             body = self.render_unsupported(exc)
         except PermissionError, exc:
             body = self.render_permissions(exc)
-        except HTTPError, exc:
+        except StackedError, exc:
             body = self.render_error(exc)
         else:
             if isinstance(self.command, AnalyzeCmd):
@@ -353,7 +353,7 @@ class RenderProduceAnalyze(Act):
         first_column = None
         last_line = None
         last_column = None
-        if isinstance(exc, MarkedError) and exc.mark.text:
+        if isinstance(exc, StackedError) and exc.mark.text:
             mark = exc.mark
             first_break = mark.text.rfind(u'\n', 0, mark.start)+1
             last_break = mark.text.rfind(u'\n', 0, mark.end)+1

@@ -4,7 +4,7 @@
 
 
 from ..adapter import Adapter, adapt
-from ..error import BadRequestError
+from ..error import Error, EmptyMark
 from ..util import Clonable
 from .command import Command, UniversalCmd, DefaultCmd, FormatCmd, FetchCmd
 from .summon import recognize
@@ -15,8 +15,10 @@ from ..fmt.emit import emit, emit_headers
 from ..fmt.accept import accept
 
 
-class UnsupportedActionError(BadRequestError):
-    pass
+class UnsupportedActionError(Error):
+
+    def __init__(self, detail):
+        super(UnsupportedActionError, self).__init__(detail, EmptyMark())
 
 
 class Action(Clonable):

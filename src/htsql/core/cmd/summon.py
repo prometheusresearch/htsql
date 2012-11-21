@@ -4,7 +4,7 @@
 
 
 from ..adapter import Adapter, Protocol, adapt, call
-from ..error import MarkedError
+from ..error import Error
 from ..util import to_name
 from ..syn.syntax import (Syntax, SkipSyntax, FunctionSyntax, PipeSyntax,
         ApplySyntax, CollectSyntax)
@@ -12,10 +12,6 @@ from ..syn.parse import parse
 from ..fmt.format import (TextFormat, HTMLFormat, RawFormat, JSONFormat,
         CSVFormat, TSVFormat, XMLFormat)
 from .command import SkipCmd, FetchCmd, FormatCmd, SQLCmd, DefaultCmd
-
-
-class RecognizeError(MarkedError):
-    pass
 
 
 class Recognize(Adapter):
@@ -96,7 +92,7 @@ class SummonFetch(Summon):
 
     def __call__(self):
         if len(self.arguments) != 1:
-            raise RecognizeError("expected 1 argument", self.syntax.mark)
+            raise Error("expected 1 argument", self.syntax.mark)
         [syntax] = self.arguments
         return FetchCmd(syntax, self.syntax.mark)
 
@@ -107,7 +103,7 @@ class SummonFormat(Summon):
 
     def __call__(self):
         if len(self.arguments) != 1:
-            raise RecognizeError("expected 1 argument", self.syntax.mark)
+            raise Error("expected 1 argument", self.syntax.mark)
         [syntax] = self.arguments
         feed = recognize(syntax)
         format = self.format()
@@ -162,7 +158,7 @@ class SummonSQL(Summon):
 
     def __call__(self):
         if len(self.arguments) != 1:
-            raise RecognizeError("expected 1 argument", self.syntax.mark)
+            raise Error("expected 1 argument", self.syntax.mark)
         [syntax] = self.arguments
         feed = recognize(syntax)
         return SQLCmd(feed, self.syntax.mark)

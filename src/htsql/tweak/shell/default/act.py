@@ -11,7 +11,7 @@ from ....core.cmd.summon import Recognize
 from ..command import ShellCmd
 from ....core.syn.parse import parse
 from ....core.syn.syntax import SkipSyntax
-from ....core.error import MarkedError
+from ....core.error import StackedError
 import re
 
 
@@ -63,7 +63,7 @@ class ShellRenderUniversal(Act):
                     else:
                         command = DefaultCmd(syntax)
             return act(command, self.action)
-        except MarkedError:
+        except StackedError:
             if not addon.on_error:
                 raise
             query = unquote(self.command.query)

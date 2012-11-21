@@ -17,7 +17,6 @@ from ...core.syn.parse import parse
 from ...core.syn.syntax import Syntax
 from ...core.tr.bind import BindByName
 from ...core.tr.binding import SubstitutionRecipe, ClosedRecipe
-from ...core.tr.error import TranslateError
 import fnmatch
 import re
 import weakref

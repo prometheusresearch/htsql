@@ -16,7 +16,7 @@ from ..adapter import Adapter, Protocol, adapt, call
 from ..domain import (Domain, BooleanDomain, IntegerDomain, DecimalDomain,
                       FloatDomain, TextDomain, EnumDomain, DateDomain,
                       TimeDomain, DateTimeDomain, ListDomain, RecordDomain)
-from .error import SerializeError
+from ..error import Error
 from ..syn.syntax import IdentifierSyntax, ApplySyntax, LiteralSyntax
 from .frame import (Clause, Frame, TableFrame, BranchFrame, NestedFrame,
                     SegmentFrame, QueryFrame,
@@ -492,8 +492,8 @@ class DumpBase(Adapter):
 
     def __call__(self):
         # By default, generate an error.
-        raise SerializeError("unable to serialize an expression",
-                             self.clause.mark)
+        raise Error("unable to serialize an expression",
+                    self.clause.mark)
 
     def format(self, template, *namespaces, **keywords):
         """
@@ -1504,8 +1504,8 @@ class DumpInteger(DumpByDomain):
         # We assume that the database supports 8-byte signed integer values
         # natively and complain if the value is out of this range.
         if not (-2**63 <= self.value < 2**63):
-            raise SerializeError("integer value is out of range",
-                                 self.phrase.mark)
+            raise Error("integer value is out of range",
+                        self.phrase.mark)
         # Write the number; use `(...)` around a negative number.
         if self.value >= 0:
             self.write(unicode(self.value))

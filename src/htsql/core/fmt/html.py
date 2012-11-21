@@ -15,7 +15,7 @@ from ..util import listof, tupleof, maybe, Printable
 from ..adapter import Adapter, adapt, adapt_many
 from .format import HTMLFormat
 from .emit import EmitHeaders, Emit
-from ..error import InternalServerError, Mark
+from ..error import StackedError, InternalServerError, Mark
 from ..domain import (Domain, BooleanDomain, NumberDomain, DecimalDomain,
         TextDomain, EnumDomain, DateDomain, TimeDomain, DateTimeDomain,
         ListDomain, RecordDomain, UntypedDomain, VoidDomain, OpaqueDomain,
@@ -143,16 +143,8 @@ class SequenceCase(Case):
         return "".join(str(case) for case in self.cases)
 
 
-class TemplateError(InternalServerError):
-
-    def __init__(self, detail, mark):
-        self.detail = detail
-        self.mark = mark
-
-    def __str__(self):
-        excerpt = "\n".join("    "+line.encode('utf-8')
-                            for line in self.mark.excerpt())
-        return "%s: %s:\n%s" % (self.kind, self.detail, excerpt)
+class TemplateError(StackedError, InternalServerError):
+    pass
 
 
 class Template(object):

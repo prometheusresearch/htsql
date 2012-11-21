@@ -16,7 +16,7 @@ from ..domain import (Domain, UntypedDomain, EntityDomain, RecordDomain,
         BooleanDomain, NumberDomain, IntegerDomain, DecimalDomain, FloatDomain,
         TextDomain, EnumDomain, DateDomain, TimeDomain, DateTimeDomain,
         OpaqueDomain)
-from .error import EncodeError
+from ..error import Error
 from .coerce import coerce
 from .binding import (Binding, QueryBinding, SegmentBinding,
         WeakSegmentBinding, WrappingBinding, SelectionBinding, HomeBinding,
@@ -161,8 +161,8 @@ class Encode(EncodeBase):
     def __call__(self):
         # The default implementation generates an error.
         # FIXME: a better error message?
-        raise EncodeError("a code expression is expected",
-                          self.binding.mark)
+        raise Error("a code expression is expected",
+                    self.binding.mark)
 
 
 class Relate(EncodeBase):
@@ -184,8 +184,8 @@ class Relate(EncodeBase):
     def __call__(self):
         # The default implementation generates an error.
         # FIXME: a better error message?
-        raise EncodeError("a flow expression is expected",
-                          self.binding.mark)
+        raise Error("a flow expression is expected",
+                    self.binding.mark)
 
 
 class EncodeQuery(Encode):
@@ -226,15 +226,15 @@ class EncodeSegment(Encode):
             # More than one dominating flow means the output flow
             # cannot be inferred from the columns unambiguously.
             if len(flows) > 1:
-                raise EncodeError("cannot deduce an unambiguous"
-                                  " segment flow",
-                                  self.binding.mark)
+                raise Error("cannot deduce an unambiguous"
+                            " segment flow",
+                            self.binding.mark)
             # Otherwise, `flows` contains a single maximal flow node.
             else:
                 [flow] = flows
         if not flow.spans(root):
-            raise EncodeError("a descendant segment flow is expected",
-                              self.binding.mark)
+            raise Error("a descendant segment flow is expected",
+                        self.binding.mark)
         if (isinstance(code, LiteralCode) and
                 isinstance(code.domain, UntypedDomain)):
             if code.value is None:
@@ -247,8 +247,8 @@ class EncodeSegment(Encode):
             flow = FilteredFlow(flow, filter, flow.binding)
         if isinstance(self.binding, WeakSegmentBinding):
             if not root.spans(flow):
-                raise EncodeError("a singular expression is expected",
-                                  self.binding.mark)
+                raise Error("a singular expression is expected",
+                            self.binding.mark)
         return SegmentCode(root, flow, code, self.binding)
 
 
@@ -344,10 +344,10 @@ class RelateQuotient(Relate):
         seed = self.state.relate(self.binding.seed)
         # Verify that the seed is a plural descendant of the parent flow.
         if base.spans(seed):
-            raise EncodeError("a plural expression is expected", seed.mark)
+            raise Error("a plural expression is expected", seed.mark)
         if not seed.spans(base):
-            raise EncodeError("a descendant expression is expected",
-                              seed.mark)
+            raise Error("a descendant expression is expected",
+                        seed.mark)
         # Encode the kernel expressions.
         kernels = [self.state.encode(binding)
                    for binding in self.binding.kernels]
@@ -399,8 +399,8 @@ class RelateFork(Relate):
         # FIXME: handled by the compiler.
         #for code in kernels:
         #    if not all(seed.spans(unit.flow) for unit in code.units):
-        #        raise EncodeError("a singular expression is expected",
-        #                          code.mark)
+        #        raise Error("a singular expression is expected",
+        #                    code.mark)
         return ForkedFlow(base, seed, kernels, self.binding)
 
 
@@ -421,11 +421,11 @@ class RelateLink(Relate):
         # rewriting; handled by the compiler.
         #for lcode, rcode in images:
         #    if not all(base.spans(unit.flow) for unit in lcode.units):
-        #        raise EncodeError("a singular expression is expected",
-        #                          lcode.mark)
+        #        raise Error("a singular expression is expected",
+        #                    lcode.mark)
         #    if not all(seed.spans(unit.flow) for unit in rcode.units):
-        #        raise EncodeError("a singular expression is expected",
-        #                          rcode.mark)
+        #        raise Error("a singular expression is expected",
+        #                    rcode.mark)
         return LinkedFlow(base, seed, images, self.binding)
 
 
@@ -437,8 +437,8 @@ class RelateClip(Relate):
         base = self.state.relate(self.binding.base)
         seed = self.state.relate(self.binding.seed)
         if not (seed.spans(base) and not base.spans(seed)):
-            raise EncodeError("a plural expression is expected",
-                              self.binding.seed.mark)
+            raise Error("a plural expression is expected",
+                        self.binding.seed.mark)
         return ClippedFlow(base, seed, self.binding.limit,
                            self.binding.offset, self.binding)
 
@@ -591,9 +591,9 @@ class Convert(Adapter):
             return self.state.encode(self.base)
         # The default implementation complains that the conversion is
         # not admissible.
-        raise EncodeError("cannot convert a value of type %s to %s"
-                          % (self.base.domain, self.domain),
-                          self.binding.mark)
+        raise Error("cannot convert a value of type %s to %s"
+                    % (self.base.domain, self.domain),
+                    self.binding.mark)
 
 
 class ConvertUntyped(Convert):
@@ -624,7 +624,7 @@ class ConvertUntyped(Convert):
         try:
             value = self.domain.parse(base.value)
         except ValueError, exc:
-            raise EncodeError(str(exc), self.binding.mark)
+            raise Error(str(exc), self.binding.mark)
         # Generate a new literal node with the converted value and
         # the target domain.
         code = LiteralCode(value, self.domain, self.binding)
@@ -958,8 +958,8 @@ class RelateBySignature(EncodeBySignatureBase):
 
     def __call__(self):
         # Override in subclasses for formulas that generate flow nodes.
-        raise EncodeError("a flow expression is expected",
-                          self.binding.mark)
+        raise Error("a flow expression is expected",
+                    self.binding.mark)
 
 
 class EncodeSelection(Encode):

@@ -4,29 +4,21 @@
 
 
 from htsql.core.adapter import adapt
+from htsql.core.error import Error
 from htsql.core.domain import (BooleanDomain, TextDomain, IntegerDomain,
-                               DecimalDomain, DateDomain, TimeDomain,
-                               DateTimeDomain)
-from htsql.core.tr.error import SerializeError
+        DecimalDomain, DateDomain, TimeDomain, DateTimeDomain)
 from htsql.core.tr.frame import ColumnPhrase, ReferencePhrase, LiteralPhrase
-from htsql.core.tr.dump import (FormatName, FormatPlaceholder,
-                                DumpBranch, DumpBySignature,
-                                DumpFromPredicate, DumpToPredicate,
-                                DumpIsTotallyEqual, DumpBoolean, DumpInteger,
-                                DumpDecimal, DumpFloat, DumpDate, DumpTime,
-                                DumpDateTime, DumpToInteger,
-                                DumpToFloat, DumpToDecimal, DumpToText,
-                                DumpToDate, DumpToTime, DumpToDateTime)
+from htsql.core.tr.dump import (FormatName, FormatPlaceholder, DumpBranch,
+        DumpBySignature, DumpFromPredicate, DumpToPredicate,
+        DumpIsTotallyEqual, DumpBoolean, DumpInteger, DumpDecimal, DumpFloat,
+        DumpDate, DumpTime, DumpDateTime, DumpToInteger, DumpToFloat,
+        DumpToDecimal, DumpToText, DumpToDate, DumpToTime, DumpToDateTime)
 from htsql.core.tr.fn.dump import (DumpRound, DumpRoundTo, DumpTrunc,
-                                   DumpTruncTo, DumpLength, DumpConcatenate,
-                                   DumpSubstring, DumpTrim, DumpToday, DumpNow,
-                                   DumpExtractYear, DumpExtractMonth,
-                                   DumpExtractDay, DumpExtractHour,
-                                   DumpExtractMinute, DumpExtractSecond,
-                                   DumpMakeDate, DumpMakeDateTime,
-                                   DumpDateIncrement, DumpDateDecrement,
-                                   DumpDateTimeIncrement,
-                                   DumpDateTimeDecrement, DumpDateDifference)
+        DumpTruncTo, DumpLength, DumpConcatenate, DumpSubstring, DumpTrim,
+        DumpToday, DumpNow, DumpExtractYear, DumpExtractMonth, DumpExtractDay,
+        DumpExtractHour, DumpExtractMinute, DumpExtractSecond, DumpMakeDate,
+        DumpMakeDateTime, DumpDateIncrement, DumpDateDecrement,
+        DumpDateTimeIncrement, DumpDateTimeDecrement, DumpDateDifference)
 import math
 
 
@@ -108,8 +100,7 @@ class MSSQLDumpInteger(DumpInteger):
 
     def __call__(self):
         if not (-2**63 <= self.value < 2**63):
-            raise SerializeError("invalid integer value",
-                                 self.phrase.mark)
+            raise Error("invalid integer value", self.phrase.mark)
         if abs(self.value) < 2**31:
             if self.value >= 0:
                 self.write(unicode(self.value))

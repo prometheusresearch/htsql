@@ -14,7 +14,7 @@ This module implements the compiling process.
 from ..util import maybe, listof
 from ..adapter import Adapter, adapt, adapt_many
 from ..domain import BooleanDomain, IntegerDomain
-from .error import CompileError
+from ..error import Error
 from .coerce import coerce
 from .signature import (IsNullSig, IsEqualSig, AndSig, CompareSig,
                         SortDirectionSig, RowNumberSig)
@@ -579,8 +579,8 @@ class CompileSegment(Compile):
 
     def __call__(self):
         if not self.state.superflow.spans(self.expression.root):
-            raise CompileError("a singular expression is expected",
-                               self.expression.root.mark)
+            raise Error("a singular expression is expected",
+                        self.expression.root.mark)
         chain = self.state.superflow_stack + \
                 [self.state.superflow, self.expression.root,
                  self.expression.flow]
@@ -1615,8 +1615,8 @@ class InjectColumn(Inject):
             return self.term
         # Verify that the unit is singular on the term flow.
         if not self.term.flow.spans(self.flow):
-            raise CompileError("a singular expression is expected",
-                               self.unit.mark)
+            raise Error("a singular expression is expected",
+                        self.unit.mark)
         # Inject the unit flow into the term.
         return self.state.inject(self.term, [self.unit.flow])
 
@@ -1657,8 +1657,8 @@ class InjectScalar(Inject):
 
         # Verify that the unit is singular relative to the term.
         if not self.term.flow.spans(self.flow):
-            raise CompileError("a singular expression is expected",
-                               self.unit.mark)
+            raise Error("a singular expression is expected",
+                        self.unit.mark)
         # Extract the unit expressions.
         codes = [unit.code for unit in units]
 
@@ -1745,8 +1745,8 @@ class InjectAggregate(Inject):
 
         # Verify that the units are singular relative to the term.
         if not self.term.flow.spans(self.flow):
-            raise CompileError("a singular expression is expected",
-                               self.unit.mark)
+            raise Error("a singular expression is expected",
+                        self.unit.mark)
         # Extract the aggregate expressions.
         codes = [unit.code for unit in units]
 
@@ -1857,8 +1857,8 @@ class InjectCorrelated(Inject):
         if not self.term.flow.spans(self.flow):
             # This is not reachable: the error is already reported by
             # the wrapping scalar unit.
-            raise CompileError("a singular expression is expected",
-                               self.unit.mark)
+            raise Error("a singular expression is expected",
+                        self.unit.mark)
 
         # The general chain of operations is as follows:
         #   - compile a term for the unit flow;
@@ -1941,8 +1941,8 @@ class InjectKernel(Inject):
             return self.term
         # Check if the unit is singular against the term flow.
         if not self.term.flow.spans(self.flow):
-            raise CompileError("a singular expression is expected",
-                               self.unit.mark)
+            raise Error("a singular expression is expected",
+                        self.unit.mark)
         # Inject the quotient space -- this should automatically
         # provide the unit.
         term = self.state.inject(self.term, [self.flow])
@@ -1965,8 +1965,8 @@ class InjectCovering(Inject):
         if not self.term.flow.spans(self.flow):
             # Not reachable since covering units are never generated
             # by the user directly, only by the compiler.
-            raise CompileError("a singular expression is expected",
-                               self.unit.mark)
+            raise Error("a singular expression is expected",
+                        self.unit.mark)
         # FIXME: the rewritter should optimize the flow graph
         # so that this code is not reachable.
         # Add a hint to the flow node to ask the compiler generate

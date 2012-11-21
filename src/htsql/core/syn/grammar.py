@@ -5,15 +5,9 @@
 
 from ..util import (maybe, oneof, listof, omapof, trim_doc, toposort, omap,
         TextBuffer, Printable)
-from ..error import MarkedError, Mark
+from ..error import Error, Mark
 from .token import Token
 import re
-
-
-class GrammarError(MarkedError):
-    """
-    Represents a parsing error.
-    """
 
 
 class Pattern(Printable):
@@ -609,10 +603,10 @@ class Scanner(Printable):
             if match is None:
                 mark = Mark(text, position, position)
                 if position < len(text):
-                    raise GrammarError("unexpected character %r"
-                                       % text[position].encode('utf-8'), mark)
+                    raise Error("unexpected character %r"
+                                % text[position].encode('utf-8'), mark)
                 else:
-                    raise GrammarError("unexpected end", mark)
+                    raise Error("unexpected end", mark)
             # The position of the next token.
             next_position = match.end()
             # The error context for the new token.
@@ -627,7 +621,7 @@ class Scanner(Printable):
                 assert False
             # Report an error for an error rule.
             if group.error is not None:
-                raise GrammarError(group.error, mark)
+                raise Error(group.error, mark)
             # Generate a new token object.
             if not group.is_junk:
                 if group.unquote:
@@ -963,9 +957,9 @@ class Parser(Printable):
                     if error is not None:
                         raise error
                 if token:
-                    raise GrammarError("unexpected input", token.mark)
+                    raise Error("unexpected input", token.mark)
                 else:
-                    raise GrammarError("unexpected end of input", token.mark)
+                    raise Error("unexpected end of input", token.mark)
 
             # The non-terminal associated with the transition and the next
             # machine state.
@@ -998,7 +992,7 @@ class Parser(Printable):
                         error = table.fail(stream, token)
                         if error is not None:
                             raise error
-                    raise GrammarError("unexpected input", token.mark)
+                    raise Error("unexpected input", token.mark)
                 # Process accumulated nodes.
                 if table.match is not None:
                     production = list(table.match(stream))

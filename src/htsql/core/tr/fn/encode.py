@@ -12,7 +12,7 @@
 from ...adapter import Adapter, adapt, adapt_many, adapt_none
 from ...domain import UntypedDomain, BooleanDomain, IntegerDomain
 from ..encode import EncodeBySignature, EncodingState
-from ..error import EncodeError
+from ...error import Error
 from ..coerce import coerce
 from ..binding import RootBinding, LiteralBinding, CastBinding
 from ..flow import (LiteralCode, ScalarUnit, CorrelatedUnit,
@@ -348,7 +348,7 @@ class EncodeAggregate(EncodeFunction):
             plural_units = [unit for unit in op.units
                                  if not flow.spans(unit.flow)]
             if not plural_units:
-                raise EncodeError("a plural operand is expected", op.mark)
+                raise Error("a plural operand is expected", op.mark)
             plural_flows = []
             for unit in plural_units:
                 if any(plural_flow.dominates(unit.flow)
@@ -359,19 +359,19 @@ class EncodeAggregate(EncodeFunction):
                                  if not unit.flow.dominates(plural_flow)]
                 plural_flows.append(unit.flow)
             if len(plural_flows) > 1:
-                raise EncodeError("cannot deduce an unambiguous"
-                                  " aggregate flow", op.mark)
+                raise Error("cannot deduce an unambiguous"
+                            " aggregate flow", op.mark)
             [plural_flow] = plural_flows
         if flow.spans(plural_flow):
-            raise EncodeError("a plural operand is expected", op.mark)
+            raise Error("a plural operand is expected", op.mark)
         if not plural_flow.spans(flow):
-            raise EncodeError("a descendant operand is expected",
-                              op.mark)
+            raise Error("a descendant operand is expected",
+                        op.mark)
         # FIXME: handled by the compiler.
         #if not all(plural_flow.spans(unit.flow)
         #           for unit in plural_units):
-        #    raise EncodeError("a descendant operand is expected",
-        #                      op.mark)
+        #    raise Error("a descendant operand is expected",
+        #                op.mark)
         return plural_flow
 
     def __call__(self):

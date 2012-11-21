@@ -6,9 +6,10 @@
 from ...core.context import context
 from ...core.cache import once
 from ...core.adapter import adapt, call
+from ...core.error import Error
 from ...core.cmd.command import Command
 from ...core.cmd.act import Act, Action, RenderAction, act
-from ...core.cmd.summon import Summon, RecognizeError, recognize
+from ...core.cmd.summon import Summon, recognize
 import weakref
 
 
@@ -33,7 +34,7 @@ class SummonMeta(Summon):
 
     def __call__(self):
         if len(self.arguments) != 1:
-            raise RecognizeError("expected 1 argument", self.syntax.mark)
+            raise Error("expected 1 argument", self.syntax.mark)
         [syntax] = self.arguments
         slave_app = get_slave_app()
         with slave_app:
