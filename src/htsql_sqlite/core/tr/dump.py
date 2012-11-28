@@ -34,8 +34,7 @@ class SQLiteDumpBoolean(DumpBoolean):
 class SQLiteDumpDecimal(DumpDecimal):
 
     def __call__(self):
-        raise Error("decimal data type is not supported",
-                    self.phrase.mark)
+        raise Error("Decimal data type is not supported")
 
 
 class SQLiteDumpDate(DumpDate):
@@ -67,8 +66,7 @@ class SQLiteDumpToFloat(DumpToFloat):
 class SQLiteDumpToDecimal(DumpToDecimal):
 
     def __call__(self):
-        raise Error("decimal data type is not supported",
-                    self.phrase.mark)
+        raise Error("Decimal data type is not supported")
 
 
 class SQLiteDumpToText(DumpToText):

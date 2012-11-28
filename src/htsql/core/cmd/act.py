@@ -4,7 +4,7 @@
 
 
 from ..adapter import Adapter, adapt
-from ..error import Error, EmptyMark
+from ..error import Error, act_guard
 from ..util import Clonable
 from .command import Command, UniversalCmd, DefaultCmd, FormatCmd, FetchCmd
 from .summon import recognize
@@ -16,9 +16,7 @@ from ..fmt.accept import accept
 
 
 class UnsupportedActionError(Error):
-
-    def __init__(self, detail):
-        super(UnsupportedActionError, self).__init__(detail, EmptyMark())
+    pass
 
 
 class Action(Clonable):
@@ -116,7 +114,8 @@ def act(command, action):
     assert isinstance(action, Action)
     if not isinstance(command, Command):
         command = recognize(command)
-    return Act.__invoke__(command, action)
+    with act_guard(command.mark):
+        return Act.__invoke__(command, action)
 
 
 def produce(command, environment=None, **parameters):

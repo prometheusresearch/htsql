@@ -3,20 +3,13 @@
 #
 
 
-from htsql.core.connect import (Connect, Scramble, Unscramble, UnscrambleError,
-        DBError)
+from htsql.core.connect import Connect, Scramble, Unscramble, UnscrambleError
 from htsql.core.adapter import adapt
 from htsql.core.context import context
 from htsql.core.domain import (BooleanDomain, TextDomain, DateDomain,
         TimeDomain)
 import datetime
 import pymssql
-
-
-class MSSQLError(DBError):
-    """
-    Raised when a database error occurred.
-    """
 
 
 class ConnectMSSQL(Connect):
@@ -46,11 +39,9 @@ class ConnectMSSQL(Connect):
 class UnscrambleMSSQLError(UnscrambleError):
 
     def __call__(self):
-        # If we got a DBAPI exception, generate our error out of it.
+        # If we got a DBAPI exception, extract the error message.
         if isinstance(self.error, pymssql.Error):
-            message = str(self.error)
-            error = MSSQLError(message)
-            return error
+            return str(self.error)
 
         # Otherwise, let the superclass return `None`.
         return super(UnscrambleMSSQLError, self).__call__()

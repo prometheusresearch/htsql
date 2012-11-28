@@ -17,7 +17,7 @@ from ..domain import (Domain, BooleanDomain, IntegerDomain, DecimalDomain,
         FloatDomain, UntypedDomain, EntityDomain, RecordDomain, ListDomain,
         IdentityDomain, VoidDomain)
 from ..classify import normalize
-from ..error import Error
+from ..error import Error, QuotePara, translate_guard, choices_guard
 from ..syn.syntax import (Syntax, CollectSyntax, SelectSyntax, ApplySyntax,
         FunctionSyntax, PipeSyntax, OperatorSyntax, PrefixSyntax,
         ProjectSyntax, FilterSyntax, LinkSyntax, DetachSyntax, AssignSyntax,
@@ -146,7 +146,8 @@ class BindingState(object):
             If set, the lookup scope is set to `scope` when
             binding the syntax node.
         """
-        return bind(syntax, self, scope)
+        with translate_guard(syntax):
+            return bind(syntax, self, scope)
 
     def use(self, recipe, syntax, scope=None):
         """
@@ -168,7 +169,8 @@ class BindingState(object):
         if scope is not None:
             self.push_scope(scope)
         # Realize and apply `BindByRecipe` adapter.
-        binding = BindByRecipe.__invoke__(recipe, syntax, self)
+        with translate_guard(syntax):
+            binding = BindByRecipe.__invoke__(recipe, syntax, self)
         # Restore the old lookup scope.
         if scope is not None:
             self.pop_scope()
@@ -192,7 +194,8 @@ class BindingState(object):
         if scope is not None:
             self.push_scope(scope)
         # Realize and apply `BindByName` protocol.
-        binding = BindByName.__invoke__(syntax, self)
+        with translate_guard(syntax):
+            binding = BindByName.__invoke__(syntax, self)
         # Restore the old lookup scope.
         if scope is not None:
             self.pop_scope()
@@ -234,7 +237,7 @@ class Bind(Adapter):
     def __call__(self):
         # The default implementation raises an error.  It is actually
         # unreachable since we provide an implementation for all syntax nodes.
-        raise Error("unable to bind a node", self.syntax.mark)
+        raise Error("Unable to bind a node")
 
 
 def hint_choices(choices):
@@ -266,14 +269,13 @@ class BindCollect(Bind):
         if self.syntax.arm is not None:
             seed = self.state.bind(self.syntax.arm)
             if isinstance(seed, AssignmentBinding):
-                if len(seed.terms) != 1:
-                    raise Error("qualified definition is not allowed"
-                                " for an in-segment assignment",
-                                seed.mark)
-                if seed.parameters is not None:
-                    raise Error("parameterized definition is not allowed"
-                                " for an in-segment assignment",
-                                seed.mark)
+                with translate_guard(seed):
+                    if len(seed.terms) != 1:
+                        raise Error("Qualified definition is not allowed"
+                                    " for an in-segment assignment")
+                    if seed.parameters is not None:
+                        raise Error("Parameterized definition is not allowed"
+                                    " for an in-segment assignment")
                 name, is_reference = seed.terms[0]
                 if is_reference:
                     recipe = BindingRecipe(self.state.bind(seed.body))
@@ -313,8 +315,7 @@ class Select(Adapter):
         if domain is None:
             # FIXME: separate implementation for VoidDomain with a better error
             # message.
-            raise Error("output column must be scalar",
-                        self.binding.mark)
+            raise Error("Output column must be scalar")
         return ImplicitCastBinding(self.binding, domain, self.binding.syntax)
 
 
@@ -386,14 +387,13 @@ class BindRecord(Bind):
             binding = self.state.bind(arm)
             # Handle in-selector assignments.
             if isinstance(binding, AssignmentBinding):
-                if len(binding.terms) != 1:
-                    raise Error("qualified definition is not allowed"
-                                " for an in-selector assignment",
-                                binding.mark)
-                if binding.parameters is not None:
-                    raise Error("parameterized definition is not allowed"
-                                " for an in-selector assignment",
-                                binding.mark)
+                with translate_guard(binding):
+                    if len(binding.terms) != 1:
+                        raise Error("Qualified definition is not allowed"
+                                    " for an in-selector assignment")
+                    if binding.parameters is not None:
+                        raise Error("Parameterized definition is not allowed"
+                                    " for an in-selector assignment")
                 name, is_reference = binding.terms[0]
                 if is_reference:
                     recipe = BindingRecipe(self.state.bind(binding.body))
@@ -486,9 +486,9 @@ class BindProject(Bind):
         kernels = []
         for element in elements:
             domain = coerce(element.domain)
-            if domain is None:
-                raise Error("quotient column must be scalar",
-                            element.mark)
+            with translate_guard(element):
+                if domain is None:
+                    raise Error("Expected a scalar column")
             kernel = ImplicitCastBinding(element, domain, element.syntax)
             kernels.append(kernel)
         # Generate the quotient scope.
@@ -563,14 +563,13 @@ class BindLink(Bind):
             target_images.append(binding)
         # Correlate origin and target images.
         if len(origin_images) != len(target_images):
-            raise Error("unbalanced origin and target columns",
-                        self.syntax.mark)
+            raise Error("Found unbalanced origin and target columns")
         images = []
         for origin_image, target_image in zip(origin_images, target_images):
             domain = coerce(origin_image.domain, target_image.domain)
             if domain is None:
-                raise Error("cannot coerce origin and target columns"
-                            " to a common type", self.syntax.mark)
+                raise Error("Cannot coerce origin and target columns"
+                            " to a common type")
             origin_image = ImplicitCastBinding(origin_image, domain,
                                                origin_image.syntax)
             target_image = ImplicitCastBinding(target_image, domain,
@@ -609,9 +608,9 @@ class BindAssign(Bind):
         syntax = self.syntax.larm
         for idx, arm in enumerate(syntax.larms):
             if isinstance(arm, ReferenceSyntax):
-                if idx < len(syntax.larms)-1:
-                    raise Error("an identifier is expected",
-                                arm.mark)
+                with translate_guard(arm):
+                    if idx < len(syntax.larms)-1:
+                        raise Error("Expected an identifier")
                 terms.append((arm.identifier.name, True))
             else:
                 terms.append((arm.name, False))
@@ -649,12 +648,14 @@ class BindLocate(Bind):
     def __call__(self):
         seed = self.state.bind(self.syntax.larm)
         recipe = identify(seed)
-        if recipe is None:
-            raise Error("cannot determine identity", seed.mark)
+        with translate_guard(seed):
+            if recipe is None:
+                raise Error("Cannot determine identity")
         identity = self.state.use(recipe, self.syntax.rarm, scope=seed)
         location = self.state.bind(self.syntax.rarm, scope=seed)
-        if identity.domain.width != location.width:
-            raise Error("ill-formed locator", self.syntax.rarm.mark)
+        with translate_guard(self.syntax.rarm):
+            if identity.domain.width != location.width:
+                raise Error("Found ill-formed locator")
         def convert(identity, elements):
             value = []
             for field in identity.labels:
@@ -675,17 +676,17 @@ class BindLocate(Bind):
                         else:
                             items.append(element)
                             total_width += 1
-                    if total_width > field.width:
-                        raise Error("ill-formed locator",
-                                        self.syntax.rarm.mark)
+                    with translate_guard(self.syntax.rarm):
+                        if total_width > field.width:
+                            raise Error("Found ill-formed locator")
                     item = convert(field, items)
                     value.append(item)
                 else:
                     assert elements
                     element = elements.pop(0)
-                    if isinstance(element, IdentityBinding):
-                        raise Error("ill-formed locator",
-                                        self.syntax.larm.mark)
+                    with translate_guard(self.syntax.larm):
+                        if isinstance(element, IdentityBinding):
+                            raise Error("Found ill-formed locator")
                     item = ImplicitCastBinding(element, field, element.syntax)
                     value.append(item)
             return tuple(value)
@@ -747,15 +748,14 @@ class BindUnpack(Bind):
         recipes = expand(self.state.scope, with_syntax=True, with_wild=True,
                          with_class=True, with_link=True)
         if recipes is None:
-            raise Error("cannot expand '*' since output columns"
-                        " are not defined", self.syntax.mark)
+            raise Error("Cannot expand '*' since output columns"
+                        " are not defined")
         # If a position is given, extract a specific element.
         if self.syntax.index is not None:
             index = self.syntax.index
             index -= 1
             if not (0 <= index < len(recipes)):
-                raise Error("value in range 1-%s is required"
-                            % len(recipes), self.syntax.mark)
+                raise Error("Expected value in range 1-%s" % len(recipes))
             syntax, recipe = recipes[index]
             syntax = syntax.clone(mark=self.syntax.mark)
             return self.state.use(recipe, syntax)
@@ -794,10 +794,9 @@ class BindReference(Bind):
             names = lookup_reference_set(self.state.scope)
             choices = [u"$"+name for name in sorted(names)
                                  if similar(model, name)]
-            hint = hint_choices(choices)
-            raise Error("unrecognized reference '%s'"
-                        % self.syntax, self.syntax.mark,
-                        hint=hint)
+            with choices_guard(choices):
+                raise Error(QuotePara("Found unknown reference",
+                                      str(self.syntax)))
         return self.state.use(recipe, self.syntax)
 
 
@@ -809,8 +808,7 @@ class BindComplement(Bind):
         # Look for a complement, complain if not found.
         recipe = lookup_complement(self.state.scope)
         if recipe is None:
-            raise Error("'^' could only be used in a quotient scope",
-                        self.syntax.mark)
+            raise Error("'^' could only be used in a quotient scope")
         return self.state.use(recipe, self.syntax)
 
 
@@ -977,7 +975,6 @@ class BindByName(Protocol):
 
     def __call__(self):
         # The default implementation; override in subclasses.
-        hint = None
         # Generate a hint with a list of alternative names.
         model = self.name.lower()
         arity = None
@@ -994,22 +991,22 @@ class BindByName(Protocol):
             component_name = component_name.lower()
             global_attributes.add((component_name, component_arity))
         all_attributes = sorted(attributes|global_attributes)
-        if hint is None and arity is None:
+        choices = []
+        if not choices and arity is None:
             names = lookup_reference_set(self.state.scope)
             if model in names:
-                hint = "did you mean: a reference '$%s'" % model.encode('utf-8')
-        if hint is None and arity is None:
+                choices = ["a reference '$%s'" % model.encode('utf-8')]
+        if not choices and arity is None:
             if any(model == sample
                    for sample, sample_arity in all_attributes
                    if sample_arity is not None):
-                hint = "did you mean: a function '%s'" % model.encode('utf-8')
-        if hint is None and arity is None:
+                choices = ["a function '%s'" % model.encode('utf-8')]
+        if not choices and arity is None:
             choices = [sample
                        for sample, sample_arity in all_attributes
                        if sample_arity is None and sample != model
                             and similar(model, sample)]
-            hint = hint_choices(choices)
-        if hint is None and arity is not None \
+        if not choices and arity is not None \
                 and not isinstance(self.syntax, OperatorSyntax):
             arities = [sample_arity
                        for sample, sample_arity in all_attributes
@@ -1030,42 +1027,37 @@ class BindByName(Protocol):
                 else:
                     required_arity.append("arguments")
                 required_arity = " ".join(required_arity)
-                raise Error("function '%s' requires %s; got %s"
+                raise Error("Function '%s' requires %s; got %s"
                             % (self.syntax.identifier,
-                               required_arity, arity),
-                            self.syntax.mark)
-        if hint is None and arity is not None:
+                               required_arity, arity))
+        if not choices and arity is not None:
             if any(model == sample
                    for sample, sample_arity in all_attributes
                    if sample_arity is None):
-                hint = "did you mean: an attribute '%s'" % model.encode('utf-8')
-        if hint is None and arity is not None:
+                choices = ["an attribute '%s'" % model.encode('utf-8')]
+        if not choices and arity is not None:
             choices = [sample
                        for sample, sample_arity in all_attributes
                        if sample_arity in [-1, arity] and sample != model
                             and similar(model, sample)]
-            hint = hint_choices(choices)
         scope_name = guess_tag(self.state.scope)
         if scope_name is not None:
             scope_name = scope_name.encode('utf-8')
-        if isinstance(self.syntax, (FunctionSyntax, PipeSyntax)):
-            raise Error("unrecognized function '%s'"
-                        % self.syntax.identifier,
-                        self.syntax.mark, hint=hint)
-        if isinstance(self.syntax, OperatorSyntax):
-            raise Error("unrecognized operator '%s'"
-                        % self.syntax.symbol.encode('utf-8'),
-                        self.syntax.mark, hint=hint)
-        if isinstance(self.syntax, PrefixSyntax):
-            raise Error("unrecognized unary operator '%s'"
-                        % self.syntax.symbol.encode('utf-8'),
-                        self.syntax.mark, hint=hint)
-        if isinstance(self.syntax, IdentifierSyntax):
-            raise Error("unrecognized attribute '%s'%s"
-                        % (self.syntax,
-                           " in scope of '%s'" % scope_name
-                           if scope_name is not None else ""),
-                        self.syntax.mark, hint=hint)
+        with choices_guard(choices):
+            if isinstance(self.syntax, (FunctionSyntax, PipeSyntax)):
+                raise Error(QuotePara("Found unknown function",
+                                      str(self.syntax.identifier)))
+            if isinstance(self.syntax, OperatorSyntax):
+                raise Error(QuotePara("Found unknown operator",
+                                      self.syntax.symbol.encode('utf-8')))
+            if isinstance(self.syntax, PrefixSyntax):
+                raise Error(QuotePara("Found unknown unary operator",
+                                      self.syntax.symbol.encode('utf-8')))
+            if isinstance(self.syntax, IdentifierSyntax):
+                raise Error(QuotePara("Found unknown attribute",
+                                      "%s.%s" % (scope_name, self.syntax)
+                                      if scope_name is not None
+                                      else str(self.syntax)))
 
 
 class BindByRecipe(Adapter):
@@ -1102,7 +1094,7 @@ class BindByRecipe(Adapter):
 
     def __call__(self):
         # The default implementation should not be reachable.
-        raise Error("unable to bind a node", self.syntax.mark)
+        raise Error("unable to bind a node")
 
 
 class BindByLiteral(BindByRecipe):
@@ -1216,8 +1208,8 @@ class BindBySubstitution(BindByRecipe):
                 arity = len(self.recipe.parameters)
             recipe = lookup_attribute(self.recipe.base, self.syntax.name)
             if recipe is None:
-                raise Error("unrecognized attribute '%s'" % self.syntax,
-                            self.syntax.mark)
+                raise Error(QuotePara("Found unknown attribute",
+                                      str(self.syntax)))
             binding = self.state.use(recipe, self.syntax)
             # Check if the term is a reference.
             if is_reference:
@@ -1309,20 +1301,13 @@ class BindByAmbiguous(BindByRecipe):
         syntax = self.syntax
         if isinstance(self.syntax, (FunctionSyntax, PipeSyntax)):
             syntax = self.syntax.identifier
-        hint = None
+        int = None
+        choices = []
         if self.recipe.alternatives:
-            alternatives = self.recipe.alternatives
-            choices = ["try "]
-            if len(alternatives) == 1:
-                choices.append(repr(alternatives[0].encode('utf-8')))
-            else:
-                choices.extend(", ".join(repr(alternative.encode('utf-8'))
-                                         for alternative in alternatives[:-1]))
-                choices.append(" or ")
-                choices.append(repr(alternatives[-1].encode('utf-8')))
-            hint = "".join(choices)
-        raise Error("ambiguous name '%s'" % syntax,
-                    self.syntax.mark, hint=hint)
+            choices = [str(alternative)
+                       for alternative in self.recipe.alternatives]
+        with choices_guard(choices):
+            raise Error(QuotePara("Found ambiguous name", str(syntax)))
 
 
 def bind(syntax, state=None, scope=None, environment=None):
@@ -1362,10 +1347,9 @@ def bind(syntax, state=None, scope=None, environment=None):
         state.set_root(root)
         if isinstance(syntax, AssignSyntax):
             specifier = syntax.larm
-            if not (len(specifier.larms) == 1 and
-                    isinstance(specifier.larms[0], IdentifierSyntax) and
-                    specifier.rarms is None):
-                raise Error("expected an identifier", specifier.mark)
+            with translate_guard(specifier):
+                if specifier.identifier is None:
+                    raise Error("Expected an identifier")
             identifier = specifier.larms[0]
             segment = state.bind(syntax.rarm)
             if not isinstance(segment, SegmentBinding):

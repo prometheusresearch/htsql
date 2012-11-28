@@ -7,7 +7,7 @@ from ... import __version__, __legal__
 from ...core.util import maybe, listof
 from ...core.context import context
 from ...core.adapter import Adapter, adapt, adapt_many, call
-from ...core.error import PermissionError, StackedError, Error
+from ...core.error import PermissionError, Error, PointerPara
 from ...core.domain import (Domain, BooleanDomain, NumberDomain, DateTimeDomain,
                             ListDomain, RecordDomain)
 from ...core.syn.syntax import StringSyntax, IntegerSyntax, IdentifierSyntax
@@ -318,7 +318,7 @@ class RenderProduceAnalyze(Act):
             body = self.render_unsupported(exc)
         except PermissionError, exc:
             body = self.render_permissions(exc)
-        except StackedError, exc:
+        except Error, exc:
             body = self.render_error(exc)
         else:
             if isinstance(self.command, AnalyzeCmd):
@@ -338,7 +338,7 @@ class RenderProduceAnalyze(Act):
         yield JS_END
 
     def render_permissions(self, exc):
-        detail = exc.detail.decode('utf-8')
+        detail = unicode(exc)
         yield JS_MAP
         yield u"type"
         yield u"permissions"
@@ -347,21 +347,25 @@ class RenderProduceAnalyze(Act):
         yield JS_END
 
     def render_error(self, exc):
-        detail = exc.detail.decode('utf-8')
+        detail = None
+        mark = None
         hint = None
         first_line = None
         first_column = None
         last_line = None
         last_column = None
-        if isinstance(exc, StackedError) and exc.mark.text:
-            mark = exc.mark
+        detail = unicode(exc)
+        for paragraph in reversed(exc.paragraphs):
+            if isinstance(paragraph, PointerPara) and paragraph.mark:
+                mark = paragraph.mark
+                break
+        if mark:
             first_break = mark.text.rfind(u'\n', 0, mark.start)+1
             last_break = mark.text.rfind(u'\n', 0, mark.end)+1
             first_line = mark.text.count(u'\n', 0, first_break)
             last_line = mark.text.count(u'\n', 0, last_break)
             first_column = mark.start-first_break
             last_column = mark.end-last_break
-            hint = exc.hint
         if hint is not None:
             hint = hint.decode('utf-8')
         yield JS_MAP

@@ -3,7 +3,7 @@
 #
 
 
-from ..error import Error, Mark
+from ..error import Error, Mark, parse_guard
 import re
 import urllib2
 
@@ -21,8 +21,8 @@ def _escape_replace(match):
         start = len(match.string[:start].decode('utf-8', 'ignore'))
         end = len(match.string[:end].decode('utf-8', 'ignore'))
         mark = Mark(text, start, end)
-        raise Error("symbol '%' must be followed by two hexdecimal"
-                    " digits", mark)
+        with parse_guard(mark):
+            raise Error("Expected symbol `%` followed by two hexdecimal digits")
     # Return the character corresponding to the escape sequence.
     return chr(int(code, 16))
 
@@ -57,9 +57,10 @@ def decode(text):
         start = len(text[:exc.start].decode('utf-8', 'ignore'))
         end = len(text[:exc.end].decode('utf-8', 'ignore'))
         mark = Mark(text.decode('utf-8', 'replace'), start, end)
-        raise Error("cannot convert a byte sequence %s to UTF-8: %s"
-                    % (urllib2.quote(exc.object[exc.start:exc.end]),
-                       exc.reason), mark)
+        with parse_guard(mark):
+            raise Error("Cannot convert a byte sequence %s to UTF-8: %s"
+                        % (urllib2.quote(exc.object[exc.start:exc.end]),
+                           exc.reason))
 
     return text
 

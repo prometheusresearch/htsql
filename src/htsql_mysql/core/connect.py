@@ -3,8 +3,7 @@
 #
 
 
-from htsql.core.connect import (Connect, Scramble, Unscramble, UnscrambleError,
-        DBError)
+from htsql.core.connect import Connect, Scramble, Unscramble, UnscrambleError
 from htsql.core.adapter import adapt
 from htsql.core.context import context
 from htsql.core.domain import (BooleanDomain, TextDomain, EnumDomain,
@@ -16,12 +15,6 @@ import datetime
 class Cursor(MySQLdb.connections.Connection.default_cursor):
 
     _defer_warnings = True
-
-
-class MySQLError(DBError):
-    """
-    Raised when a database error occurred.
-    """
 
 
 class ConnectMySQL(Connect):
@@ -51,11 +44,9 @@ class ConnectMySQL(Connect):
 class UnscrambleMySQLError(UnscrambleError):
 
     def __call__(self):
-        # If we got a DBAPI exception, generate our error out of it.
+        # If we got a DBAPI exception, extract the error message.
         if isinstance(self.error, MySQLdb.Error):
-            message = str(self.error)
-            error = MySQLError(message)
-            return error
+            return str(self.error)
 
         # Otherwise, let the superclass return `None`.
         return super(UnscrambleMySQLError, self).__call__()

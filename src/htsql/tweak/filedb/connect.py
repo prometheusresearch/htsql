@@ -7,7 +7,7 @@ from ...core.util import to_name
 from ...core.cache import once
 from ...core.connect import Connect
 from ...core.adapter import rank, Utility
-from htsql_sqlite.core.connect import SQLiteError
+from ...core.error import Error
 import sqlite3
 import os.path
 import csv
@@ -34,11 +34,11 @@ class BuildFileDB(Utility):
         for source_idx, source in enumerate(sources):
             cursor = self.connection.cursor()
             if not os.path.exists(source.file):
-                raise SQLiteError("file does not exist: %s" % source.file)
+                raise Error("File does not exist: %s" % source.file)
             try:
                 stream = open(source.file)
             except IOError, exc:
-                raise SQLiteError("failed to open file: %s" % source.file)
+                raise Error("failed to open file: %s" % source.file)
             table_name = os.path.splitext(os.path.basename(source.file))[0]
             table_name = table_name.decode('utf-8', 'replace')
             if table_name:

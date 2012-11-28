@@ -13,45 +13,26 @@ This module declares the database connection adapter.
 
 from .adapter import Adapter, Utility, adapt
 from .domain import Domain, Record
-from .error import EngineError
+from .error import Error, EngineError, QuotePara
 from .context import context
 
 
-class DBError(Exception):
-    """
-    Raised when a database error occurred.
-
-    `message` (a string)
-        The error message.
-    """
-
-    def __init__(self, message):
-        assert isinstance(message, str)
-        self.message = message
-
-    def __str__(self):
-        return self.message
-
-    def __repr__(self):
-        return "<%s %s>" % (self.__class__.__name__, self)
-
-
-class ErrorGuard(object):
+class DBErrorGuard(object):
     """
     Guards against DBAPI exception.
 
-    This class converts DBAPI exceptions to :exc:`DBError`.  It is designed
+    This class converts DBAPI exceptions to :exc:`EngineError`.  It is designed
     to be used in a ``with`` clause.
 
     Usage::
 
         connect = Connect()
         try:
-            with ErrorGuard():
+            with DBErrorGuard():
                 connection = connect.open_connection()
                 cursor = connection.cursor()
                 ...
-        except DBError:
+        except EngineError:
             ...
     """
 
@@ -84,7 +65,8 @@ class ErrorGuard(object):
 
         # If we got a new exception, raise it.
         if error is not None:
-            raise error
+            raise EngineError(QuotePara("Got an error from"
+                                        " the database driver", error))
 
 
 class ConnectionProxy(object):
@@ -93,12 +75,12 @@ class ConnectionProxy(object):
 
     The proxy supports common DBAPI methods by passing them to
     the connection object.  Any exceptions raised when the executing
-    DBAPI methods are converted to :exc:`DBError`.
+    DBAPI methods are converted to :exc:`Error`.
 
     `connection`
         A raw DBAPI connection object.
 
-    `guard` (:class:`ErrorGuard`)
+    `guard` (:class:`DBErrorGuard`)
         A DBAPI exception guard.
     """
 
@@ -158,12 +140,12 @@ class CursorProxy(object):
 
     The proxy supports common DBAPI methods by passing them to
     the cursor object.  Any exceptions raised when the executing
-    DBAPI methods are converted to :exc:`DBError`.
+    DBAPI methods are converted to :exc:`Error`.
 
     `cursor`
         A raw DBAPI cursor object.
 
-    `guard` (:class:`ErrorGuard`)
+    `guard` (:class:`DBErrorGuard`)
         A DBAPI exception guard.
     """
 
@@ -189,15 +171,43 @@ class CursorProxy(object):
         """
         Execute one SQL statement.
         """
-        with self.guard:
-            return self.cursor.execute(statement, *parameters)
+        addon = context.app.htsql
+        if addon.debug:
+            try:
+                with self.guard:
+                    return self.cursor.execute(statement, *parameters)
+            except Error, exc:
+                exc.wrap(QuotePara("While executing SQL", statement))
+                if parameters:
+                    parameters = parameters[0]
+                    exc.wrap(QuotePara("With parameters",
+                                       repr(list(parameters))))
+                raise
+        else:
+            with self.guard:
+                return self.cursor.execute(statement, *parameters)
 
-    def executemany(self, statement, *parameters):
+    def executemany(self, statement, parameters_set):
         """
         Execute an SQL statement against all parameters.
         """
-        with self.guard:
-            return self.cursor.executemany(statement, *parameters)
+        addon = context.app.htsql
+        if addon.debug:
+            try:
+                with self.guard:
+                    return self.cursor.executemany(statement, parameters_set)
+            except Error, exc:
+                exc.wrap(QuotePara("While executing SQL", statement))
+                if not parameters_set:
+                    exc.wrap("With no parameters")
+                else:
+                    exc.wrap(QuotePara("With a set of parameters",
+                                       "\n".join(repr(list(group))
+                                                 for group in parameters_set)))
+                raise
+        else:
+            with self.guard:
+                return self.cursor.executemany(statement, parameters_set)
 
     def fetchone(self):
         """
@@ -267,7 +277,7 @@ class Connect(Utility):
             cursor.execute(...)
             cursor.fetchall()
             ...
-        except DBError:
+        except Error:
             ...
     """
 
@@ -283,10 +293,10 @@ class Connect(Utility):
         and supports common DBAPI methods.
 
         If the database parameters for the application are invalid,
-        the method may raise :exc:`DBError`.
+        the method may raise :exc:`Error`.
         """
         # Create a guard for DBAPI exceptions.
-        guard = ErrorGuard()
+        guard = DBErrorGuard()
         # Open a raw connection while intercepting DBAPI exceptions.
         with guard:
             connection = self.open()
@@ -352,11 +362,7 @@ class TransactionGuard(object):
 
     def __enter__(self):
         if self.connection is None:
-            try:
-                connection = connect()
-            except DBError, exc:
-                raise EngineError("failed to open a database connection: %s"
-                                  % exc)
+            connection = connect()
             context.env.push(connection=connection)
             return connection
         return self.connection
@@ -376,17 +382,6 @@ class TransactionGuard(object):
                 #connection.rollback()
                 connection.invalidate()
             connection.release()
-            if exc_type is not None and issubclass(exc_type, DBError):
-                if isinstance(exc_value, Exception):
-                    exception = exc_value
-                elif exc_value is None:
-                    exception = exc_type()
-                elif isinstance(exc_value, tuple):
-                    exception = exc_type(*exc_value)
-                else:
-                    exception = exc_type(exc_value)
-                raise EngineError("failed to execute a database query: %s"
-                                  % exception)
 
 
 def transaction():

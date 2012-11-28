@@ -14,7 +14,7 @@ This module implements the compiling process.
 from ..util import maybe, listof
 from ..adapter import Adapter, adapt, adapt_many
 from ..domain import BooleanDomain, IntegerDomain
-from ..error import Error
+from ..error import Error, translate_guard
 from .coerce import coerce
 from .signature import (IsNullSig, IsEqualSig, AndSig, CompareSig,
                         SortDirectionSig, RowNumberSig)
@@ -150,7 +150,8 @@ class CompilingState(object):
         # and mask flows.  Second, each compiled term must have a unique
         # tag, therefore we'd have to replace the tags and route tables
         # of the cached term node.
-        return compile(expression, self, baseline=baseline)
+        with translate_guard(expression):
+            return compile(expression, self, baseline=baseline)
 
     def inject(self, term, expressions):
         """
@@ -179,7 +180,8 @@ class CompilingState(object):
             if expression in term.routes:
                 continue
             # Inject the expression into the term.
-            term = Inject.__invoke__(expression, term, self)
+            with translate_guard(expression):
+                term = Inject.__invoke__(expression, term, self)
         # Return the augmented term node.
         return term
 
@@ -579,8 +581,8 @@ class CompileSegment(Compile):
 
     def __call__(self):
         if not self.state.superflow.spans(self.expression.root):
-            raise Error("a singular expression is expected",
-                        self.expression.root.mark)
+            with translate_guard(self.expression.root):
+                raise Error("Expected a singular expression")
         chain = self.state.superflow_stack + \
                 [self.state.superflow, self.expression.root,
                  self.expression.flow]
@@ -1615,8 +1617,7 @@ class InjectColumn(Inject):
             return self.term
         # Verify that the unit is singular on the term flow.
         if not self.term.flow.spans(self.flow):
-            raise Error("a singular expression is expected",
-                        self.unit.mark)
+            raise Error("Expected a singular expression")
         # Inject the unit flow into the term.
         return self.state.inject(self.term, [self.unit.flow])
 
@@ -1657,8 +1658,7 @@ class InjectScalar(Inject):
 
         # Verify that the unit is singular relative to the term.
         if not self.term.flow.spans(self.flow):
-            raise Error("a singular expression is expected",
-                        self.unit.mark)
+            raise Error("Expected a singular expression")
         # Extract the unit expressions.
         codes = [unit.code for unit in units]
 
@@ -1745,8 +1745,7 @@ class InjectAggregate(Inject):
 
         # Verify that the units are singular relative to the term.
         if not self.term.flow.spans(self.flow):
-            raise Error("a singular expression is expected",
-                        self.unit.mark)
+            raise Error("Expected a singular expression")
         # Extract the aggregate expressions.
         codes = [unit.code for unit in units]
 
@@ -1857,8 +1856,7 @@ class InjectCorrelated(Inject):
         if not self.term.flow.spans(self.flow):
             # This is not reachable: the error is already reported by
             # the wrapping scalar unit.
-            raise Error("a singular expression is expected",
-                        self.unit.mark)
+            raise Error("Expected a singular expression")
 
         # The general chain of operations is as follows:
         #   - compile a term for the unit flow;
@@ -1941,8 +1939,7 @@ class InjectKernel(Inject):
             return self.term
         # Check if the unit is singular against the term flow.
         if not self.term.flow.spans(self.flow):
-            raise Error("a singular expression is expected",
-                        self.unit.mark)
+            raise Error("Expected a singular expression")
         # Inject the quotient space -- this should automatically
         # provide the unit.
         term = self.state.inject(self.term, [self.flow])
@@ -1965,8 +1962,7 @@ class InjectCovering(Inject):
         if not self.term.flow.spans(self.flow):
             # Not reachable since covering units are never generated
             # by the user directly, only by the compiler.
-            raise Error("a singular expression is expected",
-                        self.unit.mark)
+            raise Error("Expected a singular expression")
         # FIXME: the rewritter should optimize the flow graph
         # so that this code is not reachable.
         # Add a hint to the flow node to ask the compiler generate

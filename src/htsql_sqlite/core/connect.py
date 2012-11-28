@@ -3,21 +3,15 @@
 #
 
 
-from htsql.core.connect import (Connect, Scramble, Unscramble, UnscrambleError,
-        DBError)
+from htsql.core.connect import Connect, Scramble, Unscramble, UnscrambleError
 from htsql.core.adapter import adapt
+from htsql.core.error import Error
 from htsql.core.context import context
 from htsql.core.domain import (BooleanDomain, TextDomain, DateDomain,
         TimeDomain, DateTimeDomain)
 import sqlite3
 import datetime
 import os.path
-
-
-class SQLiteError(DBError):
-    """
-    Raised when a database error occurred.
-    """
 
 
 def sqlite3_power(x, y):
@@ -40,7 +34,7 @@ class ConnectSQLite(Connect):
         # Check if the database file exists.
         if not ((db.database.startswith(":") and db.database.endswith(":")) or
                 os.path.exists(db.database)):
-            raise SQLiteError("file does not exist")
+            raise Error("file does not exist: %s" % db.path)
         # Generate and return the DBAPI connection.
         connection = sqlite3.connect(db.database)
         self.create_functions(connection)
@@ -55,11 +49,9 @@ class ConnectSQLite(Connect):
 class UnscrambleSQLiteError(UnscrambleError):
 
     def __call__(self):
-        # If we got a DBAPI exception, generate our error out of it.
+        # If we got a DBAPI exception, extract the error message.
         if isinstance(self.error, sqlite3.Error):
-            message = str(self.error)
-            error = SQLiteError(message)
-            return error
+            return str(self.error)
         # Otherwise, let the superclass return `None`.
         return super(UnscrambleSQLiteError, self).__call__()
 

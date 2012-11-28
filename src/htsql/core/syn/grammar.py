@@ -5,7 +5,7 @@
 
 from ..util import (maybe, oneof, listof, omapof, trim_doc, toposort, omap,
         TextBuffer, Printable)
-from ..error import Error, Mark
+from ..error import Error, Mark, parse_guard
 from .token import Token
 import re
 
@@ -602,11 +602,12 @@ class Scanner(Printable):
             # Complain if no token is found.
             if match is None:
                 mark = Mark(text, position, position)
-                if position < len(text):
-                    raise Error("unexpected character %r"
-                                % text[position].encode('utf-8'), mark)
-                else:
-                    raise Error("unexpected end", mark)
+                with parse_guard(mark):
+                    if position < len(text):
+                        raise Error("Got unexpected character %r"
+                                    % text[position].encode('utf-8'))
+                    else:
+                        raise Error("Got unexpected end of input")
             # The position of the next token.
             next_position = match.end()
             # The error context for the new token.
@@ -621,7 +622,8 @@ class Scanner(Printable):
                 assert False
             # Report an error for an error rule.
             if group.error is not None:
-                raise Error(group.error, mark)
+                with parse_guard(mark):
+                    raise Error(group.error)
             # Generate a new token object.
             if not group.is_junk:
                 if group.unquote:
@@ -956,10 +958,11 @@ class Parser(Printable):
                     error = table.fail(stream, token)
                     if error is not None:
                         raise error
-                if token:
-                    raise Error("unexpected input", token.mark)
-                else:
-                    raise Error("unexpected end of input", token.mark)
+                with parse_guard(token):
+                    if token:
+                        raise Error("Got unexpected input")
+                    else:
+                        raise Error("Got unexpected end of input")
 
             # The non-terminal associated with the transition and the next
             # machine state.
@@ -988,11 +991,12 @@ class Parser(Printable):
                 # Complain if we are exiting from the top rule
                 # and there are still tokens left.
                 if not stack and token:
-                    if table.fail is not None:
-                        error = table.fail(stream, token)
-                        if error is not None:
-                            raise error
-                    raise Error("unexpected input", token.mark)
+                    with parse_guard(token):
+                        if table.fail is not None:
+                            error = table.fail(stream, token)
+                            if error is not None:
+                                raise error
+                        raise Error("Got unexpected input")
                 # Process accumulated nodes.
                 if table.match is not None:
                     production = list(table.match(stream))

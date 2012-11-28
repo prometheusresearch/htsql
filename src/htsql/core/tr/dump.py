@@ -16,7 +16,7 @@ from ..adapter import Adapter, Protocol, adapt, call
 from ..domain import (Domain, BooleanDomain, IntegerDomain, DecimalDomain,
                       FloatDomain, TextDomain, EnumDomain, DateDomain,
                       TimeDomain, DateTimeDomain, ListDomain, RecordDomain)
-from ..error import Error
+from ..error import Error, translate_guard
 from ..syn.syntax import IdentifierSyntax, ApplySyntax, LiteralSyntax
 from .frame import (Clause, Frame, TableFrame, BranchFrame, NestedFrame,
                     SegmentFrame, QueryFrame,
@@ -229,7 +229,8 @@ class SerializingState(object):
             The clause to serialize.
         """
         # Realize and call the `Serialize` adapter.
-        return serialize(clause, self)
+        with translate_guard(clause):
+            return serialize(clause, self)
 
     def dump(self, clause):
         """
@@ -240,7 +241,8 @@ class SerializingState(object):
         """
         # Realize and call the `Dump` adapter.
         # Note: returns `None`.
-        return Dump.__invoke__(clause, self)
+        with translate_guard(clause):
+            return Dump.__invoke__(clause, self)
 
     def dub(self, clause):
         """
@@ -250,7 +252,8 @@ class SerializingState(object):
             The clause to generate an alias for.
         """
         # Realize and call the `Dub` adapter.
-        return Dub.__invoke__(clause, self)
+        with translate_guard(clause):
+            return Dub.__invoke__(clause, self)
 
 
 class Serialize(Adapter):
@@ -492,8 +495,7 @@ class DumpBase(Adapter):
 
     def __call__(self):
         # By default, generate an error.
-        raise Error("unable to serialize an expression",
-                    self.clause.mark)
+        raise Error("Unable to serialize an expression")
 
     def format(self, template, *namespaces, **keywords):
         """
@@ -1504,8 +1506,7 @@ class DumpInteger(DumpByDomain):
         # We assume that the database supports 8-byte signed integer values
         # natively and complain if the value is out of this range.
         if not (-2**63 <= self.value < 2**63):
-            raise Error("integer value is out of range",
-                        self.phrase.mark)
+            raise Error("Found integer value is out of range")
         # Write the number; use `(...)` around a negative number.
         if self.value >= 0:
             self.write(unicode(self.value))

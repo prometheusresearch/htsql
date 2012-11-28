@@ -377,7 +377,9 @@ tests:
        |             9 |
 
       /error
-      unrecognized attribute 'error':
+      Found unknown attribute:
+          error
+      While translating:
           /error
            ^^^^^
     exit: 0

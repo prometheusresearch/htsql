@@ -63,6 +63,7 @@ class SerializeInsert(Utility, DumpBase):
         self.write(u")")
 
     def dump_no_values(self):
+        self.newline()
         self.write(u"DEFAULT VALUES")
 
     def dump_returning(self):

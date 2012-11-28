@@ -4,7 +4,7 @@
 
 
 from ....core.adapter import call
-from ....core.error import Error
+from ....core.error import Error, recognize_guard
 from ....core.classify import normalize, classify
 from ....core.model import HomeNode, TableArc
 from ....core.entity import TableEntity
@@ -20,7 +20,7 @@ class SummonETL(Summon):
 
     def __call__(self):
         if len(self.arguments) != 1:
-            raise Error("expected 1 argument", self.syntax.mark)
+            raise Error("Expected 1 argument")
         [syntax] = self.arguments
         feed = recognize(syntax)
         command = self.cmd(feed, self.syntax.mark)
@@ -57,18 +57,19 @@ class SummonTruncate(Summon):
 
     def __call__(self):
         if len(self.arguments) != 1:
-            raise Error("expected 1 argument", self.syntax.mark)
+            raise Error("Expected 1 argument")
         [syntax] = self.arguments
-        if not isinstance(syntax, IdentifierSyntax):
-            raise Error("an identifier is expected", syntax.mark)
-        signature = (normalize(syntax.name), None)
-        arc_by_signature = dict(((label.name, label.arity), label.arc)
-                                for label in classify(HomeNode()))
-        if signature not in arc_by_signature:
-            raise Error("unknown table", syntax.mark)
-        arc = arc_by_signature[signature]
-        if not isinstance(arc, TableArc):
-            raise Error("a table is expected", syntax.mark)
+        with recognize_guard(syntax):
+            if not isinstance(syntax, IdentifierSyntax):
+                raise Error("Expected an identifier")
+            signature = (normalize(syntax.name), None)
+            arc_by_signature = dict(((label.name, label.arity), label.arc)
+                                    for label in classify(HomeNode()))
+            if signature not in arc_by_signature:
+                raise Error("Unknown table")
+            arc = arc_by_signature[signature]
+            if not isinstance(arc, TableArc):
+                raise Error("Expected a table")
         table = arc.table
         command = TruncateCmd(table, self.syntax.mark)
         return command
@@ -80,8 +81,7 @@ class SummonDo(Summon):
 
     def __call__(self):
         if not self.arguments:
-            raise Error("expected 1 or more arguments",
-                        self.syntax.mark)
+            raise Error("expected 1 or more arguments")
         blocks = []
         for argument in self.arguments:
             name = None
@@ -89,8 +89,8 @@ class SummonDo(Summon):
             if isinstance(argument, AssignSyntax):
                 specifier = argument.larm
                 if specifier.reference is None:
-                    raise Error("a reference is expected",
-                                specifier.mark)
+                    with recognize_guard(specifier):
+                        raise Error("Expected a reference")
                 name = specifier.reference.name
                 syntax = argument.rarm
             command = recognize(syntax)

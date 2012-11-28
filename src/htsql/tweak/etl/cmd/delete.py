@@ -5,7 +5,7 @@
 
 from ....core.util import listof
 from ....core.adapter import Utility, adapt
-from ....core.error import BadRequestError
+from ....core.error import Error, QuotePara
 from ....core.entity import TableEntity, ColumnEntity
 from ....core.connect import transaction, scramble
 from ....core.domain import Product
@@ -59,7 +59,7 @@ class BuildExecuteDelete(Utility):
                     key_columns = key.origin_columns
                     break
         if not key_columns:
-            raise BadRequestError("table does not have a primary key")
+            raise Error("Table does not have a primary key")
         sql = serialize_delete(table, key_columns)
         return ExecuteDeletePipe(table, key_columns, sql)
 
@@ -74,23 +74,32 @@ class ProduceDelete(Act):
             extract_node = BuildExtractNode.__invoke__(product.meta,
                     with_id=True, with_fields=False)
             resolve_key = BuildResolveKey.__invoke__(
-                    extract_node.node.table)
+                    extract_node.node)
             execute_delete = BuildExecuteDelete.__invoke__(
                     extract_node.node.table)
             meta = decorate(VoidBinding())
             data = None
             if extract_node.is_list:
                 records = product.data
+                record_domain = product.meta.domain.item_domain
             else:
                 records = [product.data]
-            for record in records:
+                record_domain = product.meta.domain
+            for idx, record in enumerate(records):
                 if record is None:
                     continue
-                id_value, row = extract_node(record)
-                key = resolve_key(id_value)
-                if key is None:
-                    raise BadRequestError("missing record")
-                execute_delete(key)
+                try:
+                    id_value, row = extract_node(record)
+                    key = resolve_key(id_value)
+                    execute_delete(key)
+                except Error, error:
+                    if extract_node.is_list:
+                        message = "While deleting record #%s" % (idx+1)
+                    else:
+                        message = "While deleting a record"
+                    quote = record_domain.dump(record)
+                    error.wrap(QuotePara(message, quote))
+                    raise
             return Product(meta, data)
 
 

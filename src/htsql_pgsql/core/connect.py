@@ -5,16 +5,10 @@
 
 from htsql.core.adapter import adapt
 from htsql.core.domain import TextDomain, EnumDomain
-from htsql.core.connect import (Connect, DBError, UnscrambleError, Unscramble,
+from htsql.core.connect import (Connect, UnscrambleError, Unscramble,
         Scramble)
 from htsql.core.context import context
 import psycopg2, psycopg2.extensions
-
-
-class PGSQLError(DBError):
-    """
-    Raised when a database error occurred.
-    """
 
 
 class ConnectPGSQL(Connect):
@@ -60,11 +54,9 @@ class ConnectPGSQL(Connect):
 class UnscramblePGSQLError(UnscrambleError):
 
     def __call__(self):
-        # If we got a DBAPI exception, generate our own error.
+        # If we got a DBAPI exception, extract the error message.
         if isinstance(self.error, psycopg2.Error):
-            message = str(self.error)
-            error = PGSQLError(message)
-            return error
+            return str(self.error)
 
         # Otherwise, let the superclass return `None`.
         return super(UnscramblePGSQLError, self).__call__()

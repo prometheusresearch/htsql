@@ -5,11 +5,12 @@
 
 from ....core.util import listof
 from ....core.adapter import Utility, Adapter, adapt, adapt_many
-from ....core.error import BadRequestError, EmptyMark
+from ....core.error import EmptyMark, Error, QuotePara
 from ....core.connect import transaction, scramble, unscramble
 from ....core.domain import (Domain, ListDomain, RecordDomain, BooleanDomain,
         IntegerDomain, FloatDomain, DecimalDomain, TextDomain, DateDomain,
-        TimeDomain, DateTimeDomain, IdentityDomain, UntypedDomain, Product)
+        TimeDomain, DateTimeDomain, IdentityDomain, UntypedDomain, Product,
+        Value, ID)
 from ....core.classify import normalize, classify, relabel
 from ....core.model import (HomeNode, TableNode, Arc, TableArc, ColumnArc,
         ChainArc)
@@ -112,8 +113,30 @@ class ClarifyIdentity(Clarify):
             if convert is None:
                 return None
             converts.append(convert)
-        return (lambda v, cs=converts: tuple(c(i) for i, c in zip(v, cs))
-                                       if v is not None else None)
+        id_class = ID.make(self.domain.dump)
+        return (lambda v, id_class=id_class, cs=converts:
+                        id_class(c(i) for i, c in zip(v, cs))
+                                      if v is not None else None)
+
+
+class ExtractValuePipe(object):
+
+    def __init__(self, name, from_domain, to_domain, convert, index):
+        self.name = name
+        self.from_domain = from_domain
+        self.to_domain = to_domain
+        self.convert = convert
+        self.index = index
+
+    def __call__(self, row):
+        item = row[self.index]
+        try:
+            return self.convert(item)
+        except ValueError:
+            message = "Failed to adapt value of %s to %s" \
+                    % (self.name, self.to_domain)
+            quote = unicode(Value(self.from_domain, item))
+            raise Error(QuotePara(message, quote))
 
 
 class ExtractNodePipe(object):
@@ -149,30 +172,29 @@ class BuildExtractNode(Utility):
         if not ((isinstance(domain, ListDomain) and
                  isinstance(domain.item_domain, RecordDomain)) or
                 isinstance(domain, RecordDomain)):
-            raise BadRequestError("unexpected feed type: expected"
-                                  " a list of records; got %s" % domain)
+            raise Error("Expected a record or a list of records;"
+                        " got %s" % domain)
         if is_list:
             fields = domain.item_domain.fields
         else:
             fields = domain.fields
         if self.profile.tag is None:
-            raise BadRequestError("missing table name")
+            raise Error("Missing table name")
         signature = (normalize(self.profile.tag), None)
         arc_by_signature = dict(((label.name, label.arity), label.arc)
                                 for label in classify(HomeNode()))
         if signature not in arc_by_signature:
-            raise BadRequestError("unknown table name %s"
-                                  % self.profile.tag.encode('utf-8'))
+            raise Error(QuotePara("Got unknown table",
+                                  self.profile.tag.encode('utf-8')))
         arc = arc_by_signature[signature]
         if not isinstance(arc, TableArc):
-            raise BadRequestError("expected a table name; got %s"
-                                  % self.profile.tag.encode('utf-8'))
+            raise Error(QuotePara("Expected the name of a table",
+                                  self.profile.tag.encode('utf-8')))
         node = TableNode(arc.table)
         id_convert = None
         if self.with_id:
             if not fields:
-                raise BadRequestError("the first field is expected to be"
-                                      " a table identity")
+                raise Error("Expected the first field to be an identity")
             id_field = fields[0]
             state = BindingState()
             syntax = VoidSyntax()
@@ -181,14 +203,15 @@ class BuildExtractNode(Utility):
             seed = state.use(FreeTableRecipe(node.table), syntax)
             recipe = identify(seed)
             if recipe is None:
-                raise BadRequestError("cannot determine identity of the table")
+                raise Error("Cannot determine identity of the table")
             identity = state.use(recipe, syntax, scope=seed)
             id_domain = identity.domain
             clarify = Clarify.__invoke__(id_field.domain, id_domain)
             if clarify is None:
-                raise BadRequestError("the first field is expected to be"
-                                      " a table identity")
-            id_convert = (lambda r, c=clarify: c(r[0]))
+                raise Error("Expected the first field to be"
+                            " the table identity; got %s" % id_field.domain)
+            id_convert = ExtractValuePipe(signature[0], id_field.domain,
+                                          id_domain, clarify, 0)
         if self.with_fields:
             labels = classify(node)
             arc_by_signature = dict(((label.name, label.arity), label.arc)
@@ -201,12 +224,12 @@ class BuildExtractNode(Utility):
                     continue
                 signature = (normalize(field.tag), None)
                 if signature not in arc_by_signature:
-                    raise BadRequestError("unknown column name %s"
-                                          % field.tag.encode('utf-8'))
+                    raise Error(QuotePara("Expected a column or a link name",
+                                          field.tag.encode('utf-8')))
                 arc = arc_by_signature[signature]
                 if not isinstance(arc, (ColumnArc, ChainArc)):
-                    raise BadRequestError("expected a column or a link name;"
-                                          " got %s" % field.tag.encode('utf-8'))
+                    raise Error(QuotePara("Expected a column or a link name",
+                                          field.tag.encode('utf-8')))
                 index_by_arc[arc] = idx
         arcs = []
         converts = []
@@ -220,8 +243,8 @@ class BuildExtractNode(Utility):
                             and isinstance(field.domain, IdentityDomain)):
                         arc = arc.link
                     if arc in arcs:
-                        raise BadRequestError("duplicate field %s"
-                                              % field.tag.encode('utf-8'))
+                        raise Error(QuotePara("Got duplicate field",
+                                              field.tag.encode('utf-8')))
                     arcs.append(arc)
                     if isinstance(arc, ColumnArc):
                         arc_domain = arc.column.domain
@@ -230,8 +253,8 @@ class BuildExtractNode(Utility):
                         if not joins[0].is_direct and \
                                 all(join.reverse().is_contracting
                                     for join in joins[1:]):
-                            raise BadRequestError("cannot assign to link %s"
-                                                  % field.tag.encode('utf-8'))
+                            raise Error(QuotePara("Cannot assign to link",
+                                                  field.tag.encode('utf-8')))
                         state = BindingState()
                         syntax = VoidSyntax()
                         scope = RootBinding(syntax)
@@ -240,18 +263,19 @@ class BuildExtractNode(Utility):
                                          syntax)
                         recipe = identify(seed)
                         if recipe is None:
-                            raise BadRequestError("cannot determine"
-                                                  " identity of a link")
+                            raise Error(QuotePara("Cannot determine"
+                                                  "identity of a link",
+                                                  field.tag.encode('utf-8')))
                         identity = state.use(recipe, syntax, scope=seed)
                         arc_domain = identity.domain
                     clarify = Clarify.__invoke__(field.domain, arc_domain)
                     if clarify is None:
-                        raise BadRequestError("invalid type for column %s:"
-                                              " expected %s; got %s"
-                                              % (field.tag.encode('utf-8'),
-                                                 arc_domain,
-                                                 field.domain))
-                    convert = (lambda v, i=idx, c=clarify: c(v[i]))
+                        raise Error("Invalid type for column %s:"
+                                    " expected %s; got %s"
+                                    % (field.tag.encode('utf-8'),
+                                       arc_domain, field.domain))
+                    convert = ExtractValuePipe(label.name, field.domain,
+                                               arc_domain, clarify, idx)
                     converts.append(convert)
         return ExtractNodePipe(node, arcs, id_convert, converts, is_list)
 
@@ -287,20 +311,20 @@ class BuildExtractTable(Utility):
             if isinstance(arc, ColumnArc):
                 column = arc.column
                 if column in extract_by_column:
-                    raise BadRequestError("duplicate column assignment for %s"
-                                          % column.name.encode('utf-8'))
+                    raise Error("Duplicate column assignment for %s"
+                                % column.name.encode('utf-8'))
                 resolve = (lambda v: v)
                 extract = (lambda r, i=idx: r[i])
                 resolves.append(resolve)
                 extract_by_column[column] = extract
             elif isinstance(arc, ChainArc):
-                resolve_pipe = BuildResolveChain.__invoke__(arc.joins)
+                resolve_pipe = BuildResolveChain.__invoke__(arc)
                 resolve = (lambda v, p=resolve_pipe: p(v))
                 resolves.append(resolve)
                 for column_idx, column in enumerate(resolve_pipe.columns):
                     if column in extract_by_column:
-                        raise BadRequestError("duplicate column assignment for %s"
-                                              % column.name.encode('utf-8'))
+                        raise Error("Duplicate column assignment for %s"
+                                    % column.name.encode('utf-8'))
                     extract = (lambda r, i=idx, k=column_idx: r[i][k])
                     extract_by_column[column] = extract
         columns = []
@@ -336,7 +360,7 @@ class ExecuteInsertPipe(object):
             cursor.execute(self.sql.encode('utf-8'), row)
             rows = cursor.fetchall()
             if len(rows) != 1:
-                raise BadRequestError("unable to locate inserted row")
+                raise Error("Failed to insert a record")
             [row] = rows
         return row
 
@@ -363,7 +387,7 @@ class BuildExecuteInsert(Utility):
                     returning_columns = key.origin_columns
                     break
         if not returning_columns:
-            raise BadRequestError("table does not have a primary key")
+            raise Error("Table does not have a primary key")
         sql = serialize_insert(table, self.columns, returning_columns)
         return ExecuteInsertPipe(table, self.columns, returning_columns, sql)
 
@@ -378,7 +402,7 @@ class ResolveIdentityPipe(object):
         product = self.pipe(row)
         data = product.data
         if len(data) != 1:
-            raise BadRequestError("unable to locate inserted row")
+            raise Error("Unable to locate the inserted record")
         return data[0]
 
 
@@ -424,7 +448,7 @@ class BuildResolveIdentity(Utility):
         state.push_scope(scope)
         recipe = identify(scope)
         if recipe is None:
-            raise BadRequestError("cannot determine table identity")
+            raise Error("Cannot determine table identity")
         binding = state.use(recipe, syntax)
         labels = relabel(TableArc(self.table))
         if labels:
@@ -447,17 +471,18 @@ class BuildResolveIdentity(Utility):
 
 class ResolveChainPipe(object):
 
-    def __init__(self, columns, domain, pipe):
+    def __init__(self, name, columns, domain, pipe):
         assert isinstance(columns, listof(ColumnEntity))
+        self.name = name
         self.columns = columns
         self.pipe = pipe
-        self.leaves = domain.leaves
+        self.domain = domain
 
     def __call__(self, value):
         if value is None:
             return (None,)*len(self.columns)
         raw_values = []
-        for leaf in self.leaves:
+        for leaf in self.domain.leaves:
             raw_value = value
             for idx in leaf:
                 raw_value = raw_value[idx]
@@ -465,16 +490,24 @@ class ResolveChainPipe(object):
         product = self.pipe(raw_values)
         data = product.data
         if len(data) != 1:
-            raise BadRequestError("unable to resolve a link")
+            quote = None
+            if self.name:
+                quote = u"%s[%s]" % (self.name, self.domain.dump(value))
+            else:
+                quote = u"[%s]" % self.domain.dump(value)
+            raise Error(QuotePara("Unable to resolve a link", quote))
         return data[0]
 
 
 class BuildResolveChain(Utility):
 
-    def __init__(self, joins):
-        self.joins = joins
+    def __init__(self, arc):
+        self.arc = arc
+        self.joins = arc.joins
 
     def __call__(self):
+        target_labels = relabel(TableArc(self.arc.target.table))
+        target_name = target_labels[0].name if target_labels else None
         joins = self.joins
         state = BindingState()
         syntax = VoidSyntax()
@@ -483,7 +516,8 @@ class BuildResolveChain(Utility):
         seed = state.use(FreeTableRecipe(joins[-1].target), syntax)
         recipe = identify(seed)
         if recipe is None:
-            raise BadRequestError("cannot determine identity of a link")
+            raise Error(QuotePara("Cannot determine identity of a link",
+                                  target_name))
         identity = state.use(recipe, syntax, scope=seed)
         count = itertools.count()
         def make_value(domain):
@@ -521,7 +555,7 @@ class BuildResolveChain(Utility):
         pipe =  build_fetch(binding)
         columns = joins[0].origin_columns[:]
         domain = identity.domain
-        return ResolveChainPipe(columns, domain, pipe)
+        return ResolveChainPipe(target_name, columns, domain, pipe)
 
 
 class ProduceInsert(Act):
@@ -543,15 +577,26 @@ class ProduceInsert(Act):
             data = []
             if extract_node.is_list:
                 records = product.data
+                record_domain = product.meta.domain.item_domain
             else:
                 records = [product.data]
-            for record in records:
+                record_domain = product.meta.domain
+            for idx, record in enumerate(records):
                 if record is None:
                     continue
-                row = resolve_identity(
-                        execute_insert(
-                            extract_table(
-                                extract_node(record))))
+                try:
+                    row = resolve_identity(
+                            execute_insert(
+                                extract_table(
+                                    extract_node(record))))
+                except Error, exc:
+                    if extract_node.is_list:
+                        message = "While inserting record #%s" % (idx+1)
+                    else:
+                        message = "While inserting a record"
+                    quote = record_domain.dump(record)
+                    exc.wrap(QuotePara(message, quote))
+                    raise
                 data.append(row)
             if not extract_node.is_list:
                 assert len(data) <= 1

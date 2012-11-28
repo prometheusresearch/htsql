@@ -1,6 +1,7 @@
 syntax: glob
 *.pyc
 *.pyo
+*.orig
 .*.sw?
 *.egg-info
 *.env

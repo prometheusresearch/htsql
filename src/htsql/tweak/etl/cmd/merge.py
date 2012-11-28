@@ -5,8 +5,9 @@
 
 from ....core.util import listof
 from ....core.adapter import Utility, adapt
-from ....core.error import BadRequestError
+from ....core.error import Error, QuotePara
 from ....core.entity import TableEntity, ColumnEntity
+from ....core.model import TableArc
 from ....core.classify import localize, relabel
 from ....core.connect import transaction, scramble, unscramble
 from ....core.domain import IdentityDomain, RecordDomain, ListDomain, Product
@@ -50,18 +51,18 @@ class BuildExtractIdentity(Utility):
     def __call__(self):
         identity_arcs = localize(self.node)
         if identity_arcs is None:
-            raise BadRequestError("a table with identity is expected")
+            raise Error("Expected a table with identity")
         index_by_arc = dict((arc, index) for index, arc in enumerate(self.arcs))
         id_indices = []
         for arc in identity_arcs:
             if arc not in index_by_arc:
                 labels = relabel(arc)
                 if not labels:
-                    raise BadRequestError("missing identity field")
+                    raise Error("Missing identity field")
                 else:
                     label = labels[0]
-                    raise BadRequestError("missing identity field %s"
-                                          % label.name.encode('utf-8'))
+                    raise Error("Missing identity field %s"
+                                % label.name.encode('utf-8'))
             index = index_by_arc[arc]
             id_indices.append(index)
         other_indices = []
@@ -76,10 +77,13 @@ class BuildExtractIdentity(Utility):
 
 class ResolveKeyPipe(object):
 
-    def __init__(self, columns, domain, pipe):
+    def __init__(self, name, columns, domain, pipe, with_error):
+        self.name = name
         self.columns = columns
         self.pipe = pipe
+        self.domain = domain
         self.leaves = domain.leaves
+        self.with_error = with_error
 
     def __call__(self, value):
         assert value is not None
@@ -94,15 +98,26 @@ class ResolveKeyPipe(object):
         assert len(data) <= 1
         if data:
             return data[0]
+        if self.with_error:
+            quote = None
+            if self.name:
+                quote = u"%s[%s]" % (self.name, self.domain.dump(value))
+            else:
+                quote = u"[%s]" % self.domain.dump(value)
+            raise Error(QuotePara("Unable to find an entity", quote))
         return None
 
 
 class BuildResolveKey(Utility):
 
-    def __init__(self, table):
-        self.table = table
+    def __init__(self, node, with_error=True):
+        self.node = node
+        self.table = node.table
+        self.with_error = with_error
 
     def __call__(self):
+        labels = relabel(TableArc(self.table))
+        name = labels[0].name if labels else None
         state = BindingState()
         syntax = VoidSyntax()
         scope = RootBinding(syntax)
@@ -110,7 +125,7 @@ class BuildResolveKey(Utility):
         seed = state.use(FreeTableRecipe(self.table), syntax)
         recipe = identify(seed)
         if recipe is None:
-            raise BadRequestError("cannot determine identity of a link")
+            raise Error("Cannot determine identity of a link")
         identity = state.use(recipe, syntax, scope=seed)
         count = itertools.count()
         def make_value(domain):
@@ -140,7 +155,7 @@ class BuildResolveKey(Utility):
                     rcolumns = key.origin_columns
                     break
         if not columns:
-            raise BadRequestError("table does not have a primary key")
+            raise Error("Table does not have a primary key")
         elements = []
         for column in columns:
             binding = state.use(ColumnRecipe(column), syntax)
@@ -155,7 +170,7 @@ class BuildResolveKey(Utility):
         binding = QueryBinding(state.root, binding, profile, syntax)
         pipe =  build_fetch(binding)
         domain = identity.domain
-        return ResolveKeyPipe(columns, domain, pipe)
+        return ResolveKeyPipe(name, columns, domain, pipe, self.with_error)
 
 
 class ExecuteUpdatePipe(object):
@@ -191,7 +206,7 @@ class ExecuteUpdatePipe(object):
             cursor.execute(self.sql.encode('utf-8'), row+key_row)
             rows = cursor.fetchall()
             if len(rows) != 1:
-                raise BadRequestError("unable to locate updated row")
+                raise Error("Unable to locate the updated row")
             [row] = rows
         return row
 
@@ -218,7 +233,7 @@ class BuildExecuteUpdate(Utility):
                     returning_columns = key.origin_columns
                     break
         if not returning_columns:
-            raise BadRequestError("table does not have a primary key")
+            raise Error("Table does not have a primary key")
         sql = serialize_update(table, self.columns, returning_columns,
                                returning_columns)
         return ExecuteUpdatePipe(table, self.columns, returning_columns,
@@ -238,7 +253,7 @@ class ProduceMerge(Act):
             extract_identity = BuildExtractIdentity.__invoke__(
                     extract_node.node, extract_node.arcs)
             resolve_key = BuildResolveKey.__invoke__(
-                    extract_node.node.table)
+                    extract_node.node, False)
             extract_table_for_update = BuildExtractTable.__invoke__(
                     extract_identity.node, extract_identity.arcs)
             execute_insert = BuildExecuteInsert.__invoke__(
@@ -253,21 +268,32 @@ class ProduceMerge(Act):
             data = []
             if extract_node.is_list:
                 records = product.data
+                record_domain = product.meta.domain.item_domain
             else:
                 records = [product.data]
-            for record in records:
+                record_domain = product.meta.domain
+            for idx, record in enumerate(records):
                 if record is None:
                     continue
-                row = extract_node(record)
-                update_id, update_row = extract_identity(row)
-                key = resolve_key(update_id)
-                if key is not None:
-                    row = extract_table_for_update(update_row)
-                    key = execute_update(key, row)
-                else:
-                    row = extract_table(row)
-                    key = execute_insert(row)
-                row = resolve_identity(key)
+                try:
+                    row = extract_node(record)
+                    update_id, update_row = extract_identity(row)
+                    key = resolve_key(update_id)
+                    if key is not None:
+                        row = extract_table_for_update(update_row)
+                        key = execute_update(key, row)
+                    else:
+                        row = extract_table(row)
+                        key = execute_insert(row)
+                    row = resolve_identity(key)
+                except Error, exc:
+                    if extract_node.is_list:
+                        message = "While merging record #%s" % (idx+1)
+                    else:
+                        message = "While merging a record"
+                    quote = record_domain.dump(record)
+                    exc.wrap(QuotePara(message, quote))
+                    raise
                 data.append(row)
             if not extract_node.is_list:
                 assert len(data) <= 1

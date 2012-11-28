@@ -3,7 +3,7 @@
 #
 
 
-from .util import Printable, maybe
+from .util import Printable, maybe, listof, oneof
 
 
 #
@@ -24,7 +24,7 @@ class HTTPError(Exception):
     status = None
 
     def __call__(self, environ, start_response):
-        # Implement the WSGI entry point.
+        # Implement a WSGI entry point.
         start_response(self.status,
                        [('Content-Type', 'text/plain; charset=UTF-8')])
         return [str(self), "\n"]
@@ -81,6 +81,65 @@ class NotImplementedError(HTTPError):
 #
 # Concrete HTSQL errors.
 #
+
+
+class Paragraph(Printable):
+
+    def __init__(self, message):
+        assert isinstance(message, (str, unicode))
+        if isinstance(message, str):
+            message = message.decode('utf-8', 'replace')
+        self.message = message
+
+    def __unicode__(self):
+        return self.message
+
+
+class PointerPara(Paragraph):
+
+    def __init__(self, message, mark):
+        super(PointerPara, self).__init__(message)
+        assert isinstance(mark, Mark)
+        self.mark = mark
+
+    def __unicode__(self):
+        if not self.mark:
+            return self.message
+        lines = self.mark.excerpt()
+        pointer = u"\n".join(u"    "+line for line in lines)
+        return u"%s:\n%s" % (self.message, pointer)
+
+
+class QuotePara(Paragraph):
+
+    def __init__(self, message, quote):
+        assert isinstance(quote, (str, unicode))
+        if isinstance(quote, str):
+            quote = quote.decode('utf-8', 'replace')
+        super(QuotePara, self).__init__(message)
+        self.quote = quote.rstrip()
+
+    def __unicode__(self):
+        if not self.quote:
+            return self.message
+        block = "\n".join(u"    "+line for line in self.quote.splitlines())
+        return u"%s:\n%s" % (self.message, block)
+
+
+class ChoicePara(Paragraph):
+
+    def __init__(self, message, choices):
+        super(PointerPara, self).__init__(message)
+        assert isinstance(choices, listof(oneof(str, unicode)))
+        choices = [choice.decode('utf-8', 'replace')
+                   if isinstance(choice, str) else choice]
+        self.choices = choices
+
+    def __unicode__(self):
+        if not self.choices:
+            return self.message
+        return u"%s:\n%s" % (self.message,
+                             u"\n".join(u"    "+choice for choice in choices))
 
 
 class Mark(Printable):
@@ -142,6 +201,8 @@ class Mark(Printable):
         Returns a list of lines that forms an excerpt of the original query
         string with ``^`` characters underlining the marked fragment.
         """
+        if not self.text:
+            return u""
         # Find the line that contains the mark.
         excerpt_start = self.text.rfind(u'\n', 0, self.start)+1
         excerpt_end = self.text.find(u'\n', excerpt_start)
@@ -164,7 +225,10 @@ class Mark(Printable):
         return lines
 
     def __unicode__(self):
-        return u">>> %s <<<" % self.text[self.start:self.end]
+        return u"\n".join(self.excerpt())
+
+    def __nonzero__(self):
+        return bool(self.text)
 
 
 class EmptyMark(Mark):
@@ -176,59 +240,99 @@ class EmptyMark(Mark):
         super(EmptyMark, self).__init__(u"", 0, 0)
 
 
-class StackedError(Exception):
-    """
-    An exception with a query fragment as the error context.
+class Error(BadRequestError):
 
-    `detail`: ``str``
-        The error message.
+    def __init__(self, *paragraphs):
+        self.paragraphs = [paragraph if isinstance(paragraph, Paragraph)
+                           else Paragraph(paragraph)
+                           for paragraph in paragraphs]
 
-    `mark`: :class:`Mark`
-        A pointer to a query fragment.
+    def wrap(self, *paragraphs):
+        self.paragraphs.extend(paragraph if isinstance(paragraph, Paragraph)
+                               else Paragraph(paragraph)
+                               for paragraph in paragraphs)
 
-    `hint`: ``str``
-        Explanation of the error and possible ways to fix it.
-    """
-
-    def __init__(self, detail, mark, hint=None):
-        assert isinstance(mark, Mark)
-        assert isinstance(hint, maybe(str))
-        super(StackedError, self).__init__(detail)
-        self.detail = detail
-        self.mark = mark
-        self.hint = hint
+    def __unicode__(self):
+        return u"\n".join(unicode(paragraph) for paragraph in self.paragraphs)
 
     def __str__(self):
-        if not self.mark.text:
-            return self.detail
-        lines = self.mark.excerpt()
-        mark_detail = "\n".join("    "+line.encode('utf-8') for line in lines)
-        return "%s:\n%s%s" % (self.detail, mark_detail,
-                              "\n(%s)" % self.hint
-                                            if self.hint is not None else "")
+        return unicode(self).encode('utf-8')
+
+    def __repr__(self):
+        if not self.paragraphs:
+            return "<%s>" % self.__class__.__name__
+        return "<%s: %s>" % (self.__class__.__name__,
+                             self.paragraphs[0].message.encode('utf-8'))
 
 
-class Error(StackedError, BadRequestError):
+class EngineError(ConflictError, Error):
     """
-    An error caused by user mistake.
-    """
-
-
-class EngineError(StackedError, ConflictError):
-    """
-    An error generated by the database server.
+    An error generated by the database driver.
     """
 
-    def __init__(self, detail):
-        super(EngineError, self).__init__(detail, EmptyMark())
 
-
-class PermissionError(StackedError, ForbiddenError):
+class PermissionError(ForbiddenError, Error):
     """
     An error caused by lack of read or write permissions.
     """
 
-    def __init__(self, detail):
-        super(PermissionError, self).__init__(detail, EmptyMark())
+
+class ErrorGuard(object):
+
+    def __init__(self, *paragraphs):
+        self.paragraphs = paragraphs
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        if isinstance(exc_value, Error):
+            exc_value.wrap(*self.paragraphs)
+
+
+class PointerErrorGuard(object):
+
+    def __init__(self, message, mark):
+        self.message = message
+        if mark is not None:
+            if not isinstance(mark, Mark):
+                mark = mark.mark
+        self.mark = mark
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        if not isinstance(exc_value, Error):
+            return
+        if not self.mark:
+            return
+        if any(paragraph.mark.text == self.mark.text
+               for paragraph in exc_value.paragraphs
+               if isinstance(paragraph, PointerPara)):
+            return
+        exc_value.wrap(PointerPara(self.message, self.mark))
+
+
+def parse_guard(mark):
+    return PointerErrorGuard("While parsing", mark)
+
+
+recognize_guard = parse_guard
+
+
+def translate_guard(mark):
+    return PointerErrorGuard("While translating", mark)
+
+
+def act_guard(mark):
+    return PointerErrorGuard("While processing", mark)
+
+
+def choices_guard(choices):
+    if not choices:
+        return ErrorGuard()
+    quote = "\n".join(choices)
+    return ErrorGuard(QuotePara("Perhaps you had in mind", quote))
 
 

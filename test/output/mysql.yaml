@@ -1519,10 +1519,14 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            ambiguous name 'program':
+            Found ambiguous name:
+                program
+            Perhaps you had in mind:
+                part_of
+                program_via_part_of
+            While translating:
                 /(program?school_code='la'&code='uengl').program
                                                          ^^^^^^^
-            (try 'part_of' or 'program_via_part_of')
         - uri: /(program?school_code='la'&code='uengl').part_of
           status: 200 OK
           headers:
@@ -1709,10 +1713,14 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            ambiguous name 'prerequisite':
+            Found ambiguous name:
+                prerequisite
+            Perhaps you had in mind:
+                prerequisite_via_of_course
+                prerequisite_via_on_course
+            While translating:
                 /(course?department_code='lang'&no=345).prerequisite
                                                         ^^^^^^^^^^^^
-            (try 'prerequisite_via_of_course' or 'prerequisite_via_on_course')
         - uri: /(course?department_code='lang'&no=345).prerequisite_via_on_course
           status: 200 OK
           headers:
@@ -2279,10 +2287,14 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            ambiguous name 'course':
+            Found ambiguous name:
+                course
+            Perhaps you had in mind:
+                of_course
+                on_course
+            While translating:
                 /(prerequisite?of_department_code='astro'&of_course_no=230 &on_department_code='phys'&on_course_no=130).course
                                                                                                                         ^^^^^^
-            (try 'of_course' or 'on_course')
         - uri: /(prerequisite?of_department_code='astro'&of_course_no=230 &on_department_code='phys'&on_course_no=130).of_course
           status: 200 OK
           headers:
@@ -2349,10 +2361,14 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            ambiguous name 'classification':
+            Found ambiguous name:
+                classification
+            Perhaps you had in mind:
+                part_of
+                classification_via_part_of
+            While translating:
                 /(classification?code='math').classification
                                               ^^^^^^^^^^^^^^
-            (try 'part_of' or 'classification_via_part_of')
         - uri: /(classification?code='math').part_of
           status: 200 OK
           headers:
@@ -6762,7 +6778,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            a singular expression is expected:
+            Expected a singular expression
+            While translating:
                 /department{name, course.credits}
                                          ^^^^^^^
         - uri: /department{name, max(course.credits)}
@@ -6819,7 +6836,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            a plural operand is expected:
+            Expected a plural operand
+            While translating:
                 /department{name, count(school)}
                                   ^^^^^^^^^^^^^
         - uri: /max(course.credits)
@@ -7869,7 +7887,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'level' in scope of 'course':
+            Found unknown attribute:
+                course.level
+            While translating:
                 /department.define(course(level) := course?no>=level*100 &no<(level+1)*100) {name, count(course(1)), count(course(2)), count(course(3)), count(course(4))}
                                                                ^^^^^
         - uri: /department.define(course($level) := course?no>=$level*100 &no<($level+1)*100)
@@ -12390,7 +12410,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid Boolean literal: expected 'true' or 'false'; got '':
+            invalid Boolean literal: expected 'true' or 'false'; got ''
+            While translating:
                 /boolean('')
                  ^^^^^^^^^^^
         - uri: /boolean('yes')
@@ -12398,7 +12419,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid Boolean literal: expected 'true' or 'false'; got 'yes':
+            invalid Boolean literal: expected 'true' or 'false'; got 'yes'
+            While translating:
                 /boolean('yes')
                  ^^^^^^^^^^^^^^
         - uri: /{text(''), text('HTSQL'), text('O''Reilly'), text('%ce%bb%cf%8c%ce%b3%ce%bf%cf%82'),
@@ -12477,7 +12499,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid integer literal: expected an integer in a decimal format; got '2.5e1':
+            invalid integer literal: expected an integer in a decimal format; got '2.5e1'
+            While translating:
                 /{integer('2.5e1')}
                   ^^^^^^^^^^^^^^^^
         - uri: /{18446744073709551616}
@@ -12485,7 +12508,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            integer value is out of range:
+            Found integer value is out of range
+            While translating:
                 /{18446744073709551616}
                   ^^^^^^^^^^^^^^^^^^^^
         - uri: /{1.0, -2.5, 0.875}
@@ -12534,7 +12558,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid decimal literal: vingt-cinq:
+            invalid decimal literal: vingt-cinq
+            While translating:
                 /{decimal('vingt-cinq')}
                   ^^^^^^^^^^^^^^^^^^^^^
         - uri: /{0e0, -57721e-5, 36288e2}
@@ -12570,7 +12595,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid float literal: vingt-cinq:
+            invalid float literal: vingt-cinq
+            While translating:
                 /float('vingt-cinq')
                  ^^^^^^^^^^^^^^^^^^^
         - uri: /{1e1024}
@@ -12578,7 +12604,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid float literal: inf:
+            invalid float literal: inf
+            While translating:
                 /{1e1024}
                   ^^^^^^
         - uri: /{float('inf')}
@@ -12586,7 +12613,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid float literal: inf:
+            invalid float literal: inf
+            While translating:
                 /{float('inf')}
                   ^^^^^^^^^^^^
         - uri: /{date('2010-04-15')}
@@ -12607,7 +12635,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid date literal: month must be in 1..12:
+            invalid date literal: month must be in 1..12
+            While translating:
                 /date('2010-13-07')
                  ^^^^^^^^^^^^^^^^^^
         - uri: /{time('20:03'), time('20:13:04.5')}
@@ -12629,7 +12658,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid time literal: hour must be in 0..23:
+            invalid time literal: hour must be in 0..23
+            While translating:
                 /{time('29:04')}
                   ^^^^^^^^^^^^^
         - uri: /{datetime('2010-04-15'), datetime('2010-04-15 20:13'), datetime('2010-04-15T20:13:04.5'),
@@ -12654,7 +12684,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid datetime literal: month must be in 1..12:
+            invalid datetime literal: month must be in 1..12
+            While translating:
                 /{datetime('2010-13-07 17:43')}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{datetime('2010-06-05 29:04')}
@@ -12662,7 +12693,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid datetime literal: hour must be in 0..23:
+            invalid datetime literal: hour must be in 0..23
+            While translating:
                 /{datetime('2010-06-05 29:04')}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       - id: logical-and-comparison-operators
@@ -13081,7 +13113,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types (boolean, integer) to a common type:
+            Cannot coerce values of types (boolean, integer) to a common type
+            While translating:
                 /{true()=1}
                   ^^^^^^^^
         - uri: /{'cinq'!=4.9}
@@ -13089,7 +13122,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid decimal literal: cinq:
+            invalid decimal literal: cinq
+            While translating:
                 /{'cinq'!=4.9}
                   ^^^^^^
         - uri: /{date('2010-04-15')==1991}
@@ -13097,7 +13131,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types (date, integer) to a common type:
+            Cannot coerce values of types (date, integer) to a common type
+            While translating:
                 /{date('2010-04-15')==1991}
                   ^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{date('2010-04-15')=datetime('2010-04-15')}
@@ -13105,7 +13140,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types (date, datetime) to a common type:
+            Cannot coerce values of types (date, datetime) to a common type
+            While translating:
                 /{date('2010-04-15')=datetime('2010-04-15')}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{datetime('2010-04-15 20:13')!==time('02:01')}
@@ -13113,7 +13149,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types (datetime, time) to a common type:
+            Cannot coerce values of types (datetime, time) to a common type
+            While translating:
                 /{datetime('2010-04-15 20:13')!==time('02:01')}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{1<10, 7.0<=7.0, 'omega'>'alpha'}
@@ -13212,7 +13249,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            values of type boolean are not comparable:
+            Values of type boolean are not comparable
+            While translating:
                 /{false()<true()}
                   ^^^^^^^^^^^^^^
         - uri: /{'cinq'>4.9}
@@ -13220,7 +13258,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid decimal literal: cinq:
+            invalid decimal literal: cinq
+            While translating:
                 /{'cinq'>4.9}
                   ^^^^^^
         - uri: /{date('2010-04-15')>=1991}
@@ -13228,7 +13267,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types (date, integer) to a common type:
+            Cannot coerce values of types (date, integer) to a common type
+            While translating:
                 /{date('2010-04-15')>=1991}
                   ^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{datetime('2010-04-15 20:13')>time('02:01')}
@@ -13236,7 +13276,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types (datetime, time) to a common type:
+            Cannot coerce values of types (datetime, time) to a common type
+            While translating:
                 /{datetime('2010-04-15 20:13')>time('02:01')}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{if_null('Victor', 'William'), if_null(null(), 'William'), if_null('Victor',
@@ -13293,7 +13334,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid integer literal: expected an integer in a decimal format; got 'cinq':
+            invalid integer literal: expected an integer in a decimal format; got 'cinq'
+            While translating:
                 /{if_null('cinq', 5)}
                           ^^^^^^
         - uri: /{null_if('cinq', 5)}
@@ -13301,7 +13343,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid integer literal: expected an integer in a decimal format; got 'cinq':
+            invalid integer literal: expected an integer in a decimal format; got 'cinq'
+            While translating:
                 /{null_if('cinq', 5)}
                           ^^^^^^
         - uri: /{if_null(date('2010-04-15'),1991)}
@@ -13309,7 +13352,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types (date, integer) to a common type:
+            Cannot coerce values of types (date, integer) to a common type
+            While translating:
                 /{if_null(date('2010-04-15'),1991)}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{null_if(datetime('2010-04-15 20:13'),time('02:01'))}
@@ -13317,7 +13361,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types (datetime, time) to a common type:
+            Cannot coerce values of types (datetime, time) to a common type
+            While translating:
                 /{null_if(datetime('2010-04-15 20:13'),time('02:01'))}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{if(true(), 'then'), if(false(), 'then'), if(null(), 'then')}
@@ -13427,7 +13472,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid Boolean literal: expected 'true' or 'false'; got '':
+            invalid Boolean literal: expected 'true' or 'false'; got ''
+            While translating:
                 /{if('', 'then', 'else')}
                      ^^
         - uri: /{switch(1, date('2010-04-15'), 1, date('1991-08-20'), 2)}
@@ -13435,7 +13481,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types (integer, date, date) to a common type:
+            Cannot coerce values of types (integer, date, date) to a common type
+            While translating:
                 /{switch(1, date('2010-04-15'), 1, date('1991-08-20'), 2)}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{switch(1, 1, 'George', 2, false())}
@@ -13443,7 +13490,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid Boolean literal: expected 'true' or 'false'; got 'George':
+            invalid Boolean literal: expected 'true' or 'false'; got 'George'
+            While translating:
                 /{switch(1, 1, 'George', 2, false())}
                                ^^^^^^^^
       - id: numeric-functions-and-operators
@@ -13576,7 +13624,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid integer literal: expected an integer in a decimal format; got 'cinq':
+            invalid integer literal: expected an integer in a decimal format; got 'cinq'
+            While translating:
                 /{integer('cinq')}
                   ^^^^^^^^^^^^^^^
         - uri: /{decimal(true())}
@@ -13584,7 +13633,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot convert a value of type boolean to decimal:
+            Cannot convert a value of type boolean to decimal
+            While translating:
                 /{decimal(true())}
                   ^^^^^^^^^^^^^^^
         - uri: /{float(date('2010-04-15'))}
@@ -13592,7 +13642,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot convert a value of type date to float:
+            Cannot convert a value of type date to float
+            While translating:
                 /{float(date('2010-04-15'))}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{integer(text('zero'))}
@@ -13778,28 +13829,68 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            operator '+' cannot be applied to values of types (untyped, integer):
+            Cannot apply operator '+' to values of types (untyped, integer)
+            Valid types:
+                (integer, integer)
+                (integer, decimal)
+                (decimal, integer)
+                (decimal, decimal)
+                (integer, float)
+                (decimal, float)
+                (float, integer)
+                (float, decimal)
+                (float, float)
+                (date, integer)
+                (datetime, integer)
+                (datetime, decimal)
+                (datetime, float)
+                (text, text)
+            While translating:
                 /{'cinq'+7}
                   ^^^^^^^^
-            (valid types: (integer, integer), (integer, decimal), (decimal, integer), (decimal, decimal), (integer, float), (decimal, float), (float, integer), (float, decimal), (float, float), (date, integer), (datetime, integer), (datetime, decimal), (datetime, float), (text, text))
         - uri: /{2.125-date('2010-04-15')}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            operator '-' cannot be applied to values of types (decimal, date):
+            Cannot apply operator '-' to values of types (decimal, date)
+            Valid types:
+                (integer, integer)
+                (integer, decimal)
+                (decimal, integer)
+                (decimal, decimal)
+                (integer, float)
+                (decimal, float)
+                (float, integer)
+                (float, decimal)
+                (float, float)
+                (date, integer)
+                (datetime, integer)
+                (datetime, decimal)
+                (datetime, float)
+                (date, date)
+            While translating:
                 /{2.125-date('2010-04-15')}
                   ^^^^^^^^^^^^^^^^^^^^^^^^
-            (valid types: (integer, integer), (integer, decimal), (decimal, integer), (decimal, decimal), (integer, float), (decimal, float), (float, integer), (float, decimal), (float, float), (date, integer), (datetime, integer), (datetime, decimal), (datetime, float), (date, date))
         - uri: /{true()/271828e-5}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            operator '/' cannot be applied to values of types (boolean, float):
+            Cannot apply operator '/' to values of types (boolean, float)
+            Valid types:
+                (integer, integer)
+                (integer, decimal)
+                (decimal, integer)
+                (decimal, decimal)
+                (integer, float)
+                (decimal, float)
+                (float, integer)
+                (float, decimal)
+                (float, float)
+            While translating:
                 /{true()/271828e-5}
                   ^^^^^^^^^^^^^^^^
-            (valid types: (integer, integer), (integer, decimal), (decimal, integer), (decimal, decimal), (integer, float), (decimal, float), (float, integer), (float, decimal), (float, float))
         - uri: /{7*2147483647, 9223372036854775807+1}
           status: 200 OK
           headers:
@@ -13978,19 +14069,25 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'round' cannot be applied to values of types (float, integer):
+            Cannot apply function 'round' to values of types (float, integer)
+            Valid types:
+                (integer, integer)
+                (decimal, integer)
+            While translating:
                 /{round(271828e-5,2)}
                   ^^^^^^^^^^^^^^^^^^
-            (valid types: (integer, integer), (decimal, integer))
         - uri: /{trunc(271828e-5,2)}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'trunc' cannot be applied to values of types (float, integer):
+            Cannot apply function 'trunc' to values of types (float, integer)
+            Valid types:
+                (integer, integer)
+                (decimal, integer)
+            While translating:
                 /{trunc(271828e-5,2)}
                   ^^^^^^^^^^^^^^^^^^
-            (valid types: (integer, integer), (decimal, integer))
       - id: text-functions-and-operators
         tests:
         - uri: /{text(null()), text('OMGWTFBBQ')}
@@ -14107,10 +14204,12 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'length' cannot be applied to a value of type date:
+            Cannot apply function 'length' to a value of type date
+            Valid type:
+                text
+            While translating:
                 /{length(date(2010-04-15))}
                   ^^^^^^^^^^^^^^^^^^^^^^^^
-            (valid type: text)
         - uri: /{'OMG'+'WTF'+'BBQ'}
           status: 200 OK
           headers:
@@ -14144,10 +14243,25 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            operator '+' cannot be applied to values of types (text, integer):
+            Cannot apply operator '+' to values of types (text, integer)
+            Valid types:
+                (integer, integer)
+                (integer, decimal)
+                (decimal, integer)
+                (decimal, decimal)
+                (integer, float)
+                (decimal, float)
+                (float, integer)
+                (float, decimal)
+                (float, float)
+                (date, integer)
+                (datetime, integer)
+                (datetime, decimal)
+                (datetime, float)
+                (text, text)
+            While translating:
                 /{text('LOL')+7}
                   ^^^^^^^^^^^^^
-            (valid types: (integer, integer), (integer, decimal), (decimal, integer), (decimal, decimal), (integer, float), (decimal, float), (float, integer), (float, decimal), (float, float), (date, integer), (datetime, integer), (datetime, decimal), (datetime, float), (text, text))
         - uri: /{'OMGWTFBBQ'~'wtf', 'OMGWTFBBQ'!~'LOL'}
           status: 200 OK
           headers:
@@ -14506,7 +14620,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid date literal: month must be in 1..12:
+            invalid date literal: month must be in 1..12
+            While translating:
                 /{date('2010-13-07')}
                   ^^^^^^^^^^^^^^^^^^
         - uri: /{date(true())}
@@ -14514,7 +14629,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot convert a value of type boolean to date:
+            Cannot convert a value of type boolean to date
+            While translating:
                 /{date(true())}
                   ^^^^^^^^^^^^
         - uri: /{date(7)}
@@ -14522,7 +14638,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot convert a value of type integer to date:
+            Cannot convert a value of type integer to date
+            While translating:
                 /{date(7)}
                   ^^^^^^^
         - uri: /{date(time('20:13'))}
@@ -14530,7 +14647,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot convert a value of type time to date:
+            Cannot convert a value of type time to date
+            While translating:
                 /{date(time('20:13'))}
                   ^^^^^^^^^^^^^^^^^^^
         - uri: /{date(text('birthday')), date(text('2010-13-07'))}
@@ -14652,7 +14770,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid time literal: hour must be in 0..23:
+            invalid time literal: hour must be in 0..23
+            While translating:
                 /{time('29:04')}
                   ^^^^^^^^^^^^^
         - uri: /{time(true())}
@@ -14660,7 +14779,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot convert a value of type boolean to time:
+            Cannot convert a value of type boolean to time
+            While translating:
                 /{time(true())}
                   ^^^^^^^^^^^^
         - uri: /{time(7)}
@@ -14668,7 +14788,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot convert a value of type integer to time:
+            Cannot convert a value of type integer to time
+            While translating:
                 /{time(7)}
                   ^^^^^^^
         - uri: /{time(date('2010-04-15'))}
@@ -14676,7 +14797,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot convert a value of type date to time:
+            Cannot convert a value of type date to time
+            While translating:
                 /{time(date('2010-04-15'))}
                   ^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{time(text('just a moment ago')), time(text('29:04'))}
@@ -14755,7 +14877,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid datetime literal: month must be in 1..12:
+            invalid datetime literal: month must be in 1..12
+            While translating:
                 /{datetime('2010-13-07 17:43')}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{datetime(true())}
@@ -14763,7 +14886,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot convert a value of type boolean to datetime:
+            Cannot convert a value of type boolean to datetime
+            While translating:
                 /{datetime(true())}
                   ^^^^^^^^^^^^^^^^
         - uri: /{datetime(7)}
@@ -14771,7 +14895,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot convert a value of type integer to datetime:
+            Cannot convert a value of type integer to datetime
+            While translating:
                 /{datetime(7)}
                   ^^^^^^^^^^^
         - uri: /{datetime(time('20:13'))}
@@ -14779,7 +14904,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot convert a value of type time to datetime:
+            Cannot convert a value of type time to datetime
+            While translating:
                 /{datetime(time('20:13'))}
                   ^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{datetime(text('just a moment ago')), datetime(text('2010-13-07 17:43'))}
@@ -15309,7 +15435,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            a plural operand is expected:
+            Expected a plural operand
+            While translating:
                 /{exists(true())}
                          ^^^^^^
         - uri: /{every(true())}
@@ -15317,7 +15444,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            a plural operand is expected:
+            Expected a plural operand
+            While translating:
                 /{every(true())}
                         ^^^^^^
         - uri: /{count(true())}
@@ -15325,7 +15453,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            a plural operand is expected:
+            Expected a plural operand
+            While translating:
                 /{count(true())}
                   ^^^^^^^^^^^^^
         - uri: /course{no,credits}?department_code='be'
@@ -15451,10 +15580,18 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'min' cannot be applied to a value of type boolean:
+            Cannot apply function 'min' to a value of type boolean
+            Valid type:
+                integer
+                decimal
+                float
+                text
+                date
+                time
+                datetime
+            While translating:
                 /{min(student.is_active), max(student.is_active)}
                   ^^^^^^^^^^^^^^^^^^^^^^
-            (valid type: integer, decimal, float, text, date, time, datetime)
         - uri: /{sum(course{credits}?department_code='be'), count(course{credits}?department_code='be'),
             avg(course{credits}?department_code='be')}
           status: 200 OK
@@ -15496,19 +15633,27 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'sum' cannot be applied to a value of type date:
+            Cannot apply function 'sum' to a value of type date
+            Valid type:
+                integer
+                decimal
+                float
+            While translating:
                 /{sum(student.dob)}
                   ^^^^^^^^^^^^^^^^
-            (valid type: integer, decimal, float)
         - uri: /{avg(student.name)}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'avg' cannot be applied to a value of type text:
+            Cannot apply function 'avg' to a value of type text
+            Valid type:
+                integer
+                decimal
+                float
+            While translating:
                 /{avg(student.name)}
                   ^^^^^^^^^^^^^^^^^
-            (valid type: integer, decimal, float)
       - id: table-functions-and-operators
         tests:
         - uri: /school.program
@@ -16570,7 +16715,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'instructor' in scope of 'student':
+            Found unknown attribute:
+                student.instructor
+            While translating:
                 /student.instructor
                          ^^^^^^^^^^
         - uri: /school?code='mus'
@@ -19027,7 +19174,8 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              a singular expression is expected:
+              Expected a singular expression
+              While translating:
                   /school{code,department.exists(course)}
                                           ^^^^^^^^^^^^^^
           - uri: /school{code,department.avg(course.credits)}
@@ -19035,7 +19183,8 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              a singular expression is expected:
+              Expected a singular expression
+              While translating:
                   /school{code,department.avg(course.credits)}
                                           ^^^^^^^^^^^^^^^^^^^
           - uri: /department{sum(course.credits),count(course.credits), avg(course.credits)}?exists(course)
@@ -23119,7 +23268,8 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              a plural expression is expected:
+              Expected a plural expression
+              While translating:
                   /department.top(school)
                                   ^^^^^^
           - uri: /class^{year, season} {*, /top(^.sort(count(enrollment)-),3).course{title}}
@@ -23612,7 +23762,8 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              ill-formed locator:
+              Found ill-formed locator
+              While translating:
                   /program[ns]
                           ^^^^
           - uri: /school[ns.uchem]
@@ -23620,7 +23771,8 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              ill-formed locator:
+              Found ill-formed locator
+              While translating:
                   /school[ns.uchem]
                          ^^^^^^^^^^
           - uri: /course[ns.uchem]
@@ -23628,7 +23780,8 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              invalid integer literal: expected an integer in a decimal format; got 'uchem':
+              invalid integer literal: expected an integer in a decimal format; got 'uchem'
+              While translating:
                   /course[ns.uchem]
                              ^^^^^
           - uri: /program^degree{id()}
@@ -23636,7 +23789,8 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              cannot determine identity:
+              Cannot determine identity
+              While translating:
                   /program^degree{id()}
                                   ^^^^
           - uri: /course[$id]{id(), title} :where $id:='astro.105'
@@ -23644,7 +23798,8 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              ill-formed locator:
+              Found ill-formed locator
+              While translating:
                   /course[$id]{id(), title} :where $id:='astro.105'
                          ^^^^^
         - id: table-expressions
@@ -24128,7 +24283,9 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              unrecognized reference '$year':
+              Found unknown reference:
+                  $year
+              While translating:
                   /school.define(student_by_year($year) := program.student?year(dob)=$year) {code, student_by_year(1990).$year}
                                                                                                                          ^^^^^
           - uri: /define(f($x) := $x*2){{$x, f($x)} :where $x := 21}
@@ -24204,7 +24361,8 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              qualified definition is not allowed for an in-selector assignment:
+              Qualified definition is not allowed for an in-selector assignment
+              While translating:
                   /school{code, program.num_stud := count(student)}
                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
           - uri: /sch:=school{code, name}?exists(department)
@@ -26563,7 +26721,8 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              a singular expression is expected:
+              Expected a singular expression
+              While translating:
                   /{(school^campus).campus}
                                     ^^^^^^
         - id: nested-segments
@@ -27819,7 +27978,8 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              a singular expression is expected:
+              Expected a singular expression
+              While translating:
                   /school{code, department.(/course)}
                                 ^^^^^^^^^^
           - uri: /school{code, department{/course}}
@@ -27827,7 +27987,8 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              a singular expression is expected:
+              Expected a singular expression
+              While translating:
                   /school{code, department{/course}}
                                           ^^^^^^^^^
           - uri: /school{code, /root().department}
@@ -27835,7 +27996,8 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              a descendant segment flow is expected:
+              Expected a descendant segment flow
+              While translating:
                   /school{code, /root().department}
                                 ^^^^^^^^^^^^^^^^^^
       - id: known-issues
@@ -27928,95 +28090,108 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            an empty or constant kernel is not allowed:
+            Found an empty or constant kernel
+            While processing:
                 /school^{}{true()}
-                 ^^^^^^^^^
+                ^^^^^^^^^^^^^^^^^^
         - uri: /school^{true()}{true()}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            an empty or constant kernel is not allowed:
+            Found an empty or constant kernel
+            While processing:
                 /school^{true()}{true()}
-                 ^^^^^^^^^^^^^^^
+                ^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /school?false()^{true()}{true()}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            an empty or constant kernel is not allowed:
+            Found an empty or constant kernel
+            While processing:
                 /school?false()^{true()}{true()}
-                 ^^^^^^^^^^^^^^^^^^^^^^^
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /school^{}{*, count(school)}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            an empty or constant kernel is not allowed:
+            Found an empty or constant kernel
+            While processing:
                 /school^{}{*, count(school)}
-                 ^^^^^^^^^
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /school^{true()}{*, count(school)}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            an empty or constant kernel is not allowed:
+            Found an empty or constant kernel
+            While processing:
                 /school^{true()}{*, count(school)}
-                 ^^^^^^^^^^^^^^^
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /school?false()^{true()}{*, count(school)}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            an empty or constant kernel is not allowed:
+            Found an empty or constant kernel
+            While processing:
                 /school?false()^{true()}{*, count(school)}
-                 ^^^^^^^^^^^^^^^^^^^^^^^
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /school^{null()}{*, count(school)}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            an empty or constant kernel is not allowed:
+            Found an empty or constant kernel
+            While processing:
                 /school^{null()}{*, count(school)}
-                 ^^^^^^^^^^^^^^^
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{school^{}{count(school)}, school?false()^{}{count(school)}}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            an empty or constant kernel is not allowed:
+            Found an empty or constant kernel
+            While processing:
                 /{school^{}{count(school)}, school?false()^{}{count(school)}}
-                  ^^^^^^^^^
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /school{program^{}{count(program)}, program?false()^{}{count(program)}}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            an empty or constant kernel is not allowed:
+            Found an empty or constant kernel
+            While processing:
                 /school{program^{}{count(program)}, program?false()^{}{count(program)}}
-                        ^^^^^^^^^^
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{count(school^true()), count(school?false()^true()), count(school^null())}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            an empty or constant kernel is not allowed:
+            Found an empty or constant kernel
+            While processing:
                 /{count(school^true()), count(school?false()^true()), count(school^null())}
-                        ^^^^^^^^^^^^^
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /(school^null()).^
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            an empty or constant kernel is not allowed:
+            Found an empty or constant kernel
+            While processing:
                 /(school^null()).^
-                  ^^^^^^^^^^^^^
+                ^^^^^^^^^^^^^^^^^^
         - uri: /department^school_code{school_code.name, name}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'name' in scope of 'school_code':
+            Found unknown attribute:
+                school_code.name
+            While translating:
                 /department^school_code{school_code.name, name}
                                                     ^^^^
         - uri: /program.part_of.*
@@ -28384,7 +28559,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized function 'unknown':
+            Found unknown function:
+                unknown
+            While translating:
                 /school/:unknown
                 ^^^^^^^^^^^^^^^^
       - id: format-selection-by-`accept`
@@ -33031,7 +33208,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            expected 1 argument:
+            Expected 1 argument
+            While parsing:
                 /fetch()
                  ^^^^^^^
         - uri: /fetch(school)
@@ -33039,7 +33217,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            a singular expression is expected:
+            Expected a singular expression
+            While translating:
                 /fetch(school)
                        ^^^^^^
         - uri: /school/:html/:fetch
@@ -33047,7 +33226,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized function 'html':
+            Found unknown function:
+                html
+            While translating:
                 /school/:html/:fetch
                 ^^^^^^^^^^^^^
         - uri: /school/:html/:json
@@ -33056,12 +33237,18 @@ tests:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             unsupported action
+            While processing:
+                /school/:html/:json
+                ^^^^^^^^^^^^^
         - uri: /school/:html/:sql
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             unsupported action
+            While processing:
+                /school/:html/:sql
+                ^^^^^^^^^^^^^
   - include: test/input/addon.yaml
     output:
       id: addon
@@ -33867,9 +34054,12 @@ tests:
           status: 403 Forbidden
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
-          - [Set-Cookie, htsql-csrf-token=75935b7bd17b8b58444d0765db9b15e9; Path=/]
+          - [Set-Cookie, htsql-csrf-token=d1e4f773e5127343dd1f700ed98db7b5; Path=/]
           body: |
             not enough permissions to execute the query
+            While processing:
+                /school
+                ^^^^^^^
         - py: pass-csrf-token
           stdout: |+
             200 OK
@@ -34119,7 +34309,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'nothing':
+            Found unknown attribute:
+                nothing
+            While translating:
                 /sqlite_gw(/nothing)
                             ^^^^^^^
       - id: tweak.meta
@@ -35119,7 +35311,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            expected 1 argument:
+            Expected 1 argument
+            While parsing:
                 /meta()
                  ^^^^^^
         - uri: /meta(/column,/link)
@@ -35127,7 +35320,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            expected 1 argument:
+            Expected 1 argument
+            While parsing:
                 /meta(/column,/link)
                  ^^^^^^^^^^^^^^^^^^^
         - uri: /meta(/schema)
@@ -35135,7 +35329,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'schema':
+            Found unknown attribute:
+                schema
+            While translating:
                 /meta(/schema)
                        ^^^^^^
         - uri: /meta(table)
@@ -35143,7 +35339,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            a singular expression is expected:
+            Expected a singular expression
+            While translating:
                 /meta(table)
                       ^^^^^
         - uri: /meta(/column.sort(table.name, field.sort))
@@ -35209,9 +35406,12 @@ tests:
           status: 403 Forbidden
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
-          - [Set-Cookie, htsql-csrf-token=e064c75dd78e0b1c4a3b49ac7ca17757; Path=/]
+          - [Set-Cookie, htsql-csrf-token=ea40a0a2d34c17e18ae87dd9942f6729; Path=/]
           body: |
             not enough permissions to execute the query
+            While processing:
+                /meta(/table)
+                      ^^^^^^
       - id: tweak.override
         tests:
         - ctl: [ext, tweak.override]
@@ -35322,7 +35522,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'department' in scope of 'school':
+            Found unknown attribute:
+                school.department
+            While translating:
                 /avg(school.count(department))
                                   ^^^^^^^^^^
         - uri: /avg(school.count(program))
@@ -35351,7 +35553,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'department' in scope of 'school':
+            Found unknown attribute:
+                school.department
+            While translating:
                 /avg(school.count(department))
                                   ^^^^^^^^^^
         - uri: /avg(school.count(program))
@@ -35380,7 +35584,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'department' in scope of 'school':
+            Found unknown attribute:
+                school.department
+            While translating:
                 /avg(school.count(department))
                                   ^^^^^^^^^^
         - uri: /school{code, count(department)}
@@ -35419,7 +35625,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'enrollment' in scope of 'student':
+            Found unknown attribute:
+                student.enrollment
+            While translating:
                 /student{name, count(enrollment)}
                                      ^^^^^^^^^^
         - uri: /max(confidential.pay_grade)
@@ -35443,7 +35651,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'ssn' in scope of 'confidential':
+            Found unknown attribute:
+                confidential.ssn
+            While translating:
                 /confidential.ssn
                               ^^^
         - uri: /student{name, dob, school.code, program.code, exists(instructor)}.limit(1)
@@ -35513,7 +35723,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'classification':
+            Found unknown attribute:
+                classification
+            While translating:
                 /classification
                  ^^^^^^^^^^^^^^
         - uri: /active_students().limit(10)
@@ -35586,16 +35798,20 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'active_students':
+            Found unknown attribute:
+                active_students
+            Perhaps you had in mind:
+                a function 'active_students'
+            While translating:
                 /active_students
                  ^^^^^^^^^^^^^^^
-            (did you mean: a function 'active_students')
         - uri: /active_students(2010)
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'active_students' requires 0 arguments; got 1:
+            Function 'active_students' requires 0 arguments; got 1
+            While translating:
                 /active_students(2010)
                  ^^^^^^^^^^^^^^^^^^^^^
         - uri: /students_by_year
@@ -35603,16 +35819,20 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'students_by_year':
+            Found unknown attribute:
+                students_by_year
+            Perhaps you had in mind:
+                a function 'students_by_year'
+            While translating:
                 /students_by_year
                  ^^^^^^^^^^^^^^^^
-            (did you mean: a function 'students_by_year')
         - uri: /students_by_year()
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'students_by_year' requires 1 argument; got 0:
+            Function 'students_by_year' requires 1 argument; got 0
+            While translating:
                 /students_by_year()
                  ^^^^^^^^^^^^^^^^^^
         - uri: /program?exists(includes)
@@ -35651,7 +35871,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'program_via_part_of' in scope of 'program':
+            Found unknown attribute:
+                program.program_via_part_of
+            While translating:
                 /program?exists(program_via_part_of)
                                 ^^^^^^^^^^^^^^^^^^^
         - uri: /student?count(class)>55
@@ -35693,7 +35915,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'name' in scope of 'student':
+            Found unknown attribute:
+                student.name
+            While translating:
                 /student.name
                          ^^^^
         - uri: /(program?code='gart').active_students()
@@ -35765,16 +35989,20 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'active_students' in scope of 'program':
+            Found unknown attribute:
+                program.active_students
+            Perhaps you had in mind:
+                a function 'active_students'
+            While translating:
                 /program.active_students
                          ^^^^^^^^^^^^^^^
-            (did you mean: a function 'active_students')
         - uri: /program.active_students(2010)
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'active_students' requires 0 arguments; got 1:
+            Function 'active_students' requires 0 arguments; got 1
+            While translating:
                 /program.active_students(2010)
                          ^^^^^^^^^^^^^^^^^^^^^
         - uri: /program.students_by_year
@@ -35782,16 +36010,20 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'students_by_year' in scope of 'program':
+            Found unknown attribute:
+                program.students_by_year
+            Perhaps you had in mind:
+                a function 'students_by_year'
+            While translating:
                 /program.students_by_year
                          ^^^^^^^^^^^^^^^^
-            (did you mean: a function 'students_by_year')
         - uri: /program.students_by_year()
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'students_by_year' requires 1 argument; got 0:
+            Function 'students_by_year' requires 1 argument; got 0
+            While translating:
                 /program.students_by_year()
                          ^^^^^^^^^^^^^^^^^^
         - uri: /active_students{name, gender, start_date}.limit(5)
@@ -35907,7 +36139,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'active_students' requires 0, 1 or 2 arguments; got 3:
+            Function 'active_students' requires 0, 1 or 2 arguments; got 3
+            While translating:
                 /active_students(2009, 'm', 'phd')
                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /(program?code='gart').active_students{name, gender, start_date}
@@ -36021,7 +36254,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'active_students' requires 0, 1 or 2 arguments; got 3:
+            Function 'active_students' requires 0, 1 or 2 arguments; got 3
+            While translating:
                 /(program?code='gart').active_students(2009, 'm', 'phd')
                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /student{name}?count(class)>55
@@ -36055,7 +36289,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'enrollment':
+            Found unknown attribute:
+                enrollment
+            While translating:
                 /enrollment
                  ^^^^^^^^^^
         - uri: /student.enrollment
@@ -36063,7 +36299,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'enrollment' in scope of 'student':
+            Found unknown attribute:
+                student.enrollment
+            While translating:
                 /student.enrollment
                          ^^^^^^^^^^
         - uri: /student.id
@@ -36071,10 +36309,13 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'id' in scope of 'student':
+            Found unknown attribute:
+                student.id
+            Perhaps you had in mind:
+                a function 'id'
+            While translating:
                 /student.id
                          ^^
-            (did you mean: a function 'id')
         - uri: /(student{name, dob}?date(start_date)>curr_date).limit(10)
           status: 200 OK
           headers:
@@ -36195,7 +36436,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'not':
+            Found unknown attribute:
+                not
+            While translating:
                 /-/not-found
                    ^^^
         - uri: /;)/not-found
@@ -36705,7 +36948,7 @@ tests:
           body: |
             {
               "type": "permissions",
-              "detail": "not enough permissions to execute the query"
+              "detail": "not enough permissions to execute the query\nWhile processing:\n    \/school:top\n    ^^^^^^^^^^^"
             }
         - uri: /
           status: 200 OK
@@ -37194,7 +37437,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            symbol '%' must be followed by two hexdecimal digits:
+            Expected symbol `%` followed by two hexdecimal digits
+            While parsing:
                 /%27?%@$'
                      ^
         - uri: /'%FF'
@@ -37208,7 +37452,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot find a matching quote mark:
+            cannot find a matching quote mark
+            While parsing:
                 /'Hello
                  ^
         - uri: /`Hello'
@@ -37216,7 +37461,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unexpected character '`':
+            Got unexpected character '`'
+            While parsing:
                 /`Hello'
                  ^
       - id: parse-errors
@@ -37226,7 +37472,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unexpected input:
+            Got unexpected input
+            While parsing:
                 /'Hello','World'
                         ^
         - uri: school
@@ -37234,7 +37481,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            a singular expression is expected:
+            Expected a singular expression
+            While translating:
                 school
                 ^^^^^^
         - uri: /school/:1
@@ -37242,7 +37490,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unexpected input:
+            Got unexpected input
+            While parsing:
                 /school/:1
                          ^
         - uri: /school/:html(/program}
@@ -37250,7 +37499,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unexpected input:
+            Got unexpected input
+            While parsing:
                 /school/:html(/program}
                                       ^
         - uri: /school:1
@@ -37258,7 +37508,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unexpected input:
+            Got unexpected input
+            While parsing:
                 /school:1
                         ^
         - uri: /school :as ('School'}
@@ -37266,7 +37517,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unexpected input:
+            Got unexpected input
+            While parsing:
                 /school :as ('School'}
                                      ^
         - uri: /school{code,name)
@@ -37274,7 +37526,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unexpected input:
+            Got unexpected input
+            While parsing:
                 /school{code,name)
                                  ^
         - uri: /count(school}
@@ -37282,7 +37535,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unexpected input:
+            Got unexpected input
+            While parsing:
                 /count(school}
                              ^
         - uri: /school{code,name,
@@ -37290,7 +37544,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unexpected end of input:
+            Got unexpected end of input
+            While parsing:
                 /school{code,name,
                                   ^
         - uri: /school{code,,name}
@@ -37298,7 +37553,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unexpected input:
+            Got unexpected input
+            While parsing:
                 /school{code,,name}
                              ^
         - uri: /(2+2}
@@ -37306,7 +37562,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unexpected input:
+            Got unexpected input
+            While parsing:
                 /(2+2}
                      ^
         - uri: /{count(school))
@@ -37314,7 +37571,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unexpected input:
+            Got unexpected input
+            While parsing:
                 /{count(school))
                                ^
       - id: bind-errors
@@ -37332,7 +37590,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            parameterized definition is not allowed for an in-selector assignment:
+            Parameterized definition is not allowed for an in-selector assignment
+            While translating:
                 /school{code, num_dept():=count(department)}
                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /school{code, department.num_course:=count(course)}
@@ -37340,7 +37599,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            qualified definition is not allowed for an in-selector assignment:
+            Qualified definition is not allowed for an in-selector assignment
+            While translating:
                 /school{code, department.num_course:=count(course)}
                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /department^school
@@ -37348,7 +37608,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            quotient column must be scalar:
+            Expected a scalar column
+            While translating:
                 /department^school
                             ^^^^^^
         - uri: /department^(num_course:=count(course))
@@ -37356,7 +37617,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            quotient column must be scalar:
+            Expected a scalar column
+            While translating:
                 /department^(num_course:=count(course))
                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /program.{school_code,code}->school{code}
@@ -37364,7 +37626,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unbalanced origin and target columns:
+            Found unbalanced origin and target columns
+            While translating:
                 /program.{school_code,code}->school{code}
                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /program.{code}->course{no}
@@ -37372,7 +37635,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce origin and target columns to a common type:
+            Cannot coerce origin and target columns to a common type
+            While translating:
                 /program.{code}->course{no}
                  ^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /define((school).num_prog:=count(program)).true()
@@ -37380,7 +37644,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unexpected input:
+            Got unexpected input
+            While parsing:
                 /define((school).num_prog:=count(program)).true()
                                  ^^^^^^^^
         - uri: /define(true().school.num_prog:=count(program)).true()
@@ -37388,7 +37653,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unexpected input:
+            Got unexpected input
+            While parsing:
                 /define(true().school.num_prog:=count(program)).true()
                                ^^^^^^
         - uri: /define(school.num_prog(1):=count(program)).true()
@@ -37396,7 +37662,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unexpected input:
+            Got unexpected input
+            While parsing:
                 /define(school.num_prog(1):=count(program)).true()
                                           ^^
         - uri: /define(school.(num_prog):=count(program)).true()
@@ -37404,7 +37671,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unexpected input:
+            Got unexpected input
+            While parsing:
                 /define(school.(num_prog):=count(program)).true()
                                          ^^
         - uri: /school?*1.5
@@ -37412,7 +37680,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unexpected input:
+            Got unexpected input
+            While parsing:
                 /school?*1.5
                          ^^^
         - uri: /school?*5
@@ -37420,7 +37689,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            value in range 1-3 is required:
+            Expected value in range 1-3
+            While translating:
                 /school?*5
                         ^^
         - uri: /school?$code='art'
@@ -37428,7 +37698,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized reference '$code':
+            Found unknown reference:
+                $code
+            While translating:
                 /school?$code='art'
                         ^^^^^
         - uri: /school{code, count(^)}
@@ -37436,7 +37708,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            '^' could only be used in a quotient scope:
+            '^' could only be used in a quotient scope
+            While translating:
                 /school{code, count(^)}
                                     ^
         - uri: /invalid
@@ -37444,7 +37717,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'invalid':
+            Found unknown attribute:
+                invalid
+            While translating:
                 /invalid
                  ^^^^^^^
         - uri: /invalid()
@@ -37452,7 +37727,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized function 'invalid':
+            Found unknown function:
+                invalid
+            While translating:
                 /invalid()
                  ^^^^^^^^^
         - uri: /school :invalid
@@ -37460,7 +37737,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized function 'invalid':
+            Found unknown function:
+                invalid
+            While translating:
                 /school :invalid
                  ^^^^^^^^^^^^^^^
         - uri: /define(invalid.value:=true()).invalid{value}
@@ -37468,7 +37747,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'invalid':
+            Found unknown attribute:
+                invalid
+            While translating:
                 /define(invalid.value:=true()).invalid{value}
                                                ^^^^^^^
         - uri: /program.program
@@ -37476,10 +37757,14 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            ambiguous name 'program':
+            Found ambiguous name:
+                program
+            Perhaps you had in mind:
+                part_of
+                program_via_part_of
+            While translating:
                 /program.program
                          ^^^^^^^
-            (try 'part_of' or 'program_via_part_of')
       - id: lookup-hints
         tests:
         - uri: /school?code=$scool_code :where $school_code:='art'
@@ -37487,16 +37772,21 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized reference '$scool_code':
+            Found unknown reference:
+                $scool_code
+            Perhaps you had in mind:
+                $school_code
+            While translating:
                 /school?code=$scool_code :where $school_code:='art'
                              ^^^^^^^^^^^
-            (did you mean: '$school_code')
         - uri: /school?code=$code :where $school_code:='art'
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized reference '$code':
+            Found unknown reference:
+                $code
+            While translating:
                 /school?code=$code :where $school_code:='art'
                              ^^^^^
         - uri: /school?code=$scool_code :where ($school_code1:='art', $school_code2:='eng',
@@ -37505,52 +37795,71 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized reference '$scool_code':
+            Found unknown reference:
+                $scool_code
+            Perhaps you had in mind:
+                $school_code1
+                $school_code2
+                $school_code3
+            While translating:
                 /school?code=$scool_code :where ($school_code1:='art', $school_code2:='eng', $school_code3:='mus')
                              ^^^^^^^^^^^
-            (did you mean: '$school_code1', '$school_code2' or '$school_code3')
         - uri: /school?code=school_code :where $school_code:='art'
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'school_code' in scope of 'school':
+            Found unknown attribute:
+                school.school_code
+            Perhaps you had in mind:
+                a reference '$school_code'
+            While translating:
                 /school?code=school_code :where $school_code:='art'
                              ^^^^^^^^^^^
-            (did you mean: a reference '$school_code')
         - uri: /school{code, count{department}}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'count' in scope of 'school':
+            Found unknown attribute:
+                school.count
+            Perhaps you had in mind:
+                a function 'count'
+            While translating:
                 /school{code, count{department}}
                               ^^^^^
-            (did you mean: a function 'count')
         - uri: /school{code, count(depatrment)}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'depatrment' in scope of 'school':
+            Found unknown attribute:
+                school.depatrment
+            Perhaps you had in mind:
+                department
+            While translating:
                 /school{code, count(depatrment)}
                                     ^^^^^^^^^^
-            (did you mean: 'department')
         - uri: /department?school.code==nulll
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'nulll' in scope of 'department':
+            Found unknown attribute:
+                department.nulll
+            Perhaps you had in mind:
+                null
+            While translating:
                 /department?school.code==nulll
                                          ^^^^^
-            (did you mean: 'null')
         - uri: /school{code, count(student)}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized attribute 'student' in scope of 'school':
+            Found unknown attribute:
+                school.student
+            While translating:
                 /school{code, count(student)}
                                     ^^^^^^^
         - uri: /program.define(student_by_year($year) := student?year(start_date)=$year)
@@ -37559,7 +37868,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'student_by_year' requires 1 argument; got 0:
+            Function 'student_by_year' requires 1 argument; got 0
+            While translating:
                 /program.define(student_by_year($year) := student?year(start_date)=$year) {code, count(student_by_year())}
                                                                                                        ^^^^^^^^^^^^^^^^^
         - uri: /program.define(student_by_year($year) := student?year(start_date)=$year,
@@ -37568,7 +37878,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'student_by_year' requires 0 or 1 argument; got 2:
+            Function 'student_by_year' requires 0 or 1 argument; got 2
+            While translating:
                 /program.define(student_by_year($year) := student?year(start_date)=$year, student_by_year() := student_by_year(2011)) {code, count(student_by_year(2009,2010))}
                                                                                                                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /department{school(), code}
@@ -37576,35 +37887,46 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized function 'school':
+            Found unknown function:
+                school
+            Perhaps you had in mind:
+                an attribute 'school'
+            While translating:
                 /department{school(), code}
                             ^^^^^^^^
-            (did you mean: an attribute 'school')
         - uri: /program.define(student_by_year($year) := student?year(start_date)=$year)
             {code, count(students_by_year(2010))}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized function 'students_by_year':
+            Found unknown function:
+                students_by_year
+            Perhaps you had in mind:
+                student_by_year
+            While translating:
                 /program.define(student_by_year($year) := student?year(start_date)=$year) {code, count(students_by_year(2010))}
                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^
-            (did you mean: 'student_by_year')
         - uri: /cont(program)
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized function 'cont':
+            Found unknown function:
+                cont
+            Perhaps you had in mind:
+                count
+            While translating:
                 /cont(program)
                  ^^^^^^^^^^^^^
-            (did you mean: 'count')
         - uri: /program{code, count(student_by_year(2010))}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unrecognized function 'student_by_year':
+            Found unknown function:
+                student_by_year
+            While translating:
                 /program{code, count(student_by_year(2010))}
                                      ^^^^^^^^^^^^^^^^^^^^^
       - id: function-bind-errors
@@ -37614,7 +37936,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'count' expects 1 argument; got 0:
+            Function 'count' expects 1 argument; got 0
+            While translating:
                 /count()
                  ^^^^^^^
         - uri: /today(1)
@@ -37622,7 +37945,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'today' expects 0 arguments; got 1:
+            Function 'today' expects 0 arguments; got 1
+            While translating:
                 /today(1)
                  ^^^^^^^^
         - uri: /slice()
@@ -37630,7 +37954,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'slice' expects 1 to 3 arguments; got 0:
+            Function 'slice' expects 1 to 3 arguments; got 0
+            While translating:
                 /slice()
                  ^^^^^^^
         - uri: /slice('HTSQL',1,3,5)
@@ -37638,7 +37963,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'slice' expects 1 to 3 arguments; got 4:
+            Function 'slice' expects 1 to 3 arguments; got 4
+            While translating:
                 /slice('HTSQL',1,3,5)
                  ^^^^^^^^^^^^^^^^^^^^
         - uri: /school.sort()
@@ -37646,7 +37972,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'sort' expects 1 or more arguments; got 0:
+            Function 'sort' expects 1 or more arguments; got 0
+            While translating:
                 /school.sort()
                         ^^^^^^
         - uri: /'SQL'={}
@@ -37654,7 +37981,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            at least one element is expected:
+            Expected at least one element
+            While translating:
                 /'SQL'={}
                        ^^
         - uri: /if(school)
@@ -37662,7 +37990,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'if' expects 2 or more arguments; got 1:
+            Function 'if' expects 2 or more arguments; got 1
+            While translating:
                 /if(school)
                  ^^^^^^^^^^
         - uri: /switch(school,department)
@@ -37670,7 +37999,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'switch' expects 3 or more arguments; got 2:
+            Function 'switch' expects 3 or more arguments; got 2
+            While translating:
                 /switch(school,department)
                  ^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /department{code, school :if_null 'none'}
@@ -37678,7 +38008,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types (entity, untyped) to a common type:
+            Cannot coerce values of types (entity, untyped) to a common type
+            While translating:
                 /department{code, school :if_null 'none'}
                                   ^^^^^^^^^^^^^^^^^^^^^^
         - uri: /department{code, is_null(school)}
@@ -37686,7 +38017,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            a scalar value is expected:
+            Expected a scalar value
+            While translating:
                 /department{code, is_null(school)}
                                   ^^^^^^^^^^^^^^^
         - uri: /school?code=today()
@@ -37694,7 +38026,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types (text, date) to a common type:
+            Cannot coerce values of types (text, date) to a common type
+            While translating:
                 /school?code=today()
                         ^^^^^^^^^^^^
         - uri: /school?code==today()
@@ -37702,7 +38035,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types (text, date) to a common type:
+            Cannot coerce values of types (text, date) to a common type
+            While translating:
                 /school?code==today()
                         ^^^^^^^^^^^^^
         - uri: /school?code={'art',5,today()}
@@ -37710,7 +38044,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types (text, untyped, integer, date) to a common type:
+            Cannot coerce values of types (text, untyped, integer, date) to a common type
+            While translating:
                 /school?code={'art',5,today()}
                         ^^^^^^^^^^^^^^^^^^^^^^
         - uri: /school?code<today()
@@ -37718,7 +38053,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types (text, date) to a common type:
+            Cannot coerce values of types (text, date) to a common type
+            While translating:
                 /school?code<today()
                         ^^^^^^^^^^^^
         - uri: /department{code, if(school,school.code,today())}
@@ -37726,7 +38062,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types (text, date) to a common type:
+            Cannot coerce values of types (text, date) to a common type
+            While translating:
                 /department{code, if(school,school.code,today())}
                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /department{code, if(school.code,school)}
@@ -37734,7 +38071,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            a scalar value is expected:
+            Expected a scalar value
+            While translating:
                 /department{code, if(school.code,school)}
                                                  ^^^^^^
         - uri: /department{code, switch(school.code,today(),now())}
@@ -37742,7 +38080,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types (text, date) to a common type:
+            Cannot coerce values of types (text, date) to a common type
+            While translating:
                 /department{code, switch(school.code,today(),now())}
                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /department{code, switch(school.code,'art',today(),now())}
@@ -37750,7 +38089,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot coerce values of types (date, datetime) to a common type:
+            Cannot coerce values of types (date, datetime) to a common type
+            While translating:
                 /department{code, switch(school.code,'art',today(),now())}
                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /department{code, switch(school.code,'art',school)}
@@ -37758,7 +38098,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            a scalar value is expected:
+            Expected a scalar value
+            While translating:
                 /department{code, switch(school.code,'art',school)}
                                                            ^^^^^^
         - uri: /student?is_active<true()
@@ -37766,7 +38107,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            values of type boolean are not comparable:
+            Values of type boolean are not comparable
+            While translating:
                 /student?is_active<true()
                          ^^^^^^^^^^^^^^^^
         - uri: /trunc(school)
@@ -37774,43 +38116,65 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'trunc' cannot be applied to a value of type entity:
+            Cannot apply function 'trunc' to a value of type entity
+            Valid type:
+                integer
+                decimal
+                float
+            While translating:
                 /trunc(school)
                  ^^^^^^^^^^^^^
-            (valid type: integer, decimal, float)
         - uri: /trunc(school,department)
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'trunc' cannot be applied to values of types (entity, entity):
+            Cannot apply function 'trunc' to values of types (entity, entity)
+            Valid types:
+                (integer, integer)
+                (decimal, integer)
+            While translating:
                 /trunc(school,department)
                  ^^^^^^^^^^^^^^^^^^^^^^^^
-            (valid types: (integer, integer), (decimal, integer))
         - uri: /-school
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            unary operator '-' cannot be applied to a value of type entity:
+            Cannot apply unary operator '-' to a value of type entity
+            Valid type:
+                integer
+                decimal
+                float
+            While translating:
                 /-school
                  ^^^^^^^
-            (valid type: integer, decimal, float)
         - uri: /school*department
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            operator '*' cannot be applied to values of types (entity, entity):
+            Cannot apply operator '*' to values of types (entity, entity)
+            Valid types:
+                (integer, integer)
+                (integer, decimal)
+                (decimal, integer)
+                (decimal, decimal)
+                (integer, float)
+                (decimal, float)
+                (float, integer)
+                (float, decimal)
+                (float, float)
+            While translating:
                 /school*department
                  ^^^^^^^^^^^^^^^^^
-            (valid types: (integer, integer), (integer, decimal), (decimal, integer), (decimal, decimal), (integer, float), (decimal, float), (float, integer), (float, decimal), (float, float))
         - uri: /fetch(school)
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            a singular expression is expected:
+            Expected a singular expression
+            While translating:
                 /fetch(school)
                        ^^^^^^
         - uri: /html(school)
@@ -37818,7 +38182,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            a singular expression is expected:
+            Expected a singular expression
+            While translating:
                 /html(school)
                       ^^^^^^
         - uri: /distinct(department)
@@ -37826,7 +38191,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'distinct' expects an argument with a selector:
+            Function 'distinct' expects an argument with a selector
+            While translating:
                 /distinct(department)
                           ^^^^^^^^^^
         - uri: /distinct(department{school})
@@ -37834,7 +38200,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            quotient column must be scalar:
+            Expected a scalar quotient column
+            While translating:
                 /distinct(department{school})
                                      ^^^^^^
         - uri: /school.limit(today())
@@ -37842,7 +38209,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'limit' expects a non-negative integer:
+            Function 'limit' expects a non-negative integer
+            While translating:
                 /school.limit(today())
                               ^^^^^^^
         - uri: /school.limit(1,-1)
@@ -37850,7 +38218,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'limit' expects a non-negative integer:
+            Function 'limit' expects a non-negative integer
+            While translating:
                 /school.limit(1,-1)
                                 ^^
         - uri: /department.sort(school)
@@ -37858,7 +38227,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'sort' expects a scalar expression:
+            Function 'sort' expects a scalar expression
+            While translating:
                 /department.sort(school)
                                  ^^^^^^
         - uri: /define(today()){now()}
@@ -37866,7 +38236,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'define' expects an assignment expression:
+            Function 'define' expects an assignment expression
+            While translating:
                 /define(today()){now()}
                         ^^^^^^^
         - uri: /today() :where now()
@@ -37874,7 +38245,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'where' expects an assignment expression:
+            Function 'where' expects an assignment expression
+            While translating:
                 /today() :where now()
                                 ^^^^^
         - uri: /exists(school{code,name})
@@ -37882,7 +38254,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'exists' expects 1 argument; got 2:
+            Function 'exists' expects 1 argument; got 2
+            While translating:
                 /exists(school{code,name})
                               ^^^^^^^^^^^
         - uri: /count(school{code,name})
@@ -37890,7 +38263,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'count' expects 1 argument; got 2:
+            Function 'count' expects 1 argument; got 2
+            While translating:
                 /count(school{code,name})
                              ^^^^^^^^^^^
         - uri: /avg(school{code,name})
@@ -37898,7 +38272,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'avg' expects 1 argument; got 2:
+            Function 'avg' expects 1 argument; got 2
+            While translating:
                 /avg(school{code,name})
                            ^^^^^^^^^^^
         - uri: /max(school{code,name})
@@ -37906,7 +38281,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            function 'max' expects 1 argument; got 2:
+            Function 'max' expects 1 argument; got 2
+            While translating:
                 /max(school{code,name})
                            ^^^^^^^^^^^
       - id: encode-errors
@@ -37916,7 +38292,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            a code expression is expected:
+            Expected a code expression
+            While translating:
                 /true().fork()
                         ^^^^^^
         - uri: /true().fork(){true()}
@@ -37924,7 +38301,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            a flow expression is expected:
+            Expected a flow expression
+            While translating:
                 /true().fork(){true()}
                  ^^^^^^
         - uri: /school|department
@@ -37932,7 +38310,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot deduce an unambiguous segment flow:
+            Cannot deduce an unambiguous segment flow
+            While translating:
                 /school|department
                 ^^^^^^^^^^^^^^^^^^
         - uri: /department.(school^campus)
@@ -37940,7 +38319,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            a plural expression is expected:
+            Expected a plural expression
+            While translating:
                 /department.(school^campus)
                              ^^^^^^
         - uri: /department{code, count($school^campus)} :where $school:=school
@@ -37948,7 +38328,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            a descendant expression is expected:
+            Expected a descendant expression
+            While translating:
                 /department{code, count($school^campus)} :where $school:=school
                                                                          ^^^^^^
         - uri: /school^true()
@@ -37956,15 +38337,17 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            an empty or constant kernel is not allowed:
+            Found an empty or constant kernel
+            While processing:
                 /school^true()
-                 ^^^^^^^^^^^^^
+                ^^^^^^^^^^^^^^
         - uri: /date(true())
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot convert a value of type boolean to date:
+            Cannot convert a value of type boolean to date
+            While translating:
                 /date(true())
                  ^^^^^^^^^^^^
         - uri: /boolean('!')
@@ -37972,7 +38355,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid Boolean literal: expected 'true' or 'false'; got '!':
+            invalid Boolean literal: expected 'true' or 'false'; got '!'
+            While translating:
                 /boolean('!')
                  ^^^^^^^^^^^^
         - uri: /integer('!')
@@ -37980,7 +38364,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid integer literal: expected an integer in a decimal format; got '!':
+            invalid integer literal: expected an integer in a decimal format; got '!'
+            While translating:
                 /integer('!')
                  ^^^^^^^^^^^^
         - uri: /decimal('!')
@@ -37988,7 +38373,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid decimal literal: !:
+            invalid decimal literal: !
+            While translating:
                 /decimal('!')
                  ^^^^^^^^^^^^
         - uri: /float('!')
@@ -37996,7 +38382,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid float literal: !:
+            invalid float literal: !
+            While translating:
                 /float('!')
                  ^^^^^^^^^^
         - uri: /date('!')
@@ -38004,7 +38391,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid date literal: expected a valid date in a 'YYYY-MM-DD' format; got '!':
+            invalid date literal: expected a valid date in a 'YYYY-MM-DD' format; got '!'
+            While translating:
                 /date('!')
                  ^^^^^^^^^
         - uri: /time('!')
@@ -38012,7 +38400,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid time literal: expected a valid time in a 'HH:SS:MM.SSSSSS' format; got '!':
+            invalid time literal: expected a valid time in a 'HH:SS:MM.SSSSSS' format; got '!'
+            While translating:
                 /time('!')
                  ^^^^^^^^^
         - uri: /datetime('!')
@@ -38020,7 +38409,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid datetime literal: expected a valid date/time in a 'YYYY-MM-DD HH:SS:MM.SSSSSS' format; got '!':
+            invalid datetime literal: expected a valid date/time in a 'YYYY-MM-DD HH:SS:MM.SSSSSS' format; got '!'
+            While translating:
                 /datetime('!')
                  ^^^^^^^^^^^^^
         - uri: /department{code, count(school)}
@@ -38028,7 +38418,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            a plural operand is expected:
+            Expected a plural operand
+            While translating:
                 /department{code, count(school)}
                                   ^^^^^^^^^^^^^
         - uri: /department{code, count(school{code})}
@@ -38036,7 +38427,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            a plural operand is expected:
+            Expected a plural operand
+            While translating:
                 /department{code, count(school{code})}
                                   ^^^^^^^^^^^^^^^^^^^
         - uri: /department{code, count($school{code})} :where $school:=school
@@ -38044,7 +38436,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            a descendant operand is expected:
+            Expected a descendant operand
+            While translating:
                 /department{code, count($school{code})} :where $school:=school
                                   ^^^^^^^^^^^^^^^^^^^^
         - uri: /school{code, count(program|department)}
@@ -38052,7 +38445,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            cannot deduce an unambiguous aggregate flow:
+            Cannot deduce an unambiguous aggregate flow
+            While translating:
                 /school{code, count(program|department)}
                               ^^^^^^^^^^^^^^^^^^^^^^^^^
       - id: compile-errors
@@ -38062,7 +38456,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            a singular expression is expected:
+            Expected a singular expression
+            While translating:
                 /school{code, department.code}
                                          ^^^^
         - uri: /school{code, department.count(course)}
@@ -38070,7 +38465,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            a singular expression is expected:
+            Expected a singular expression
+            While translating:
                 /school{code, department.count(course)}
                                          ^^^^^^^^^^^^^
         - uri: /school{code, department.avg(course.credits)}
@@ -38078,7 +38474,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            a singular expression is expected:
+            Expected a singular expression
+            While translating:
                 /school{code, department.avg(course.credits)}
                                          ^^^^^^^^^^^^^^^^^^^
         - uri: /school{department^count(course){*}}
@@ -38086,7 +38483,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            a singular expression is expected:
+            Expected a singular expression
+            While translating:
                 /school{department^count(course){*}}
                                                 ^^^
       - id: serialize-errors
@@ -38096,7 +38494,8 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            integer value is out of range:
+            Found integer value is out of range
+            While translating:
                 /18446744073709551616
                  ^^^^^^^^^^^^^^^^^^^^
   - include: test/input/embedding.yaml

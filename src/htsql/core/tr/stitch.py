@@ -14,7 +14,7 @@ This module implements stitching utilities over flow nodes.
 from ..adapter import Adapter, adapt, adapt_many
 from ..model import TableNode, ColumnArc, ChainArc
 from ..classify import normalize, localize
-from ..error import Error
+from ..error import Error, translate_guard
 from ..syn.syntax import IdentifierSyntax
 from .flow import (Flow, ScalarFlow, TableFlow, FiberTableFlow, QuotientFlow,
         ComplementFlow, MonikerFlow, ForkedFlow, LinkedFlow, ClippedFlow,
@@ -315,8 +315,9 @@ class SewTable(Sew):
                     break
         # No primary key, we don't have other choice but to report an error.
         if connect_columns is None:
-            raise Error("unable to connect a table"
-                        " lacking a primary key", self.flow.mark)
+            with translate_guard(flow):
+                raise Error("Unable to connect a table"
+                            " lacking a primary key")
         # Generate joints that represent a connection by the primary key.
         flow = self.flow.inflate()
         for column in connect_columns:

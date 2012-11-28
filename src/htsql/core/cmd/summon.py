@@ -4,7 +4,7 @@
 
 
 from ..adapter import Adapter, Protocol, adapt, call
-from ..error import Error
+from ..error import Error, recognize_guard
 from ..util import to_name
 from ..syn.syntax import (Syntax, SkipSyntax, FunctionSyntax, PipeSyntax,
         ApplySyntax, CollectSyntax)
@@ -38,7 +38,8 @@ class RecognizeFunction(Recognize):
     adapt(FunctionSyntax)
 
     def __call__(self):
-        return Summon.__invoke__(self.syntax)
+        with recognize_guard(self.syntax):
+            return Summon.__invoke__(self.syntax)
 
 
 class RecognizePipe(Recognize):
@@ -48,7 +49,8 @@ class RecognizePipe(Recognize):
     def __call__(self):
         if self.syntax.is_flow:
             return super(RecognizePipe, self).__call__()
-        return Summon.__invoke__(self.syntax)
+        with recognize_guard(self.syntax):
+            return Summon.__invoke__(self.syntax)
 
 
 class RecognizeCollect(Recognize):
@@ -88,11 +90,12 @@ class Summon(Protocol):
 
 class SummonFetch(Summon):
 
-    call('fetch', 'retrieve')
+    call('fetch',
+         'retrieve')
 
     def __call__(self):
         if len(self.arguments) != 1:
-            raise Error("expected 1 argument", self.syntax.mark)
+            raise Error("Expected 1 argument")
         [syntax] = self.arguments
         return FetchCmd(syntax, self.syntax.mark)
 
@@ -103,7 +106,7 @@ class SummonFormat(Summon):
 
     def __call__(self):
         if len(self.arguments) != 1:
-            raise Error("expected 1 argument", self.syntax.mark)
+            raise Error("Expected 1 argument")
         [syntax] = self.arguments
         feed = recognize(syntax)
         format = self.format()
@@ -158,7 +161,7 @@ class SummonSQL(Summon):
 
     def __call__(self):
         if len(self.arguments) != 1:
-            raise Error("expected 1 argument", self.syntax.mark)
+            raise Error("Expected 1 argument")
         [syntax] = self.arguments
         feed = recognize(syntax)
         return SQLCmd(feed, self.syntax.mark)

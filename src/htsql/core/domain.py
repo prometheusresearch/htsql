@@ -128,7 +128,7 @@ class Value(Clonable, Printable):
         text = ContainerDomain.dump_entry(self.data, self.domain)
         # Make sure the output is printable.
         text = urlquote(text, "")
-        return u"%s: %s" % (text, self.meta)
+        return text
 
     def __iter__(self):
         if not (isinstance(self.domain, ListDomain) and self.data is not None):

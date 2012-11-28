@@ -100,7 +100,7 @@ class MSSQLDumpInteger(DumpInteger):
 
     def __call__(self):
         if not (-2**63 <= self.value < 2**63):
-            raise Error("invalid integer value", self.phrase.mark)
+            raise Error("Got invalid integer value")
         if abs(self.value) < 2**31:
             if self.value >= 0:
                 self.write(unicode(self.value))

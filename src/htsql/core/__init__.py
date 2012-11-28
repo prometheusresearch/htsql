@@ -8,7 +8,8 @@ from . import (adapter, addon, application, cache, cmd, connect, context,
         wsgi)
 from .validator import DBVal, StrVal, BoolVal
 from .addon import Addon, Parameter, Variable, addon_registry
-from .connect import connect, DBError
+from .connect import connect
+from .error import Error
 from .introspect import introspect
 from .cache import GeneralCache
 
@@ -66,12 +67,12 @@ class HTSQLAddon(Addon):
             raise ValueError("database address is not specified")
         try:
             connect().release()
-        except DBError, exc:
+        except Error, exc:
             raise ValueError("failed to establish database connection: %s"
                              % exc)
         try:
             introspect()
-        except DBError, exc:
+        except Error, exc:
             raise ValueError("failed to introspect the database: %s" % exc)
 
 

@@ -4,7 +4,7 @@
 
 
 from ....core.adapter import adapt
-from ....core.error import BadRequestError
+from ....core.error import Error, QuotePara
 from ....core.connect import transaction
 from ....core.domain import Product
 from ....core.cmd.act import Act, ProduceAction, act
@@ -23,7 +23,7 @@ class ProduceUpdate(Act):
             extract_node = BuildExtractNode.__invoke__(product.meta,
                     with_id=True, with_fields=True)
             resolve_key = BuildResolveKey.__invoke__(
-                    extract_node.node.table)
+                    extract_node.node)
             extract_table = BuildExtractTable.__invoke__(
                     extract_node.node, extract_node.arcs)
             execute_update = BuildExecuteUpdate.__invoke__(
@@ -36,16 +36,27 @@ class ProduceUpdate(Act):
             data = []
             if extract_node.is_list:
                 records = product.data
+                record_domain = product.meta.domain.item_domain
             else:
                 records = [product.data]
-            for record in records:
+                record_domain = product.meta.domain
+            for idx, record in enumerate(records):
                 if record is None:
                     continue
-                key_id, row = extract_node(record)
-                key = resolve_key(key_id)
-                row = extract_table(row)
-                key = execute_update(key, row)
-                row = resolve_identity(key)
+                try:
+                    key_id, row = extract_node(record)
+                    key = resolve_key(key_id)
+                    row = extract_table(row)
+                    key = execute_update(key, row)
+                    row = resolve_identity(key)
+                except Error, error:
+                    if extract_node.is_list:
+                        message = "While updating record #%s" % (idx+1)
+                    else:
+                        message = "While updating a record"
+                    quote = record_domain.dump(record)
+                    error.wrap(QuotePara(message, quote))
+                    raise
                 data.append(row)
             if not extract_node.is_list:
                 assert len(data) <= 1

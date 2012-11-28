@@ -12,7 +12,7 @@
 from ...adapter import Adapter, adapt, adapt_many, adapt_none
 from ...domain import UntypedDomain, BooleanDomain, IntegerDomain
 from ..encode import EncodeBySignature, EncodingState
-from ...error import Error
+from ...error import Error, translate_guard
 from ..coerce import coerce
 from ..binding import RootBinding, LiteralBinding, CastBinding
 from ..flow import (LiteralCode, ScalarUnit, CorrelatedUnit,
@@ -344,29 +344,29 @@ class EncodeAggregate(EncodeFunction):
     adapt(AggregateSig)
 
     def aggregate(self, op, flow, plural_flow):
-        if plural_flow is None:
-            plural_units = [unit for unit in op.units
-                                 if not flow.spans(unit.flow)]
-            if not plural_units:
-                raise Error("a plural operand is expected", op.mark)
-            plural_flows = []
-            for unit in plural_units:
-                if any(plural_flow.dominates(unit.flow)
-                       for plural_flow in plural_flows):
-                    continue
-                plural_flows = [plural_flow
-                                 for plural_flow in plural_flows
-                                 if not unit.flow.dominates(plural_flow)]
-                plural_flows.append(unit.flow)
-            if len(plural_flows) > 1:
-                raise Error("cannot deduce an unambiguous"
-                            " aggregate flow", op.mark)
-            [plural_flow] = plural_flows
-        if flow.spans(plural_flow):
-            raise Error("a plural operand is expected", op.mark)
-        if not plural_flow.spans(flow):
-            raise Error("a descendant operand is expected",
-                        op.mark)
+        with translate_guard(op):
+            if plural_flow is None:
+                plural_units = [unit for unit in op.units
+                                     if not flow.spans(unit.flow)]
+                if not plural_units:
+                    raise Error("Expected a plural operand")
+                plural_flows = []
+                for unit in plural_units:
+                    if any(plural_flow.dominates(unit.flow)
+                           for plural_flow in plural_flows):
+                        continue
+                    plural_flows = [plural_flow
+                                     for plural_flow in plural_flows
+                                     if not unit.flow.dominates(plural_flow)]
+                    plural_flows.append(unit.flow)
+                if len(plural_flows) > 1:
+                    raise Error("Cannot deduce an unambiguous"
+                                " aggregate flow")
+                [plural_flow] = plural_flows
+            if flow.spans(plural_flow):
+                raise Error("Expected a plural operand")
+            if not plural_flow.spans(flow):
+                raise Error("Expected a descendant operand")
         # FIXME: handled by the compiler.
         #if not all(plural_flow.spans(unit.flow)
         #           for unit in plural_units):

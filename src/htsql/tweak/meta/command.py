@@ -34,7 +34,7 @@ class SummonMeta(Summon):
 
     def __call__(self):
         if len(self.arguments) != 1:
-            raise Error("expected 1 argument", self.syntax.mark)
+            raise Error("Expected 1 argument")
         [syntax] = self.arguments
         slave_app = get_slave_app()
         with slave_app:

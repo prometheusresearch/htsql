@@ -2021,7 +2021,8 @@ class SQLTestCase(SkipTestCase):
         # to split the SQL data and to connect to the database, but we
         # never use it for executing HTSQL queries.
         from htsql import HTSQL
-        from htsql.core.connect import connect, DBError
+        from htsql.core.error import Error
+        from htsql.core.connect import connect
         from htsql.core.split_sql import split_sql
         try:
             app = HTSQL(self.input.connect)
@@ -2044,16 +2045,16 @@ class SQLTestCase(SkipTestCase):
             try:
                 connection = connect(with_autocommit=self.input.autocommit)
                 cursor = connection.cursor()
-            except DBError, exc:
+            except Error, exc:
                 return self.failed("*** failed to connect to the database:"
-                                   " %s" % exc)
+                                   "\n%s" % exc)
 
             # Execute the given SQL statements.
             for statement in statements:
                 try:
                     # Execute the statement in the current connection.
                     cursor.execute(statement)
-                except DBError, exc:
+                except Error, exc:
                     # Display the statement that caused a problem.
                     for line in statement.splitlines():
                         self.out(line, indent=4)
@@ -2061,7 +2062,7 @@ class SQLTestCase(SkipTestCase):
                     # but if `ignore` is set, we just break the loop.
                     if not self.input.ignore:
                         return self.failed("*** failed to execute SQL:"
-                                           " %s" % exc)
+                                           "\n%s" % exc)
                     break
 
             # No error occurred while executing the SQL statements.
@@ -2071,19 +2072,19 @@ class SQLTestCase(SkipTestCase):
                 if not self.input.autocommit:
                     try:
                         connection.commit()
-                    except DBError, exc:
+                    except Error, exc:
                         if not self.input.ignore:
                             return self.failed("*** failed to commit"
-                                               " a transaction: %s" % exc)
+                                               " a transaction:\n%s" % exc)
 
             # Close the connection.  Note that we insist that connection
             # is opened and closed successfully regardless of the value
             # of the `ignore` flag.
             try:
                 connection.close()
-            except DBError, exc:
+            except Error, exc:
                 return self.failed("*** failed to close the connection:"
-                                   " %s" % exc)
+                                   "\n%s" % exc)
 
         # If we reached that far, we passed the test.
         return self.passed()

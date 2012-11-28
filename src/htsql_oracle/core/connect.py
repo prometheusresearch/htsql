@@ -3,8 +3,7 @@
 #
 
 
-from htsql.core.connect import (Connect, Scramble, Unscramble, UnscrambleError,
-        DBError)
+from htsql.core.connect import Connect, Scramble, Unscramble, UnscrambleError
 from htsql.core.adapter import adapt
 from htsql.core.context import context
 from htsql.core.domain import (BooleanDomain, DecimalDomain, TextDomain,
@@ -12,12 +11,6 @@ from htsql.core.domain import (BooleanDomain, DecimalDomain, TextDomain,
 import datetime
 import decimal
 import cx_Oracle
-
-
-class OracleError(DBError):
-    """
-    Raised when a database error occurred.
-    """
 
 
 class ConnectOracle(Connect):
@@ -69,11 +62,9 @@ class ConnectOracle(Connect):
 class UnscrambleOracleError(UnscrambleError):
 
     def __call__(self):
-        # If we got a DBAPI exception, generate our error out of it.
+        # If we got a DBAPI exception, extract the error message.
         if isinstance(self.error, cx_Oracle.Error):
-            message = str(self.error)
-            error = OracleError(message)
-            return error
+            return str(self.error)
 
         # Otherwise, let the superclass return `None`.
         return super(UnscrambleOracleError, self).__call__()
