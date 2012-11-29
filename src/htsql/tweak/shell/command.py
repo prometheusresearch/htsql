@@ -7,7 +7,7 @@ from ... import __version__, __legal__
 from ...core.util import maybe, listof
 from ...core.context import context
 from ...core.adapter import Adapter, adapt, adapt_many, call
-from ...core.error import PermissionError, Error, PointerPara
+from ...core.error import PermissionError, Error, PointerPara, recognize_guard
 from ...core.domain import (Domain, BooleanDomain, NumberDomain, DateTimeDomain,
                             ListDomain, RecordDomain)
 from ...core.syn.syntax import StringSyntax, IntegerSyntax, IdentifierSyntax
@@ -30,8 +30,7 @@ import wsgiref.util
 
 class ShellCmd(Command):
 
-    def __init__(self, query=None, is_implicit=False, mark=None):
-        super(ShellCmd, self).__init__(mark)
+    def __init__(self, query=None, is_implicit=False):
         assert isinstance(query, maybe(unicode))
         assert isinstance(is_implicit, bool)
         self.query = query
@@ -40,16 +39,14 @@ class ShellCmd(Command):
 
 class CompleteCmd(Command):
 
-    def __init__(self, names, mark):
-        super(CompleteCmd, self).__init__(mark)
+    def __init__(self, names):
         assert isinstance(names, listof(unicode))
         self.names = names
 
 
 class ProduceCmd(Command):
 
-    def __init__(self, query, page=None, mark=None):
-        super(ProduceCmd, self).__init__(mark)
+    def __init__(self, query, page=None):
         assert isinstance(query, unicode)
         assert isinstance(page, maybe(int))
         if page is None:
@@ -60,16 +57,14 @@ class ProduceCmd(Command):
 
 class AnalyzeCmd(Command):
 
-    def __init__(self, query, mark):
-        super(AnalyzeCmd, self).__init__(mark)
+    def __init__(self, query):
         assert isinstance(query, unicode)
         self.query = query
 
 
 class WithPermissionsCmd(Command):
 
-    def __init__(self, command, can_read, can_write, mark):
-        super(WithPermissionsCmd, self).__init__(mark)
+    def __init__(self, command, can_read, can_write):
         assert isinstance(command, Command)
         assert isinstance(can_read, bool)
         assert isinstance(can_write, bool)
@@ -86,14 +81,13 @@ class SummonShell(Summon):
         query = None
         if self.arguments:
             if len(self.arguments) != 1:
-                raise Error("expected no or 1 argument",
-                            self.syntax.mark)
+                raise Error("Expected no or 1 argument")
             [syntax] = self.arguments
             if isinstance(syntax, StringSyntax):
                 query = syntax.text
             else:
                 query = unicode(syntax)
-        command = ShellCmd(query, False, self.syntax.mark)
+        command = ShellCmd(query, False)
         return command
 
 
@@ -105,13 +99,14 @@ class SummonComplete(Summon):
         names = []
         for syntax in self.arguments:
             if not isinstance(syntax, (IdentifierSyntax, StringSyntax)):
-                raise Error("an identifier is required", syntax.mark)
+                with recognize_guard(syntax):
+                    raise Error("Expected an identifier")
             if isinstance(syntax, IdentifierSyntax):
                 name = syntax.name
             else:
                 name = syntax.text
             names.append(name)
-        command = CompleteCmd(names, self.syntax.mark)
+        command = CompleteCmd(names)
         return command
 
 
@@ -121,19 +116,20 @@ class SummonProduce(Summon):
 
     def __call__(self):
         if not (1 <= len(self.arguments) <= 2):
-            raise Error("expected 1 or 2 arguments",
-                                 self.syntax.mark)
+            raise Error("Expected 1 or 2 arguments")
         query = self.arguments[0]
         if not isinstance(query, StringSyntax):
-            raise Error("a string literal is required", query.mark)
+            with recognize_guard(query):
+                raise Error("Expected a string literal")
         query = query.text
         page = None
         if len(self.arguments) == 2:
             page = self.arguments[1]
             if not isinstance(page, IntegerSyntax):
-                raise Error("an integer literal is required", page.mark)
+                with recognize_guard(page):
+                    raise Error("Expected an integer literal")
             page = page.value
-        command = ProduceCmd(query, page, self.syntax.mark)
+        command = ProduceCmd(query, page)
         return command
 
 
@@ -143,13 +139,13 @@ class SummonAnalyze(Summon):
 
     def __call__(self):
         if len(self.arguments) != 1:
-            raise Error("expected 1 argument",
-                        self.syntax.mark)
+            raise Error("Expected 1 argument")
         query = self.arguments[0]
         if not isinstance(query, StringSyntax):
-            raise Error("a string literal is required", query.mark)
+            with recognize_guard(query):
+                raise Error("Expected a string literal")
         query = query.text
-        command = AnalyzeCmd(query, self.syntax.mark)
+        command = AnalyzeCmd(query)
         return command
 
 
@@ -159,26 +155,25 @@ class SummonWithPermissions(Summon):
 
     def __call__(self):
         if len(self.arguments) != 3:
-            raise Error("expected 3 arguments", self.syntax.mark)
+            raise Error("Expected 3 arguments")
         query, can_read, can_write = self.arguments
         literals = [can_read, can_write]
         values = []
         domain = BooleanDomain()
         for literal in literals:
-            if not isinstance(literal, StringSyntax):
-                raise Error("a string literal is required",
-                                     literal.mark)
-            try:
-                value = domain.parse(literal.text)
-            except ValueError, exc:
-                raise Error(str(exc), literal.mark)
+            with recognize_guard(literal):
+                if not isinstance(literal, StringSyntax):
+                        raise Error("Expected a string literal")
+                try:
+                    value = domain.parse(literal.text)
+                except ValueError, exc:
+                    raise Error(str(exc))
             values.append(value)
         can_read, can_write = values
         with context.env(can_read=context.env.can_read and can_read,
                          can_write=context.env.can_write and can_write):
             query = recognize(query)
-        command = WithPermissionsCmd(query, can_read, can_write,
-                                     self.syntax.mark)
+        command = WithPermissionsCmd(query, can_read, can_write)
         return command
 
 

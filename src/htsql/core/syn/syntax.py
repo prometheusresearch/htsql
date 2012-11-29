@@ -3,7 +3,6 @@
 #
 
 
-from ..error import Mark, EmptyMark
 from ..util import (maybe, listof, oneof, Clonable, Hashable, Printable,
         to_name, to_literal)
 import re
@@ -13,14 +12,11 @@ import decimal
 class Syntax(Clonable, Hashable, Printable):
     """
     A syntax node.
-
-    `mark`: :class:`.Mark`
-        Error context.
     """
 
-    def __init__(self, mark):
-        assert isinstance(mark, Mark)
-        self.mark = mark
+    def __init__(self):
+        # Need a dummy constructor for `Clonable`.
+        pass
 
 
 class VoidSyntax(Syntax):
@@ -30,9 +26,6 @@ class VoidSyntax(Syntax):
     Use when a syntax node is required structurally, but no regular nodes are
     available.
     """
-
-    def __init__(self):
-        super(VoidSyntax, self).__init__(EmptyMark())
 
     def __basis__(self):
         return ()
@@ -72,10 +65,9 @@ class AssignSyntax(Syntax):
         The assigned value.
     """
 
-    def __init__(self, larm, rarm, mark):
+    def __init__(self, larm, rarm):
         assert isinstance(larm, SpecifySyntax)
         assert isinstance(rarm, Syntax)
-        super(AssignSyntax, self).__init__(mark)
         self.larm = larm
         self.rarm = rarm
 
@@ -109,13 +101,12 @@ class SpecifySyntax(Syntax):
         Set only if the specifier is a reference.
     """
 
-    def __init__(self, larms, rarms, mark):
+    def __init__(self, larms, rarms):
         assert isinstance(larms, listof(oneof(IdentifierSyntax,
                                               ReferenceSyntax)))
         assert len(larms) > 0
         assert isinstance(rarms, maybe(listof(oneof(IdentifierSyntax,
                                                     ReferenceSyntax))))
-        super(SpecifySyntax, self).__init__(mark)
         self.larms = larms
         self.rarms = rarms
         # Unpack the specifier for common cases:
@@ -157,10 +148,9 @@ class ApplySyntax(Syntax):
         Function arguments or operands of the operator.
     """
 
-    def __init__(self, name, arguments, mark):
+    def __init__(self, name, arguments):
         assert isinstance(name, unicode)
         assert isinstance(arguments, listof(Syntax))
-        super(ApplySyntax, self).__init__(mark)
         self.name = name
         self.arguments = arguments
 
@@ -180,10 +170,10 @@ class FunctionSyntax(ApplySyntax):
         Function arguments.
     """
 
-    def __init__(self, identifier, arms, mark):
+    def __init__(self, identifier, arms):
         assert isinstance(identifier, IdentifierSyntax)
         assert isinstance(arms, listof(Syntax))
-        super(FunctionSyntax, self).__init__(identifier.name, arms, mark)
+        super(FunctionSyntax, self).__init__(identifier.name, arms)
         self.identifier = identifier
         self.arms = arms
 
@@ -223,14 +213,14 @@ class PipeSyntax(ApplySyntax):
         enclosed in parentheses.
     """
 
-    def __init__(self, identifier, larm, rarms, is_flow, is_open, mark):
+    def __init__(self, identifier, larm, rarms, is_flow, is_open):
         assert isinstance(identifier, IdentifierSyntax)
         assert isinstance(larm, Syntax)
         assert isinstance(rarms, listof(Syntax))
         assert isinstance(is_flow, bool)
         assert isinstance(is_open, bool)
         assert not is_open or len(rarms) <= 1
-        super(PipeSyntax, self).__init__(identifier.name, [larm]+rarms, mark)
+        super(PipeSyntax, self).__init__(identifier.name, [larm]+rarms)
         self.identifier = identifier
         self.larm = larm
         self.rarms = rarms
@@ -276,11 +266,11 @@ class OperatorSyntax(ApplySyntax):
         The right-hand operand.
     """
 
-    def __init__(self, symbol, larm, rarm, mark):
+    def __init__(self, symbol, larm, rarm):
         assert isinstance(symbol, unicode)
         assert isinstance(larm, Syntax)
         assert isinstance(rarm, Syntax)
-        super(OperatorSyntax, self).__init__(symbol, [larm, rarm], mark)
+        super(OperatorSyntax, self).__init__(symbol, [larm, rarm])
         self.symbol = symbol
         self.larm = larm
         self.rarm = rarm
@@ -307,10 +297,10 @@ class PrefixSyntax(ApplySyntax):
         The operand.
     """
 
-    def __init__(self, symbol, arm, mark):
+    def __init__(self, symbol, arm):
         assert isinstance(symbol, unicode)
         assert isinstance(arm, Syntax)
-        super(PrefixSyntax, self).__init__(symbol, [arm], mark)
+        super(PrefixSyntax, self).__init__(symbol, [arm])
         self.symbol = symbol
         self.arm = arm
 
@@ -330,8 +320,8 @@ class FilterSyntax(OperatorSyntax):
         <larm> ? <rarm>
     """
 
-    def __init__(self, larm, rarm, mark):
-        super(FilterSyntax, self).__init__(u'?', larm, rarm, mark)
+    def __init__(self, larm, rarm):
+        super(FilterSyntax, self).__init__(u'?', larm, rarm)
 
 
 class ProjectSyntax(OperatorSyntax):
@@ -343,8 +333,8 @@ class ProjectSyntax(OperatorSyntax):
         <larm> ^ <rarm>
     """
 
-    def __init__(self, larm, rarm, mark):
-        super(ProjectSyntax, self).__init__(u'^', larm, rarm, mark)
+    def __init__(self, larm, rarm):
+        super(ProjectSyntax, self).__init__(u'^', larm, rarm)
 
 
 class LinkSyntax(OperatorSyntax):
@@ -356,8 +346,8 @@ class LinkSyntax(OperatorSyntax):
         <larm> -> <rarm>
     """
 
-    def __init__(self, larm, rarm, mark):
-        super(LinkSyntax, self).__init__(u'->', larm, rarm, mark)
+    def __init__(self, larm, rarm):
+        super(LinkSyntax, self).__init__(u'->', larm, rarm)
 
 
 class AttachSyntax(OperatorSyntax):
@@ -369,8 +359,8 @@ class AttachSyntax(OperatorSyntax):
         <larm> @ <rarm>
     """
 
-    def __init__(self, larm, rarm, mark):
-        super(AttachSyntax, self).__init__(u'@', larm, rarm, mark)
+    def __init__(self, larm, rarm):
+        super(AttachSyntax, self).__init__(u'@', larm, rarm)
 
 
 class DetachSyntax(PrefixSyntax):
@@ -382,8 +372,8 @@ class DetachSyntax(PrefixSyntax):
         @ <arm>
     """
 
-    def __init__(self, arm, mark):
-        super(DetachSyntax, self).__init__(u'@', arm, mark)
+    def __init__(self, arm):
+        super(DetachSyntax, self).__init__(u'@', arm)
 
 
 class CollectSyntax(PrefixSyntax):
@@ -395,8 +385,8 @@ class CollectSyntax(PrefixSyntax):
         / <arm>
     """
 
-    def __init__(self, arm, mark):
-        super(CollectSyntax, self).__init__(u'/', arm, mark)
+    def __init__(self, arm):
+        super(CollectSyntax, self).__init__(u'/', arm)
 
 
 class DirectSyntax(Syntax):
@@ -415,10 +405,9 @@ class DirectSyntax(Syntax):
         The operand.
     """
 
-    def __init__(self, symbol, arm, mark):
+    def __init__(self, symbol, arm):
         assert isinstance(symbol, unicode) and symbol in [u'+', u'-']
         assert isinstance(arm, Syntax)
-        super(DirectSyntax, self).__init__(mark)
         self.symbol = symbol
         self.arm = arm
 
@@ -444,10 +433,9 @@ class ComposeSyntax(Syntax):
         The right-hand operand.
     """
 
-    def __init__(self, larm, rarm, mark):
+    def __init__(self, larm, rarm):
         assert isinstance(larm, Syntax)
         assert isinstance(rarm, Syntax)
-        super(ComposeSyntax, self).__init__(mark)
         self.larm = larm
         self.rarm = rarm
 
@@ -485,8 +473,7 @@ class UnpackSyntax(Syntax):
         ``True`` if no ``()``.
     """
 
-    def __init__(self, index, is_open, mark):
-        super(UnpackSyntax, self).__init__(mark)
+    def __init__(self, index, is_open):
         assert index is None or (isinstance(index, (int, long)) and index >= 0)
         assert isinstance(is_open, bool)
         self.index = index
@@ -535,9 +522,8 @@ class GroupSyntax(Syntax):
         The expression.
     """
 
-    def __init__(self, arm, mark):
+    def __init__(self, arm):
         assert isinstance(arm, Syntax)
-        super(GroupSyntax, self).__init__(mark)
         self.arm = arm
 
     def __basis__(self):
@@ -562,10 +548,9 @@ class SelectSyntax(Syntax):
         The selection record.
     """
 
-    def __init__(self, larm, rarm, mark):
+    def __init__(self, larm, rarm):
         assert isinstance(larm, Syntax)
         assert isinstance(rarm, RecordSyntax)
-        super(SelectSyntax, self).__init__(mark)
         self.larm = larm
         self.rarm = rarm
 
@@ -591,10 +576,9 @@ class LocateSyntax(Syntax):
         The identity.
     """
 
-    def __init__(self, larm, rarm, mark):
+    def __init__(self, larm, rarm):
         assert isinstance(larm, Syntax)
         assert isinstance(rarm, IdentitySyntax)
-        super(LocateSyntax, self).__init__(mark)
         self.larm = larm
         self.rarm = rarm
 
@@ -617,9 +601,8 @@ class RecordSyntax(Syntax):
         Record fields.
     """
 
-    def __init__(self, arms, mark):
+    def __init__(self, arms):
         assert isinstance(arms, listof(Syntax))
-        super(RecordSyntax, self).__init__(mark)
         self.arms = arms
 
     def __basis__(self):
@@ -641,9 +624,8 @@ class ListSyntax(Syntax):
         List elements.
     """
 
-    def __init__(self, arms, mark):
+    def __init__(self, arms):
         assert isinstance(arms, listof(Syntax))
-        super(ListSyntax, self).__init__(mark)
         self.arms = arms
 
     def __basis__(self):
@@ -676,10 +658,9 @@ class IdentitySyntax(Syntax):
         (``()``).
     """
 
-    def __init__(self, arms, is_hard, mark):
+    def __init__(self, arms, is_hard):
         assert isinstance(arms, listof(Syntax)) and len(arms) > 0
         assert isinstance(is_hard, bool)
-        super(IdentitySyntax, self).__init__(mark)
         self.arms = arms
         self.is_hard = is_hard
 
@@ -715,9 +696,8 @@ class ReferenceSyntax(Syntax):
         Normalized identifier name.
     """
 
-    def __init__(self, identifier, mark):
+    def __init__(self, identifier):
         assert isinstance(identifier, IdentifierSyntax)
-        super(ReferenceSyntax, self).__init__(mark)
         self.identifier = identifier
         self.name = identifier.name
 
@@ -743,9 +723,8 @@ class IdentifierSyntax(Syntax):
         Normalized name.
     """
 
-    def __init__(self, text, mark):
+    def __init__(self, text):
         assert isinstance(text, unicode)
-        super(IdentifierSyntax, self).__init__(mark)
         self.text = text
         self.name = to_name(text)
 
@@ -767,9 +746,8 @@ class LiteralSyntax(Syntax):
         The value of the literal.
     """
 
-    def __init__(self, text, mark):
+    def __init__(self, text):
         assert isinstance(text, unicode)
-        super(LiteralSyntax, self).__init__(mark)
         self.text = text
 
     def __basis__(self):
@@ -815,8 +793,8 @@ class NumberSyntax(LiteralSyntax):
     is_decimal = False
     is_float = False
 
-    def __init__(self, text, value, mark):
-        super(NumberSyntax, self).__init__(text, mark)
+    def __init__(self, text, value):
+        super(NumberSyntax, self).__init__(text)
         self.value = value
 
 
@@ -827,8 +805,8 @@ class IntegerSyntax(NumberSyntax):
 
     is_integer = True
 
-    def __init__(self, text, mark):
-        super(IntegerSyntax, self).__init__(text, int(text), mark)
+    def __init__(self, text):
+        super(IntegerSyntax, self).__init__(text, int(text))
 
 
 class DecimalSyntax(NumberSyntax):
@@ -840,8 +818,8 @@ class DecimalSyntax(NumberSyntax):
 
     is_decimal = True
 
-    def __init__(self, text, mark):
-        super(DecimalSyntax, self).__init__(text, decimal.Decimal(text), mark)
+    def __init__(self, text):
+        super(DecimalSyntax, self).__init__(text, decimal.Decimal(text))
 
 
 class FloatSyntax(NumberSyntax):
@@ -853,7 +831,7 @@ class FloatSyntax(NumberSyntax):
 
     is_float = True
 
-    def __init__(self, text, mark):
-        super(FloatSyntax, self).__init__(text, float(text), mark)
+    def __init__(self, text):
+        super(FloatSyntax, self).__init__(text, float(text))
 
 

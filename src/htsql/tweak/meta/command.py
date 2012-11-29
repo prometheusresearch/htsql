@@ -23,8 +23,7 @@ def get_slave_app():
 
 class MetaCmd(Command):
 
-    def __init__(self, command, mark):
-        super(MetaCmd, self).__init__(mark)
+    def __init__(self, command):
         self.command = command
 
 
@@ -39,7 +38,7 @@ class SummonMeta(Summon):
         slave_app = get_slave_app()
         with slave_app:
             command = recognize(syntax)
-        return MetaCmd(command, self.syntax.mark)
+        return MetaCmd(command)
 
 
 class ActMeta(Act):

@@ -15,6 +15,7 @@ from ..util import maybe, listof, tupleof, Clonable, Printable, Hashable
 from ..entity import TableEntity, ColumnEntity, Join
 from ..domain import (Domain, VoidDomain, BooleanDomain, ListDomain,
         RecordDomain, EntityDomain, IdentityDomain, Profile)
+from ..error import point
 from ..syn.syntax import Syntax, VoidSyntax, IdentifierSyntax, StringSyntax
 from .signature import Signature, Bag, Formula
 from ..cmd.command import Command
@@ -52,11 +53,6 @@ class Binding(Clonable, Printable):
         for presentation or error reporting only, there is no guarantee
         that that the syntax node is semantically, or even syntaxically
         valid.
-
-    Other attributes:
-
-    `mark` (:class:`htsql.core.mark.Mark`)
-        The location of the node in the original query (for error reporting).
     """
 
     def __init__(self, base, domain, syntax):
@@ -68,7 +64,7 @@ class Binding(Clonable, Printable):
         self.base = base
         self.domain = domain
         self.syntax = syntax
-        self.mark = syntax.mark
+        point(self, syntax)
 
     def __str__(self):
         # Display an HTSQL fragment that (approximately) corresponds

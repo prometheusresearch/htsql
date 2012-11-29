@@ -11,8 +11,7 @@ from ....core.entity import TableEntity
 
 class ETLCmd(Command):
 
-    def __init__(self, feed, mark):
-        super(ETLCmd, self).__init__(mark)
+    def __init__(self, feed):
         assert isinstance(feed, Command)
         self.feed = feed
 
@@ -35,16 +34,14 @@ class DeleteCmd(ETLCmd):
 
 class TruncateCmd(Command):
 
-    def __init__(self, table, mark):
-        super(TruncateCmd, self).__init__(mark)
+    def __init__(self, table):
         assert isinstance(table, TableEntity)
         self.table = table
 
 
 class DoCmd(Command):
 
-    def __init__(self, blocks, mark):
-        super(DoCmd, self).__init__(mark)
+    def __init__(self, blocks):
         assert isinstance(blocks, listof(tupleof(maybe(unicode), Command)))
         self.blocks = blocks
 

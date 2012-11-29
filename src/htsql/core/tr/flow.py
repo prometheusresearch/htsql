@@ -15,6 +15,7 @@ from ..util import (maybe, listof, tupleof, Clonable, Hashable, Printable,
                     cachedproperty)
 from ..entity import TableEntity, ColumnEntity, Join
 from ..domain import Domain, BooleanDomain, ListDomain, IdentityDomain
+from ..error import point
 from .binding import Binding, QueryBinding, SegmentBinding
 from .signature import Signature, Bag, Formula
 
@@ -67,7 +68,7 @@ class Expression(Hashable, Clonable, Printable):
         assert isinstance(binding, Binding)
         self.binding = binding
         self.syntax = binding.syntax
-        self.mark = binding.syntax.mark
+        point(self, binding)
 
     def __str__(self):
         # Display the syntex node that gave rise to the expression.

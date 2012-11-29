@@ -14,6 +14,7 @@ This module declares term nodes.
 from ..util import (listof, dictof, tupleof, maybe,
                     Clonable, Printable, Hashable)
 from ..domain import BooleanDomain
+from ..error import point
 from .flow import Expression, Flow, Code, Unit, QueryExpr, SegmentCode
 
 
@@ -94,7 +95,7 @@ class PreTerm(Clonable, Printable):
         self.expression = expression
         self.binding = expression.binding
         self.syntax = expression.syntax
-        self.mark = expression.mark
+        point(self, expression)
 
     def __str__(self):
         return str(self.expression)

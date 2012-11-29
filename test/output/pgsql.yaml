@@ -28075,99 +28075,99 @@ tests:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             Found an empty or constant kernel
-            While processing:
+            While translating:
                 /school^{}{true()}
-                ^^^^^^^^^^^^^^^^^^
+                 ^^^^^^^^^
         - uri: /school^{true()}{true()}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             Found an empty or constant kernel
-            While processing:
+            While translating:
                 /school^{true()}{true()}
-                ^^^^^^^^^^^^^^^^^^^^^^^^
+                 ^^^^^^^^^^^^^^^
         - uri: /school?false()^{true()}{true()}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             Found an empty or constant kernel
-            While processing:
+            While translating:
                 /school?false()^{true()}{true()}
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                 ^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /school^{}{*, count(school)}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             Found an empty or constant kernel
-            While processing:
+            While translating:
                 /school^{}{*, count(school)}
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                 ^^^^^^^^^
         - uri: /school^{true()}{*, count(school)}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             Found an empty or constant kernel
-            While processing:
+            While translating:
                 /school^{true()}{*, count(school)}
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                 ^^^^^^^^^^^^^^^
         - uri: /school?false()^{true()}{*, count(school)}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             Found an empty or constant kernel
-            While processing:
+            While translating:
                 /school?false()^{true()}{*, count(school)}
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                 ^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /school^{null()}{*, count(school)}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             Found an empty or constant kernel
-            While processing:
+            While translating:
                 /school^{null()}{*, count(school)}
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                 ^^^^^^^^^^^^^^^
         - uri: /{school^{}{count(school)}, school?false()^{}{count(school)}}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             Found an empty or constant kernel
-            While processing:
+            While translating:
                 /{school^{}{count(school)}, school?false()^{}{count(school)}}
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                  ^^^^^^^^^
         - uri: /school{program^{}{count(program)}, program?false()^{}{count(program)}}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             Found an empty or constant kernel
-            While processing:
+            While translating:
                 /school{program^{}{count(program)}, program?false()^{}{count(program)}}
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                        ^^^^^^^^^^
         - uri: /{count(school^true()), count(school?false()^true()), count(school^null())}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             Found an empty or constant kernel
-            While processing:
+            While translating:
                 /{count(school^true()), count(school?false()^true()), count(school^null())}
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                        ^^^^^^^^^^^^^
         - uri: /(school^null()).^
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             Found an empty or constant kernel
-            While processing:
+            While translating:
                 /(school^null()).^
-                ^^^^^^^^^^^^^^^^^^
+                  ^^^^^^^^^^^^^
         - uri: /department^school_code{school_code.name, name}
           status: 400 Bad Request
           headers:
@@ -33242,7 +33242,7 @@ tests:
             unsupported action
             While processing:
                 /school/:html/:json
-                ^^^^^^^^^^^^^
+                         ^^^^
         - uri: /school/:html/:sql
           status: 400 Bad Request
           headers:
@@ -33251,7 +33251,7 @@ tests:
             unsupported action
             While processing:
                 /school/:html/:sql
-                ^^^^^^^^^^^^^
+                         ^^^^
   - include: test/input/addon.yaml
     output:
       id: addon
@@ -34057,12 +34057,12 @@ tests:
           status: 403 Forbidden
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
-          - [Set-Cookie, htsql-csrf-token=3703f0b9a29c9de97294d6199d9e49f4; Path=/]
+          - [Set-Cookie, htsql-csrf-token=b5a8aa7666b3b2b4ffd1dee5b6f336a0; Path=/]
           body: |
             not enough permissions to execute the query
             While processing:
                 /school
-                ^^^^^^^
+                ^
         - py: pass-csrf-token
           stdout: |+
             200 OK
@@ -34290,7 +34290,7 @@ tests:
                 SELECT CAST('HTSQL' AS INET)
             While processing:
                 /{inet(text('HTSQL'))}
-                ^^^^^^^^^^^^^^^^^^^^^^
+                ^
         - uri: /{inet(-1)}
           status: 409 Conflict
           headers:
@@ -34302,7 +34302,7 @@ tests:
                 SELECT ('0.0.0.0'::INET + (-1))
             While processing:
                 /{inet(-1)}
-                ^^^^^^^^^^^
+                ^
         - uri: /{inet('192.168.24.1')=inet('192.168.24.1'), inet('192.168.24.1')!=inet('192.168.12.10'),
             inet('192.168.24.1')>inet('192.168.12.10')}
           status: 200 OK
@@ -35420,12 +35420,12 @@ tests:
           status: 403 Forbidden
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
-          - [Set-Cookie, htsql-csrf-token=cc9c208945ee20d4d5051ecf0a526aa5; Path=/]
+          - [Set-Cookie, htsql-csrf-token=6770573d046d88b17900983d5957cd6a; Path=/]
           body: |
             not enough permissions to execute the query
             While processing:
                 /meta(/table)
-                      ^^^^^^
+                      ^
       - id: tweak.override
         tests:
         - ctl: [ext, tweak.override]
@@ -36988,7 +36988,7 @@ tests:
           body: |
             {
               "type": "permissions",
-              "detail": "not enough permissions to execute the query\nWhile processing:\n    \/school:top\n    ^^^^^^^^^^^"
+              "detail": "not enough permissions to execute the query\nWhile processing:\n    \/school:top\n    ^"
             }
         - uri: /
           status: 200 OK
@@ -38447,9 +38447,9 @@ tests:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             Found an empty or constant kernel
-            While processing:
+            While translating:
                 /school^true()
-                ^^^^^^^^^^^^^^
+                 ^^^^^^^^^^^^^
         - uri: /date(true())
           status: 400 Bad Request
           headers:
@@ -38807,7 +38807,7 @@ tests:
               {'ACID', 'Acer'}
           While processing:
               /{'ACID' :as code, 'Acer' :as name} :as manufacturer /:insert
-              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                                                     ^^^^^^
       - uri: /{'SMSN', 'Samsung'} :as manufacturer /:insert
         status: 409 Conflict
         headers:
@@ -38825,7 +38825,7 @@ tests:
               {'SMSN', 'Samsung'}
           While processing:
               /{'SMSN', 'Samsung'} :as manufacturer /:insert
-              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                                      ^^^^^^
       - uri: /{code:='SMSN'} :as manufacturer /:insert
         status: 409 Conflict
         headers:
@@ -38843,7 +38843,7 @@ tests:
               {'SMSN'}
           While processing:
               /{code:='SMSN'} :as manufacturer /:insert
-              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                                 ^^^^^^
       - uri: /{name:='Samsung'} :as manufacturer /:insert
         status: 409 Conflict
         headers:
@@ -38861,7 +38861,7 @@ tests:
               {'Samsung'}
           While processing:
               /{name:='Samsung'} :as manufacturer /:insert
-              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                                    ^^^^^^
       - uri: /{code:='SMSN', name:='Samsung', full_name:='Samsung Electronics Co Ltd'}
           :as manufacturer /:insert
         status: 400 Bad Request
@@ -38872,7 +38872,7 @@ tests:
               full_name
           While processing:
               /{code:='SMSN', name:='Samsung', full_name:='Samsung Electronics Co Ltd'} :as manufacturer /:insert
-              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                                                                                           ^^^^^^
       - uri: /{code:='SMSN', name:=true} :as manufacturer /:insert
         status: 400 Bad Request
         headers:
@@ -38881,7 +38881,7 @@ tests:
           Invalid type for column name: expected text; got boolean
           While processing:
               /{code:='SMSN', name:=true} :as manufacturer /:insert
-              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                                             ^^^^^^
       - uri: /{code:='SMSN', name:='Samsung'} :as manufacturer /:insert
         status: 200 OK
         headers:
@@ -39195,7 +39195,7 @@ tests:
           Missing identity field sku
           While processing:
               /merge(product:={list_price:='649.00'})
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+               ^^^^^
       - uri: /update(product:={[A0000002], list_price:='649.00'})
         status: 200 OK
         headers:
@@ -39225,7 +39225,7 @@ tests:
           Expected the first field to be the table identity; got text
           While processing:
               /delete(product[A0000003])
-               ^^^^^^^^^^^^^^^^^^^^^^^^^
+               ^^^^^^
       - uri: /delete(product[A0000003]{id()})
         status: 200 OK
         headers:

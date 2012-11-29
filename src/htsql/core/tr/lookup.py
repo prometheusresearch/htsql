@@ -18,6 +18,7 @@ from ..model import (HomeNode, TableNode, Arc, TableArc, ChainArc, ColumnArc,
         SyntaxArc, InvalidArc, AmbiguousArc)
 from ..classify import classify, relabel, localize, normalize
 from ..syn.syntax import IdentifierSyntax
+from ..error import point
 from .binding import (Binding, ScopingBinding, ChainingBinding,
         WrappingBinding, SegmentBinding, HomeBinding, RootBinding,
         TableBinding, FreeTableBinding, AttachedTableBinding, ColumnBinding,
@@ -643,7 +644,8 @@ class ExpandHome(Lookup):
             for label in labels:
                 if not label.is_public:
                     continue
-                identifier = IdentifierSyntax(label.name, self.binding.mark)
+                identifier = IdentifierSyntax(label.name)
+                point(identifier, self.binding)
                 recipe = prescribe(label.arc, self.binding)
                 recipes.append((identifier, recipe))
             return recipes
@@ -731,7 +733,8 @@ class ExpandTable(Lookup):
             if not label.is_public:
                 continue
             # Create a "virtual" syntax node for each column
-            identifier = IdentifierSyntax(label.name, self.binding.mark)
+            identifier = IdentifierSyntax(label.name)
+            point(identifier, self.binding)
             recipe = prescribe(label.arc, self.binding)
             yield (identifier, recipe)
 

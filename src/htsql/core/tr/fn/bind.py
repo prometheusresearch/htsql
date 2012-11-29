@@ -25,7 +25,7 @@ from ..binding import (LiteralBinding, SortBinding, SieveBinding,
         QueryBinding, Binding, BindingRecipe, ComplementRecipe, KernelRecipe,
         SubstitutionRecipe, ClosedRecipe)
 from ..bind import BindByName, BindingState
-from ...error import Error, translate_guard, QuotePara, ErrorGuard
+from ...error import Error, translate_guard, QuotePara, ErrorGuard, point
 from ..coerce import coerce
 from ..decorate import decorate
 from ..lookup import direct, expand, identify, guess_tag, lookup_command
@@ -545,9 +545,9 @@ class BindSelect(BindMacro):
             if recipes is not None:
                 for syntax, recipe in recipes:
                     if not isinstance(syntax, (IdentifierSyntax, GroupSyntax)):
-                        syntax = GroupSyntax(syntax, syntax.mark)
-                    syntax = ComposeSyntax(element.syntax, syntax,
-                                           syntax.mark)
+                        syntax = point(GroupSyntax(syntax), syntax)
+                    syntax = point(ComposeSyntax(element.syntax, syntax),
+                                   syntax)
                     elements.append(self.state.use(recipe, syntax))
             else:
                 elements.append(element)

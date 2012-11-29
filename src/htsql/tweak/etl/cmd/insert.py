@@ -5,7 +5,7 @@
 
 from ....core.util import listof
 from ....core.adapter import Utility, Adapter, adapt, adapt_many
-from ....core.error import EmptyMark, Error, QuotePara
+from ....core.error import Error, QuotePara
 from ....core.connect import transaction, scramble, unscramble
 from ....core.domain import (Domain, ListDomain, RecordDomain, BooleanDomain,
         IntegerDomain, FloatDomain, DecimalDomain, TextDomain, DateDomain,
@@ -453,7 +453,7 @@ class BuildResolveIdentity(Utility):
         labels = relabel(TableArc(self.table))
         if labels:
             label = labels[0]
-            identifier = IdentifierSyntax(label.name, EmptyMark())
+            identifier = IdentifierSyntax(label.name)
             binding = AliasBinding(binding, identifier)
         state.pop_scope()
         state.pop_scope()

@@ -12,8 +12,7 @@ from ...core.cmd.summon import Summon, recognize
 
 class GatewayCmd(Command):
 
-    def __init__(self, instance, command, mark):
-        super(GatewayCmd, self).__init__(mark)
+    def __init__(self, instance, command):
         self.instance = instance
         self.command = command
 
@@ -28,7 +27,7 @@ class SummonGateway(Summon):
         [syntax] = self.arguments
         with self.instance:
             command = recognize(syntax)
-        return GatewayCmd(self.instance, command, self.syntax.mark)
+        return GatewayCmd(self.instance, command)
 
 
 class ActGateway(Act):

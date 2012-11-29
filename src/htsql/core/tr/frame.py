@@ -14,6 +14,7 @@ This module declares frame and phrase nodes.
 from ..util import listof, tupleof, maybe, Clonable, Hashable, Printable
 from ..entity import TableEntity, ColumnEntity
 from ..domain import Domain, BooleanDomain
+from ..error import point
 from .coerce import coerce
 from .flow import Expression
 from .term import Term, QueryTerm
@@ -78,7 +79,7 @@ class Clause(Hashable, Clonable, Printable):
         self.expression = expression
         self.binding = expression.binding
         self.syntax = expression.syntax
-        self.mark = expression.mark
+        point(self, expression)
 
     def __str__(self):
         return str(self.expression)

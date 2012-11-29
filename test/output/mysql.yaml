@@ -28091,99 +28091,99 @@ tests:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             Found an empty or constant kernel
-            While processing:
+            While translating:
                 /school^{}{true()}
-                ^^^^^^^^^^^^^^^^^^
+                 ^^^^^^^^^
         - uri: /school^{true()}{true()}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             Found an empty or constant kernel
-            While processing:
+            While translating:
                 /school^{true()}{true()}
-                ^^^^^^^^^^^^^^^^^^^^^^^^
+                 ^^^^^^^^^^^^^^^
         - uri: /school?false()^{true()}{true()}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             Found an empty or constant kernel
-            While processing:
+            While translating:
                 /school?false()^{true()}{true()}
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                 ^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /school^{}{*, count(school)}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             Found an empty or constant kernel
-            While processing:
+            While translating:
                 /school^{}{*, count(school)}
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                 ^^^^^^^^^
         - uri: /school^{true()}{*, count(school)}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             Found an empty or constant kernel
-            While processing:
+            While translating:
                 /school^{true()}{*, count(school)}
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                 ^^^^^^^^^^^^^^^
         - uri: /school?false()^{true()}{*, count(school)}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             Found an empty or constant kernel
-            While processing:
+            While translating:
                 /school?false()^{true()}{*, count(school)}
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                 ^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /school^{null()}{*, count(school)}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             Found an empty or constant kernel
-            While processing:
+            While translating:
                 /school^{null()}{*, count(school)}
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                 ^^^^^^^^^^^^^^^
         - uri: /{school^{}{count(school)}, school?false()^{}{count(school)}}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             Found an empty or constant kernel
-            While processing:
+            While translating:
                 /{school^{}{count(school)}, school?false()^{}{count(school)}}
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                  ^^^^^^^^^
         - uri: /school{program^{}{count(program)}, program?false()^{}{count(program)}}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             Found an empty or constant kernel
-            While processing:
+            While translating:
                 /school{program^{}{count(program)}, program?false()^{}{count(program)}}
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                        ^^^^^^^^^^
         - uri: /{count(school^true()), count(school?false()^true()), count(school^null())}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             Found an empty or constant kernel
-            While processing:
+            While translating:
                 /{count(school^true()), count(school?false()^true()), count(school^null())}
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                        ^^^^^^^^^^^^^
         - uri: /(school^null()).^
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             Found an empty or constant kernel
-            While processing:
+            While translating:
                 /(school^null()).^
-                ^^^^^^^^^^^^^^^^^^
+                  ^^^^^^^^^^^^^
         - uri: /department^school_code{school_code.name, name}
           status: 400 Bad Request
           headers:
@@ -33239,7 +33239,7 @@ tests:
             unsupported action
             While processing:
                 /school/:html/:json
-                ^^^^^^^^^^^^^
+                         ^^^^
         - uri: /school/:html/:sql
           status: 400 Bad Request
           headers:
@@ -33248,7 +33248,7 @@ tests:
             unsupported action
             While processing:
                 /school/:html/:sql
-                ^^^^^^^^^^^^^
+                         ^^^^
   - include: test/input/addon.yaml
     output:
       id: addon
@@ -34054,12 +34054,12 @@ tests:
           status: 403 Forbidden
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
-          - [Set-Cookie, htsql-csrf-token=d1e4f773e5127343dd1f700ed98db7b5; Path=/]
+          - [Set-Cookie, htsql-csrf-token=4780d3ab6ca5c074cc8654f4a52fe4ba; Path=/]
           body: |
             not enough permissions to execute the query
             While processing:
                 /school
-                ^^^^^^^
+                ^
         - py: pass-csrf-token
           stdout: |+
             200 OK
@@ -35406,12 +35406,12 @@ tests:
           status: 403 Forbidden
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
-          - [Set-Cookie, htsql-csrf-token=ea40a0a2d34c17e18ae87dd9942f6729; Path=/]
+          - [Set-Cookie, htsql-csrf-token=340fbc8056469569b31881a44510ea6a; Path=/]
           body: |
             not enough permissions to execute the query
             While processing:
                 /meta(/table)
-                      ^^^^^^
+                      ^
       - id: tweak.override
         tests:
         - ctl: [ext, tweak.override]
@@ -36948,7 +36948,7 @@ tests:
           body: |
             {
               "type": "permissions",
-              "detail": "not enough permissions to execute the query\nWhile processing:\n    \/school:top\n    ^^^^^^^^^^^"
+              "detail": "not enough permissions to execute the query\nWhile processing:\n    \/school:top\n    ^"
             }
         - uri: /
           status: 200 OK
@@ -38338,9 +38338,9 @@ tests:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             Found an empty or constant kernel
-            While processing:
+            While translating:
                 /school^true()
-                ^^^^^^^^^^^^^^
+                 ^^^^^^^^^^^^^
         - uri: /date(true())
           status: 400 Bad Request
           headers:

@@ -56,7 +56,7 @@ def prepare_parse():
             larm = stream.pull()    # specifier
             stream.pull()           # `:=`
             rarm = stream.pull()    # pipe | flow
-            yield AssignSyntax(larm, rarm, stream.mark())
+            yield stream.mark(AssignSyntax(larm, rarm))
         else:
             yield stream.pull()     # pipe | flow
 
@@ -86,7 +86,7 @@ def prepare_parse():
                 rarm = stream.pull()    # parameter
                 rarms.append(rarm)
             stream.pull()               # `)`
-        yield SpecifySyntax(larms, rarms, stream.mark())
+        yield stream.mark(SpecifySyntax(larms, rarms))
 
     # Assignees and parameters in an assignment expression.
     parameter = grammar.add_rule('''
@@ -149,7 +149,8 @@ def prepare_parse():
                     rarms.append(rarm)
             is_flow = False
             syntax = PipeSyntax(identifier, larm, rarms,
-                                is_flow, is_open, stream.mark())
+                                is_flow, is_open)
+            stream.mark(syntax)
         yield syntax
 
     # Flow pipe notation (`<larm> : <identifier>`) and sort direction
@@ -171,7 +172,8 @@ def prepare_parse():
                 stream.pull()               # %DIRSIG
             if stream.peek(u'+') or stream.peek(u'-'):
                 direction = stream.pull()   # `+` | `-`
-                syntax = DirectSyntax(direction.text, syntax, stream.mark())
+                syntax = DirectSyntax(direction.text, syntax)
+                stream.mark(syntax)
             else:
                 larm = syntax
                 stream.pull()               # `:`
@@ -191,7 +193,8 @@ def prepare_parse():
                         rarms.append(rarm)
                 is_flow = True
                 syntax = PipeSyntax(identifier, larm, rarms,
-                                    is_flow, is_open, stream.mark())
+                                    is_flow, is_open)
+                stream.mark(syntax)
         yield syntax
 
     # Flow operators (`?` and `^`) and selection (`<larm> {...}`).
@@ -211,21 +214,25 @@ def prepare_parse():
                 larm = syntax
                 stream.pull()               # `?`
                 rarm = stream.pull()        # disjunction
-                syntax = FilterSyntax(larm, rarm, stream.mark())
+                syntax = FilterSyntax(larm, rarm)
+                stream.mark(syntax)
             elif stream.peek(u'^'):
                 larm = syntax
                 stream.pull()               # `^`
                 rarm = stream.pull()        # disjunction
-                syntax = ProjectSyntax(larm, rarm, stream.mark())
+                syntax = ProjectSyntax(larm, rarm)
+                stream.mark(syntax)
             else:
                 larm = syntax
                 rarm = stream.pull()        # record
-                syntax = SelectSyntax(larm, rarm, stream.mark())
+                syntax = SelectSyntax(larm, rarm)
+                stream.mark(syntax)
                 while stream.peek(u'.'):
                     stream.pull()           # `.`
                     larm = syntax
                     rarm = stream.pull()    # location
-                    syntax = ComposeSyntax(larm, rarm, stream.mark())
+                    syntax = ComposeSyntax(larm, rarm)
+                    stream.mark(syntax)
         yield syntax
 
     # Used by binary operator productions of the form:
@@ -236,7 +243,8 @@ def prepare_parse():
             larm = syntax
             operator = stream.pull()    # (operator symbol)
             rarm = stream.pull()        # (right operand)
-            syntax = OperatorSyntax(operator.text, larm, rarm, stream.mark())
+            syntax = OperatorSyntax(operator.text, larm, rarm)
+            stream.mark(syntax)
         yield syntax
 
     # OR operator.
@@ -262,7 +270,8 @@ def prepare_parse():
         if stream.peek(u'!'):
             operator = stream.pull()    # `!`
             arm = stream.pull()         # negation
-            syntax = PrefixSyntax(operator.text, arm, stream.mark())
+            syntax = PrefixSyntax(operator.text, arm)
+            stream.mark(syntax)
         else:
             syntax = stream.pull()      # comparison
         yield syntax
@@ -302,7 +311,8 @@ def prepare_parse():
         if stream.peek(u'+') or stream.peek(u'-'):
             prefix = stream.pull()  # `+` | `-`
             arm = stream.pull()     # factor
-            syntax = PrefixSyntax(prefix.text, arm, stream.mark())
+            syntax = PrefixSyntax(prefix.text, arm)
+            stream.mark(syntax)
         else:
             syntax = stream.pull()  # linking
         yield syntax
@@ -320,7 +330,8 @@ def prepare_parse():
             larm = syntax
             stream.pull()           # `->`
             rarm = stream.pull()    # flow
-            syntax = LinkSyntax(larm, rarm, stream.mark())
+            syntax = LinkSyntax(larm, rarm)
+            stream.mark(syntax)
         yield syntax
 
     # Composition expression.
@@ -336,7 +347,8 @@ def prepare_parse():
             larm = syntax
             stream.pull()           # `.`
             rarm = stream.pull()    # location
-            syntax = ComposeSyntax(larm, rarm, stream.mark())
+            syntax = ComposeSyntax(larm, rarm)
+            stream.mark(syntax)
         yield syntax
 
     # Location expression (`<larm> [...]`)
@@ -351,7 +363,8 @@ def prepare_parse():
         if stream:
             larm = syntax
             rarm = stream.pull()    # identity
-            syntax = LocateSyntax(larm, rarm, stream.mark())
+            syntax = LocateSyntax(larm, rarm)
+            stream.mark(syntax)
         yield syntax
 
     # Attachment operator.
@@ -367,7 +380,8 @@ def prepare_parse():
             larm = syntax
             stream.pull()           # `@`
             rarm = stream.pull()    # atom
-            syntax = AttachSyntax(larm, rarm, stream.mark())
+            syntax = AttachSyntax(larm, rarm)
+            stream.mark(syntax)
         yield syntax
 
     # Atomic expressions.
@@ -387,10 +401,12 @@ def prepare_parse():
     def match_collection(stream):
         stream.pull()               # `/`
         if not stream:
-            syntax = SkipSyntax(stream.mark())
+            syntax = SkipSyntax()
+            stream.mark(syntax)
         else:
             arm = stream.pull()     # flow_pipe
-            syntax = CollectSyntax(arm, stream.mark())
+            syntax = CollectSyntax(arm)
+            stream.mark(syntax)
         yield syntax
 
     # Detachment operator.
@@ -403,7 +419,8 @@ def prepare_parse():
     def match_detachment(stream):
         stream.pull()               # `@`
         arm = stream.pull()         # atom
-        syntax = DetachSyntax(arm, stream.mark())
+        syntax = DetachSyntax(arm)
+        stream.mark(syntax)
         yield syntax
 
     # Unpacking expression.
@@ -426,7 +443,8 @@ def prepare_parse():
             else:
                 index = stream.pull()   # %INTEGER
             index = int(index.text)
-        syntax = UnpackSyntax(index, is_open, stream.mark())
+        syntax = UnpackSyntax(index, is_open)
+        stream.mark(syntax)
         yield syntax
 
     # Reference expression.
@@ -439,7 +457,8 @@ def prepare_parse():
     def match_reference(stream):
         stream.pull()                   # `$`
         identifier = stream.pull()      # identifier
-        syntax = ReferenceSyntax(identifier, stream.mark())
+        syntax = ReferenceSyntax(identifier)
+        stream.mark(syntax)
         yield syntax
 
     # Attribute or function call.
@@ -459,7 +478,8 @@ def prepare_parse():
                 arm = stream.pull()     # assignment
                 arms.append(arm)
             stream.pull()               # `)`
-            syntax = FunctionSyntax(identifier, arms, stream.mark())
+            syntax = FunctionSyntax(identifier, arms)
+            stream.mark(syntax)
         yield syntax
 
     # An identifier.
@@ -471,7 +491,8 @@ def prepare_parse():
     @identifier.set_match
     def match_identifier(stream):
         name = stream.pull()        # %NAME
-        syntax = IdentifierSyntax(name.text, stream.mark())
+        syntax = IdentifierSyntax(name.text)
+        stream.mark(syntax)
         yield syntax
 
     # Complement indicator (`^`).
@@ -483,7 +504,8 @@ def prepare_parse():
     @complement.set_match
     def match_complement(stream):
         stream.pull()               # `^`
-        syntax = ComplementSyntax(stream.mark())
+        syntax = ComplementSyntax()
+        stream.mark(syntax)
         yield syntax
 
     # Record constructor.
@@ -499,7 +521,8 @@ def prepare_parse():
             arm = stream.pull()     # assignment
             arms.append(arm)
         stream.pull()               # `}`
-        syntax = RecordSyntax(arms, stream.mark())
+        syntax = RecordSyntax(arms)
+        stream.mark(syntax)
         yield syntax
 
     # Grouping or list constructor.
@@ -512,12 +535,13 @@ def prepare_parse():
         stream.pull()                       # `(`
         if stream.peek(u')'):
             stream.pull()                   # `)`
-            syntax = ListSyntax([], stream.mark())
+            syntax = ListSyntax([])
+            stream.mark(syntax)
         else:
             arm = stream.pull()             # assignment
             if stream.peek(u')'):
                 stream.pull()               # `)`
-                syntax = GroupSyntax(arm, stream.mark())
+                syntax = GroupSyntax(arm)
             else:
                 arms = [arm]
                 stream.pull()               # `,`
@@ -525,7 +549,8 @@ def prepare_parse():
                     arm = stream.pull()     # assignment
                     arms.append(arm)
                 stream.pull()               # `)`
-                syntax = ListSyntax(arms, stream.mark())
+                syntax = ListSyntax(arms)
+            stream.mark(syntax)
         yield syntax
 
     # Identity constructor.
@@ -548,7 +573,8 @@ def prepare_parse():
             arm = stream.pull()     # label
             arms.append(arm)
         stream.pull()               # `]` | `)`
-        syntax = IdentitySyntax(arms, is_hard, stream.mark())
+        syntax = IdentitySyntax(arms, is_hard)
+        stream.mark(syntax)
         yield syntax
 
     identity.set_match(match_identity)
@@ -576,11 +602,13 @@ def prepare_parse():
     def match_label(stream):
         if stream.peek(LABEL):
             label = stream.pull()   # %LABEL
-            syntax = LabelSyntax(label.text, stream.mark())
+            syntax = LabelSyntax(label.text)
+            stream.mark(syntax)
             yield syntax
         elif stream.peek(STRING):
             literal = stream.pull() # %STRING
-            syntax = StringSyntax(literal.text, stream.mark())
+            syntax = StringSyntax(literal.text)
+            stream.mark(syntax)
             yield syntax
         else:
             yield stream.pull()     # label_group | reference
@@ -595,16 +623,17 @@ def prepare_parse():
     def match_literal(stream):
         if stream.peek(STRING):
             literal = stream.pull()     # %STRING
-            syntax = StringSyntax(literal.text, literal.mark)
+            syntax = StringSyntax(literal.text)
         elif stream.peek(INTEGER):
             literal = stream.pull()     # %INTEGER
-            syntax = IntegerSyntax(literal.text, literal.mark)
+            syntax = IntegerSyntax(literal.text)
         elif stream.peek(DECIMAL):
             literal = stream.pull()     # %DECIMAL
-            syntax = DecimalSyntax(literal.text, literal.mark)
+            syntax = DecimalSyntax(literal.text)
         elif stream.peek(FLOAT):
             literal = stream.pull()     # %FLOAT
-            syntax = FloatSyntax(literal.text, literal.mark)
+            syntax = FloatSyntax(literal.text)
+        stream.mark(syntax)
         yield syntax
 
     # Generate and return the parser.

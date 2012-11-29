@@ -50,7 +50,7 @@ class ShellRenderUniversal(Act):
         try:
             syntax = parse(self.command.query)
             if addon.on_root and isinstance(syntax, SkipSyntax):
-                command = ShellCmd(is_implicit=True, mark=syntax.mark)
+                command = ShellCmd(is_implicit=True)
             else:
                 command = Recognize.__invoke__(syntax)
                 if command is None:
@@ -58,8 +58,7 @@ class ShellRenderUniversal(Act):
                             not isinstance(syntax, SkipSyntax)):
                         query = unquote(self.command.query)
                         query = query.decode('utf-8', 'replace')
-                        command = ShellCmd(query, is_implicit=True,
-                                           mark=syntax.mark)
+                        command = ShellCmd(query, is_implicit=True)
                     else:
                         command = DefaultCmd(syntax)
             return act(command, self.action)
@@ -68,7 +67,7 @@ class ShellRenderUniversal(Act):
                 raise
             query = unquote(self.command.query)
             query = query.decode('utf-8', 'replace')
-            command = ShellCmd(query, is_implicit=True, mark=self.command.mark)
+            command = ShellCmd(query, is_implicit=True)
             return act(command, self.action)
 
 

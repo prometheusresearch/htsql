@@ -5,7 +5,7 @@
 
 from ..util import (maybe, oneof, listof, omapof, trim_doc, toposort, omap,
         TextBuffer, Printable)
-from ..error import Error, Mark, parse_guard
+from ..error import Error, Mark, parse_guard, point
 from .token import Token
 import re
 
@@ -631,7 +631,8 @@ class Scanner(Printable):
                 code = group.name
                 if group.is_symbol:
                     code = block
-                token = Token(code, block, mark)
+                token = Token(code, block)
+                point(token, mark)
                 tokens.append(token)
             # For an exit rule, exit the top context.
             if group.pop:
@@ -658,7 +659,8 @@ class Scanner(Printable):
                         break
                     token = tokens[end]
                 if None in dfa[state]:
-                    token = Token(treatment.name, u"", tokens[start].mark)
+                    token = Token(treatment.name, u"")
+                    point(token, tokens[start])
                     tokens.insert(start, token)
                     start = end+1
                 else:
@@ -899,9 +901,11 @@ class ParseStream(object):
             return False
         return (node.code == code)
 
-    def mark(self):
+    def mark(self, node):
         # Makes a mark covering all the pulled nodes.
-        return Mark.union(*self.nodes[:self.index])
+        mark = Mark.union(*self.nodes[:self.index])
+        point(node, mark)
+        return node
 
     def __nonzero__(self):
         return (self.index < len(self.nodes))

@@ -267,8 +267,7 @@ class ArrangeTable(Arrange):
                     # but in order to produce a better string representation,
                     # we replace the associated syntax node with a new
                     # identifier named after the column.
-                    identifier = IdentifierSyntax(normalize(column.name),
-                                                  self.flow.mark)
+                    identifier = IdentifierSyntax(normalize(column.name))
                     binding = self.flow.binding.clone(syntax=identifier)
                     code = ColumnUnit(column, flow, binding)
                     yield (code, +1)

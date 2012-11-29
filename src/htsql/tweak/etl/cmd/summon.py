@@ -23,7 +23,7 @@ class SummonETL(Summon):
             raise Error("Expected 1 argument")
         [syntax] = self.arguments
         feed = recognize(syntax)
-        command = self.cmd(feed, self.syntax.mark)
+        command = self.cmd(feed)
         return command
 
 
@@ -71,7 +71,7 @@ class SummonTruncate(Summon):
             if not isinstance(arc, TableArc):
                 raise Error("Expected a table")
         table = arc.table
-        command = TruncateCmd(table, self.syntax.mark)
+        command = TruncateCmd(table)
         return command
 
 
@@ -95,7 +95,7 @@ class SummonDo(Summon):
                 syntax = argument.rarm
             command = recognize(syntax)
             blocks.append((name, command))
-        command = DoCmd(blocks, self.syntax.mark)
+        command = DoCmd(blocks)
         return command
 
 

@@ -75,7 +75,7 @@ class ActDefault(Act):
     adapt(DefaultCmd, Action)
 
     def __call__(self):
-        command = FetchCmd(self.command.syntax, self.command.mark)
+        command = FetchCmd(self.command.syntax)
         return act(command, self.action)
 
 
@@ -114,7 +114,7 @@ def act(command, action):
     assert isinstance(action, Action)
     if not isinstance(command, Command):
         command = recognize(command)
-    with act_guard(command.mark):
+    with act_guard(command):
         return Act.__invoke__(command, action)
 
 

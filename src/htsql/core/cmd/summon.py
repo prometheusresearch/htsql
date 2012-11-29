@@ -4,7 +4,7 @@
 
 
 from ..adapter import Adapter, Protocol, adapt, call
-from ..error import Error, recognize_guard
+from ..error import Error, recognize_guard, point, MarkRef
 from ..util import to_name
 from ..syn.syntax import (Syntax, SkipSyntax, FunctionSyntax, PipeSyntax,
         ApplySyntax, CollectSyntax)
@@ -30,7 +30,8 @@ class RecognizeSkip(Recognize):
     adapt(SkipSyntax)
 
     def __call__(self):
-        return SkipCmd(self.syntax.mark)
+        command = SkipCmd()
+        return point(command, self.syntax)
 
 
 class RecognizeFunction(Recognize):
@@ -39,7 +40,8 @@ class RecognizeFunction(Recognize):
 
     def __call__(self):
         with recognize_guard(self.syntax):
-            return Summon.__invoke__(self.syntax)
+            command = Summon.__invoke__(self.syntax)
+            return point(command, self.syntax.identifier)
 
 
 class RecognizePipe(Recognize):
@@ -50,7 +52,8 @@ class RecognizePipe(Recognize):
         if self.syntax.is_flow:
             return super(RecognizePipe, self).__call__()
         with recognize_guard(self.syntax):
-            return Summon.__invoke__(self.syntax)
+            command = Summon.__invoke__(self.syntax)
+            return point(command, self.syntax.identifier)
 
 
 class RecognizeCollect(Recognize):
@@ -79,10 +82,6 @@ class Summon(Protocol):
         self.syntax = syntax
         self.name = syntax.name
         self.arguments = syntax.arguments
-        if isinstance(syntax, (FunctionSyntax, PipeSyntax)):
-            self.mark = syntax.identifier.mark
-        else:
-            self.mark = syntax.mark
 
     def __call__(self):
         return None
@@ -97,7 +96,7 @@ class SummonFetch(Summon):
         if len(self.arguments) != 1:
             raise Error("Expected 1 argument")
         [syntax] = self.arguments
-        return FetchCmd(syntax, self.syntax.mark)
+        return FetchCmd(syntax)
 
 
 class SummonFormat(Summon):
@@ -110,7 +109,7 @@ class SummonFormat(Summon):
         [syntax] = self.arguments
         feed = recognize(syntax)
         format = self.format()
-        return FormatCmd(feed, format, self.syntax.mark)
+        return FormatCmd(feed, format)
 
 
 class SummonTxt(SummonFormat):
@@ -164,7 +163,7 @@ class SummonSQL(Summon):
             raise Error("Expected 1 argument")
         [syntax] = self.arguments
         feed = recognize(syntax)
-        return SQLCmd(feed, self.syntax.mark)
+        return SQLCmd(feed)
 
 
 def recognize(syntax):
@@ -174,6 +173,9 @@ def recognize(syntax):
     command = Recognize.__invoke__(syntax)
     if command is None:
         command = DefaultCmd(syntax)
+        mark = MarkRef.get_mark(syntax)
+        if mark is not None:
+            point(command, mark.clone(end=mark.start))
     return command
 
 

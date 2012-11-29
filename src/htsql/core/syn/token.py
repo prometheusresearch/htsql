@@ -3,7 +3,6 @@
 #
 
 
-from ..error import Mark
 from ..util import Clonable, Hashable, Printable
 import urllib
 
@@ -19,18 +18,13 @@ class Token(Clonable, Hashable, Printable):
 
     `text`: ``unicode``
         The token value.
-
-    `mark`: :class:`.Mark`
-        Error context.
     """
 
-    def __init__(self, code, text, mark):
+    def __init__(self, code, text):
         assert isinstance(code, unicode)
         assert isinstance(text, unicode)
-        assert isinstance(mark, Mark)
         self.code = code
         self.text = text
-        self.mark = mark
 
     def __basis__(self):
         return (self.code, self.text)

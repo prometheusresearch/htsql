@@ -3,7 +3,8 @@
 #
 
 
-from .util import Printable, maybe, listof, oneof
+from .util import Clonable, Printable, maybe, listof, oneof, urlquote
+import weakref
 
 
 #
@@ -142,7 +143,7 @@ class ChoicePara(Paragraph):
                              u"\n".join(u"    "+choice for choice in choices))
 
 
-class Mark(Printable):
+class Mark(Clonable, Printable):
     """
     A fragment of an HTSQL query.
 
@@ -171,10 +172,10 @@ class Mark(Printable):
         """
         # Get a list of `Mark` objects; if no marks are given, return an
         # empty mark.
-        marks = [node if isinstance(node, Mark) else node.mark
+        marks = [node if isinstance(node, Mark) else MarkRef.get_mark(node)
                  for node in nodes if node is not None]
         if not marks:
-            return EmptyMark()
+            return None
         # It might happen that different marks refer to different query strings.
         # In this case, we choose one of them and ignore marks associated with
         # other query strings.
@@ -227,17 +228,60 @@ class Mark(Printable):
     def __unicode__(self):
         return u"\n".join(self.excerpt())
 
+    def __repr__(self):
+        chunk = self.text[self.start:self.end]
+        return "<%s %s>" % (self.__class__.__name__,
+                            urlquote(chunk, '').encode('utf-8'))
+
     def __nonzero__(self):
         return bool(self.text)
 
 
-class EmptyMark(Mark):
-    """
-    An empty error context.
-    """
+class MarkRef(weakref.ref):
 
-    def __init__(self):
-        super(EmptyMark, self).__init__(u"", 0, 0)
+    __slots__ = ('oid', 'mark')
+
+    oid_to_ref = {}
+
+    @staticmethod
+    def cleanup(ref, oid_to_ref=oid_to_ref):
+        del oid_to_ref[ref.oid]
+
+    def __new__(cls, node, mark):
+        self = super(MarkRef, cls).__new__(cls, node, cls.cleanup)
+        self.oid = id(node)
+        self.mark = mark
+        cls.oid_to_ref[self.oid] = self
+        return self
+
+    def __init__(self, node, mark):
+        super(MarkRef, self).__init__(node, self.cleanup)
+
+    @classmethod
+    def get_mark(cls, node):
+        ref = cls.oid_to_ref.get(id(node))
+        if ref is not None:
+            return ref.mark
+
+    @classmethod
+    def set_mark(cls, node, mark):
+        cls(node, mark)
+
+    @classmethod
+    def point(cls, node, mark):
+        if node is None or mark is None:
+            return
+        if cls.get_mark(node) is not None:
+            return node
+        if not isinstance(mark, Mark):
+            mark = cls.get_mark(mark)
+        if mark is None:
+            return node
+        cls.set_mark(node, mark)
+        return node
+
+
+point = MarkRef.point
 
 
 class Error(BadRequestError):
@@ -294,9 +338,10 @@ class PointerErrorGuard(object):
 
     def __init__(self, message, mark):
         self.message = message
+        self.node = mark
         if mark is not None:
             if not isinstance(mark, Mark):
-                mark = mark.mark
+                mark = MarkRef.get_mark(mark)
         self.mark = mark
 
     def __enter__(self):

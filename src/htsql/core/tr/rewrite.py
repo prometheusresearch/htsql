@@ -144,8 +144,7 @@ class RewritingState(object):
         if expression in self.rewrite_cache:
             return self.rewrite_cache[expression]
         # Apply `Rewrite` adapter.
-        with translate_guard(expression):
-            replacement = rewrite(expression, self)
+        replacement = rewrite(expression, self)
         # Cache the output.
         self.rewrite_cache[expression] = replacement
         return replacement
@@ -173,7 +172,8 @@ class RewritingState(object):
         # If the key is not in the cache, apply the `Unmask` adapter and store
         # the result in the cache.
         if key not in self.unmask_cache:
-            replacement = Unmask.__invoke__(expression, self)
+            with translate_guard(expression):
+                replacement = Unmask.__invoke__(expression, self)
             self.unmask_cache[key] = replacement
         # Otherwise, fetch the result from the cache.
         else:
@@ -194,7 +194,8 @@ class RewritingState(object):
         `expression` (:class:`htsql.core.tr.flow.Expression`)
             The expression to collect units from.
         """
-        Collect.__invoke__(expression, self)
+        with translate_guard(expression):
+            Collect.__invoke__(expression, self)
 
     def recombine(self):
         """
@@ -222,7 +223,8 @@ class RewritingState(object):
         if expression in self.replace_cache:
             return self.replace_cache[expression]
         # If not, apply the `Replace` adapter.
-        replacement = Replace.__invoke__(expression, self)
+        with translate_guard(expression):
+            replacement = Replace.__invoke__(expression, self)
         # Store the result in the cache and return it.
         self.replace_cache[expression] = replacement
         return replacement
@@ -1616,6 +1618,7 @@ def rewrite(expression, state=None):
     if state is None:
         state = RewritingState()
     # Apply the `Rewrite` adapter.
-    return Rewrite.__invoke__(expression, state)
+    with translate_guard(expression):
+        return Rewrite.__invoke__(expression, state)
 
 

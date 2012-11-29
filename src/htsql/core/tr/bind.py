@@ -17,7 +17,7 @@ from ..domain import (Domain, BooleanDomain, IntegerDomain, DecimalDomain,
         FloatDomain, UntypedDomain, EntityDomain, RecordDomain, ListDomain,
         IdentityDomain, VoidDomain)
 from ..classify import normalize
-from ..error import Error, QuotePara, translate_guard, choices_guard
+from ..error import Error, QuotePara, translate_guard, choices_guard, point
 from ..syn.syntax import (Syntax, CollectSyntax, SelectSyntax, ApplySyntax,
         FunctionSyntax, PipeSyntax, OperatorSyntax, PrefixSyntax,
         ProjectSyntax, FilterSyntax, LinkSyntax, DetachSyntax, AssignSyntax,
@@ -757,12 +757,12 @@ class BindUnpack(Bind):
             if not (0 <= index < len(recipes)):
                 raise Error("Expected value in range 1-%s" % len(recipes))
             syntax, recipe = recipes[index]
-            syntax = syntax.clone(mark=self.syntax.mark)
+            syntax = point(syntax, self.syntax)
             return self.state.use(recipe, syntax)
         # Otherwise, generate a selection node.
         elements = []
         for syntax, recipe in recipes:
-            syntax = syntax.clone(mark=self.syntax.mark)
+            syntax = point(syntax, self.syntax)
             element = self.state.use(recipe, syntax)
             elements.append(element)
         fields = [decorate(element) for element in elements]
