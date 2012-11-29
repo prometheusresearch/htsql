@@ -25,7 +25,7 @@ from ..binding import (LiteralBinding, SortBinding, SieveBinding,
         QueryBinding, Binding, BindingRecipe, ComplementRecipe, KernelRecipe,
         SubstitutionRecipe, ClosedRecipe)
 from ..bind import BindByName, BindingState
-from ...error import Error, translate_guard, QuotePara, ErrorGuard, point
+from ...error import Error, translate_guard
 from ..coerce import coerce
 from ..decorate import decorate
 from ..lookup import direct, expand, identify, guess_tag, lookup_command
@@ -313,12 +313,11 @@ class Correlate(Component):
                     valid_families = "(%s)" % valid_families
                 if valid_families not in valid_types:
                     valid_types.append(valid_families)
-        paragraphs = []
+        error = Error("Cannot apply %s to %s of %s %s"
+                      % (name, values, types, families))
         if valid_types:
-            paragraphs = [QuotePara("Valid %s" % types, "\n".join(valid_types))]
-        with ErrorGuard(*paragraphs):
-            raise Error("Cannot apply %s to %s of %s %s"
-                        % (name, values, types, families))
+            error.wrap("Valid %s" % types, "\n".join(valid_types))
+        raise error
 
 
 def match(signature, *domain_vectors):
@@ -545,9 +544,8 @@ class BindSelect(BindMacro):
             if recipes is not None:
                 for syntax, recipe in recipes:
                     if not isinstance(syntax, (IdentifierSyntax, GroupSyntax)):
-                        syntax = point(GroupSyntax(syntax), syntax)
-                    syntax = point(ComposeSyntax(element.syntax, syntax),
-                                   syntax)
+                        syntax = GroupSyntax(syntax)
+                    syntax = ComposeSyntax(element.syntax, syntax)
                     elements.append(self.state.use(recipe, syntax))
             else:
                 elements.append(element)

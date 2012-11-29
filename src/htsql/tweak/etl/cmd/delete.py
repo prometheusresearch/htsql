@@ -5,7 +5,7 @@
 
 from ....core.util import listof
 from ....core.adapter import Utility, adapt
-from ....core.error import Error, QuotePara
+from ....core.error import Error
 from ....core.entity import TableEntity, ColumnEntity
 from ....core.connect import transaction, scramble
 from ....core.domain import Product
@@ -98,7 +98,7 @@ class ProduceDelete(Act):
                     else:
                         message = "While deleting a record"
                     quote = record_domain.dump(record)
-                    error.wrap(QuotePara(message, quote))
+                    error.wrap(message, quote)
                     raise
             return Product(meta, data)
 

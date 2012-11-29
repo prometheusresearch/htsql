@@ -7,7 +7,7 @@ from ... import __version__, __legal__
 from ...core.util import maybe, listof
 from ...core.context import context
 from ...core.adapter import Adapter, adapt, adapt_many, call
-from ...core.error import PermissionError, Error, PointerPara, recognize_guard
+from ...core.error import PermissionError, Error, Mark, recognize_guard
 from ...core.domain import (Domain, BooleanDomain, NumberDomain, DateTimeDomain,
                             ListDomain, RecordDomain)
 from ...core.syn.syntax import StringSyntax, IntegerSyntax, IdentifierSyntax
@@ -351,8 +351,8 @@ class RenderProduceAnalyze(Act):
         last_column = None
         detail = unicode(exc)
         for paragraph in reversed(exc.paragraphs):
-            if isinstance(paragraph, PointerPara) and paragraph.mark:
-                mark = paragraph.mark
+            if isinstance(paragraph.quote, Mark) and paragraph.quote:
+                mark = paragraph.quote
                 break
         if mark:
             first_break = mark.text.rfind(u'\n', 0, mark.start)+1

@@ -4,7 +4,7 @@
 
 
 from ....core.adapter import adapt
-from ....core.error import Error, QuotePara
+from ....core.error import Error
 from ....core.connect import transaction
 from ....core.domain import Product
 from ....core.cmd.act import Act, ProduceAction, act
@@ -55,7 +55,7 @@ class ProduceUpdate(Act):
                     else:
                         message = "While updating a record"
                     quote = record_domain.dump(record)
-                    error.wrap(QuotePara(message, quote))
+                    error.wrap(message, quote)
                     raise
                 data.append(row)
             if not extract_node.is_list:

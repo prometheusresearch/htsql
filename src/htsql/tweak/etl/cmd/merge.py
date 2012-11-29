@@ -5,7 +5,7 @@
 
 from ....core.util import listof
 from ....core.adapter import Utility, adapt
-from ....core.error import Error, QuotePara
+from ....core.error import Error
 from ....core.entity import TableEntity, ColumnEntity
 from ....core.model import TableArc
 from ....core.classify import localize, relabel
@@ -104,7 +104,7 @@ class ResolveKeyPipe(object):
                 quote = u"%s[%s]" % (self.name, self.domain.dump(value))
             else:
                 quote = u"[%s]" % self.domain.dump(value)
-            raise Error(QuotePara("Unable to find an entity", quote))
+            raise Error("Unable to find an entity", quote)
         return None
 
 
@@ -292,7 +292,7 @@ class ProduceMerge(Act):
                     else:
                         message = "While merging a record"
                     quote = record_domain.dump(record)
-                    exc.wrap(QuotePara(message, quote))
+                    exc.wrap(message, quote)
                     raise
                 data.append(row)
             if not extract_node.is_list:

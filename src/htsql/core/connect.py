@@ -13,7 +13,7 @@ This module declares the database connection adapter.
 
 from .adapter import Adapter, Utility, adapt
 from .domain import Domain, Record
-from .error import Error, EngineError, QuotePara
+from .error import Error, EngineError
 from .context import context
 
 
@@ -65,8 +65,7 @@ class DBErrorGuard(object):
 
         # If we got a new exception, raise it.
         if error is not None:
-            raise EngineError(QuotePara("Got an error from"
-                                        " the database driver", error))
+            raise EngineError("Got an error from the database driver", error)
 
 
 class ConnectionProxy(object):
@@ -177,11 +176,10 @@ class CursorProxy(object):
                 with self.guard:
                     return self.cursor.execute(statement, *parameters)
             except Error, exc:
-                exc.wrap(QuotePara("While executing SQL", statement))
+                exc.wrap("While executing SQL", statement)
                 if parameters:
                     parameters = parameters[0]
-                    exc.wrap(QuotePara("With parameters",
-                                       repr(list(parameters))))
+                    exc.wrap("With parameters", repr(list(parameters)))
                 raise
         else:
             with self.guard:
@@ -197,13 +195,13 @@ class CursorProxy(object):
                 with self.guard:
                     return self.cursor.executemany(statement, parameters_set)
             except Error, exc:
-                exc.wrap(QuotePara("While executing SQL", statement))
+                exc.wrap("While executing SQL", statement)
                 if not parameters_set:
                     exc.wrap("With no parameters")
                 else:
-                    exc.wrap(QuotePara("With a set of parameters",
-                                       "\n".join(repr(list(group))
-                                                 for group in parameters_set)))
+                    exc.wrap("With a set of parameters",
+                             "\n".join(repr(list(group))
+                                       for group in parameters_set))
                 raise
         else:
             with self.guard:

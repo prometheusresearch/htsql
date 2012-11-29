@@ -17,7 +17,7 @@ from ..domain import (Domain, BooleanDomain, IntegerDomain, DecimalDomain,
         FloatDomain, UntypedDomain, EntityDomain, RecordDomain, ListDomain,
         IdentityDomain, VoidDomain)
 from ..classify import normalize
-from ..error import Error, QuotePara, translate_guard, choices_guard, point
+from ..error import Error, translate_guard, choices_guard, point
 from ..syn.syntax import (Syntax, CollectSyntax, SelectSyntax, ApplySyntax,
         FunctionSyntax, PipeSyntax, OperatorSyntax, PrefixSyntax,
         ProjectSyntax, FilterSyntax, LinkSyntax, DetachSyntax, AssignSyntax,
@@ -795,8 +795,7 @@ class BindReference(Bind):
             choices = [u"$"+name for name in sorted(names)
                                  if similar(model, name)]
             with choices_guard(choices):
-                raise Error(QuotePara("Found unknown reference",
-                                      str(self.syntax)))
+                raise Error("Found unknown reference", self.syntax)
         return self.state.use(recipe, self.syntax)
 
 
@@ -1045,19 +1044,18 @@ class BindByName(Protocol):
             scope_name = scope_name.encode('utf-8')
         with choices_guard(choices):
             if isinstance(self.syntax, (FunctionSyntax, PipeSyntax)):
-                raise Error(QuotePara("Found unknown function",
-                                      str(self.syntax.identifier)))
+                raise Error("Found unknown function",
+                            self.syntax.identifier)
             if isinstance(self.syntax, OperatorSyntax):
-                raise Error(QuotePara("Found unknown operator",
-                                      self.syntax.symbol.encode('utf-8')))
+                raise Error("Found unknown operator",
+                            self.syntax.symbol)
             if isinstance(self.syntax, PrefixSyntax):
-                raise Error(QuotePara("Found unknown unary operator",
-                                      self.syntax.symbol.encode('utf-8')))
+                raise Error("Found unknown unary operator",
+                            self.syntax.symbol)
             if isinstance(self.syntax, IdentifierSyntax):
-                raise Error(QuotePara("Found unknown attribute",
-                                      "%s.%s" % (scope_name, self.syntax)
-                                      if scope_name is not None
-                                      else str(self.syntax)))
+                raise Error("Found unknown attribute",
+                            "%s.%s" % (scope_name, self.syntax)
+                            if scope_name is not None else str(self.syntax))
 
 
 class BindByRecipe(Adapter):
@@ -1208,8 +1206,7 @@ class BindBySubstitution(BindByRecipe):
                 arity = len(self.recipe.parameters)
             recipe = lookup_attribute(self.recipe.base, self.syntax.name)
             if recipe is None:
-                raise Error(QuotePara("Found unknown attribute",
-                                      str(self.syntax)))
+                raise Error("Found unknown attribute", self.syntax)
             binding = self.state.use(recipe, self.syntax)
             # Check if the term is a reference.
             if is_reference:
@@ -1307,7 +1304,7 @@ class BindByAmbiguous(BindByRecipe):
             choices = [str(alternative)
                        for alternative in self.recipe.alternatives]
         with choices_guard(choices):
-            raise Error(QuotePara("Found ambiguous name", str(syntax)))
+            raise Error("Found ambiguous name", syntax)
 
 
 def bind(syntax, state=None, scope=None, environment=None):
