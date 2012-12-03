@@ -264,6 +264,85 @@ tests:
   - uri: /empty
     expect: 400
 
+  # CSV files for testing caching (first batch)
+  - write: build/regress/volatile.csv
+    data: |
+        source
+        volatile
+  - write: build/regress/permanent.csv
+    data: |
+        source
+        permanent
+  - write: build/regress/hidden.csv
+    data: |
+        source
+        hidden
+
+  # Initialize the application with a cache
+  - db: null
+    extensions:
+      htsql:
+        debug: true
+      tweak.filedb:
+        sources:
+        - file: build/regress/volatile.csv
+        - file: build/regress/permanent.csv
+        - file: build/regress/hidden.csv
+        cache-file: build/regress/filedb.sqlite
+
+  # Available tables
+  - uri: /volatile
+  - uri: /permanent
+  - uri: /hidden
+  - uri: /_source
+    expect: 400
+
+  # Update some CSV files and add another one
+  - write: build/regress/volatile.csv
+    data: |
+        source
+        volatile/updated
+  - write: build/regress/new.csv
+    data: |
+        source
+        new
+
+  # Make an application with updated files
+  - db: null
+    extensions:
+      htsql:
+        debug: true
+      tweak.filedb:
+        sources:
+        - file: build/regress/permanent.csv
+        - file: build/regress/volatile.csv
+        - file: build/regress/new.csv
+        cache-file: build/regress/filedb.sqlite
+
+  # Available tables
+  - uri: /permanent
+  - uri: /volatile
+  - uri: /hidden
+    expect: 400
+  - uri: /new
+
+  # Make an applicate with the cache file directly
+  - db:
+      engine: sqlite
+      database: build/regress/filedb.sqlite
+    extensions:
+      htsql:
+        debug: true
+
+  # Cache content
+  - uri: /permanent
+  - uri: /volatile
+  - uri: /hidden
+  - uri: /new
+  - uri: /_source
+    ignore: true
+  - uri: /{_source[permanent].timestamp<_source[volatile].timestamp}
+
   # Cleanup
   - remove:
     - build/regress/table.csv
@@ -271,8 +350,13 @@ tests:
     - build/regress/irregular-fields.csv
     - build/regress/nothing.csv
     - build/regress/duplicate-table-name.csv
-    - build/regress/Duplicate_Table_name.csv
+    - build/regress/Duplicate_Table_Name.csv
     - build/regress/empty.csv
+    - build/regress/permanent.csv
+    - build/regress/volatile.csv
+    - build/regress/hidden.csv
+    - build/regress/new.csv
+    - build/regress/filedb.sqlite
 
 # TWEAK.GATEWAY - define gateways to other databases
 - title: tweak.gateway

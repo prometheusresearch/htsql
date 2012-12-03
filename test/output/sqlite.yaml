@@ -34148,8 +34148,12 @@ tests:
 
             `file`: the path to the CSV file.
 
+            Optional parameter `cache-file` allows you to specify a persistent
+            storage for the database.
+
             Parameters:
               sources=SOURCES          : source CSV files
+              cache-file=CACHE-FILE    : persistent storage
 
           exit: 0
         - uri: /table{id:integer,text,date:date}
@@ -34259,6 +34263,241 @@ tests:
             While translating:
                 /empty
                  ^^^^^
+        - uri: /volatile
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | volatile |
+             +----------+
+             | source   |
+            -+----------+-
+             | volatile |
+
+             ----
+             /volatile
+             SELECT "volatile"."source"
+             FROM "volatile"
+             ORDER BY 1 ASC
+        - uri: /permanent
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | permanent |
+             +-----------+
+             | source    |
+            -+-----------+-
+             | permanent |
+
+             ----
+             /permanent
+             SELECT "permanent"."source"
+             FROM "permanent"
+             ORDER BY 1 ASC
+        - uri: /hidden
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | hidden |
+             +--------+
+             | source |
+            -+--------+-
+             | hidden |
+
+             ----
+             /hidden
+             SELECT "hidden"."source"
+             FROM "hidden"
+             ORDER BY 1 ASC
+        - uri: /_source
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            Found unknown attribute:
+                _source
+            While translating:
+                /_source
+                 ^^^^^^^
+        - uri: /permanent
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | permanent |
+             +-----------+
+             | source    |
+            -+-----------+-
+             | permanent |
+
+             ----
+             /permanent
+             SELECT "permanent"."source"
+             FROM "permanent"
+             ORDER BY 1 ASC
+        - uri: /volatile
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | volatile         |
+             +------------------+
+             | source           |
+            -+------------------+-
+             | volatile/updated |
+
+             ----
+             /volatile
+             SELECT "volatile"."source"
+             FROM "volatile"
+             ORDER BY 1 ASC
+        - uri: /hidden
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            Found unknown attribute:
+                hidden
+            While translating:
+                /hidden
+                 ^^^^^^
+        - uri: /new
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | new    |
+             +--------+
+             | source |
+            -+--------+-
+             | new    |
+
+             ----
+             /new
+             SELECT "new"."source"
+             FROM "new"
+             ORDER BY 1 ASC
+        - uri: /permanent
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | permanent |
+             +-----------+
+             | source    |
+            -+-----------+-
+             | permanent |
+
+             ----
+             /permanent
+             SELECT "permanent"."source"
+             FROM "permanent"
+             ORDER BY 1 ASC
+        - uri: /volatile
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | volatile         |
+             +------------------+
+             | source           |
+            -+------------------+-
+             | volatile/updated |
+
+             ----
+             /volatile
+             SELECT "volatile"."source"
+             FROM "volatile"
+             ORDER BY 1 ASC
+        - uri: /hidden
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | hidden |
+             +--------+
+             | source |
+            -+--------+-
+             | hidden |
+
+             ----
+             /hidden
+             SELECT "hidden"."source"
+             FROM "hidden"
+             ORDER BY 1 ASC
+        - uri: /new
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | new    |
+             +--------+
+             | source |
+            -+--------+-
+             | new    |
+
+             ----
+             /new
+             SELECT "new"."source"
+             FROM "new"
+             ORDER BY 1 ASC
+        - uri: /_source
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | _source                                                        |
+             +-----------+-----------------------------+------+---------------+
+             | name      | file                        | size | timestamp     |
+            -+-----------+-----------------------------+------+---------------+-
+             | hidden    | build/regress/hidden.csv    |   14 | 1354577059.14 |
+             | new       | build/regress/new.csv       |   11 | 1354577059.93 |
+             | permanent | build/regress/permanent.csv |   17 | 1354577059.14 |
+             | volatile  | build/regress/volatile.csv  |   24 | 1354577059.93 |
+
+             ----
+             /_source
+             SELECT "!source"."name",
+                    "!source"."file",
+                    "!source"."size",
+                    "!source"."timestamp"
+             FROM "!source"
+             ORDER BY 1 ASC
+        - uri: /{_source[permanent].timestamp<_source[volatile].timestamp}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | _source[permanent].timestamp<_source[volatile].timestamp |
+            -+----------------------------------------------------------+-
+             | true                                                     |
+
+             ----
+             /{_source[permanent].timestamp<_source[volatile].timestamp}
+             SELECT ("!source_1"."timestamp" < "!source_2"."timestamp")
+             FROM (SELECT 1 AS "/") AS "!"
+                  LEFT OUTER JOIN (SELECT "!source"."timestamp"
+                                   FROM "!source"
+                                   WHERE ("!source"."name" = 'permanent')) AS "!source_1"
+                                  ON 1
+                  LEFT OUTER JOIN (SELECT "!source"."timestamp"
+                                   FROM "!source"
+                                   WHERE ("!source"."name" = 'volatile')) AS "!source_2"
+                                  ON 1
       - id: tweak.meta
         tests:
         - ctl: [ext, tweak.meta]

@@ -3,7 +3,7 @@
 #
 
 
-from . import connect
+from . import connect, introspect
 from ...core.addon import Addon, Parameter
 from ...core.util import DB
 from ...core.validator import StrVal, SeqVal, RecordVal
@@ -24,6 +24,9 @@ class TweakFileDBAddon(Addon):
     files; each entry has the following fields:
 
     `file`: the path to the CSV file.
+
+    Optional parameter `cache-file` allows you to specify a persistent
+    storage for the database.
     """
 
     prerequisites = []
@@ -33,6 +36,8 @@ class TweakFileDBAddon(Addon):
                 ("file", StrVal())])),
                 default=[],
                 hint="""source CSV files"""),
+            Parameter('cache_file', StrVal(),
+                hint="""persistent storage"""),
     ]
 
     @classmethod

@@ -5,7 +5,7 @@
 from ...core.context import context
 from ...core.util import to_name
 from ...core.cache import once
-from ...core.connect import Connect
+from ...core.connect import Connect, DBErrorGuard
 from ...core.adapter import rank, Utility
 from ...core.error import Error
 import sqlite3
@@ -28,32 +28,65 @@ class BuildFileDB(Utility):
         self.connection = connection
 
     def __call__(self):
-        sources = context.app.tweak.filedb.sources
         cursor = self.connection.cursor()
-        table_names = set()
-        for source_idx, source in enumerate(sources):
-            cursor = self.connection.cursor()
-            if not os.path.exists(source.file):
-                raise Error("File does not exist: %s" % source.file)
+        source_meta = {}
+        cursor.execute("""
+            SELECT 1
+            FROM sqlite_master
+            WHERE name = '!source'
+        """)
+        if cursor.fetchone() is None:
+            cursor.execute("""
+                CREATE TABLE "!source" (
+                    name        TEXT PRIMARY KEY NOT NULL,
+                    file        TEXT UNIQUE NOT NULL,
+                    size        INTEGER NOT NULL,
+                    timestamp   FLOAT NOT NULL
+                )
+            """)
+        else:
+            cursor.execute("""
+                SELECT name, file, size, timestamp
+                FROM "!source"
+                ORDER BY name
+            """)
+            for name, file, size, timestamp in cursor.fetchall():
+                source_meta[name] = (file, size, timestamp)
+        for table_name, source_file in build_names():
+            if not os.path.exists(source_file):
+                raise Error("File does not exist", source_file)
+            stat = os.stat(source_file)
+            meta = (source_file, stat.st_size, stat.st_mtime)
+            if table_name in source_meta:
+                if meta == source_meta[table_name]:
+                    continue
+                else:
+                    cursor.execute("""
+                        UPDATE "!source"
+                        SET file = ?,
+                            size = ?,
+                            timestamp = ?
+                        WHERE name = ?
+                    """, meta+(table_name,))
+                    cursor.execute("""
+                        DROP TABLE "%s"
+                    """ % table_name)
+            else:
+                cursor.execute("""
+                    INSERT INTO "!source" (name, file, size, timestamp)
+                    VALUES (?, ?, ?, ?)
+                """, (table_name,)+meta)
             try:
-                stream = open(source.file)
+                stream = open(source_file)
             except IOError, exc:
-                raise Error("failed to open file: %s" % source.file)
-            table_name = os.path.splitext(os.path.basename(source.file))[0]
-            table_name = table_name.decode('utf-8', 'replace')
-            if table_name:
-                table_name = to_name(table_name)
-            if (not table_name or table_name in table_names or
-                    re.match(r"^_\d+$", table_name)):
-                table_name = "_%s" % (source_idx+1)
-            table_names.add(table_name)
+                raise Error("Failed to open file", source_file)
             reader = csv.reader(stream)
             try:
                 columns_row = next(reader)
             except StopIteration:
-                return
+                continue
             if not columns_row:
-                return
+                continue
             column_names = []
             for idx, name in enumerate(columns_row):
                 name = name.decode('utf-8', 'replace')
@@ -93,10 +126,32 @@ class BuildFileDB(Utility):
 
 
 @once
+def build_names():
+    sources = context.app.tweak.filedb.sources
+    names = []
+    table_names = set()
+    for source_idx, source in enumerate(sources):
+        table_name = os.path.splitext(os.path.basename(source.file))[0]
+        table_name = table_name.decode('utf-8', 'replace')
+        table_name = to_name(table_name)
+        if (table_name in table_names or
+                re.match(r"^sqlite_", table_name) or
+                re.match(r"^_\d+$", table_name)):
+            table_name = "_%s" % (source_idx+1)
+        table_names.add(table_name)
+        names.append((table_name, source.file))
+    return names
+
+
+@once
 def build_filedb():
-    connection = sqlite3.connect(':memory:', check_same_thread=False)
-    BuildFileDB.__invoke__(connection)
-    connection.commit()
+    cache_file = context.app.tweak.filedb.cache_file
+    if cache_file is None:
+        cache_file = ':memory:'
+    with DBErrorGuard():
+        connection = sqlite3.connect(cache_file, check_same_thread=False)
+        BuildFileDB.__invoke__(connection)
+        connection.commit()
     return connection
 
 

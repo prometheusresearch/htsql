@@ -83,9 +83,7 @@ def emit(format, headers):
     if isinstance(format, (str, unicode)):
         format = Accept.__invoke__(format)
         assert not isinstance(format, DefaultFormat), "unknown format"
-    for line in Emit.__invoke__(format, headers):
-        if isinstance(line, unicode):
-            line = line.encode('utf-8')
-        yield line
+    return (line.encode('utf-8') if isinstance(line, unicode) else line
+            for line in Emit.__invoke__(format, headers))
 
 
