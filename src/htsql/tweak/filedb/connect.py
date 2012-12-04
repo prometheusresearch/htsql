@@ -77,7 +77,7 @@ class BuildFileDB(Utility):
                     VALUES (?, ?, ?, ?)
                 """, (table_name,)+meta)
             try:
-                stream = open(source_file)
+                stream = open(source_file, mode="rU")
             except IOError, exc:
                 raise Error("Failed to open file", source_file)
             reader = csv.reader(stream)
