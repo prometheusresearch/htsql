@@ -29,7 +29,7 @@ class IntrospectSQLite(Introspect):
         cursor.execute("""
             SELECT *
             FROM sqlite_master
-            WHERE type = 'table'
+            WHERE type = 'table' OR type = 'view'
             ORDER BY name
         """)
         for row in cursor.fetchnamed():
