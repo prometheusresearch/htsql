@@ -19,16 +19,16 @@ from ..domain import (Domain, UntypedDomain, EntityDomain, RecordDomain,
 from ..error import Error, translate_guard
 from .coerce import coerce
 from .binding import (Binding, QueryBinding, SegmentBinding,
-        WeakSegmentBinding, WrappingBinding, SelectionBinding, HomeBinding,
-        RootBinding, FreeTableBinding, AttachedTableBinding, ColumnBinding,
+        WeakSegmentBinding, WrappingBinding, DecorateBinding, SelectionBinding,
+        HomeBinding, RootBinding, TableBinding, ChainBinding, ColumnBinding,
         QuotientBinding, KernelBinding, ComplementBinding, IdentityBinding,
-        LocatorBinding, CoverBinding, ForkBinding, LinkBinding, ClipBinding,
+        LocateBinding, CoverBinding, ForkBinding, AttachBinding, ClipBinding,
         SieveBinding, SortBinding, CastBinding, RescopingBinding,
         LiteralBinding, FormulaBinding)
 from .lookup import direct
 from .flow import (RootFlow, ScalarFlow, DirectTableFlow, FiberTableFlow,
         QuotientFlow, ComplementFlow, MonikerFlow, LocatorFlow, ForkedFlow,
-        LinkedFlow, ClippedFlow, FilteredFlow, OrderedFlow, QueryExpr,
+        AttachFlow, ClippedFlow, FilteredFlow, OrderedFlow, QueryExpr,
         SegmentCode, LiteralCode, FormulaCode, CastCode, RecordCode,
         AnnihilatorCode, IdentityCode, ColumnUnit, ScalarUnit, KernelUnit)
 from .signature import Signature, IsNullSig, NullIfSig, IsEqualSig, AndSig
@@ -268,9 +268,9 @@ class RelateHome(Relate):
         return ScalarFlow(base, self.binding)
 
 
-class RelateFreeTable(Relate):
+class RelateTable(Relate):
 
-    adapt(FreeTableBinding)
+    adapt(TableBinding)
 
     def __call__(self):
         # Generate the parent flow.
@@ -279,15 +279,17 @@ class RelateFreeTable(Relate):
         return DirectTableFlow(base, self.binding.table, self.binding)
 
 
-class RelateAttachedTable(Relate):
+class RelateChain(Relate):
 
-    adapt(AttachedTableBinding)
+    adapt(ChainBinding)
 
     def __call__(self):
         # Generate the parent flow.
-        base = self.state.relate(self.binding.base)
+        flow = self.state.relate(self.binding.base)
         # Produce a link between table classes.
-        return FiberTableFlow(base, self.binding.join, self.binding)
+        for join in self.binding.joins:
+            flow = FiberTableFlow(flow, join, self.binding)
+        return flow
 
 
 class RelateSieve(Relate):
@@ -400,9 +402,9 @@ class RelateFork(Relate):
         return ForkedFlow(base, seed, kernels, self.binding)
 
 
-class RelateLink(Relate):
+class RelateAttach(Relate):
 
-    adapt(LinkBinding)
+    adapt(AttachBinding)
 
     def __call__(self):
         # Generate the parent and the seed flows.
@@ -422,7 +424,10 @@ class RelateLink(Relate):
         #    if not all(seed.spans(unit.flow) for unit in rcode.units):
         #        raise Error("a singular expression is expected",
         #                    rcode.mark)
-        return LinkedFlow(base, seed, images, self.binding)
+        filter = None
+        if self.binding.condition is not None:
+            filter = self.state.encode(self.binding.condition)
+        return AttachFlow(base, seed, images, filter, self.binding)
 
 
 class RelateClip(Relate):
@@ -441,31 +446,17 @@ class RelateClip(Relate):
 
 class RelateLocator(Relate):
 
-    adapt(LocatorBinding)
+    adapt(LocateBinding)
 
     def __call__(self):
         base = self.state.relate(self.binding.base)
         seed = self.state.relate(self.binding.seed)
-        def convert(identity, items):
-            filters = []
-            for element, item in zip(identity.elements, items):
-                if isinstance(element, IdentityBinding):
-                    filter = convert(element, item)
-                else:
-                    element = self.state.encode(element)
-                    item = self.state.encode(item)
-                    filter = FormulaCode(IsEqualSig(+1),
-                                         coerce(BooleanDomain()),
-                                         self.binding,
-                                         lop=element, rop=item)
-                filters.append(filter)
-            if len(filters) == 1:
-                return filters[0]
-            else:
-                return FormulaCode(AndSig(), coerce(BooleanDomain()),
-                                   self.binding, ops=filters)
-        filter = convert(self.binding.identity, self.binding.value)
-        return LocatorFlow(base, seed, filter, self.binding)
+        images = [(self.state.encode(lop), self.state.encode(rop))
+                  for lop, rop in self.binding.images]
+        filter = None
+        if self.binding.condition is not None:
+            filter = self.state.encode(self.binding.condition)
+        return LocatorFlow(base, seed, images, filter, self.binding)
 
 
 class EncodeColumn(Encode):
@@ -997,7 +988,8 @@ class EncodeIdentity(Encode):
 
 class EncodeWrapping(Encode):
 
-    adapt(WrappingBinding)
+    adapt_many(WrappingBinding,
+               DecorateBinding)
 
     def __call__(self):
         # Delegate the adapter to the wrapped binding.
@@ -1009,7 +1001,8 @@ class RelateWrapping(Relate):
     Translates a wrapper binding to a flow node.
     """
 
-    adapt(WrappingBinding)
+    adapt_many(WrappingBinding,
+               DecorateBinding)
 
     def __call__(self):
         # Delegate the adapter to the wrapped binding.

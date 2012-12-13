@@ -17,11 +17,11 @@ from ..error import Error, translate_guard
 from .coerce import coerce
 from .flow import (Expression, QueryExpr, SegmentCode, Flow, RootFlow,
         FiberTableFlow, QuotientFlow, ComplementFlow, MonikerFlow, ForkedFlow,
-        LinkedFlow, ClippedFlow, LocatorFlow, FilteredFlow, OrderedFlow, Code,
+        AttachFlow, ClippedFlow, LocatorFlow, FilteredFlow, OrderedFlow, Code,
         LiteralCode, CastCode, RecordCode, IdentityCode, AnnihilatorCode,
         FormulaCode, Unit, ColumnUnit, CompoundUnit, ScalarUnit,
         AggregateUnitBase, AggregateUnit, KernelUnit, CoveringUnit)
-from .signature import Signature, OrSig, AndSig
+from .signature import Signature, OrSig, AndSig, IsEqualSig, isformula
 # FIXME: move `IfSig` and `SwitchSig` to `htsql.core.tr.signature`.
 from .fn.signature import IfSig
 
@@ -822,49 +822,6 @@ class ReplaceMoniker(Replace):
         return self.flow.clone(base=base, seed=seed)
 
 
-class RewriteLocator(RewriteFlow):
-
-    adapt(LocatorFlow)
-
-    def __call__(self):
-        #if self.flow.base.dominates(self.flow.seed):
-        #    flow = FilteredFlow(self.flow.seed, self.flow.filter,
-        #                        self.flow.binding)
-        #    return self.state.rewrite(flow)
-        base = self.state.rewrite(self.flow.base)
-        seed = self.state.rewrite(self.flow.seed)
-        filter = self.state.rewrite(self.flow.filter)
-        return self.flow.clone(base=base, seed=seed, filter=filter)
-
-
-class UnmaskLocator(UnmaskFlow):
-
-    adapt(LocatorFlow)
-
-    def __call__(self):
-        # Unmask the seed flow against the parent flow.
-        seed = self.state.unmask(self.flow.seed, mask=self.flow.base)
-        # Unmask the parent flow against the current mask.
-        base = self.state.unmask(self.flow.base)
-        filter = self.state.unmask(self.flow.filter, mask=self.flow.seed)
-        return self.flow.clone(base=base, seed=seed, filter=filter)
-
-
-class ReplaceLocator(Replace):
-
-    adapt(LocatorFlow)
-
-    def __call__(self):
-        base = self.state.replace(self.flow.base)
-        substate = self.state.spawn()
-        substate.collect(self.flow.seed)
-        substate.collect(self.flow.filter)
-        substate.recombine()
-        seed = substate.replace(self.flow.seed)
-        filter = substate.replace(self.flow.filter)
-        return self.flow.clone(base=base, seed=seed, filter=filter)
-
-
 class RewriteForked(RewriteFlow):
 
     adapt(ForkedFlow)
@@ -927,9 +884,9 @@ class ReplaceForked(Replace):
         return self.flow.clone(base=base, seed=seed, kernels=kernels)
 
 
-class RewriteLinked(RewriteFlow):
+class RewriteAttach(RewriteFlow):
 
-    adapt(LinkedFlow)
+    adapt(AttachFlow)
 
     def __call__(self):
         # Rewrite the child nodes.
@@ -937,12 +894,60 @@ class RewriteLinked(RewriteFlow):
         seed = self.state.rewrite(self.flow.seed)
         images = [(self.state.rewrite(lcode), self.state.rewrite(rcode))
                   for lcode, rcode in self.flow.images]
-        return self.flow.clone(base=base, seed=seed, images=images)
+        filter = self.flow.filter
+        if filter is not None:
+            filter = self.state.rewrite(filter)
+            if (isinstance(filter, LiteralCode) and
+                isinstance(filter.domain, BooleanDomain) and
+                filter.value is True):
+                filter = None
+        predicates = []
+        all_images = images
+        images = []
+        for lcode, rcode in all_images:
+            if not lcode.units:
+                code = FormulaCode(IsEqualSig(+1), BooleanDomain(),
+                                   self.flow.binding, lop=rcode, rop=lcode)
+                predicates.append(code)
+            else:
+                images.append((lcode, rcode))
+        if filter is not None:
+            if isformula(filter, AndSig):
+                ops = filter.ops
+            else:
+                ops = [filter]
+            for op in ops:
+                if (isformula(op, IsEqualSig) and
+                        op.signature.polarity == +1):
+                    if (op.lop.units and
+                            all(self.flow.base.spans(unit.flow)
+                                for unit in op.lop.units) and
+                            any(not self.flow.base.spans(unit.flow)
+                                for unit in op.rop.units)):
+                        images.append((op.lop, op.rop))
+                        continue
+                    if (op.rop.units and
+                            all(self.flow.base.spans(unit.flow)
+                                for unit in op.rop.units) and
+                            any(not self.flow.base.spans(unit.flow)
+                                for unit in op.lop.units)):
+                        images.append((op.rop, op.lop))
+                        continue
+                predicates.append(op)
+        if len(predicates) == 0:
+            filter = None
+        elif len(predicates) == 1:
+            [filter] = predicates
+        else:
+            filter = FormulaCode(AndSig(), BooleanDomain(),
+                                 self.flow.binding, ops=predicates)
+        return self.flow.clone(base=base, seed=seed, images=images,
+                               filter=filter)
 
 
-class UnmaskLinked(UnmaskFlow):
+class UnmaskAttach(UnmaskFlow):
 
-    adapt(LinkedFlow)
+    adapt(AttachFlow)
 
     def __call__(self):
         # Unmask the parent flow.
@@ -954,12 +959,16 @@ class UnmaskLinked(UnmaskFlow):
         images = [(self.state.unmask(lcode, mask=self.flow.base),
                    self.state.unmask(rcode, mask=self.flow.seed))
                   for lcode, rcode in self.flow.images]
-        return self.flow.clone(base=base, seed=seed, images=images)
+        filter = None
+        if self.flow.filter is not None:
+            filter = self.state.unmask(self.flow.filter, mask=self.flow.seed)
+        return self.flow.clone(base=base, seed=seed, images=images,
+                               filter=filter)
 
 
-class CollectLinked(Collect):
+class CollectAttach(Collect):
 
-    adapt(LinkedFlow)
+    adapt(AttachFlow)
 
     def __call__(self):
         # Gather units in the parent flow and the parent images.
@@ -968,9 +977,9 @@ class CollectLinked(Collect):
             self.state.collect(lcode)
 
 
-class ReplaceLinked(Replace):
+class ReplaceAttach(Replace):
 
-    adapt(LinkedFlow)
+    adapt(AttachFlow)
 
     def __call__(self):
         # Replace the parent flow and parental images.

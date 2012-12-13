@@ -21916,12 +21916,8 @@ tests:
                SELECT [school].[code],
                       [school].[name],
                       [school].[campus]
-               FROM (SELECT 1 AS [/]) AS [!]
-                    INNER JOIN (SELECT [school].[code],
-                                       [school].[name],
-                                       [school].[campus]
-                                FROM [ad].[school]) AS [school]
-                               ON ('art' = [school].[code])
+               FROM [ad].[school]
+               WHERE ([school].[code] = 'art')
                ORDER BY 1 ASC
           - uri: /course{department.code,no,credits}?credits=max(fork().credits)
             status: 200 OK

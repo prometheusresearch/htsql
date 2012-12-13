@@ -9,10 +9,10 @@ from .token import (DIRSIG, PIPESIG, LHSSIG, STRING, LABEL, INTEGER, DECIMAL,
 from .syntax import (Syntax, SkipSyntax, AssignSyntax, SpecifySyntax,
         FunctionSyntax, PipeSyntax, OperatorSyntax, PrefixSyntax, FilterSyntax,
         ProjectSyntax, LinkSyntax, AttachSyntax, DetachSyntax, CollectSyntax,
-        DirectSyntax, ComposeSyntax, UnpackSyntax, ComplementSyntax,
-        GroupSyntax, SelectSyntax, LocateSyntax, RecordSyntax, ListSyntax,
-        IdentitySyntax, ReferenceSyntax, IdentifierSyntax, StringSyntax,
-        LabelSyntax, IntegerSyntax, DecimalSyntax, FloatSyntax)
+        DirectSyntax, ComposeSyntax, UnpackSyntax, LiftSyntax, GroupSyntax,
+        SelectSyntax, LocateSyntax, RecordSyntax, ListSyntax, IdentitySyntax,
+        ReferenceSyntax, IdentifierSyntax, StringSyntax, LabelSyntax,
+        IntegerSyntax, DecimalSyntax, FloatSyntax)
 from .grammar import SyntaxGrammar
 from .scan import scan
 
@@ -387,7 +387,7 @@ def prepare_parse():
     # Atomic expressions.
     atom = grammar.add_rule('''
         atom:   collection  | detachment    | unpacking     |
-                reference   | function      | complement    |
+                reference   | function      | lift          |
                 record      | list          | identity      | literal
     ''')
 
@@ -495,16 +495,15 @@ def prepare_parse():
         stream.mark(syntax)
         yield syntax
 
-    # Complement indicator (`^`).
-    complement = grammar.add_rule('''
-        complement:
-                `^`
+    # Lift indicator (`^`).
+    lift = grammar.add_rule('''
+        lift:   `^`
     ''')
 
-    @complement.set_match
-    def match_complement(stream):
+    @lift.set_match
+    def match_lift(stream):
         stream.pull()               # `^`
-        syntax = ComplementSyntax()
+        syntax = LiftSyntax()
         stream.mark(syntax)
         yield syntax
 

@@ -494,9 +494,9 @@ class UnpackSyntax(Syntax):
         return u"".join(chunks)
 
 
-class ComplementSyntax(Syntax):
+class LiftSyntax(Syntax):
     """
-    The complement symbol.
+    The lift symbol.
 
     ::
 

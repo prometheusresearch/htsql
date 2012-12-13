@@ -20,25 +20,27 @@ from ..classify import normalize
 from ..error import Error, translate_guard, choices_guard, point
 from ..syn.syntax import (Syntax, CollectSyntax, SelectSyntax, ApplySyntax,
         FunctionSyntax, PipeSyntax, OperatorSyntax, PrefixSyntax,
-        ProjectSyntax, FilterSyntax, LinkSyntax, DetachSyntax, AssignSyntax,
-        ComposeSyntax, LocateSyntax, IdentitySyntax, GroupSyntax,
-        IdentifierSyntax, UnpackSyntax, ReferenceSyntax, ComplementSyntax,
+        ProjectSyntax, FilterSyntax, LinkSyntax, DetachSyntax, AttachSyntax,
+        AssignSyntax, ComposeSyntax, LocateSyntax, IdentitySyntax, GroupSyntax,
+        IdentifierSyntax, UnpackSyntax, ReferenceSyntax, LiftSyntax,
         StringSyntax, LabelSyntax, NumberSyntax, RecordSyntax, DirectSyntax)
 from .binding import (Binding, WrappingBinding, QueryBinding, SegmentBinding,
-        WeakSegmentBinding, RootBinding, HomeBinding, FreeTableBinding,
-        AttachedTableBinding, ColumnBinding, QuotientBinding, KernelBinding,
-        ComplementBinding, LinkBinding, LocatorBinding, SieveBinding,
+        WeakSegmentBinding, RootBinding, HomeBinding, TableBinding,
+        ChainBinding, ColumnBinding, QuotientBinding, KernelBinding,
+        ComplementBinding, LocateBinding, SieveBinding, AttachBinding,
         SortBinding, CastBinding, IdentityBinding, ImplicitCastBinding,
-        RescopingBinding, AssignmentBinding, DefinitionBinding,
-        SelectionBinding, WildSelectionBinding, DirectionBinding, TitleBinding,
-        RerouteBinding, ReferenceRerouteBinding, AliasBinding, LiteralBinding,
+        RescopingBinding, AssignmentBinding, DefineBinding,
+        DefineReferenceBinding, DefineLiftBinding, SelectionBinding,
+        WildSelectionBinding, DirectionBinding, TitleBinding, RerouteBinding,
+        ReferenceRerouteBinding, AliasBinding, LiteralBinding, FormulaBinding,
         VoidBinding, Recipe, LiteralRecipe, SelectionRecipe, FreeTableRecipe,
         AttachedTableRecipe, ColumnRecipe, KernelRecipe, ComplementRecipe,
         IdentityRecipe, ChainRecipe, SubstitutionRecipe, BindingRecipe,
         ClosedRecipe, PinnedRecipe, AmbiguousRecipe)
 from .lookup import (lookup_attribute, lookup_reference, lookup_complement,
         lookup_attribute_set, lookup_reference_set, expand, direct, guess_tag,
-        lookup_command, identify, unwrap)
+        identify, unwrap)
+from .signature import IsEqualSig, AndSig
 from .coerce import coerce
 from .decorate import decorate
 
@@ -86,8 +88,8 @@ class BindingState(object):
         if self.environment is not None:
             for name, recipe in self.environment:
                 name = normalize(name)
-                self.scope = DefinitionBinding(self.scope, name, True, None,
-                                               recipe, self.scope.syntax)
+                self.scope = DefineReferenceBinding(self.scope, name,
+                                                    recipe, self.scope.syntax)
 
     def flush(self):
         """
@@ -289,8 +291,6 @@ class BindCollect(Bind):
                 seed = self.state.use(recipe, syntax)
         else:
             seed = self.state.scope
-        if lookup_command(seed) is not None:
-            return seed
         seed = Select.__invoke__(seed, self.state)
         domain = ListDomain(seed.domain)
         return SegmentBinding(self.state.scope, seed, domain,
@@ -405,8 +405,12 @@ class BindRecord(Bind):
                 if isinstance(syntax, AssignSyntax):
                     syntax = syntax.larm.larms[0]
                 binding = self.state.use(recipe, syntax)
-                scope = DefinitionBinding(scope, name, is_reference,
-                                          None, recipe, scope.syntax)
+                if is_reference:
+                    scope = DefineReferenceBinding(scope, name,
+                                                   recipe, scope.syntax)
+                else:
+                    scope = DefineBinding(scope, name, None,
+                                          recipe, scope.syntax)
                 self.state.pop_scope()
                 self.state.push_scope(scope)
             # Extract nested selectors, if any.
@@ -500,15 +504,14 @@ class BindProject(Bind):
         if name is not None:
             recipe = ComplementRecipe(quotient)
             recipe = ClosedRecipe(recipe)
-            binding = DefinitionBinding(binding, name, False, None, recipe,
-                                        self.syntax)
+            binding = DefineBinding(binding, name, None, recipe, self.syntax)
         for index, kernel in enumerate(kernels):
             name = guess_tag(kernel)
             if name is not None:
                 recipe = KernelRecipe(quotient, index)
                 recipe = ClosedRecipe(recipe)
-                binding = DefinitionBinding(binding, name, False, None, recipe,
-                                            self.syntax)
+                binding = DefineBinding(binding, name, None, recipe,
+                                        self.syntax)
         return binding
 
 
@@ -576,7 +579,24 @@ class BindLink(Bind):
                                                target_image.syntax)
             images.append((origin_image, target_image))
         # Generate a link scope.
-        return LinkBinding(self.state.scope, seed, images, self.syntax)
+        return AttachBinding(self.state.scope, seed, images, None, self.syntax)
+
+
+class BindAttach(Bind):
+
+    adapt(AttachSyntax)
+
+    def __call__(self):
+        home = HomeBinding(self.state.scope, self.syntax)
+        seed = self.state.bind(self.syntax.rarm, scope=home)
+        recipe = BindingRecipe(seed)
+        scope = self.state.scope
+        scope = DefineLiftBinding(scope, recipe, self.syntax)
+        name = guess_tag(seed)
+        if name is not None:
+            scope = DefineBinding(scope, name, None, recipe, self.syntax)
+        condition = self.state.bind(self.syntax.larm, scope=scope)
+        return AttachBinding(self.state.scope, seed, [], condition, self.syntax)
 
 
 class BindDetach(Bind):
@@ -657,17 +677,18 @@ class BindLocate(Bind):
             if identity.domain.width != location.width:
                 raise Error("Found ill-formed locator")
         def convert(identity, elements):
-            value = []
-            for field in identity.labels:
-                if isinstance(field, IdentityDomain):
+            assert isinstance(identity, IdentityBinding)
+            images = []
+            for field in identity.elements:
+                if isinstance(field.domain, IdentityDomain):
                     total_width = 0
                     items = []
-                    while total_width < field.width:
+                    while total_width < field.domain.width:
                         assert elements
                         element = elements.pop(0)
                         if (total_width == 0 and
                                 isinstance(element, IdentityBinding) and
-                                element.width == field.width):
+                                element.width == field.domain.width):
                             items = element.elements[:]
                             total_width = element.width
                         elif isinstance(element, IdentityBinding):
@@ -677,25 +698,24 @@ class BindLocate(Bind):
                             items.append(element)
                             total_width += 1
                     with translate_guard(self.syntax.rarm):
-                        if total_width > field.width:
+                        if total_width > field.domain.width:
                             raise Error("Found ill-formed locator")
-                    item = convert(field, items)
-                    value.append(item)
+                    images.extend(convert(field, items))
                 else:
                     assert elements
                     element = elements.pop(0)
                     with translate_guard(self.syntax.larm):
                         if isinstance(element, IdentityBinding):
                             raise Error("Found ill-formed locator")
-                    item = ImplicitCastBinding(element, field, element.syntax)
-                    value.append(item)
-            return tuple(value)
+                    item = ImplicitCastBinding(element, field.domain,
+                                               element.syntax)
+                    images.append((item, field))
+            return images
         elements = location.elements[:]
         while len(elements) == 1 and isinstance(elements[0], IdentityBinding):
             elements = elements[0].elements[:]
-        value = convert(identity.domain, elements)
-        return LocatorBinding(self.state.scope, seed, identity, value,
-                              self.syntax)
+        images = convert(identity, elements)
+        return LocateBinding(self.state.scope, seed, images, None, self.syntax)
 
 
 class BindIdentity(Bind):
@@ -799,9 +819,9 @@ class BindReference(Bind):
         return self.state.use(recipe, self.syntax)
 
 
-class BindComplement(Bind):
+class BindLift(Bind):
 
-    adapt(ComplementSyntax)
+    adapt(LiftSyntax)
 
     def __call__(self):
         # Look for a complement, complain if not found.
@@ -1126,9 +1146,9 @@ class BindByFreeTable(BindByRecipe):
 
     def __call__(self):
         # Produce a free table scope.
-        return FreeTableBinding(self.state.scope,
-                                self.recipe.table,
-                                self.syntax)
+        return TableBinding(self.state.scope,
+                            self.recipe.table,
+                            self.syntax)
 
 
 class BindByAttachedTable(BindByRecipe):
@@ -1136,11 +1156,7 @@ class BindByAttachedTable(BindByRecipe):
     adapt(AttachedTableRecipe)
 
     def __call__(self):
-        # Produce a sequence of joined tables.
-        binding = self.state.scope
-        for join in self.recipe.joins:
-            binding = AttachedTableBinding(binding, join, self.syntax)
-        return binding
+        return ChainBinding(self.state.scope, self.recipe.joins, self.syntax)
 
 
 class BindByColumn(BindByRecipe):
@@ -1221,7 +1237,11 @@ class BindBySubstitution(BindByRecipe):
                                             self.recipe.parameters,
                                             self.recipe.body)
             recipe = ClosedRecipe(recipe)
-            binding = DefinitionBinding(binding, name, is_reference, arity,
+            if is_reference:
+                binding = DefineReferenceBinding(binding, name,
+                                                 recipe, self.syntax)
+            else:
+                binding = DefineBinding(binding, name, arity,
                                         recipe, self.syntax)
             return binding
 
@@ -1239,7 +1259,11 @@ class BindBySubstitution(BindByRecipe):
                 binding = self.state.bind(syntax)
                 recipe = BindingRecipe(binding)
                 recipe = ClosedRecipe(recipe)
-                scope = DefinitionBinding(scope, name, is_reference, None,
+                if is_reference:
+                    scope = DefineReferenceBinding(scope, name,
+                                                   recipe, scope.syntax)
+                else:
+                    scope = DefineBinding(scope, name, None,
                                           recipe, scope.syntax)
         # Bind the syntax node associated with the recipe.
         binding = self.state.bind(self.recipe.body, scope=scope)

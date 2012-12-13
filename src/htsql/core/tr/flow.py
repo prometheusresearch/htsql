@@ -1118,7 +1118,7 @@ class ForkedFlow(Flow):
                 % (self.base, ", ".join(str(code) for code in self.kernels))
 
 
-class LinkedFlow(Flow):
+class AttachFlow(Flow):
     """
     Represents a linking operation.
 
@@ -1148,22 +1148,20 @@ class LinkedFlow(Flow):
 
     is_axis = True
 
-    def __init__(self, base, seed, images, binding, companions=[]):
+    def __init__(self, base, seed, images, filter, binding, companions=[]):
         assert isinstance(base, Flow)
         assert isinstance(seed, Flow)
         assert seed.spans(base)
         assert not base.spans(seed)
         assert isinstance(images, listof(tupleof(Code, Code)))
-        # FIXME: the constraint may be violated after rewriting.
-        #assert all(base.spans(unit.flow) for lop, rop in images
-        #                                 for unit in lop.units)
-        #assert all(seed.spans(unit.flow) for lop, rop in images
-        #                                 for unit in rop.units)
+        assert isinstance(filter, maybe(Code))
+        if filter is not None:
+            assert isinstance(filter.domain, BooleanDomain)
         assert isinstance(companions, listof(Code))
         ground = seed
         while not base.spans(ground.base):
             ground = ground.base
-        super(LinkedFlow, self).__init__(
+        super(AttachFlow, self).__init__(
                     base=base,
                     family=seed.family,
                     is_contracting=False,
@@ -1172,10 +1170,11 @@ class LinkedFlow(Flow):
         self.seed = seed
         self.ground = ground
         self.images = images
+        self.filter = filter
         self.companions = companions
 
     def __basis__(self):
-        return (self.base, self.seed, tuple(self.images))
+        return (self.base, self.seed, tuple(self.images), self.filter)
 
     def __str__(self):
         # Display:
@@ -1232,15 +1231,17 @@ class ClippedFlow(Flow):
                    self.limit if self.limit is not None else 1)
 
 
-class LocatorFlow(Flow):
+class LocatorFlow(AttachFlow):
 
     is_axis = True
 
-    def __init__(self, base, seed, filter, binding, companions=[]):
+    def __init__(self, base, seed, images, filter, binding, companions=[]):
         assert isinstance(base, Flow)
         assert isinstance(seed, Flow)
-        assert (isinstance(filter, Code) and
-                isinstance(filter.domain, BooleanDomain))
+        assert isinstance(images, listof(tupleof(Code, Code)))
+        assert isinstance(filter, maybe(Code))
+        if filter is not None:
+            assert isinstance(filter.domain, BooleanDomain)
         assert seed.spans(base)
         # We don't need `seed` to be plural or even axial against `base`.
         #assert not base.spans(seed)
@@ -1257,19 +1258,21 @@ class LocatorFlow(Flow):
         while not axis.is_axis:
             axis = axis.base
         is_contracting = (axis.base is None or base.spans(axis.base))
-        super(LocatorFlow, self).__init__(
+        # Note: skip Attach constructor.
+        super(AttachFlow, self).__init__(
                     base=base,
                     family=seed.family,
                     is_contracting=is_contracting,
                     is_expanding=False,
                     binding=binding)
         self.seed = seed
+        self.images = images
         self.filter = filter
         self.ground = ground
         self.companions = companions
 
     def __basis__(self):
-        return (self.base, self.seed, self.filter)
+        return (self.base, self.seed, tuple(self.images), self.filter)
 
 
 class FilteredFlow(Flow):
@@ -1943,7 +1946,7 @@ class CoveringUnit(CompoundUnit):
         assert isinstance(flow, (ComplementFlow,
                                  MonikerFlow,
                                  ForkedFlow,
-                                 LinkedFlow,
+                                 AttachFlow,
                                  ClippedFlow,
                                  LocatorFlow))
         super(CoveringUnit, self).__init__(

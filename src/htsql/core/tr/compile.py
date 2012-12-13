@@ -20,7 +20,7 @@ from .signature import (IsNullSig, IsEqualSig, AndSig, CompareSig,
                         SortDirectionSig, RowNumberSig)
 from .flow import (Expression, QueryExpr, SegmentCode, Code, LiteralCode,
         FormulaCode, Flow, RootFlow, ScalarFlow, TableFlow, QuotientFlow,
-        ComplementFlow, MonikerFlow, LocatorFlow, ForkedFlow, LinkedFlow,
+        ComplementFlow, MonikerFlow, LocatorFlow, ForkedFlow, AttachFlow,
         ClippedFlow, FilteredFlow, OrderedFlow, Unit, ScalarUnit, ColumnUnit,
         AggregateUnit, CorrelatedUnit, KernelUnit, CoveringUnit,
         CorrelationCode)
@@ -1293,9 +1293,8 @@ class CompileCovering(CompileFlow):
     # The implementation is shared by these three covering flows.
     adapt_many(MonikerFlow,
                ForkedFlow,
-               LinkedFlow,
-               ClippedFlow,
-               LocatorFlow)
+               AttachFlow,
+               ClippedFlow)
 
     def __call__(self):
         # Moniker, forked and linked flows are represented as a seed term
@@ -1327,7 +1326,7 @@ class CompileCovering(CompileFlow):
         if isinstance(self.flow, ForkedFlow):
             codes += self.flow.kernels
         # For the linked flow, it must export the linking expressions.
-        if isinstance(self.flow, LinkedFlow):
+        if isinstance(self.flow, AttachFlow):
             codes += [rop for lop, rop in self.flow.images]
         # A clipped flow must order itself (but only up to the base).
         if isinstance(self.flow, ClippedFlow):
@@ -1338,13 +1337,15 @@ class CompileCovering(CompileFlow):
                     continue
                 codes.append(code)
                 order.append((code, direction))
-        if isinstance(self.flow, LocatorFlow):
+        if (isinstance(self.flow, AttachFlow) and
+                self.flow.filter is not None):
             codes.append(self.flow.filter)
         # Any companion expressions must also be included.
         codes += self.flow.companions
         seed_term = self.state.inject(seed_term, codes)
 
-        if isinstance(self.flow, LocatorFlow):
+        if (isinstance(self.flow, AttachFlow) and
+                self.flow.filter is not None):
             seed_term = FilterTerm(self.state.tag(), seed_term,
                                    self.flow.filter,
                                    seed_term.flow,

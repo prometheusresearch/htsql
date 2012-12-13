@@ -20,15 +20,15 @@ from ...syn.syntax import (NumberSyntax, IntegerSyntax, StringSyntax,
 from ..binding import (LiteralBinding, SortBinding, SieveBinding,
         FormulaBinding, CastBinding, ImplicitCastBinding, WrappingBinding,
         TitleBinding, DirectionBinding, QuotientBinding, AssignmentBinding,
-        DefinitionBinding, SelectionBinding, HomeBinding, RescopingBinding,
-        CoverBinding, ForkBinding, ClipBinding, CommandBinding, SegmentBinding,
-        QueryBinding, Binding, BindingRecipe, ComplementRecipe, KernelRecipe,
-        SubstitutionRecipe, ClosedRecipe)
+        DefineBinding, DefineReferenceBinding, SelectionBinding, HomeBinding,
+        RescopingBinding, CoverBinding, ForkBinding, ClipBinding,
+        SegmentBinding, QueryBinding, Binding, BindingRecipe, ComplementRecipe,
+        KernelRecipe, SubstitutionRecipe, ClosedRecipe)
 from ..bind import BindByName, BindingState
 from ...error import Error, translate_guard
 from ..coerce import coerce
 from ..decorate import decorate
-from ..lookup import direct, expand, identify, guess_tag, lookup_command
+from ..lookup import direct, expand, identify, guess_tag
 from ..signature import (Signature, NullarySig, UnarySig, BinarySig,
         CompareSig, IsEqualSig, IsTotallyEqualSig, IsInSig, IsNullSig,
         IfNullSig, NullIfSig, AndSig, OrSig, NotSig, SortDirectionSig)
@@ -473,15 +473,14 @@ class BindDistinct(BindMacro):
         if name is not None:
             recipe = ComplementRecipe(quotient)
             recipe = ClosedRecipe(recipe)
-            binding = DefinitionBinding(binding, name, False, None, recipe,
-                                        self.syntax)
+            binding = DefineBinding(binding, name, None, recipe, self.syntax)
         for index, kernel in enumerate(kernels):
             name = guess_tag(kernel)
             if name is not None:
                 recipe = KernelRecipe(quotient, index)
                 recipe = ClosedRecipe(recipe)
-                binding = DefinitionBinding(binding, name, False, None, recipe,
-                                            self.syntax)
+                binding = DefineBinding(binding, name, None, recipe,
+                                        self.syntax)
         return binding
 
 
@@ -620,7 +619,8 @@ class BindTop(BindMacro):
             limit = self.parse(limit)
         if offset is not None:
             offset = self.parse(offset)
-        return ClipBinding(self.state.scope, seed, limit, offset, self.syntax)
+        return ClipBinding(self.state.scope, seed, [], limit, offset,
+                           self.syntax)
 
 
 class BindDirectionBase(BindMacro):
@@ -731,7 +731,11 @@ class BindDefine(BindMacro):
                                             assignment.parameters,
                                             assignment.body)
             recipe = ClosedRecipe(recipe)
-            binding = DefinitionBinding(binding, name, is_reference, arity,
+            if is_reference:
+                binding = DefineReferenceBinding(binding, name,
+                                                 recipe, self.syntax)
+            else:
+                binding = DefineBinding(binding, name, arity,
                                         recipe, self.syntax)
         return binding
 
@@ -762,7 +766,11 @@ class BindWhere(BindMacro):
                                             assignment.parameters,
                                             assignment.body)
             recipe = ClosedRecipe(recipe)
-            binding = DefinitionBinding(binding, name, is_reference, arity,
+            if is_reference:
+                binding = DefineReferenceBinding(binding, name,
+                                                 recipe, self.syntax)
+            else:
+                binding = DefineBinding(binding, name, arity,
                                         recipe, self.syntax)
         return self.state.bind(lop, scope=binding)
 

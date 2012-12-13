@@ -3,14 +3,6 @@
 #
 
 
-"""
-:mod:`htsql.core.tr.binding`
-============================
-
-This module declares binding nodes and recipe objects.
-"""
-
-
 from ..util import maybe, listof, tupleof, Clonable, Printable, Hashable
 from ..entity import TableEntity, ColumnEntity, Join
 from ..domain import (Domain, VoidDomain, BooleanDomain, ListDomain,
@@ -18,63 +10,51 @@ from ..domain import (Domain, VoidDomain, BooleanDomain, ListDomain,
 from ..error import point
 from ..syn.syntax import Syntax, VoidSyntax, IdentifierSyntax, StringSyntax
 from .signature import Signature, Bag, Formula
-from ..cmd.command import Command
 
 
 class Binding(Clonable, Printable):
     """
-    Represents a binding node.
+    A binding node.
 
-    This is an abstract class; see subclasses for concrete binding nodes.
+    A binding graph is an intermediate representation of an HTSQL query.
+    It is constructed from the syntax tree by the *binding* process and
+    further translated to the flow graph by the *encoding* process.
 
-    A binding graph is an intermediate phase of the HTSQL translator between
-    the syntax tree and the flow graph.  It is converted from the syntax tree
-    by the *binding* process and further translated to the flow graph by the
-    *encoding* process.
+    A binding node represents an HTSQL expression or a naming scope (or both).
+    Each binding node keeps a reference to the scope in which it was created;
+    this scope chain forms a lookup context.
 
-    The structure of the binding graph reflects the form of naming *scopes*
-    in the query; each binding node keeps a reference to the scope where
-    it was instantiated.
+    `base`: :class:`Binding` or ``None``
+        The scope in which the node was created; used for chaining lookup
+        requests.
 
-    The constructor arguments:
+    `domain`: :class:`.Domain`
+        The data type of the expression.
 
-    `base` (:class:`Binding` or ``None``)
-        The scope in which the node is created.
-
-        The value of ``None`` is only valid for an instance of
-        :class:`RootBinding`, which represents the origin node in the graph.
-
-    `domain` (:class:`htsql.core.domain.Domain`)
-        The type of the binding node; use :class:`htsql.core.domain.VoidDomain`
-        instance when not applicable.
-
-    `syntax` (:class:`htsql.core.tr.syntax.Syntax`)
-        The syntax node that generated the binding node; should be used
-        for presentation or error reporting only, there is no guarantee
-        that that the syntax node is semantically, or even syntaxically
-        valid.
+    `syntax`: :class:`.Syntax`
+        The syntax node from which the binding node was generated; use
+        only for presentation and error reporting.
     """
 
     def __init__(self, base, domain, syntax):
         assert isinstance(base, maybe(Binding))
-        assert base is None or not isinstance(self, RootBinding)
+        assert base is not None or isinstance(self, (RootBinding, VoidBinding))
         assert isinstance(domain, Domain)
         assert isinstance(syntax, Syntax)
 
         self.base = base
         self.domain = domain
         self.syntax = syntax
+        # Inherit the error context from the syntax node.
         point(self, syntax)
 
-    def __str__(self):
-        # Display an HTSQL fragment that (approximately) corresponds
-        # to the binding node.
-        return str(self.syntax)
+    def __unicode__(self):
+        return unicode(self.syntax)
 
 
-class Recipe(Hashable, Printable):
+class Recipe(Hashable):
     """
-    Represents a recipe object.
+    A recipe object.
 
     A recipe is a generator of binding nodes.  Recipes are produced by lookup
     requests and used to construct the binding graph.
@@ -82,10 +62,323 @@ class Recipe(Hashable, Printable):
 
 
 class VoidBinding(Binding):
+    """
+    A dummy binding node.
+    """
 
     def __init__(self):
-        base = RootBinding(VoidSyntax())
-        super(VoidBinding, self).__init__(base, VoidDomain(), VoidSyntax())
+        super(VoidBinding, self).__init__(None, VoidDomain(), VoidSyntax())
+
+
+class ScopeBinding(Binding):
+    """
+    Represents a binding node that introduces a new naming scope.
+    """
+
+
+class HomeBinding(ScopeBinding):
+    """
+    The *home* scope.
+
+    The home scope contains all database tables.
+    """
+
+    def __init__(self, base, syntax):
+        super(HomeBinding, self).__init__(base, EntityDomain(), syntax)
+
+
+class RootBinding(HomeBinding):
+    """
+    The root scope.
+
+    The root scope is the origin of the binding graph.
+    """
+
+    def __init__(self, syntax):
+        super(RootBinding, self).__init__(None, syntax)
+
+
+class TableBinding(ScopeBinding):
+    """
+    A table scope.
+
+    A table scope contains all table attributes and the links to other tables
+    related via foreign key constraints.
+
+    `table`: :class:`.TableEntity`
+        The database table.
+    """
+
+    def __init__(self, base, table, syntax):
+        assert isinstance(table, TableEntity)
+        super(TableBinding, self).__init__(base, EntityDomain(), syntax)
+        self.table = table
+
+
+class ChainBinding(TableBinding):
+    """
+    An attached table scope.
+
+    An attached table is produced by a link from another table via
+    a chain of foreign key constraints.
+
+    `joins`: [:class:`.Join`]
+        Constraints attaching the table to its base.
+    """
+
+    def __init__(self, base, joins, syntax):
+        assert isinstance(joins, listof(Join)) and len(joins) > 0
+        super(ChainBinding, self).__init__(base, joins[-1].target, syntax)
+        self.joins = joins
+
+
+class ColumnBinding(ScopeBinding):
+    """
+    A table column scope.
+
+    `column`: :class:`.ColumnEntity`
+        The column.
+
+    `link`: :class:`Binding` or ``None``
+        If set, intercepts all lookup requests to the column scope.  Used
+        when the same name represents both a column and a link to another
+        table.
+    """
+
+    def __init__(self, base, column, link, syntax):
+        assert isinstance(column, ColumnEntity)
+        assert isinstance(link, maybe(Binding))
+        super(ColumnBinding, self).__init__(base, column.domain, syntax)
+        self.column = column
+        self.link = link
+
+
+class QuotientBinding(ScopeBinding):
+    """
+    A quotient scope.
+
+    A quotient of the `seed` flow by the given `kernels` is a flow of
+    all unique values of ``kernels`` as it ranges over ``seed``.
+
+    `seed`: :class:`Binding`
+        The seed of the quotient.
+
+    `kernels`: [:class:`Binding`]
+        The kernel expressions.
+    """
+
+    def __init__(self, base, seed, kernels, syntax):
+        assert isinstance(seed, Binding)
+        assert isinstance(kernels, listof(Binding))
+        super(QuotientBinding, self).__init__(base, EntityDomain(), syntax)
+        self.seed = seed
+        self.kernels = kernels
+
+
+class CoverBinding(ScopeBinding):
+    """
+    Represents a scope that borrows its content from another scope.
+
+    `seed`: :class:`Binding`
+        The wrapped scope.
+    """
+
+    def __init__(self, base, seed, syntax):
+        assert isinstance(seed, Binding)
+        super(ScopeBinding, self).__init__(base, seed.domain, syntax)
+        self.seed = seed
+
+
+class KernelBinding(CoverBinding):
+    """
+    A kernel expression in a quotient scope.
+
+    `quotient`: :class:`QuotientBinding`
+        The quotient scope.
+
+    `index`: ``int``
+        The position of the selected kernel expression.
+    """
+
+    def __init__(self, base, quotient, index, syntax):
+        assert isinstance(quotient, QuotientBinding)
+        assert isinstance(index, int)
+        assert 0 <= index < len(quotient.kernels)
+        seed = quotient.kernels[index]
+        super(KernelBinding, self).__init__(base, seed, syntax)
+        self.quotient = quotient
+        self.index = index
+
+
+class ComplementBinding(CoverBinding):
+    """
+    A complement link in a quotient scope.
+
+    `quotient`: :class:`QuotientBinding`
+        The quotient scope.
+    """
+
+    def __init__(self, base, quotient, syntax):
+        assert isinstance(quotient, QuotientBinding)
+        super(ComplementBinding, self).__init__(base, quotient.seed, syntax)
+        self.quotient = quotient
+
+
+class ForkBinding(CoverBinding):
+    """
+    A fork of the current scope.
+
+    `kernels` [:class:`Binding`]
+        The kernel expressions attaching the fork to its base.
+    """
+
+    def __init__(self, base, kernels, syntax):
+        assert isinstance(kernels, listof(Binding))
+        super(ForkBinding, self).__init__(base, base, syntax)
+        self.kernels = kernels
+
+
+class AttachBinding(CoverBinding):
+    """
+    An attachment expression.
+
+    `images`: [(:class:`Binding`, :class:`Binding`)]
+        Pairs of expressions attaching the binding to its base.
+
+    `condition`: :class:`Binding`
+        A condition attaching the binding to its base.
+    """
+
+    def __init__(self, base, seed, images, condition, syntax):
+        assert isinstance(images, listof(tupleof(Binding, Binding)))
+        assert isinstance(condition, maybe(Binding))
+        if condition is not None:
+            assert isinstance(condition.domain, BooleanDomain)
+        super(AttachBinding, self).__init__(base, seed, syntax)
+        self.images = images
+        self.condition = condition
+
+
+class LocateBinding(AttachBinding):
+    """
+    A locator expression.
+
+    A locator is an attachment expression for which we know that
+    it produces a singular value.
+    """
+
+
+class ClipBinding(CoverBinding):
+    """
+    A slice of a flow.
+
+    `order`: [(:class:`Binding`, ``+1`` or ``-1``)]
+        Expressions to sort by.
+
+    `limit`: ``int`` or ``None``
+        If set, indicates to take the top ``limit`` rows.
+        (``None`` means ``1``).
+
+    `offset`: ``int`` or ``None``
+        If set, indicates to drop the top ``offset`` rows.
+        (``None`` means ``0``).
+    """
+
+    def __init__(self, base, seed, order, limit, offset, syntax):
+        assert isinstance(seed, Binding)
+        assert isinstance(order, listof(tupleof(Binding, int)))
+        assert isinstance(limit, maybe(int))
+        assert isinstance(offset, maybe(int))
+        super(ClipBinding, self).__init__(base, seed, syntax)
+        self.order = order
+        self.limit = limit
+        self.offset = offset
+
+
+class ValueBinding(Binding):
+    """
+    A literal value.
+
+    `data`
+        The data value.
+    """
+
+    def __init__(self, base, data, domain, syntax):
+        super(ValueBinding, self).__init__(base, domain, syntax)
+        self.data = data
+
+
+class WrapBinding(Binding):
+    """
+    Represents a binding node that augments a naming scope.
+    """
+
+
+class DecorateBinding(WrapBinding):
+    """
+    Represents a binding node ignored by the encoder.
+    """
+
+    def __init__(self, base, syntax):
+        super(DecorateBinding, self).__init__(base, base.domain, syntax)
+
+
+class DefineBinding(DecorateBinding):
+    """
+    Defines a calculated attribute.
+
+    `name`: ``unicode``
+        The name of the attribute.
+
+    `arity`: ``int`` or ``None``
+        The number of arguments for an parameterized attribute;
+        ``None`` for an attribute without parameters.
+
+    `recipe`: :class:`Recipe`
+        The value generator.
+    """
+
+    def __init__(self, base, name, arity, recipe, syntax):
+        assert isinstance(name, unicode)
+        assert isinstance(arity, maybe(int))
+        assert isinstance(recipe, Recipe)
+        super(DefineBinding, self).__init__(base, syntax)
+        self.name = name
+        self.arity = arity
+        self.recipe = recipe
+
+
+class DefineReferenceBinding(DecorateBinding):
+    """
+    Defines a reference.
+
+    `name`: ``unicode``
+        The reference name.
+
+    `recipe`: :class:`Recipe`
+        The value generator.
+    """
+
+    def __init__(self, base, name, recipe, syntax):
+        assert isinstance(name, unicode)
+        assert isinstance(recipe, Recipe)
+        super(DefineReferenceBinding, self).__init__(base, syntax)
+        self.name = name
+        self.recipe = recipe
+
+
+class DefineLiftBinding(DecorateBinding):
+    """
+    Defines the value of the lift symbol.
+
+    `recipe`: :class:`Recipe`
+        The value generator.
+    """
+
+    def __init__(self, base, recipe, syntax):
+        assert isinstance(recipe, Recipe)
+        super(DefineLiftBinding, self).__init__(base, syntax)
+        self.recipe = recipe
 
 
 class QueryBinding(Binding):
@@ -128,14 +421,6 @@ class WeakSegmentBinding(SegmentBinding):
     pass
 
 
-class CommandBinding(Binding):
-
-    def __init__(self, base, command, syntax):
-        assert isinstance(command, Command)
-        super(CommandBinding, self).__init__(base, VoidDomain(), syntax)
-        self.command = command
-
-
 class ScopingBinding(Binding):
     """
     Represents a binding node that introduces a new naming scope.
@@ -162,223 +447,6 @@ class WrappingBinding(ChainingBinding):
 
     def __init__(self, base, syntax):
         super(WrappingBinding, self).__init__(base, base.domain, syntax)
-
-
-class HomeBinding(ScopingBinding):
-    """
-    Represents the *home* naming scope.
-
-    The home scope contains links to all tables in the database.
-    """
-
-    def __init__(self, base, syntax):
-        super(HomeBinding, self).__init__(base, EntityDomain(), syntax)
-
-
-class RootBinding(HomeBinding):
-    """
-    Represents the root scope.
-
-    The root scope is the origin of the binding graph.
-    """
-
-    def __init__(self, syntax):
-        super(RootBinding, self).__init__(None, syntax)
-
-
-class TableBinding(ScopingBinding):
-    """
-    Represents a table scope.
-
-    This is an abstract class; see :class:`FreeTableBinding` and
-    :class:`AttachedTableBinding` for concrete subclasses.
-
-    A table scope contains all attributes of the tables as well
-    as the links to other tables related via foreign key constraints.
-
-    `table` (:class:`htsql.core.entity.TableEntity`)
-        The table with which the binding is associated.
-    """
-
-    def __init__(self, base, table, syntax):
-        assert isinstance(table, TableEntity)
-        super(TableBinding, self).__init__(base, EntityDomain(), syntax)
-        self.table = table
-
-
-class FreeTableBinding(TableBinding):
-    """
-    Represents a free table scope.
-
-    A free table binding is generated by a link from the home class.
-    """
-
-
-class AttachedTableBinding(TableBinding):
-    """
-    Represents an attached table scope.
-
-    An attached table binding is generated by a link from another table.
-
-    `join` (:class:`htsql.core.entity.Join`)
-        The join attaching the table to its base.
-    """
-
-    def __init__(self, base, join, syntax):
-        assert isinstance(join, Join)
-        super(AttachedTableBinding, self).__init__(base, join.target, syntax)
-        self.join = join
-
-
-class ColumnBinding(ScopingBinding):
-    """
-    Represents a table column scope.
-
-    `column` (:class:`htsql.core.entity.ColumnEntity`)
-        The column entity.
-
-    `link` (:class:`Binding` or ``None``)
-        If set, indicates that the binding also represents a link
-        to another table.  Any lookup requests applied to the column
-        binding are delegated to `link`.
-    """
-
-    def __init__(self, base, column, link, syntax):
-        assert isinstance(column, ColumnEntity)
-        assert isinstance(link, maybe(Binding))
-        super(ColumnBinding, self).__init__(base, column.domain, syntax)
-        self.column = column
-        self.link = link
-
-
-class QuotientBinding(ScopingBinding):
-    """
-    Represents a quotient scope.
-
-    A quotient expression generates a flow of all unique values of
-    the given kernel as it ranges over the `seed` flow.
-
-    `seed` (:class:`Binding`)
-        The seed of the quotient.
-
-    `kernels` (a list of :class:`Binding`)
-        The kernel expressions of the quotient.
-    """
-
-    def __init__(self, base, seed, kernels, syntax):
-        assert isinstance(seed, Binding)
-        assert isinstance(kernels, listof(Binding))
-        super(QuotientBinding, self).__init__(base, EntityDomain(), syntax)
-        self.seed = seed
-        self.kernels = kernels
-
-
-class KernelBinding(ScopingBinding):
-    """
-    Represents a kernel in a quotient scope.
-
-    `quotient` (:class:`QuotientBinding`)
-        The quotient binding (typically coincides with `base`).
-
-    `index` (an integer)
-        The position of the selected kernel expression.
-    """
-
-    def __init__(self, base, quotient, index, syntax):
-        assert isinstance(quotient, QuotientBinding)
-        assert isinstance(index, int)
-        assert 0 <= index < len(quotient.kernels)
-        domain = quotient.kernels[index].domain
-        super(KernelBinding, self).__init__(base, domain, syntax)
-        self.quotient = quotient
-        self.index = index
-
-
-class ComplementBinding(ScopingBinding):
-    """
-    Represents a complement link in a quotient scope.
-
-    `quotient` (:class:`QuotientBinding`)
-        The quotient binding (typically coincides with `base`)
-    """
-
-    def __init__(self, base, quotient, syntax):
-        assert isinstance(quotient, QuotientBinding)
-        domain = quotient.seed.domain
-        super(ComplementBinding, self).__init__(base, domain, syntax)
-        self.quotient = quotient
-
-
-class CoverBinding(ScopingBinding):
-    """
-    Represents an opaque alias for a scope expression.
-
-    `seed` (:class:`Binding`)
-        The covered expression.
-    """
-
-    def __init__(self, base, seed, syntax):
-        assert isinstance(seed, Binding)
-        super(CoverBinding, self).__init__(base, seed.domain, syntax)
-        self.seed = seed
-
-
-class ForkBinding(ScopingBinding):
-    """
-    Represents a forking expression.
-
-    `kernels` (a list of :class:`Binding`)
-        The kernel expressions of the fork.
-    """
-
-    def __init__(self, base, kernels, syntax):
-        assert isinstance(kernels, listof(Binding))
-        super(ForkBinding, self).__init__(base, base.domain, syntax)
-        self.kernels = kernels
-
-
-class LinkBinding(ScopingBinding):
-    """
-    Represents a linking expression.
-
-    `seed` (:class:`Binding`)
-        The target of the link.
-
-    `images` (a list of pairs of :class:`Binding`)
-        Pairs of expressions connecting `seed` to `base`.
-    """
-
-    def __init__(self, base, seed, images, syntax):
-        assert isinstance(seed, Binding)
-        assert isinstance(images, listof(tupleof(Binding, Binding)))
-        super(LinkBinding, self).__init__(base, EntityDomain(), syntax)
-        self.seed = seed
-        self.images = images
-
-
-class ClipBinding(ScopingBinding):
-
-    def __init__(self, base, seed, limit, offset, syntax):
-        assert isinstance(seed, Binding)
-        assert isinstance(limit, maybe(int))
-        assert isinstance(offset, maybe(int))
-        super(ClipBinding, self).__init__(base, seed.domain, syntax)
-        self.seed = seed
-        self.limit = limit
-        self.offset = offset
-
-
-class LocatorBinding(ScopingBinding):
-
-    def __init__(self, base, seed, identity, value, syntax):
-        assert isinstance(seed, Binding)
-        assert isinstance(identity, IdentityBinding)
-        assert (isinstance(value, tuple) and
-                len(value) == len(identity.elements))
-        super(LocatorBinding, self).__init__(base, seed.domain, syntax)
-        self.seed = seed
-        self.identity = identity
-        self.value = value
 
 
 class SieveBinding(ChainingBinding):
@@ -504,38 +572,6 @@ class AssignmentBinding(Binding):
         self.terms = terms
         self.parameters = parameters
         self.body = body
-
-
-class DefinitionBinding(WrappingBinding):
-    """
-    Represents a definition of a calculated attribute or a reference.
-
-    `name` (a Unicode string)
-        The name of the attribute.
-
-    `is_reference` (Boolean)
-        If set, indicates a definition of a reference.
-
-    `arity` (an integer or ``None``)
-        The number of arguments for an parameterized attribute;
-        ``None`` for an attribute without parameters.
-
-    `recipe` (:class:`Recipe`)
-        The value of the attribute.
-    """
-
-    def __init__(self, base, name, is_reference, arity, recipe, syntax):
-        assert isinstance(name, unicode)
-        assert isinstance(is_reference, bool)
-        assert isinstance(arity, maybe(int))
-        # A reference cannot have parameters.
-        assert arity is None or not is_reference
-        assert isinstance(recipe, Recipe)
-        super(DefinitionBinding, self).__init__(base, syntax)
-        self.name = name
-        self.is_reference = is_reference
-        self.arity = arity
-        self.recipe = recipe
 
 
 class DirectionBinding(WrappingBinding):

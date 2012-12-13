@@ -17,7 +17,7 @@ from ..classify import normalize, localize
 from ..error import Error, translate_guard
 from ..syn.syntax import IdentifierSyntax
 from .flow import (Flow, ScalarFlow, TableFlow, FiberTableFlow, QuotientFlow,
-        ComplementFlow, MonikerFlow, ForkedFlow, LinkedFlow, ClippedFlow,
+        ComplementFlow, MonikerFlow, ForkedFlow, AttachFlow, ClippedFlow,
         LocatorFlow, OrderedFlow, ColumnUnit, KernelUnit, CoveringUnit)
 from .term import Joint
 
@@ -314,7 +314,7 @@ class SewTable(Sew):
                     break
         # No primary key, we don't have other choice but to report an error.
         if connect_columns is None:
-            with translate_guard(flow):
+            with translate_guard(self.flow):
                 raise Error("Unable to connect a table"
                             " lacking a primary key")
         # Generate joints that represent a connection by the primary key.
@@ -416,9 +416,8 @@ class ArrangeCovering(Arrange):
     adapt_many(ComplementFlow,
                MonikerFlow,
                ForkedFlow,
-               LinkedFlow,
-               ClippedFlow,
-               LocatorFlow)
+               AttachFlow,
+               ClippedFlow)
 
     def __call__(self):
         # Start with the parent ordering.
@@ -454,9 +453,8 @@ class SpreadCovering(Spread):
     adapt_many(ComplementFlow,
                MonikerFlow,
                ForkedFlow,
-               LinkedFlow,
-               ClippedFlow,
-               LocatorFlow)
+               AttachFlow,
+               ClippedFlow)
 
     def __call__(self):
         # Native units of the complement are inherited from the seed flow.
@@ -472,10 +470,9 @@ class SewCovering(Sew):
     # The implementation is shared by all covering flows.
     adapt_many(ComplementFlow,
                MonikerFlow,
-               LinkedFlow,
+               AttachFlow,
                ForkedFlow,
-               ClippedFlow,
-               LocatorFlow)
+               ClippedFlow)
 
     def __call__(self):
         # To sew two terms representing a covering flow, we sew all axial flows
@@ -552,17 +549,6 @@ class TieMoniker(Tie):
             yield joint.clone(rop=rop)
 
 
-class TieLocator(Tie):
-
-    adapt(LocatorFlow)
-
-    def __call__(self):
-        flow = self.flow.inflate()
-        for joint in tie(flow.ground):
-            rop = CoveringUnit(joint.rop, flow, joint.rop.binding)
-            yield joint.clone(rop=rop)
-
-
 class TieClipped(Tie):
 
     adapt(ClippedFlow)
@@ -594,13 +580,16 @@ class TieForked(Tie):
             yield Joint(lop, rop)
 
 
-class TieLinked(Tie):
+class TieAttach(Tie):
 
-    adapt(LinkedFlow)
+    adapt(AttachFlow)
 
     def __call__(self):
         # Use an inflated flow for joints.
         flow = self.flow.inflate()
+        for joint in tie(flow.ground):
+            rop = CoveringUnit(joint.rop, flow, joint.rop.binding)
+            yield joint.clone(rop=rop)
         # Attach the seed to the base flow using the fiber conditions.
         for lop, rop in flow.images:
             rop = CoveringUnit(rop, flow, rop.binding)

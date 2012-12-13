@@ -20,7 +20,7 @@ from ....core.cmd.fetch import RowStream, build_fetch
 from ....core.tr.bind import BindingState, Select
 from ....core.syn.syntax import VoidSyntax, IdentifierSyntax
 from ....core.tr.binding import (VoidBinding, RootBinding, FormulaBinding,
-        LocatorBinding, SelectionBinding, SieveBinding, AliasBinding,
+        LocateBinding, SelectionBinding, SieveBinding, AliasBinding,
         SegmentBinding, QueryBinding, FreeTableRecipe, ColumnRecipe)
 from ....core.tr.signature import IsEqualSig, AndSig, PlaceholderSig
 from ....core.tr.decorate import decorate
@@ -512,20 +512,20 @@ class BuildResolveChain(Utility):
             raise Error("Cannot determine identity of a link", target_name)
         identity = state.use(recipe, syntax, scope=seed)
         count = itertools.count()
-        def make_value(domain):
-            value = []
-            for field in domain.labels:
-                if isinstance(field, IdentityDomain):
-                    item = make_value(field)
+        def make_images(identity):
+            images = []
+            for field in identity.elements:
+                if isinstance(field.domain, IdentityDomain):
+                    images.extend(make_images(field))
                 else:
                     item = FormulaBinding(scope,
                                           PlaceholderSig(next(count)),
-                                          field,
+                                          field.domain,
                                           syntax)
-                value.append(item)
-            return tuple(value)
-        value = make_value(identity.domain)
-        scope = LocatorBinding(scope, seed, identity, value, syntax)
+                    images.append((item, field))
+            return images
+        images = make_images(identity)
+        scope = LocateBinding(scope, seed, images, None, syntax)
         state.push_scope(scope)
         if len(joins) > 1:
             recipe = AttachedTableRecipe([join.reverse()

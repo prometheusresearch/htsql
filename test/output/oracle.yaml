@@ -22206,12 +22206,8 @@ tests:
                SELECT "SCHOOL"."CODE",
                       "SCHOOL"."NAME",
                       "SCHOOL"."CAMPUS"
-               FROM DUAL "!"
-                    INNER JOIN (SELECT "SCHOOL"."CODE",
-                                       "SCHOOL"."NAME",
-                                       "SCHOOL"."CAMPUS"
-                                FROM "SCHOOL") "SCHOOL"
-                               ON ('art' = "SCHOOL"."CODE")
+               FROM "SCHOOL"
+               WHERE ("SCHOOL"."CODE" = 'art')
                ORDER BY 1 ASC
           - uri: /course{department.code,no,credits}?credits=max(fork().credits)
             status: 200 OK
