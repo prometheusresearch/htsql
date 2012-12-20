@@ -467,8 +467,19 @@ class Flow(Expression):
         # is a tuple of all its essential attributes and the first element
         # of the tuple is the flow base.  So we skip the base flow and
         # compare the remaining attributes.
-        return (isinstance(other, self.__class__) and
-                self._basis[1:] == other._basis[1:])
+        if not isinstance(other, self.__class__):
+            return False
+        try:
+            _basis = self._basis
+        except AttributeError:
+            self._rehash()
+            _basis = self._basis
+        try:
+            _other_basis = other._basis
+        except AttributeError:
+            other._rehash()
+            _other_basis = other._basis
+        return (_basis[1:] == _other_basis[1:])
 
     def inflate(self):
         """

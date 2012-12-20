@@ -31,6 +31,8 @@ class Domain(Clonable, Hashable, Printable):
     to the other.
     """
 
+    __slots__ = ()
+
     # Make sure `str(domain.__class__)` produces a usable domain family name.
     class __metaclass__(type):
 
@@ -208,6 +210,8 @@ class NullDomain(Domain):
     This is an abstract class.
     """
 
+    __slots__ = ()
+
 
 class VoidDomain(NullDomain):
     """
@@ -217,6 +221,8 @@ class VoidDomain(NullDomain):
     but has no semantics.
     """
 
+    __slots__ = ()
+
 
 class EntityDomain(NullDomain):
     """
@@ -225,6 +231,8 @@ class EntityDomain(NullDomain):
     Since class entities are not observable directly in HTSQL model,
     this domain does not support any values.
     """
+
+    __slots__ = ()
 
 
 #
@@ -239,6 +247,8 @@ class UntypedDomain(Domain):
     This domain is assigned to HTSQL literals temporarily until the actual
     domain could be derived from the context.
     """
+
+    __slots__ = ()
 
     @staticmethod
     def parse(text):
@@ -263,6 +273,8 @@ class BooleanDomain(Domain):
 
     Valid native objects: ``bool`` values.
     """
+
+    __slots__ = ()
 
     @staticmethod
     def parse(text):
@@ -306,6 +318,8 @@ class NumberDomain(Domain):
         Indicates whether the values are stored in binary or decimal form.
     """
 
+    __slots__ = ()
+
     is_exact = None
     radix = None
 
@@ -321,6 +335,8 @@ class IntegerDomain(NumberDomain):
     `size`: ``int`` or ``None``
         Number of bits used to store a value; ``None`` if not known.
     """
+
+    __slots__ = ('size',)
 
     is_exact = True
     radix = 2
@@ -367,6 +383,8 @@ class FloatDomain(NumberDomain):
     `size`: ``int`` or ``None``
         Number of bits used to store a value; ``None`` if not known.
     """
+
+    __slots__ = ('size',)
 
     is_exact = False
     radix = 2
@@ -421,6 +439,8 @@ class DecimalDomain(NumberDomain):
         Number of significant digits in the fractional part; zero for integers,
         ``None`` if infinite or not known.
     """
+
+    __slots__ = ('precision', 'scale')
 
     is_exact = True
     radix = 10
@@ -479,6 +499,8 @@ class TextDomain(Domain):
         Indicates whether values are fixed-length or variable-length.
     """
 
+    __slots__ = ('length', 'is_varying')
+
     def __init__(self, length=None, is_varying=True):
         assert isinstance(length, maybe(int))
         assert isinstance(is_varying, bool)
@@ -518,6 +540,8 @@ class EnumDomain(Domain):
     `labels`: [``unicode``]
         List of valid values.
     """
+
+    __slots__ = ('labels',)
 
     # NOTE: HTSQL enum type is structural, but some SQL databases implement
     # enums as nominal types (e.g. PostgreSQL).  In practice, it should not be
@@ -613,6 +637,8 @@ class DateDomain(Domain):
     Valid native objects: ``datetime.date`` values.
     """
 
+    __slots__ = ()
+
     # Regular expression to match YYYY-MM-DD.
     regexp = re.compile(r'''(?x)
         ^ \s*
@@ -662,6 +688,8 @@ class TimeDomain(Domain):
 
     Valid native objects: ``datetime.time`` values.
     """
+
+    __slots__ = ()
 
     # Regular expression to match HH:MM:SS.SSSSSS.
     regexp = re.compile(r'''(?x)
@@ -727,6 +755,8 @@ class DateTimeDomain(Domain):
 
     Valid native objects: ``datetime.datetime`` values.
     """
+
+    __slots__ = ()
 
     # Regular expression to match YYYY-MM-DD HH:MM:SS.SSSSSS.
     regexp = re.compile(r'''(?x)
@@ -826,6 +856,8 @@ class OpaqueDomain(Domain):
 
     Valid native objects: any.
     """
+
+    __slots__ = ()
 
     @staticmethod
     def parse(text):
@@ -1066,6 +1098,8 @@ class ContainerDomain(Domain):
     This is an abstract superclass for container domains.
     """
 
+    __slots__ = ()
+
     @staticmethod
     def parse_entry(text, domain):
         # Unquotes and parses a container entry.
@@ -1139,6 +1173,8 @@ class ListDomain(ContainerDomain):
         The type of entries.
     """
 
+    __slots__ = ('item_domain',)
+
     def __init__(self, item_domain):
         assert isinstance(item_domain, Domain)
         self.item_domain = item_domain
@@ -1185,6 +1221,8 @@ class RecordDomain(ContainerDomain):
     `fields`: [:class:`Profile`]
         The types and other structural metadata of the record fields.
     """
+
+    __slots__ = ('fields',)
 
     def __init__(self, fields):
         assert isinstance(fields, listof(Profile))
@@ -1383,6 +1421,8 @@ class IdentityDomain(ContainerDomain):
     `leaves`: [[``int``]]
         Paths (as tuple indexes) to leaf labels.
     """
+
+    __slots__ = ('labels', 'width', 'leaves')
 
     def __init__(self, labels):
         assert isinstance(labels, listof(Domain))

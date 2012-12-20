@@ -763,6 +763,8 @@ class Clonable(object):
         attributes.
     """
 
+    __slots__ = ()
+
     def __init__(self):
         # Must be overriden in subclasses.
         raise NotImplementedError()
@@ -857,56 +859,75 @@ class Hashable(object):
     the same type and their basis vectors are equal.
     """
 
+    __slots__ = ('_basis', '_hash')
+
     def __hash__(self):
-        return self._hash
+        try:
+            return self._hash
+        except AttributeError:
+            self._rehash()
+            return self._hash
 
     def __basis__(self):
         """
         Returns a vector of values uniquely identifying the object.
         """
         raise NotImplementedError()
-        ## By default, objects are compared by identity.  Reimplement
-        ## for by-value comparison.
-        #return id(self)
 
-    @cachedproperty
-    def _hash(self):
-        # Calculate and cache the object hash.
-        return hash(self._basis)
-
-    @cachedproperty
-    def _basis(self):
-        # Get the object basis vector.
+    def _rehash(self):
+        # Calculate the object hash and the basis vector.
         _basis = self.__basis__()
         # Flatten and return the vector.
         if isinstance(_basis, tuple):
             elements = []
             for element in _basis:
                 if isinstance(element, Hashable):
-                    elements.append((element.__class__,
-                                     element._hash,
-                                     element._basis))
+                    element_class = element.__class__
+                    try:
+                        element_hash = element._hash
+                        element_basis = element._basis
+                    except AttributeError:
+                        element._rehash()
+                        element_hash = element._hash
+                        element_basis = element._basis
+                    elements.append((element_class,
+                                     element_hash,
+                                     element_basis))
                 else:
                     elements.append(element)
             _basis = tuple(elements)
-        return _basis
+        self._basis = _basis
+        self._hash = hash(_basis)
 
     def __eq__(self, other):
         # We could just compare object basis vectors, but
         # for performance, we start with faster checks.
-        return ((self is other) or
-                (isinstance(other, Hashable) and
-                 self.__class__ is other.__class__ and
-                 self._hash == other._hash and
-                 self._basis == other._basis))
+        if self is other:
+            return True
+        if not (isinstance(other, Hashable) and
+                self.__class__ is other.__class__):
+            return False
+        try:
+            _hash = self._hash
+            _basis = self._basis
+        except AttributeError:
+            self._rehash()
+            _hash = self._hash
+            _basis = self._basis
+        try:
+            _other_hash = other._hash
+            _other_basis = other._basis
+        except AttributeError:
+            other._rehash()
+            _other_hash = other._hash
+            _other_basis = other._basis
+        return (_hash == _other_hash and _basis == _other_basis)
 
     def __ne__(self, other):
         # Since we override `==`, we also need to override `!=`.
-        return ((self is not other) and
-                (not isinstance(other, Hashable) or
-                 self.__class__ is not other.__class__ or
-                 self._hash != other._hash and
-                 self._basis != other._basis))
+        if self is other:
+            return False
+        return not (self == other)
 
 
 class Printable(object):
@@ -916,6 +937,8 @@ class Printable(object):
     A subclass of :class:`Printable` is expected to reimplement the
     :meth:`__unicode__` method.
     """
+
+    __slots__ = ()
 
     def __unicode__(self):
         # Override in subclasses.

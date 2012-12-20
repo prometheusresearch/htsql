@@ -11,15 +11,20 @@ from .syn.syntax import Syntax
 
 class Model(Hashable, Clonable, Printable):
 
+    __slots__ = ()
+
     def __init__(self):
         pass
 
 
 class Node(Model):
-    pass
+
+    __slots__ = ()
 
 
 class Arc(Model):
+
+    __slots__ = ('origin', 'target', 'arity', 'is_expanding', 'is_contracting')
 
     def __init__(self, origin, target, arity, is_expanding, is_contracting):
         assert isinstance(origin, Node)
@@ -38,6 +43,9 @@ class Arc(Model):
 
 
 class Label(Clonable, Printable):
+
+    __slots__ = ('name', 'arc', 'origin', 'target', 'arity',
+                 'is_expanding', 'is_contracting', 'is_public')
 
     def __init__(self, name, arc, is_public):
         assert isinstance(name, unicode)
@@ -62,6 +70,8 @@ class Label(Clonable, Printable):
 
 class HomeNode(Node):
 
+    __slots__ = ()
+
     def __basis__(self):
         return ()
 
@@ -70,6 +80,8 @@ class HomeNode(Node):
 
 
 class TableNode(Node):
+
+    __slots__ = ('table',)
 
     def __init__(self, table):
         assert isinstance(table, TableEntity)
@@ -84,6 +96,8 @@ class TableNode(Node):
 
 class DomainNode(Node):
 
+    __slots__ = ('domain',)
+
     def __init__(self, domain):
         assert isinstance(domain, Domain)
         self.domain = domain
@@ -97,6 +111,8 @@ class DomainNode(Node):
 
 class UnknownNode(Node):
 
+    __slots__ = ()
+
     def __basis__(self):
         return ()
 
@@ -106,6 +122,8 @@ class UnknownNode(Node):
 
 class InvalidNode(Node):
 
+    __slots__ = ()
+
     def __basis__(self):
         return ()
 
@@ -114,6 +132,8 @@ class InvalidNode(Node):
 
 
 class TableArc(Arc):
+
+    __slots__ = ('table',)
 
     def __init__(self, table):
         assert isinstance(table, TableEntity)
@@ -133,6 +153,8 @@ class TableArc(Arc):
 
 
 class ChainArc(Arc):
+
+    __slots__ = ('table', 'joins', 'is_direct', 'is_reverse')
 
     def __init__(self, table, joins):
         assert isinstance(table, TableEntity)
@@ -162,6 +184,8 @@ class ChainArc(Arc):
 
 class ColumnArc(Arc):
 
+    __slots__ = ('table', 'column', 'link')
+
     def __init__(self, table, column, link=None):
         assert isinstance(table, TableEntity)
         assert isinstance(column, ColumnEntity) and column.table is table
@@ -187,6 +211,8 @@ class ColumnArc(Arc):
 
 class SyntaxArc(Arc):
 
+    __slots__ = ('parameters', 'syntax')
+
     def __init__(self, origin, parameters, syntax):
         assert isinstance(parameters, maybe(listof(tupleof(unicode, bool))))
         assert isinstance(syntax, Syntax)
@@ -210,6 +236,8 @@ class SyntaxArc(Arc):
 
 class InvalidArc(Arc):
 
+    __slots__ = ()
+
     def __init__(self, origin, arity):
         assert isinstance(origin, Node)
         super(InvalidArc, self).__init__(
@@ -227,6 +255,8 @@ class InvalidArc(Arc):
 
 
 class AmbiguousArc(InvalidArc):
+
+    __slots__ = ('alternatives',)
 
     def __init__(self, arity, alternatives):
         assert isinstance(alternatives, listof(Arc)) and len(alternatives) > 0

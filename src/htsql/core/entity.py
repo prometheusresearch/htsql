@@ -18,6 +18,8 @@ import weakref
 
 class Entity(Printable):
 
+    __slots__ = ('owner',)
+
     is_frozen = True
 
     def __init__(self, owner):
@@ -37,14 +39,21 @@ class Entity(Printable):
 
 class MutableEntity(Entity):
 
+    __slots__ = ()
+
     is_frozen = False
 
     def remove(self):
-        self.__dict__.clear()
-        self.__class__ = RemovedEntity
+        for cls in self.__class__.__mro__:
+            if hasattr(cls, '__slots__'):
+                for slot in cls.__slots__:
+                    if not (slot.startswith('__') and slot.endswith('__')):
+                        delattr(self, slot)
 
 
 class NamedEntity(Entity):
+
+    __slots__ = ('name',)
 
     def __init__(self, owner, name):
         assert isinstance(name, unicode)
@@ -58,16 +67,9 @@ class NamedEntity(Entity):
             return u"<default>"
 
 
-class RemovedEntity(Printable):
-
-    def __unicode__(self):
-        return u"<removed>"
-
-    def __str__(self):
-        return "<removed>"
-
-
 class EntitySet(Printable):
+
+    __slots__ = ('entities', 'index_by_name')
 
     is_frozen = True
 
@@ -112,6 +114,8 @@ class EntitySet(Printable):
 
 class MutableEntitySet(EntitySet):
 
+    __slots__ = ()
+
     is_frozen = False
 
     def add(self, entity):
@@ -138,10 +142,13 @@ class MutableEntitySet(EntitySet):
 
 
 class CatalogEntity(Entity):
-    pass
+
+    __slots__ = ('schemas', '__weakref__')
 
 
 class MutableCatalogEntity(CatalogEntity, MutableEntity):
+
+    __slots__ = ()
 
     def __init__(self):
         super(MutableCatalogEntity, self).__init__(weakref.ref(self))
@@ -157,11 +164,12 @@ class MutableCatalogEntity(CatalogEntity, MutableEntity):
     def remove(self):
         for schema in reversed(self.schemas):
             schema.remove()
-        self.__dict__.clear()
-        self.__class__ = RemovedEntity
+        super(MutableCatalogEntity, self).remove()
 
 
 class SchemaEntity(NamedEntity):
+
+    __slots__ = ('tables', 'priority', '__weakref__')
 
     @property
     def catalog(self):
@@ -169,6 +177,8 @@ class SchemaEntity(NamedEntity):
 
 
 class MutableSchemaEntity(SchemaEntity, MutableEntity):
+
+    __slots__ = ()
 
     def __init__(self, catalog, name, priority):
         assert isinstance(catalog, MutableCatalogEntity)
@@ -195,11 +205,13 @@ class MutableSchemaEntity(SchemaEntity, MutableEntity):
         for table in reversed(list(self.tables)):
             table.remove()
         self.catalog.schemas.remove(self)
-        self.__dict__.clear()
-        self.__class__ = RemovedEntity
+        super(MutableSchemaEntity, self).remove()
 
 
 class TableEntity(NamedEntity):
+
+    __slots__ = ('columns', 'primary_key', 'unique_keys',
+                 'foreign_keys', 'referring_foreign_keys', '__weakref__')
 
     @property
     def schema(self):
@@ -212,6 +224,8 @@ class TableEntity(NamedEntity):
 
 
 class MutableTableEntity(TableEntity, MutableEntity):
+
+    __slots__ = ()
 
     def __init__(self, schema, name):
         assert isinstance(schema, MutableSchemaEntity)
@@ -258,11 +272,12 @@ class MutableTableEntity(TableEntity, MutableEntity):
         for column in reversed(list(self.columns)):
             column.remove()
         self.schema.tables.remove(self)
-        self.__dict__.clear()
-        self.__class__ = RemovedEntity
+        super(MutableTableEntity, self).remove()
 
 
 class ColumnEntity(NamedEntity, MutableEntity):
+
+    __slots__ = ('domain', 'is_nullable', 'has_default')
 
     @property
     def table(self):
@@ -291,6 +306,8 @@ class ColumnEntity(NamedEntity, MutableEntity):
 
 
 class MutableColumnEntity(ColumnEntity, MutableEntity):
+
+    __slots__ = ()
 
     def __init__(self, table, name, domain, is_nullable, has_default):
         assert isinstance(table, MutableTableEntity)
@@ -333,11 +350,12 @@ class MutableColumnEntity(ColumnEntity, MutableEntity):
         for foreign_key in self.referring_foreign_keys:
             foreign_key.remove()
         self.table.columns.remove(self)
-        self.__dict__.clear()
-        self.__class__ = RemovedEntity
+        super(MutableColumnEntity, self).remove()
 
 
 class UniqueKeyEntity(Entity):
+
+    __slots__ = ('origin_columns', 'is_primary', 'is_partial')
 
     @property
     def origin(self):
@@ -350,6 +368,8 @@ class UniqueKeyEntity(Entity):
 
 
 class MutableUniqueKeyEntity(UniqueKeyEntity, MutableEntity):
+
+    __slots__ = ()
 
     def __init__(self, origin, origin_columns, is_primary, is_partial):
         assert isinstance(origin, MutableTableEntity)
@@ -400,11 +420,12 @@ class MutableUniqueKeyEntity(UniqueKeyEntity, MutableEntity):
         self.origin.unique_keys.remove(self)
         if self.is_primary:
             self.origin.primary_key = None
-        self.__dict__.clear()
-        self.__class__ = RemovedEntity
+        super(MutableUniqueKeyEntity, self).remove()
 
 
 class ForeignKeyEntity(Entity):
+
+    __slots__ = ('origin_columns', 'coowner', 'target_columns', 'is_partial')
 
     @property
     def origin(self):
@@ -423,6 +444,8 @@ class ForeignKeyEntity(Entity):
 
 
 class MutableForeignKeyEntity(ForeignKeyEntity, MutableEntity):
+
+    __slots__ = ()
 
     def __init__(self, origin, origin_columns, target, target_columns,
                  is_partial):
@@ -455,8 +478,7 @@ class MutableForeignKeyEntity(ForeignKeyEntity, MutableEntity):
     def remove(self):
         self.origin.foreign_keys.remove(self)
         self.target.referring_foreign_keys.remove(self)
-        self.__dict__.clear()
-        self.__class__ = RemovedEntity
+        super(MutableForeignKeyEntity, self).remove()
 
 
 class Join(Printable, Hashable):
@@ -495,6 +517,9 @@ class Join(Printable, Hashable):
         the join condition.
     """
     # FIXME: do joins belong to `entity.py`?
+
+    __slots__ = ('origin', 'target', 'origin_columns', 'target_columns',
+                 'is_expanding', 'is_contracting')
 
     is_direct = False
     is_reverse = False
@@ -535,6 +560,8 @@ class DirectJoin(Join):
     `foreign_key` (:class:`ForeignKeyEntity`)
         The foreign key that generates the join condition.
     """
+
+    __slots__ = ('foreign_key',)
 
     is_direct = True
 
@@ -581,6 +608,8 @@ class ReverseJoin(Join):
     `foreign_key` (:class:`ForeignKeyEntity`)
         The foreign key that generates the join condition.
     """
+
+    __slots__ = ('foreign_key',)
 
     is_reverse = True
 
