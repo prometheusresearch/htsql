@@ -9,4 +9,5 @@ syntax: glob
 build
 vm-build
 external
+vendor
 sandbox

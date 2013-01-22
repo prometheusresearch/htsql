@@ -4,7 +4,7 @@
 
 
 from ...core.adapter import call
-from ..resource.locate import LocatePackage, LocateRemote
+from ..resource.locate import LocatePackage
 
 
 class LocateShell(LocatePackage):
@@ -14,20 +14,17 @@ class LocateShell(LocatePackage):
     directory = 'static'
 
 
-class LocateJQuery(LocateRemote):
+class LocateJQuery(LocatePackage):
 
-    call('/shell/external/jquery/')
-    url = 'http://code.jquery.com/jquery-1.6.4.min.js'
-    md5 = '9118381924c51c89d9414a311ec9c97f'
-    cache = 'jquery-1.6.4'
+    call('/shell/vendor/jquery/')
+    package = __name__
+    directory = 'vendor/jquery-1.6.4'
 
 
-class LocateCodeMirror(LocateRemote):
+class LocateCodeMirror(LocatePackage):
 
-    call('/shell/external/codemirror/')
-    url = 'https://nodeload.github.com/marijnh/CodeMirror/zipball/v2.13'
-    md5 = 'b2a4f989ba45f1778b183603f78cf883'
-    cache = 'codemirror-2.13'
-    is_zip = True
+    call('/shell/vendor/codemirror/')
+    package = __name__
+    directory = 'vendor/codemirror-2.13'
 
 

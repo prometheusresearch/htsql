@@ -5,7 +5,7 @@
 include README LICENSE NEWS AUTHORS
 
 # Package resources.
-recursive-include src *.html *.css *.js *.png
+recursive-include src *.html *.css *.js *.png *.svg README README.* LICENSE LICENSE.*
 
 # Generated HTML documentation and MAN pages.
 recursive-include doc/html *

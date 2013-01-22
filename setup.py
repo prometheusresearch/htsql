@@ -11,7 +11,12 @@
 
 
 from setuptools import setup, find_packages
-import os.path, re
+from setuptools.command.develop import develop as setuptools_develop
+from distutils.command.build import build as setuptools_build
+from distutils.cmd import Command
+from distutils.dir_util import remove_tree
+from distutils import log
+import os, os.path, re, hashlib, urllib2, cStringIO, zipfile
 
 
 def get_version():
@@ -78,6 +83,90 @@ def get_addons():
     ]
 
 
+def get_vendors():
+    # Vendor packages to download `(url, md5, target)`.
+    return [
+        ('http://code.jquery.com/jquery-1.6.4.min.js',
+         '9118381924c51c89d9414a311ec9c97f',
+         'src/htsql/tweak/shell/vendor/jquery-1.6.4'),
+        ('http://codemirror.net/codemirror-2.13.zip',
+         '211de80f62d67c2475cd189d295191ff',
+         'src/htsql/tweak/shell/vendor/codemirror-2.13'),
+    ]
+
+
+class build_vendor(Command):
+    # Download vendor packages.
+
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        build_cmd = self.get_finalized_command('build')
+        for url, md5_hash, target in get_vendors():
+            if os.path.exists(target):
+                continue
+            log.info("downloading vendor package '%s'" % url)
+            stream = urllib2.urlopen(url)
+            data = stream.read()
+            stream.close()
+            assert hashlib.md5(data).hexdigest() == md5_hash
+            build_dir = os.path.join(build_cmd.build_base,
+                                     os.path.basename(target))
+            if os.path.exists(build_dir):
+                remove_tree(build_dir)
+            os.mkdir(build_dir)
+            if url.endswith('.zip'):
+                archive = zipfile.ZipFile(cStringIO.StringIO(data))
+                entries = archive.infolist()
+                assert entries
+                common = entries[0].filename
+                if not (common.endswith('/') and
+                        all(entry.filename.startswith(common)
+                            for entry in entries)):
+                    common = ''
+                for entry in entries:
+                    filename = entry.filename[len(common):]
+                    if filename.startswith('/'):
+                        filename = filename[1:]
+                    if not filename:
+                        continue
+                    filename = os.path.join(build_dir, filename)
+                    if filename.endswith('/'):
+                        os.mkdir(filename)
+                    else:
+                        stream = open(filename, 'wb')
+                        stream.write(archive.read(entry))
+                        stream.close()
+            else:
+                filename = os.path.join(build_dir,
+                                        os.path.basename(url))
+                stream = open(filename, 'wb')
+                stream.write(data)
+                stream.close()
+            target_base = os.path.dirname(target)
+            if not os.path.exists(target_base):
+                os.makedirs(target_base)
+            os.rename(build_dir, target)
+
+
+class build(setuptools_build):
+
+    sub_commands = [('build_vendor', None)] + setuptools_build.sub_commands
+
+
+class develop(setuptools_develop):
+
+    def install_for_development(self):
+        self.run_command('build_vendor')
+        setuptools_develop.install_for_development(self)
+
+
 if __name__ == '__main__':
     setup(name="HTSQL",
           version=get_version(),
@@ -88,6 +177,10 @@ if __name__ == '__main__':
           entry_points={
               'console_scripts': ['htsql-ctl = htsql.ctl:main'],
               'htsql.routines': get_routines(),
-              'htsql.addons': get_addons()})
+              'htsql.addons': get_addons()},
+          cmdclass={
+              'build_vendor': build_vendor,
+              'build': build,
+              'develop': develop})
 
 
