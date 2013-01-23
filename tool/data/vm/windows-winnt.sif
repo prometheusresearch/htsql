@@ -23,13 +23,13 @@
     Repartition = Yes
     WaitForReboot = No
 
-; Select the Administrator password; select the time zone: US/Eastern.
+; Select the Administrator password; select the time zone: US/Central.
 ; Perform auto-logon once to force execution of the post-installation script.
 [GuiUnattended]
     AdminPassword = "Administrator"
     EncryptedAdminPassword = No
     OemSkipRegional = 1
-    TimeZone = 35
+    TimeZone = 20
     OemSkipWelcome = 1
     AutoLogon = Yes
     AutoLogonCount = 999
