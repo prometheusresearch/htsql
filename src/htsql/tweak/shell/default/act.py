@@ -37,15 +37,17 @@ class ShellRenderUniversal(Act):
     def __call__(self):
         addon = context.app.tweak.shell.default
         command = None
-        accept = set()
+        content_type = ""
         if 'HTTP_ACCEPT' in self.action.environ:
-            for name in self.action.environ['HTTP_ACCEPT'].split(','):
-                if ';' in name:
-                    name = name.split(';', 1)[0]
-                name = name.strip()
-                accept.add(name)
-        if not (('text/html' in accept or 'text/*' in accept
-                 or '*/*' in accept) and 'application/json' not in accept):
+            content_types = self.action.environ['HTTP_ACCEPT'].split(',')
+            if len(content_types) == 1:
+                [content_type] = content_types
+                if ';' in content_type:
+                    content_type = content_type.split(';', 1)[0]
+                    content_type = content_type.strip()
+            else:
+                content_type = "*/*"
+        if content_type != "*/*":
             return super(ShellRenderUniversal, self).__call__()
         try:
             syntax = parse(self.command.query)
