@@ -6,9 +6,13 @@ set -ex
 ## Update the hostname.
 #echo oracle10g-vm >/etc/hostname
 
+# Enable HTTPS for APT repositories.
+apt-get -q update
+apt-get -qy install apt-transport-https
+
 # Register the Oracle repository.
-echo "deb http://oss.oracle.com/debian/ unstable main non-free" >/etc/apt/sources.list.d/oracle.list
-wget -q http://oss.oracle.com/el4/RPM-GPG-KEY-oracle -O- | apt-key add -
+echo "deb https://oss.oracle.com/debian/ unstable main non-free" >/etc/apt/sources.list.d/oracle.list
+wget -q https://oss.oracle.com/el4/RPM-GPG-KEY-oracle -O- | apt-key add -
 apt-get -q update
 
 # Install the Oracle 10g Express Edition.

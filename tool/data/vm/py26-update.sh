@@ -6,9 +6,13 @@ set -ex
 # Update the hostname.
 echo py26-vm >/etc/hostname
 
+# Enable HTTPS for APT repositories.
+apt-get -q update
+apt-get -qy install apt-transport-https
+
 # Register the Oracle repository.
-echo "deb http://oss.oracle.com/debian/ unstable main non-free" >/etc/apt/sources.list.d/oracle.list
-wget -q http://oss.oracle.com/el4/RPM-GPG-KEY-oracle -O- | apt-key add -
+echo "deb https://oss.oracle.com/debian/ unstable main non-free" >/etc/apt/sources.list.d/oracle.list
+wget -q https://oss.oracle.com/el4/RPM-GPG-KEY-oracle -O- | apt-key add -
 apt-get -q update
 
 # Install Mercurial.
@@ -33,6 +37,9 @@ apt-get clean
 
 # Initialize Python virtual enviroment in `/root`.
 virtualenv -p python2.6 .
+
+# Upgrade setuptools.
+~/bin/pip -q install --upgrade distribute
 
 # Install Django and SQLAlchemy.
 ~/bin/pip -q install Django

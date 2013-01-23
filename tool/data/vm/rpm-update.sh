@@ -7,7 +7,7 @@ set -ex
 echo "rpm-vm" >/etc/hostname
 
 # Add EPEL repository.
-rpm -Uvh http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-5.noarch.rpm
+rpm -Uvh http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm
 
 # install packages
 yum -q -y install rpmdevtools

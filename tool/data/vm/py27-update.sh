@@ -6,6 +6,10 @@ set -ex
 # Update the hostname.
 echo py27-vm >/etc/hostname
 
+# Enable HTTPS for APT repositories.
+apt-get -q update
+apt-get -qy install apt-transport-https
+
 # Register the testing repository.
 echo "deb http://ftp.us.debian.org/debian/ wheezy main" >/etc/apt/sources.list.d/testing.list
 cat <<END >>/etc/apt/preferences.d/pinning.pref
@@ -16,8 +20,8 @@ END
 apt-get -q update
 
 # Register the Oracle repository.
-echo "deb http://oss.oracle.com/debian/ unstable main non-free" >/etc/apt/sources.list.d/oracle.list
-wget -q http://oss.oracle.com/el4/RPM-GPG-KEY-oracle -O- | apt-key add -
+echo "deb https://oss.oracle.com/debian/ unstable main non-free" >/etc/apt/sources.list.d/oracle.list
+wget -q https://oss.oracle.com/el4/RPM-GPG-KEY-oracle -O- | apt-key add -
 apt-get -q update
 
 # Install Mercurial.
@@ -47,6 +51,9 @@ apt-get clean
 
 # Initialize Python virtual enviroment in `/root`.
 virtualenv -p python2.7 --system-site-packages .
+
+# Upgrade setuptools.
+~/bin/pip -q install --upgrade distribute
 
 # Install Django and SQLAlchemy.
 ~/bin/pip -q install Django

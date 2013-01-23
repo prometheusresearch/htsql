@@ -19,20 +19,17 @@ DISK_SIZE = "8G"
 MEM_SIZE = "512"
 
 DEBIAN_ISO_URLS = [
-    "http://cdimage.debian.org/cdimage/archive/6.0.3/i386/iso-cd/debian-6.0.3-i386-netinst.iso",
-    "http://cdimage.debian.org/cdimage/release/6.0.3/i386/iso-cd/debian-6.0.3-i386-netinst.iso",
+    "http://cdimage.debian.org/cdimage/archive/6.0.6/i386/iso-cd/debian-6.0.6-i386-netinst.iso",
+    "http://cdimage.debian.org/cdimage/release/6.0.6/i386/iso-cd/debian-6.0.6-i386-netinst.iso",
 ]
 
 UBUNTU_ISO_URLS = [
-    "http://releases.ubuntu.com/oneiric/ubuntu-11.10-server-i386.iso",
-]
-
-UBUNTU_LTS_ISO_URLS = [
-    "http://releases.ubuntu.com/precise/ubuntu-12.04-server-i386.iso",
+    "http://releases.ubuntu.com/precise/ubuntu-12.04.1-server-i386.iso",
 ]
 
 CENTOS_ISO_URLS = [
-    "http://mirrors.cmich.edu/centos/6.2/isos/i386/CentOS-6.2-i386-minimal.iso",
+    "http://mirrors.cmich.edu/centos/6.3/isos/i386/CentOS-6.3-i386-minimal.iso",
+    "http://vault.centos.org/6.3/isos/i386/CentOS-6.3-i386-minimal.iso",
 ]
 
 WINDOWS_ISO_FILES = [
@@ -634,9 +631,6 @@ windows_vm = WindowsTemplateVM('windows')
 ubuntu_vm = DebianTemplateVM('ubuntu',
                              iso_env="UBUNTU_ISO",
                              iso_urls=UBUNTU_ISO_URLS)
-ubuntu_lts_vm = DebianTemplateVM('ubuntu-lts',
-                                 iso_env="UBUNTU_LTS_ISO",
-                                 iso_urls=UBUNTU_LTS_ISO_URLS)
 
 
 @job
