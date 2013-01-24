@@ -41,9 +41,13 @@ class TweakDjangoAddon(Addon):
         engine = {
                 'django.db.backends.postgresql_psycopg2': 'pgsql',
                 'django.db.backends.postgresql': 'pgsql',
+                'django.contrib.gis.db.backends.postgis': 'pgsql',
                 'django.db.backends.mysql': 'mysql',
+                'django.contrib.gis.db.backends.mysql': 'mysql',
                 'django.db.backends.sqlite3': 'sqlite',
+                'django.contrib.gis.db.backends.spatialite': 'sqlite',
                 'django.db.backends.oracle': 'oracle',
+                'django.contrib.gis.db.backends.oracle': 'oracle',
         }.get(engine, engine)
         username = settings.DATABASES[DEFAULT_DB_ALIAS]['USER']
         if not username:
