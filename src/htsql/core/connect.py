@@ -353,6 +353,12 @@ class UnscrambleError(Utility):
         return None
 
 
+class Transact(Utility):
+
+    def __call__(self):
+        return TransactionGuard()
+
+
 class TransactionGuard(object):
 
     def __init__(self):
@@ -382,13 +388,10 @@ class TransactionGuard(object):
             connection.release()
 
 
-def transaction():
-    return TransactionGuard()
-
-
 connect = Connect.__invoke__
 scramble = Scramble.__invoke__
 unscramble = Unscramble.__invoke__
 unscramble_error = UnscrambleError.__invoke__
+transaction = Transact.__invoke__
 
 

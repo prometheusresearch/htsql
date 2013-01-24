@@ -24,7 +24,6 @@ def to_environ(request):
     return environ
 
 @login_required
-@transaction.commit_manually
 def gateway(request):
     class output:
         status = None
