@@ -34226,7 +34226,7 @@ tests:
                     "school"."campus"
              FROM "school"
              ORDER BY 1 ASC
-        - uri: /department[ee]{name, count(course)}/:pgsql_gw
+        - uri: /department[ee]{name, count(course)}/:sqlite_gw
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
@@ -34242,10 +34242,10 @@ tests:
              /department[ee]{name,count(course)}
              SELECT "department"."name",
                     COALESCE("course"."count", 0)
-             FROM "ad"."department"
-                  LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+             FROM "department"
+                  LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
                                           "course"."department_code"
-                                   FROM "ad"."course"
+                                   FROM "course"
                                    GROUP BY 2) AS "course"
                                   ON ("department"."code" = "course"."department_code")
              WHERE ("department"."code" = 'ee')
@@ -34278,7 +34278,7 @@ tests:
                 }
               ]
             }
-        - uri: /pgsql_gw(/fetch(count(course)))/:raw
+        - uri: /sqlite_gw(/fetch(count(course)))/:raw
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
@@ -34294,7 +34294,7 @@ tests:
               },
               "data": 358
             }
-        - uri: /pgsql_gw(/school/:html)
+        - uri: /sqlite_gw(/school/:html)
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]

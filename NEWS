@@ -2,6 +2,27 @@ List of Changes
 ===============
 
 
+2.3.3 (2013-01-XX)
+------------------
+
+* Added a binary attachment operator (`@`).
+* Added support for references in locators.
+* Added comment syntax (`#`).
+* `tweak.shell`: include JQuery and Codemirror to the source
+  and binary distributions.
+* `tweak.filedb`: makes a database from a set of CSV files.
+* `tweak.gateway`: defines gateway to other database servers.
+* `tweak.csrf`: protection against CSRF attacks.
+* `tweak.etl`: insert, merge, update and delete commands
+  (PostgreSQL only, work in progress)
+* `tweak.django`: fixed the introspector missing auto-created
+  many-to-many models.
+* Configuration: added support for `!include` tag.
+* Reduced memory footprint for large database schemas.
+* Improved error reporting.
+* Many other fixes and improvements.
+
+
 2.3.2 (2012-08-24)
 ------------------
 

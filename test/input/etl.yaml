@@ -28,6 +28,7 @@ tests:
 - uri: /{'ACID' :as code, 'Acer' :as name} :as manufacturer
         /:insert
   expect: 409
+  ignore: true
 - uri: /{'SMSN', 'Samsung'} :as manufacturer
         /:insert
   expect: 409

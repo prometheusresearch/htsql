@@ -371,24 +371,17 @@ tests:
       tweak.gateway:
         gateways:
           sqlite_gw: sqlite:///build/regress/sqlite/htsql_demo.sqlite
-          pgsql_gw:
-            engine: pgsql
-            database: htsql_demo
-            username: htsql_demo
-            password: secret
-            host: ${PGSQL_HOST}
-            port: ${PGSQL_PORT}
 
   # Normal queries
   - uri: /sqlite_gw(/school)
-  - uri: /department[ee]{name, count(course)}/:pgsql_gw
+  - uri: /department[ee]{name, count(course)}/:sqlite_gw
 
   # Formats and commands
   - uri: /sqlite_gw(/school[art].program)/:json
-  - uri: /pgsql_gw(/fetch(count(course)))/:raw
+  - uri: /sqlite_gw(/fetch(count(course)))/:raw
 
   # Errors
-  - uri: /pgsql_gw(/school/:html)
+  - uri: /sqlite_gw(/school/:html)
     expect: 400
     skip: true # is it still an error?
   - uri: /sqlite_gw(/nothing)
