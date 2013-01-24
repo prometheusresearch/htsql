@@ -38793,6 +38793,7 @@ tests:
         body: |
           Got an error from the database driver:
               duplicate key value violates unique constraint "manufacturer_pk"
+              DETAIL:  Key (code)=(ACID) already exists.
           While executing SQL:
               INSERT INTO "public"."manufacturer" ("code", "name")
               VALUES (%s, %s)

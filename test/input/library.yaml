@@ -302,13 +302,14 @@ tests:
     ignore: true
     ifdef: [pgsql, mssql]
   - uri: /{9223372036854775807+1}
+    # FIXME: silent overflow under MySQL 5.1; error under MySQL 5.5.
     expect: 409
     ignore: true
     ifdef: [pgsql, mssql]
   - uri: /{7*2147483647, 9223372036854775807+1}
     # FIXME: Older SQLite silently truncates the result, newer SQLite
     # converts the result to float.
-    ifndef: [pgsql, mssql, sqlite]
+    ifdef: [oracle]
   # Division by zero
   - uri: /{7/0}
     expect: 409

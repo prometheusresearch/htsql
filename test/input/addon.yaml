@@ -768,7 +768,7 @@ tests:
   - uri: /
   - uri: /
     headers:
-      Accept: text/html
+      Accept: '*/*'
     ignore: true
 
 # TWEAK.SQLALCHEMY - adapt to SQLAlchemy
