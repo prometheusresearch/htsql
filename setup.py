@@ -120,7 +120,7 @@ class build_vendor(Command):
                                      os.path.basename(target))
             if os.path.exists(build_dir):
                 remove_tree(build_dir)
-            os.mkdir(build_dir)
+            os.makedirs(build_dir)
             if url.endswith('.zip'):
                 archive = zipfile.ZipFile(cStringIO.StringIO(data))
                 entries = archive.infolist()
