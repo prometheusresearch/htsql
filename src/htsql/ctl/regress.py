@@ -2769,7 +2769,7 @@ class RegressRoutine(Routine):
     name = 'regress'
     aliases = ['test']
     arguments = [
-            Argument('suites', SeqVal(WordVal()), None, is_list=True),
+            Argument('suites', SeqVal(StrVal()), None, is_list=True),
     ]
     options = [
             InputOption,
