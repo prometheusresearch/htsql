@@ -10,7 +10,7 @@ tests:
   - ctl: []
     stdout: |
       HTSQL-CTL - HTSQL command-line administrative application
-      Copyright (c) 2006-2012, Prometheus Research, LLC
+      Copyright (c) 2006-2013, Prometheus Research, LLC
 
       Run `htsql-ctl help` for general usage and list of routines.
       Run `htsql-ctl help <routine>` for help on a specific routine.
@@ -18,7 +18,7 @@ tests:
   - ctl: [--help]
     stdout: |+
       HTSQL-CTL - HTSQL command-line administrative application
-      Copyright (c) 2006-2012, Prometheus Research, LLC
+      Copyright (c) 2006-2013, Prometheus Research, LLC
       Usage: htsql-ctl <routine> [options] [arguments]
 
       Run `htsql-ctl help` for general usage and list of routines.
@@ -36,8 +36,8 @@ tests:
     exit: 0
   - ctl: [--version]
     stdout: |+
-      HTSQL 2.3.2
-      Copyright (c) 2006-2012, Prometheus Research, LLC
+      HTSQL 2.3.3
+      Copyright (c) 2006-2013, Prometheus Research, LLC
 
       This is free software: you are free to change and redistribute it.
       There is NO WARRANTY, to the extent permitted by law.  This software
@@ -73,7 +73,7 @@ tests:
   - ctl: [help]
     stdout: |+
       HTSQL-CTL - HTSQL command-line administrative application
-      Copyright (c) 2006-2012, Prometheus Research, LLC
+      Copyright (c) 2006-2013, Prometheus Research, LLC
       Usage: htsql-ctl <routine> [options] [arguments]
 
       Run `htsql-ctl help` for general usage and list of routines.
@@ -101,8 +101,8 @@ tests:
     exit: 0
   - ctl: [version]
     stdout: |+
-      HTSQL 2.3.2
-      Copyright (c) 2006-2012, Prometheus Research, LLC
+      HTSQL 2.3.3
+      Copyright (c) 2006-2013, Prometheus Research, LLC
 
       This is free software: you are free to change and redistribute it.
       There is NO WARRANTY, to the extent permitted by law.  This software

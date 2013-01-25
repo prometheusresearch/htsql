@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2012, Prometheus Research, LLC
+# Copyright (c) 2006-2013, Prometheus Research, LLC
 #
 
 from ...core.connect import Connect, Transact, connect

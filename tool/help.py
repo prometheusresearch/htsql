@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2012, Prometheus Research, LLC
+# Copyright (c) 2006-2013, Prometheus Research, LLC
 #
 
 
@@ -10,7 +10,7 @@ from job import settings, job, log, fatal
 def default():
     # The default job.
     log("JOB - HTSQL development and build tool")
-    log("Copyright (c) 2006-2012, Prometheus Research, LLC")
+    log("Copyright (c) 2006-2013, Prometheus Research, LLC")
     log()
     log("Run `job help` for general usage and a list of jobs.")
     log("Run `job help <job>` for help on a specific job.")
@@ -77,7 +77,7 @@ def help(name=None):
     """
     if name is None:
         log("JOB - HTSQL development and build tool")
-        log("Copyright (c) 2006-2012, Prometheus Research, LLC")
+        log("Copyright (c) 2006-2013, Prometheus Research, LLC")
         log("Usage: `job [-v] <job> [<arguments>...]`")
         log()
         log("Run `job help` for general usage and a list of jobs.")

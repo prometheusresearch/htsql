@@ -35,7 +35,7 @@ ${DESCRIPTION}
 %install
 rm -rf $RPM_BUILD_ROOT
 %{__python} setup.py install -O1 --skip-build --root $RPM_BUILD_ROOT
- 
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 
@@ -47,6 +47,8 @@ ${FILES}
 %{python_sitelib}/*
 
 %changelog
+* Thu Jan 24 2013 Kirill Simonov <xi@resolvent.net> - 2.3.3-1
+- Upstream release
 * Thu Aug 23 2012 Kirill Simonov <xi@resolvent.net> - 2.3.2-1
 - Upstream release
 * Thu Jun 28 2012 Kirill Simonov <xi@resolvent.net> - 2.3.1-1
@@ -58,4 +60,4 @@ ${FILES}
 * Tue Nov 22 2011 Clark C. Evans <cce@clarkevans.com> - 2.2.0c1-1
 - Upstream release
 * Fri Nov 11 2011 Clark C. Evans <cce@clarkevans.com> - 2.2.0b2-1
-- Initial packaging 
+- Initial packaging

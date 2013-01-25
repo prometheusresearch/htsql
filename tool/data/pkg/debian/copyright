@@ -3,7 +3,7 @@ Upstream-Name: ${SOURCE_NAME}
 Source: http://pypi.python.org/pypi/${SOURCE_NAME}/
 
 Files: *
-Copyright: Copyright (c) 2006-2012, Prometheus Research, LLC
+Copyright: Copyright (c) 2006-2013, Prometheus Research, LLC
 License: AGPL-3 with 7b attribution and GPL-2 exception
  This program is free software: you can use, redistribute, and/or modify
  it under the terms of the GNU Affero General Public License, version 3
