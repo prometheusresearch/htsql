@@ -6,9 +6,9 @@
 from htsql.core.adapter import Protocol, call
 from htsql.core.introspect import Introspect
 from htsql.core.entity import make_catalog
-from htsql.core.domain import (BooleanDomain, IntegerDomain,
-                               FloatDomain, TextDomain, DateDomain,
-                               TimeDomain, DateTimeDomain, OpaqueDomain)
+from htsql.core.domain import (BooleanDomain, IntegerDomain, DecimalDomain,
+        FloatDomain, TextDomain, DateDomain, TimeDomain, DateTimeDomain,
+        OpaqueDomain)
 from htsql.core.connect import connect
 
 
@@ -137,6 +137,14 @@ class IntrospectSQLiteTextDomain(IntrospectSQLiteDomain):
 
     def __call__(self):
         return TextDomain()
+
+
+class IntrospectSQLiteDecimalDomain(IntrospectSQLiteDomain):
+
+    call('dec', 'num')
+
+    def __call__(self):
+        return DecimalDomain()
 
 
 class IntrospectSQLiteFloatDomain(IntrospectSQLiteDomain):

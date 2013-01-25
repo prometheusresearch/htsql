@@ -12534,7 +12534,7 @@ tests:
           body: |2
              | decimal('1E-10') |
             -+------------------+-
-             |            1e-10 |
+             |            1E-10 |
 
              ----
              /{decimal('1E-10')}
@@ -12547,17 +12547,17 @@ tests:
           body: |2
              | 4154781481226426191177580544000000.808017424794512875886459904961710757005754368000000000 |
             -+-------------------------------------------------------------------------------------------+-
-             |                                                                         4.15478148123e+33 |
+             |                                                                         4.15478148123E+33 |
 
              ----
              /{4154781481226426191177580544000000.808017424794512875886459904961710757005754368000000000}
-             SELECT 4.154781481226426e+33
+             SELECT 4.15478148123e+33
         - uri: /{decimal('vingt-cinq')}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid float literal: vingt-cinq
+            invalid decimal literal: vingt-cinq
             While translating:
                 /{decimal('vingt-cinq')}
                   ^^^^^^^^^^^^^^^^^^^^^
@@ -13121,7 +13121,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid float literal: cinq
+            invalid decimal literal: cinq
             While translating:
                 /{'cinq'!=4.9}
                   ^^^^^^
@@ -13257,7 +13257,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid float literal: cinq
+            invalid decimal literal: cinq
             While translating:
                 /{'cinq'>4.9}
                   ^^^^^^
@@ -13564,7 +13564,7 @@ tests:
              ----
              /{decimal(60),decimal(271828e-5)}
              SELECT 60.0,
-                    2.71828
+                    CAST(2.71828 AS REAL)
         - uri: /{float(60), float(2.125)}
           status: 200 OK
           headers:
@@ -13632,7 +13632,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            Cannot convert a value of type boolean to float
+            Cannot convert a value of type boolean to decimal
             While translating:
                 /{decimal(true())}
                   ^^^^^^^^^^^^^^^
@@ -13852,7 +13852,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            Cannot apply operator '-' to values of types (float, date)
+            Cannot apply operator '-' to values of types (decimal, date)
             Valid types:
                 (integer, integer)
                 (integer, decimal)
@@ -13916,7 +13916,8 @@ tests:
 
              ----
              /{7/0,7/0.0,7/0e0}
-             SELECT (7.0 / 0.0)
+             SELECT (7.0 / 0.0),
+                    (7.0 / 0.0)
         - uri: /{round(3272.78125), round(3272.78125,2), round(3272.78125,-2)}
           status: 200 OK
           headers:
@@ -14062,6 +14063,30 @@ tests:
              ----
              /{round(9973,-2)}
              SELECT (ROUND(9973.0 / 100.0) * 100.0)
+        - uri: /{round(271828e-5,2)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            Cannot apply function 'round' to values of types (float, integer)
+            Valid types:
+                (integer, integer)
+                (decimal, integer)
+            While translating:
+                /{round(271828e-5,2)}
+                  ^^^^^^^^^^^^^^^^^^
+        - uri: /{trunc(271828e-5,2)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            Cannot apply function 'trunc' to values of types (float, integer)
+            Valid types:
+                (integer, integer)
+                (decimal, integer)
+            While translating:
+                /{trunc(271828e-5,2)}
+                  ^^^^^^^^^^^^^^^^^^
       - id: text-functions-and-operators
         tests:
         - uri: /{text(null()), text('OMGWTFBBQ')}
@@ -29237,7 +29262,7 @@ tests:
                         },
                         {
                           "domain": {
-                            "type": "float"
+                            "type": "decimal"
                           },
                           "header": "2.125",
                           "syntax": "2.125"
@@ -29427,7 +29452,7 @@ tests:
             <tr><th class="htsql-empty-header"></th><th>null()</th><th>'HTSQL'</th><th>true()</th><th>false()</th><th>60</th><th>2.125</th><th>271828e-5</th><th>text(null())</th><th>text('')</th><th>text('OMGWTFBBQ')</th><th>date('2010-04-15')</th><th>time('20:13:04.5')</th><th>datetime('2010-04-15 20:13')</th></tr>
             </thead>
             <tbody>
-            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-untyped-type htsql-null-value"></td><td class="htsql-untyped-type">HTSQL</td><td class="htsql-boolean-type htsql-true-value">true</td><td class="htsql-boolean-type htsql-false-value">false</td><td class="htsql-integer-type">60</td><td class="htsql-float-type">2.125</td><td class="htsql-float-type">2.71828</td><td class="htsql-text-type htsql-null-value"></td><td class="htsql-text-type htsql-empty-value"></td><td class="htsql-text-type">OMGWTFBBQ</td><td class="htsql-date-type">2010-04-15</td><td class="htsql-time-type">20:13:04.500000</td><td class="htsql-datetime-type">2010-04-15 20:13:00</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-untyped-type htsql-null-value"></td><td class="htsql-untyped-type">HTSQL</td><td class="htsql-boolean-type htsql-true-value">true</td><td class="htsql-boolean-type htsql-false-value">false</td><td class="htsql-integer-type">60</td><td class="htsql-decimal-type">2.125</td><td class="htsql-float-type">2.71828</td><td class="htsql-text-type htsql-null-value"></td><td class="htsql-text-type htsql-empty-value"></td><td class="htsql-text-type">OMGWTFBBQ</td><td class="htsql-date-type">2010-04-15</td><td class="htsql-time-type">20:13:04.500000</td><td class="htsql-datetime-type">2010-04-15 20:13:00</td></tr>
             </tbody>
             </table>
             </body>
@@ -38286,7 +38311,6 @@ tests:
             Valid types:
                 (integer, integer)
                 (decimal, integer)
-                (float, integer)
             While translating:
                 /trunc(school,department)
                  ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -38527,7 +38551,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid float literal: !
+            invalid decimal literal: !
             While translating:
                 /decimal('!')
                  ^^^^^^^^^^^^

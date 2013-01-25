@@ -34,7 +34,12 @@ class SQLiteDumpBoolean(DumpBoolean):
 class SQLiteDumpDecimal(DumpDecimal):
 
     def __call__(self):
-        raise Error("Decimal data type is not supported")
+        assert self.value.is_finite()
+        value = float(self.value)
+        if value >= 0.0:
+            self.write(u"%s" % value)
+        else:
+            self.write(u"(%s)" % value)
 
 
 class SQLiteDumpDate(DumpDate):
@@ -66,7 +71,7 @@ class SQLiteDumpToFloat(DumpToFloat):
 class SQLiteDumpToDecimal(DumpToDecimal):
 
     def __call__(self):
-        raise Error("Decimal data type is not supported")
+        self.format("CAST({base} AS REAL)", base=self.base)
 
 
 class SQLiteDumpToText(DumpToText):

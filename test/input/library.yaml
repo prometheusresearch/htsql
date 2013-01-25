@@ -349,10 +349,8 @@ tests:
   # Inadmissible operand
   - uri: /{round(271828e-5,2)}
     expect: 400
-    ifndef: sqlite
   - uri: /{trunc(271828e-5,2)}
     expect: 400
-    ifndef: sqlite
 
 ########################################################################
 

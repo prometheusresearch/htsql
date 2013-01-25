@@ -7,11 +7,12 @@ from htsql.core.connect import Connect, Scramble, Unscramble, UnscrambleError
 from htsql.core.adapter import adapt
 from htsql.core.error import Error
 from htsql.core.context import context
-from htsql.core.domain import (BooleanDomain, TextDomain, DateDomain,
-        TimeDomain, DateTimeDomain)
+from htsql.core.domain import (BooleanDomain, TextDomain, IntegerDomain,
+        DecimalDomain, FloatDomain, DateDomain, TimeDomain, DateTimeDomain)
 import sqlite3
 import datetime
 import os.path
+import decimal
 
 
 def sqlite3_power(x, y):
@@ -70,8 +71,47 @@ class UnscrambleSQLiteBoolean(Unscramble):
         if isinstance(value, bool):
             return value
         if not isinstance(value, int):
-            raise SQLiteError("expected a Boolean value, got %r" % value)
+            raise Error("Expected a Boolean value, got", repr(value))
         return (value != 0)
+
+
+class UnscrambleSQLiteInteger(Unscramble):
+
+    adapt(IntegerDomain)
+
+    @staticmethod
+    def convert(value):
+        if value is None:
+            return None
+        if isinstance(value, (int, long)):
+            return value
+        raise Error("Expected an integer value, got", repr(value))
+
+
+class UnscrambleSQLiteDecimal(Unscramble):
+
+    adapt(DecimalDomain)
+
+    @staticmethod
+    def convert(value):
+        if value is None:
+            return None
+        if isinstance(value, float):
+            return decimal.Decimal(str(value))
+        raise Error("Expected a decimal value, got", repr(value))
+
+
+class UnscrambleSQLiteFloat(Unscramble):
+
+    adapt(FloatDomain)
+
+    @staticmethod
+    def convert(value):
+        if value is None:
+            return None
+        if isinstance(value, float):
+            return value
+        raise Error("Expected a float value, got", repr(value))
 
 
 class UnscrambleSQLiteText(Unscramble):
@@ -83,9 +123,12 @@ class UnscrambleSQLiteText(Unscramble):
         if value is None:
             return None
         if isinstance(value, str):
-            value = value.decode('utf-8')
+            try:
+                value = value.decode('utf-8')
+            except UnicodeDecodeError:
+                pass
         if not isinstance(value, unicode):
-            value = unicode(value)
+            raise Error("Expected a text value, got", repr(value))
         return value
 
 
@@ -100,7 +143,7 @@ class UnscrambleSQLiteDate(Unscramble):
         if isinstance(value, datetime.date):
             return value
         if not isinstance(value, (str, unicode)):
-            raise SQLiteError("expected a date value, got %r" % value)
+            raise Error("Expected a date value, got", repr(value))
         converter = sqlite3.converters['DATE']
         value = converter(value)
         return value
@@ -117,7 +160,7 @@ class UnscrambleSQLiteTime(Unscramble):
         if isinstance(value, datetime.time):
             return value
         if not isinstance(value, (str, unicode)):
-            raise SQLiteError("expected a time value, got %r" % value)
+            raise Error("Expected a time value, got", repr(value))
         # FIXME: verify that the value is in valid format.
         hour, minute, second = value.split(':')
         hour = int(hour)
@@ -144,7 +187,7 @@ class UnscrambleSQLiteDateTime(Unscramble):
         if isinstance(value, datetime.datetime):
             return value
         if not isinstance(value, (str, unicode)):
-            raise SQLiteError("expected a timestamp value, got %r" % value)
+            raise Error("Expected a timestamp value, got", repr(value))
         converter = sqlite3.converters['TIMESTAMP']
         value = converter(value)
         return value

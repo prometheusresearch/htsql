@@ -353,7 +353,10 @@ class DecimalToText(ToText):
             value = value.normalize()
             sign, digits, exp = value.as_tuple()
         if exp > 0:
-            value = value.quantize(decimal.Decimal(1))
+            # Guard against InvalidOperation:
+            # quantize result has too many digits for current context
+            if exp+len(digits) < 28:
+                value = value.quantize(decimal.Decimal(1))
         return unicode(value)
 
 
