@@ -14,8 +14,8 @@ This module implements the `shell` routine.
 from .error import ScriptError
 from .request import Request, DBRoutine
 from ..core.util import listof, trim_doc
-from ..core.model import (HomeNode, InvalidNode, InvalidArc, TableArc, 
-                          ColumnArc, ChainArc, AmbiguousArc)
+from ..core.model import (HomeNode, InvalidNode, InvalidArc, TableArc,
+        ColumnArc, ChainArc, AmbiguousArc)
 from ..core.classify import classify, normalize
 import traceback
 import StringIO
@@ -449,6 +449,7 @@ class GetPostBaseCmd(Cmd):
 
     @classmethod
     def complete(cls, routine, argument):
+        # FIXME: handle post arguments.
         if routine.state.app is None:
             return
         argument = argument.decode('utf-8', 'replace')
@@ -529,12 +530,29 @@ class GetPostBaseCmd(Cmd):
         return names
 
     def execute(self):
-        # Check if the argument of the command looks like an HTSQL query.
+        # Parse the argument.
         if not self.argument:
             self.ctl.out("** a query is expected")
             return
-        if self.argument[0] != '/':
-            self.ctl.out("** a query is expected; got %r" % self.argument)
+
+        query = self.argument
+
+        # Extract a filename and content type for a POST request.
+        if self.method == 'POST':
+            chunks = query.split(None, 1)
+            query = chunks.pop()
+            if not chunks:
+                self.ctl.out("** a file name is expected")
+                return
+            content_path = chunks.pop()
+            content_type = None
+            chunks = query.split(None, 1)
+            if len(chunks) == 2 and chunks[0][0] != '/':
+                query = chunks.pop()
+                content_type = chunks.pop()
+
+        if query[0] != '/':
+            self.ctl.out("** a query is expected; got %r" % query)
             return
 
         # Prepare the WSGI `environ` for a GET request.
@@ -544,10 +562,6 @@ class GetPostBaseCmd(Cmd):
 
         # Prepare the WSGI `environ` for a POST request.
         if self.method == 'POST':
-            # Get the name of the file containing POST data of the request.
-            if self.ctl.is_interactive:
-                self.ctl.out("File with POST data:", end=" ")
-            content_path = self.ctl.stdin.readline().strip()
             if not content_path:
                 self.ctl.out("** a file name is expected")
                 return
@@ -557,15 +571,10 @@ class GetPostBaseCmd(Cmd):
             content_body = open(content_path, 'rb').read()
 
             # Determine the content type of the POST data.
-            default_content_type = mimetypes.guess_type(content_path)[0]
-            if default_content_type is None:
-                default_content_type = 'application/octet-stream'
-            if self.ctl.is_interactive:
-                self.ctl.out("Content type [%s]:" % default_content_type,
-                             end=" ")
-            content_type = self.ctl.stdin.readline().strip()
             if not content_type:
-                content_type = default_content_type
+                content_type = mimetypes.guess_type(content_path)[0]
+                if content_type is None:
+                    content_type = 'application/octet-stream'
 
             request = Request.prepare('POST', query=self.argument,
                                       remote_user=self.state.remote_user,
@@ -648,13 +657,16 @@ class PostCmd(GetPostBaseCmd):
     """
 
     name = 'post'
-    signature = """post /query"""
+    signature = """post filename /query"""
     hint = """execute an HTSQL query with POST data"""
     help = """
-    Type `post /query` to execute an HTSQL query with POST data.
+    Type `post filename /query` or `post filename content-type /query` to
+    execute an HTSQL query with POST data.
 
-    You will be asked to provide a file containing the POST data and to
-    indicate the content type of the data.
+    The content of the POST request is read from the file `filename`.  You
+    can optionally specify the content type of the POST data as a second
+    parameter.  If content type is not specified, it is deduced from the
+    file extension.
 
     The output of the query is dumped to the console.  When the pager is
     enabled and the number of lines in the response body exceeds the height
@@ -752,6 +764,7 @@ class ShellState(object):
         self.completer = completer
         self.completer_delims = completer_delims
         self.completions = completions
+
 
 class VersionCmd(Cmd):
     """

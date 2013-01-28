@@ -122,18 +122,19 @@ tests:
       /count(school)
       /error
   # Post
+  - write: build/regress/post.json
+    data: |
+      { "school_code": "art" }
   - write: build/regress/post.data
     data: "school_code=art"
   - ctl: [shell, *db]
     stdin: |
       help post
       post
-      post /school
-      build/regress/post.data
-      application/x-www-form-urlencoded
-      post /school
-      error
-  - remove: [build/regress/post.data]
+      post build/regress/post.json /school
+      post build/regress/post.data application/x-www-form-urlencoded /school
+      post error /school
+  - remove: [build/regress/post.json, build/regress/post.data]
   # Run
   - write: build/regress/run.htsql
     data: |

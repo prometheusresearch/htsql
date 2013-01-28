@@ -156,7 +156,7 @@ tests:
         headers on|off           : display HTTP status line and headers
         pager on|off             : pipe long output to a pager
         [get] /query             : execute an HTSQL query
-        post /query              : execute an HTSQL query with POST data
+        post filename /query     : execute an HTSQL query with POST data
         run filename.htsql       : run an HTSQL query from a file
 
       Arguments:
@@ -245,7 +245,7 @@ tests:
         headers on|off           : display HTTP status line and headers
         pager on|off             : pipe long output to a pager
         [get] /query             : execute an HTSQL query
-        post /query              : execute an HTSQL query with POST data
+        post filename /query     : execute an HTSQL query with POST data
         run filename.htsql       : run an HTSQL query from a file
 
       help error
@@ -263,8 +263,8 @@ tests:
       license information.
 
       version
-      HTSQL 2.3.2
-      Copyright (c) 2006-2012, Prometheus Research, LLC
+      HTSQL 2.3.3
+      Copyright (c) 2006-2013, Prometheus Research, LLC
 
       This is free software: you are free to change and redistribute it.
       There is NO WARRANTY, to the extent permitted by law.  This software
@@ -387,12 +387,15 @@ tests:
     stdout: |
       help post
       POST - execute an HTSQL query with POST data
-      Usage: post /query
+      Usage: post filename /query
 
-      Type `post /query` to execute an HTSQL query with POST data.
+      Type `post filename /query` or `post filename content-type /query` to
+      execute an HTSQL query with POST data.
 
-      You will be asked to provide a file containing the POST data and to
-      indicate the content type of the data.
+      The content of the POST request is read from the file `filename`.  You
+      can optionally specify the content type of the POST data as a second
+      parameter.  If content type is not specified, it is deduced from the
+      file extension.
 
       The output of the query is dumped to the console.  When the pager is
       enabled and the number of lines in the response body exceeds the height
@@ -405,12 +408,11 @@ tests:
 
       post
       ** a query is expected
-      post /school
-      build/regress/post.data
-      application/x-www-form-urlencoded
+      post build/regress/post.json /school
       POST requests are not permitted.
-      post /school
-      error
+      post build/regress/post.data application/x-www-form-urlencoded /school
+      POST requests are not permitted.
+      post error /school
       ** file 'error' does not exist
     exit: 0
   - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
