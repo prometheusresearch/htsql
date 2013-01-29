@@ -219,6 +219,9 @@ tests:
   - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
     stdout: |
       help help
+      help
+      help error
+      error
       HELP - describe the shell or a shell command
       Usage: help [command]
 
@@ -227,7 +230,6 @@ tests:
 
       Type `help <command>` to learn how to use the specified command.
 
-      help
       To execute an HTSQL query, type
 
           /query
@@ -248,21 +250,19 @@ tests:
         post filename /query     : execute an HTSQL query with POST data
         run filename.htsql       : run an HTSQL query from a file
 
-      help error
       ** unknown command 'error'
-      error
       ** unknown command 'error'
     exit: 0
   - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
     stdout: |+
       help version
+      version
       VERSION - print version and license information
       Usage: version
 
       Type `version` to list the current software version and
       license information.
 
-      version
       HTSQL 2.3.3
       Copyright (c) 2006-2013, Prometheus Research, LLC
 
@@ -276,18 +276,21 @@ tests:
 
     exit: 0
   - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
-    stdout: |
+    stdout: |+
       help exit
+      exit
+      /count(school)
       EXIT - quit the shell
       Usage: exit
 
       Type `exit` or Ctrl-D to quit the shell.
 
-      exit
     exit: 0
   - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
     stdout: |
       help user
+      user
+      user htsql_demo
       USER - set the remote user for HTTP requests
       Usage: user [remote_user]
 
@@ -295,35 +298,34 @@ tests:
 
       To unset the remote user for HTTP requests, type `user`.
 
-      user
       ** remote user is unset
-      user htsql_demo
       ** remote user is set to 'htsql_demo'
     exit: 0
   - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
-    stdout: "help describe\nDESCRIBE - list tables, or slots for a given table\nUsage:
-      describe [table]\n\nType `describe` to list all tables or `describe <table>`
-      to list\nall columns and links for a given table.\n\ndescribe\nTables introspected
-      for this database are:\n\tappointment\n\tclass\n\tclassification\n\tconfidential\n\tcourse\n\tcourse_classification\n\tdepartment\n\tenrollment\n\tinstructor\n\tprerequisite\n\tprogram\n\tprogram_requirement\n\tschool\n\tsemester\n\tstudent\n\ndescribe
-      school\nSlots for `school` are:\n\t code       text\n\t name       text\n\t
-      campus     text\n\t department PLURAL(department)\n\t program    PLURAL(program)\n\ndescribe
-      school.code\nUnable to find table: school.code\n\ndescribe error\nUnable to
-      find table: error\n\n"
+    stdout: "help describe\ndescribe\ndescribe school\ndescribe school.code\ndescribe
+      error\nDESCRIBE - list tables, or slots for a given table\nUsage: describe [table]\n\nType
+      `describe` to list all tables or `describe <table>` to list\nall columns and
+      links for a given table.\n\nTables introspected for this database are:\n\tappointment\n\tclass\n\tclassification\n\tconfidential\n\tcourse\n\tcourse_classification\n\tdepartment\n\tenrollment\n\tinstructor\n\tprerequisite\n\tprogram\n\tprogram_requirement\n\tschool\n\tsemester\n\tstudent\n\nSlots
+      for `school` are:\n\t code       text\n\t name       text\n\t campus     text\n\t
+      department PLURAL(department)\n\t program    PLURAL(program)\n\nUnable to find
+      table: school.code\n\nUnable to find table: error\n\n"
     exit: 0
   - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
-    stdout: "help headers\nHEADERS - display HTTP status line and headers\nUsage:
-      headers on|off\n\nType `headers on` to enable output of HTTP status line and
-      headers along\nwith any HTTP response body.\n\nType `headers off` to disable
-      output of HTTP status line and headers.\nOnly HTTP response body will be displayed.\n\nheaders\n**
-      expected 'on' or 'off'\nheaders on\n** headers are turned on\n/count(school)\n200
-      OK\r\nContent-Type: text/plain; charset=UTF-8\r\nVary: Accept\r\n\r\n | count(school)
-      |\n-+---------------+-\n |             9 |\n\nheaders off\n** headers are turned
-      off\n/count(school)\n | count(school) |\n-+---------------+-\n |             9
-      |\n\n"
+    stdout: "help headers\nheaders\nheaders on\n/count(school)\nheaders off\n/count(school)\nHEADERS
+      - display HTTP status line and headers\nUsage: headers on|off\n\nType `headers
+      on` to enable output of HTTP status line and headers along\nwith any HTTP response
+      body.\n\nType `headers off` to disable output of HTTP status line and headers.\nOnly
+      HTTP response body will be displayed.\n\n** expected 'on' or 'off'\n** headers
+      are turned on\n200 OK\r\nContent-Type: text/plain; charset=UTF-8\r\nVary: Accept\r\n\r\n
+      | count(school) |\n-+---------------+-\n |             9 |\n\n** headers are
+      turned off\n | count(school) |\n-+---------------+-\n |             9 |\n\n"
     exit: 0
   - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
     stdout: |
       help pager
+      pager
+      pager on
+      pager off
       PAGER - pipe long output to a pager
       Usage: pager on|off
 
@@ -340,16 +342,17 @@ tests:
       `/usr/bin/more` is used if available.  The pager could only be enabled
       when the shell is running in a terminal.
 
-      pager
       ** expected 'on' or 'off'
-      pager on
       ** pager cannot be enabled in the non-interactive mode
-      pager off
       ** pager is disabled
     exit: 0
   - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
     stdout: |
       help get
+      get
+      get /count(school)
+      /count(school)
+      /error
       GET - execute an HTSQL query
       Usage: [get] /query
 
@@ -364,19 +367,15 @@ tests:
       headers.  To enable displaying the status line and the headers along
       with the response body, use `headers on`.
 
-      get
       ** a query is expected
-      get /count(school)
        | count(school) |
       -+---------------+-
        |             9 |
 
-      /count(school)
        | count(school) |
       -+---------------+-
        |             9 |
 
-      /error
       Found unknown attribute:
           error
       While translating:
@@ -386,6 +385,10 @@ tests:
   - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
     stdout: |
       help post
+      post
+      post build/regress/post.json /school
+      post build/regress/post.data application/x-www-form-urlencoded /school
+      post error /school
       POST - execute an HTSQL query with POST data
       Usage: post filename /query
 
@@ -406,18 +409,17 @@ tests:
       headers.  To enable displaying the status line and the headers along
       with the response body, use `headers on`.
 
-      post
       ** a query is expected
-      post build/regress/post.json /school
       POST requests are not permitted.
-      post build/regress/post.data application/x-www-form-urlencoded /school
       POST requests are not permitted.
-      post error /school
       ** file 'error' does not exist
     exit: 0
   - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
     stdout: |
       help run
+      run
+      run build/regress/run.htsql
+      run error
       RUN - run an HTSQL query from a file
       Usage: run filename.htsql
 
@@ -435,14 +437,96 @@ tests:
       headers.  To enable displaying the status line and the headers along
       with the response body, use `headers on`.
 
-      run
       ** a file name is expected
-      run build/regress/run.htsql
        | count(school) | count(program) | count(department) |
       -+---------------+----------------+-------------------+-
        |             9 |             40 |                27 |
 
-      run error
+       | school                               |
+       +------+-------------------------------+
+       | code | name                          |
+      -+------+-------------------------------+-
+       | art  | School of Art & Design        |
+       | bus  | School of Business            |
+       | edu  | College of Education          |
+       | eng  | School of Engineering         |
+       | la   | School of Arts and Humanities |
+       | mus  | School of Music & Dance       |
+       | ns   | School of Natural Sciences    |
+       | ph   | Public Honorariums            |
+       | sc   | School of Continuing Studies  |
+
+       | course                                                                                             |
+       +-----------------+-----+-------------------------------+---------+----------------------------------+
+       | department_code | no  | title                         | credits | description                      |
+      -+-----------------+-----+-------------------------------+---------+----------------------------------+-
+       | ee              | 107 | Exploration of Electrical     |       4 | "Exploration of electrical       |
+       :                 :     : Engineering                   :         : engineering through several      :
+       :                 :     :                               :         : hands-on activities that cover a :
+       :                 :     :                               :         : broad spectrum of applications   :
+       :                 :     :                               :         : and fundamental concepts. "      :
+       | ee              | 202 | Engineering Electromagnetics  |       3 | Static electric and magnetic     |
+       :                 :     :                               :         : fields; solutions to static      :
+       :                 :     :                               :         : field problems, electromagnetic  :
+       :                 :     :                               :         : waves, boundary conditions,      :
+       :                 :     :                               :         : engineering applications.        :
+       | ee              | 220 | Semiconductor Devices         |       3 | Theory of semiconductor devices, |
+       :                 :     :                               :         : principles of design and         :
+       :                 :     :                               :         : fabrication, p-n junctions,      :
+       :                 :     :                               :         : bipolar transistors, their       :
+       :                 :     :                               :         : structure, operation modes and   :
+       :                 :     :                               :         : application, MOS capacitors and  :
+       :                 :     :                               :         : MOSFETs.                         :
+       | ee              | 221 | Semiconductor Devices Lab     |       2 | Provides practical examination   |
+       :                 :     :                               :         : of semiconductor devices         :
+       :                 :     :                               :         : properties.                      :
+       | ee              | 228 | Circuits and Electronics      |       3 | Fundamentals of lumped circuit   |
+       :                 :     :                               :         : abstraction: resistive elements  :
+       :                 :     :                               :         : and networks, energy storage     :
+       :                 :     :                               :         : elements, switches, amplifiers,  :
+       :                 :     :                               :         : analog and digital circuit       :
+       :                 :     :                               :         : principles.                      :
+       | ee              | 251 | Mathematical Methods in       |       3 | Topics in mathematics useful in  |
+       :                 :     : Engineering                   :         : engeineering: differential       :
+       :                 :     :                               :         : equations, Fourier series,       :
+       :                 :     :                               :         : Laplace transforms, boundary     :
+       :                 :     :                               :         : value problems.                  :
+       | ee              | 315 | Signals and Systems           |       3 | Concepts of continuous and       |
+       :                 :     :                               :         : digital signal analysis,         :
+       :                 :     :                               :         : modeling continuous and discrete :
+       :                 :     :                               :         : linear dynamical systems.        :
+       | ee              | 319 | Electric Power Systems        |       3 | Introductory course to the field |
+       :                 :     :                               :         : of electric power and electrical :
+       :                 :     :                               :         : to/from mechanical power         :
+       :                 :     :                               :         : conversion.                      :
+       | ee              | 329 | Optical Communication         |       3 | Study of optical communication   |
+       :                 :     :                               :         : systems with emphasis on physics :
+       :                 :     :                               :         : of the optical processes and     :
+       :                 :     :                               :         : system functional units.         :
+       | ee              | 412 | Laboratory in Electrical      |       4 | Hands-on experience covering     |
+       :                 :     : Engineering                   :         : areas of optical transforms,     :
+       :                 :     :                               :         : electro-optics devices, signal   :
+       :                 :     :                               :         : processing, fiber optics         :
+       :                 :     :                               :         : transmission, and holography.    :
+       | ee              | 436 | PCB Design                    |       3 | Principles of PCB design,        |
+       :                 :     :                               :         : development and manufacturing    :
+       :                 :     :                               :         : process details.                 :
+       | ee              | 437 | PCB Design Lab                |       3 | Practice in PCB design using     |
+       :                 :     :                               :         : specific software.               :
+       | ee              | 505 | Information Theory            |       3 | Mathematical measurement of      |
+       :                 :     :                               :         : information; information         :
+       :                 :     :                               :         : transfer in discrete systems;    :
+       :                 :     :                               :         : redundancy, efficiency, and      :
+       :                 :     :                               :         : channel capacity; encoding       :
+       :                 :     :                               :         : systems.                         :
+       | ee              | 615 | Learning and Adaptive Systems |       3 | Adaptive and learning control    |
+       :                 :     :                               :         : systems; system identification;  :
+       :                 :     :                               :         : performance indices; gradient,   :
+       :                 :     :                               :         : stochastic approximation,        :
+       :                 :     :                               :         : controlled random search         :
+       :                 :     :                               :         : methods; introduction to pattern :
+       :                 :     :                               :         : recognition.                     :
+
       ** file 'error' does not exist
     exit: 0
 - id: htsql-ctl-server

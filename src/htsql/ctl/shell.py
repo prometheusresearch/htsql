@@ -22,6 +22,7 @@ import StringIO
 import mimetypes
 import sys
 import os, os.path
+import glob
 import re
 import subprocess
 import struct
@@ -706,33 +707,42 @@ class RunCmd(GetPostBaseCmd):
 
     @classmethod
     def complete(cls, routine, argument):
-        return None
+        if not argument or argument != argument.rstrip():
+            argument = ""
+        else:
+            argument = argument.split()[-1]
+        argument = os.path.expanduser(argument)
+        filenames = []
+        for filename in glob.glob(argument+"*"):
+            if os.path.isfile(filename):
+                filenames.append(filename)
+            elif os.path.isdir(filename):
+                filenames.append(filename+"/")
+        tails = []
+        for filename in filenames:
+            if filename.startswith(argument) and filename != argument:
+                tails.append(filename[len(argument):])
+        return tails
 
     def execute(self):
         # Check if the argument is suppied and is a valid filename.
         if not self.argument:
             self.ctl.out("** a file name is expected")
             return
-        if not os.path.isfile(self.argument):
-            self.ctl.out("** file %r does not exist" % self.argument)
-            return
+        filenames = []
+        for pattern in self.argument.split():
+            pattern_filenames = sorted(glob.glob(os.path.expanduser(pattern)))
+            if not pattern_filenames:
+                self.ctl.out("** file %r does not exist" % pattern)
+                return
+            filenames.extend(pattern_filenames)
 
-        # Read the file, check if it looks like valid HTSQL.
-        stream = open(self.argument)
-        query = stream.read().strip()
-        stream.close()
-        if not query or query[0] != '/':
-            self.ctl.out("** file %r does not contain a valid HTSQL query"
-                         % self.argument)
-            return
-
-        # Prepare and execute a WSGI request.
-        request = Request.prepare('GET', query=query,
-                                  remote_user=self.state.remote_user)
-        response = request.execute(self.state.app)
-
-        # Display the response using a pager when necessary.
-        self.dump(response)
+        for filename in filenames:
+            if not os.path.isfile(filename):
+                self.ctl.out("** %r is not a file" % filename)
+            stream = open(filename)
+            self.routine.run_noninteractive(stream)
+            stream.close()
 
 
 class ShellState(object):
@@ -1093,19 +1103,28 @@ class ShellRoutine(DBRoutine):
         # Set the active HTSQL application.
         self.state.app = app
 
+        # For TTY input, setup readline and run one command at a time.
+        if self.ctl.is_interactive:
+            self.run_interactive()
+        # For a non-TTY input, read and execute all commands from the input
+        # stream.
+        else:
+            self.run_noninteractive(self.ctl.stdin)
+
+    def run_interactive(self):
         # Display the welcome notice; load the history.
-        self.setup()
+        self.setup_interactive()
         try:
             # Read and execute commands until instructed to exit.
-            while self.loop() is None:
+            while self.loop_interactive() is None:
                 pass
         finally:
             # Save the history.
-            self.shutdown()
+            self.shutdown_interactive()
 
-    def setup(self):
+    def setup_interactive(self):
         # Load the `readline` history; initialize completion.
-        if self.ctl.is_interactive and readline is not None:
+        if readline is not None:
             path = os.path.abspath(os.path.expanduser(self.history_path))
             if os.path.exists(path):
                 readline.read_history_file(path)
@@ -1117,14 +1136,13 @@ class ShellRoutine(DBRoutine):
             readline.parse_and_bind("tab: complete")
 
         # Display the welcome notice.
-        if self.ctl.is_interactive:
-            intro = self.get_intro()
-            if intro:
-                self.ctl.out(intro)
+        intro = self.get_intro()
+        if intro:
+            self.ctl.out(intro)
 
-    def shutdown(self):
+    def shutdown_interactive(self):
         # Save the `readline` history; restore the original state of completion.
-        if self.ctl.is_interactive and readline is not None:
+        if readline is not None:
             path = os.path.abspath(os.path.expanduser(self.history_path))
             directory = os.path.dirname(path)
             if not os.path.exists(directory):
@@ -1136,32 +1154,56 @@ class ShellRoutine(DBRoutine):
             readline.set_completer(self.state.completer)
             readline.set_completer_delims(self.state.completer_delims)
 
-    def loop(self):
-        # Display the prompt and read the command from the console.
-        # On EOF, exit the loop.
-        if self.ctl.is_interactive:
-            prompt = "$ "
-            app = self.state.app
-            if app is not None and app.htsql.db is not None:
-                # When the database is a file, strip the dirname and
-                # the extension.
-                database = os.path.basename(app.htsql.db.database)
-                database = os.path.splitext(database)[0]
-                prompt = "%s$ " % database
-            try:
-                line = raw_input(prompt)
-            except EOFError:
-                self.ctl.out()
-                return True
-        else:
-            line = self.ctl.stdin.readline()
-            if not line:
-                return True
+    def loop_interactive(self):
+        # Display the prompt and read the command from the console
+        # or the input stream.  On EOF, exit the loop.
+        prompt = "$ "
+        app = self.state.app
+        if app is not None and app.htsql.db is not None:
+            # When the database is a file, strip the dirname and
+            # the extension.
+            database = os.path.basename(app.htsql.db.database)
+            database = os.path.splitext(database)[0]
+            prompt = "%s$ " % database
+        try:
+            line = raw_input(prompt)
+        except EOFError:
+            self.ctl.out()
+            return True
 
         # Skip empty lines.
         line = line.strip()
         if not line:
             return
+
+        return self.execute(line)
+
+    def run_noninteractive(self, stream):
+        blocks = []
+        lines = []
+        for line in stream:
+            if not line.strip():
+                if lines:
+                    lines.append(line)
+            elif line == line.lstrip():
+                if lines:
+                    blocks.append(lines)
+                lines = [line]
+            else:
+                if not lines:
+                    self.ctl.out("** unexpected indentation %r" % line)
+                else:
+                    lines.append(line)
+        if lines:
+            blocks.append(lines)
+        for lines in blocks:
+            while lines and not lines[-1]:
+                lines.pop()
+            if self.execute("\n".join(lines)) is not None:
+                return
+
+    def execute(self, line):
+        # Parse the command line and execute the command.
 
         # Determine the command name and the command argument.
         name = line.split()[0]

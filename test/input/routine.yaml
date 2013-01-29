@@ -141,6 +141,9 @@ tests:
       /{count(school),
         count(program),
         count(department)}
+      /school{code, name}
+      /department[ee]
+        .course
   - ctl: [shell, *db]
     stdin: |
       help run
