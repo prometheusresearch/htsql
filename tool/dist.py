@@ -94,11 +94,17 @@ def clean():
     """
     if os.path.exists("./build"):
         rmtree("./build")
+    if os.path.exists("./dist"):
+        rmtree("./dist")
     for dirpath, dirnames, filenames in os.walk("."):
         for filename in filenames:
             if filename.endswith(".pyc") or filename.endswith(".pyo"):
                 filename = os.path.join(dirpath, filename)
                 rm(filename)
+        for dirname in dirnames:
+            if dirname == "vendor":
+                dirname = os.path.join(dirpath, dirname)
+                rmtree(dirname)
     for filename in ls("./HTSQL-*"):
         if os.path.isdir(filename):
             rmtree(filename)

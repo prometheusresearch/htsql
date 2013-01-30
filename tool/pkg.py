@@ -154,7 +154,7 @@ def pkg_src():
             mktree("./build/tmp")
             run("hg archive ./build/tmp/htsql")
             if with_doc:
-                setup_py("build_vendor", cd="./build/tmp/htsql")
+                setup_py("-q download_vendor", cd="./build/tmp/htsql")
             for dirname in ls("./build/tmp/htsql/src/*"):
                 if os.path.basename(dirname) not in packages:
                     rmtree(dirname)

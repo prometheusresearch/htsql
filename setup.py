@@ -11,8 +11,7 @@
 
 
 from setuptools import setup, find_packages
-from setuptools.command.develop import develop as setuptools_develop
-from distutils.command.build import build as setuptools_build
+from setuptools.command.egg_info import egg_info as setuptools_egg_info
 from distutils.cmd import Command
 from distutils.dir_util import remove_tree
 from distutils import log
@@ -95,7 +94,7 @@ def get_vendors():
     ]
 
 
-class build_vendor(Command):
+class download_vendor(Command):
     # Download vendor packages.
 
     user_options = []
@@ -107,7 +106,7 @@ class build_vendor(Command):
         pass
 
     def run(self):
-        build_cmd = self.get_finalized_command('build')
+        info_cmd = self.get_finalized_command('egg_info')
         for url, md5_hash, target in get_vendors():
             if os.path.exists(target):
                 continue
@@ -116,7 +115,7 @@ class build_vendor(Command):
             data = stream.read()
             stream.close()
             assert hashlib.md5(data).hexdigest() == md5_hash
-            build_dir = os.path.join(build_cmd.build_base,
+            build_dir = os.path.join(info_cmd.egg_info,
                                      os.path.basename(target))
             if os.path.exists(build_dir):
                 remove_tree(build_dir)
@@ -155,16 +154,12 @@ class build_vendor(Command):
             os.rename(build_dir, target)
 
 
-class build(setuptools_build):
+class egg_info(setuptools_egg_info):
+    # Make sure `download_vendor` is executed as early as possible.
 
-    sub_commands = [('build_vendor', None)] + setuptools_build.sub_commands
-
-
-class develop(setuptools_develop):
-
-    def install_for_development(self):
-        self.run_command('build_vendor')
-        setuptools_develop.install_for_development(self)
+    def find_sources(self):
+        self.run_command('download_vendor')
+        setuptools_egg_info.find_sources(self)
 
 
 if __name__ == '__main__':
@@ -179,8 +174,7 @@ if __name__ == '__main__':
               'htsql.routines': get_routines(),
               'htsql.addons': get_addons()},
           cmdclass={
-              'build_vendor': build_vendor,
-              'build': build,
-              'develop': develop})
+              'download_vendor': download_vendor,
+              'egg_info': egg_info})
 
 
