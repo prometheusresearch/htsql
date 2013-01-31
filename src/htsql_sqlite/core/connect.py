@@ -35,7 +35,7 @@ class ConnectSQLite(Connect):
         # Check if the database file exists.
         if not ((db.database.startswith(":") and db.database.endswith(":")) or
                 os.path.exists(db.database)):
-            raise Error("file does not exist: %s" % db.path)
+            raise Error("file does not exist: %s" % db.database)
         # Generate and return the DBAPI connection.
         connection = sqlite3.connect(db.database)
         self.create_functions(connection)

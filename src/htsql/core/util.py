@@ -1170,6 +1170,9 @@ class DB(Clonable, Hashable, Printable):
                 raise ValueError("options must be a dictionary with"
                                  " string keys and values; got %r" % options)
 
+        # Permit capitalized engine name.
+        engine = engine.lower()
+
         # We are done, produce an instance.
         return cls(engine, database, username, password, host, port, options)
 

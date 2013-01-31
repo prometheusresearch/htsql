@@ -13,10 +13,11 @@ This module implements the `shell` routine.
 
 from .error import ScriptError
 from .request import Request, DBRoutine
-from ..core.util import listof, trim_doc
+from ..core.util import listof, trim_doc, to_name
 from ..core.model import (HomeNode, InvalidNode, InvalidArc, TableArc,
-        ColumnArc, ChainArc, AmbiguousArc)
-from ..core.classify import classify, normalize
+        ColumnArc, ChainArc, SyntaxArc, AmbiguousArc)
+from ..core.classify import classify, normalize, relabel, localize
+from ..core.entity import UniqueKeyEntity, ForeignKeyEntity
 import traceback
 import StringIO
 import mimetypes
@@ -800,79 +801,236 @@ class DescribeCmd(Cmd):
     """
 
     name = 'describe'
-    signature = """describe [table]"""
-    hint = """list tables, or slots for a given table"""
+    signature = """describe [name]"""
+    hint = """describe a database entity"""
     help = """
-    Type `describe` to list all tables or `describe <table>` to list
-    all columns and links for a given table.
+    Type `describe` to list the content of the database.
+
+    Type `describe <table>` to describe a table and list table
+    attributes.
+
+    Typ `describe <table>.<column>` or `describe <table>.<link>`
+    to describe a table attribute.
     """
 
     @classmethod
     def complete(cls, routine, argument):
-        if argument:
-            return None
+        path = [name.strip().lower() for name in argument.split('.')]
+        if path:
+            if path[-1]:
+                return None
+            path.pop()
+        node = HomeNode()
         with routine.state.app:
-             return [label.name for label in classify(HomeNode())]
+            labels = [label for label in classify(node)
+                      if label.arity is None and
+                         not isinstance(label.arc, InvalidArc)]
+        for name in path:
+            node_by_name = dict((label.name.encode('utf-8'), label.target)
+                                for label in labels)
+            if name not in node_by_name:
+                return None
+            node = node_by_name[name]
+            with routine.state.app:
+                labels = [label for label in classify(node)
+                          if label.arity is None and
+                             not isinstance(label.arc, InvalidArc)]
+        return [label.name.encode('utf-8') for label in labels]
 
     def execute(self):
+        path = []
+        if self.argument:
+            path = [name.strip() for name in self.argument.split('.')]
+        arc = None
+        for name in path:
+            if to_name(name).encode('utf-8') != name.lower():
+                self.ctl.out("** invalid identifier %r" % name)
+                return
+            if arc is None:
+                node = HomeNode()
+            else:
+                node = arc.target
+            with self.state.app:
+                labels = [label for label in classify(node)
+                          if label.arity is None and
+                             not isinstance(label.arc, InvalidArc)]
+            arc_by_name = dict((label.name.encode('utf-8'), label.arc)
+                                for label in labels)
+            if name.lower() not in arc_by_name:
+                self.ctl.out("** unknown identifier %r" % name)
+                return
+            arc = arc_by_name[name.lower()]
+
+        if arc is None:
+            node = HomeNode()
+        else:
+            node = arc.target
         with self.state.app:
-             root_labels = classify(HomeNode())
+            labels = [label for label in classify(node)
+                      if not isinstance(label.arc, InvalidArc)]
 
-        if not self.argument:
-            #
-            # Enumerate introspected tables if one isn't provided
-            #
-            if not(root_labels):
-                 self.ctl.out("No tables introspected or configured.")
-                 return
-            self.ctl.out("Tables introspected for this database are:")
-            for label in root_labels:
-                if not isinstance(label.arc, TableArc):
-                     continue
-                if label.name == label.arc.target.table.name:
-                    self.ctl.out("\t%s" % label.name)
+        if arc is None:
+            db = self.state.app.htsql.db
+            sanitized_db = self.state.app.htsql.db.clone(
+                    engine=db.engine.upper(), password=None)
+            name = str(sanitized_db)
+            kind = "HTSQL database"
+        else:
+            name = ".".join(to_name(name) for name in path).upper()
+            kind = self.get_arc_kind(arc)
+        self.ctl.out("%s - %s" % (name, kind))
+        for line in self.get_arc_description(arc):
+            self.ctl.out(line)
+        if labels:
+            self.ctl.out()
+            self.ctl.out("Labels:")
+            for label in labels:
+                signature = self.get_label_signature(label)
+                hint = self.get_arc_kind(label.arc)
+                self.ctl.out("  ", end="")
+                if hint is not None:
+                    self.ctl.out("%-24s : %s" % (signature, hint))
                 else:
-                    self.ctl.out("\t%s (%s)" % (label.name,
-                                                label.arc.target.table.name))
-            self.ctl.out()
-            return
-        #
-        # Dump table attributes if a specific table is requested.
-        #
-        slots = None
-        with self.state.app:
-            for label in root_labels:
-                if label.name == self.argument:
-                    slots = classify(label.arc.target)
-        if slots is None:
-            self.ctl.out("Unable to find table: %s" % self.argument)
-            self.ctl.out()
-            return
-
-        max_width = 0
-        for slot in slots:
-            if isinstance(slot.arc, AmbiguousArc):
-                continue
-            if len(slot.name) > max_width:
-                max_width = len(slot.name)
-        if not max_width:
-            self.ctl.out("Table `%s` has no slots." % self.argument)
-            self.ctl.out()
-            return
-
-        self.ctl.out("Slots for `%s` are:" % self.argument)
-        for slot in slots:
-            name = slot.name.ljust(max_width)
-            post = str(slot.arc.target)
-            if isinstance(slot.arc, ChainArc):
-                if slot.arc.is_contracting:
-                    post = "SINGULAR(%s)" % post
-                else:
-                    post = "PLURAL(%s)" % post
-            if isinstance(slot.arc, AmbiguousArc):
-                continue
-            self.ctl.out("\t %s %s" % (name, post))
+                    self.ctl.out(signature)
         self.ctl.out()
+
+    def get_arc_kind(self, arc):
+        if isinstance(arc, TableArc):
+            return "table"
+        elif isinstance(arc, ColumnArc):
+            return "%s column" % arc.column.domain
+        elif isinstance(arc, ChainArc):
+            with self.state.app:
+                target_labels = relabel(TableArc(arc.target.table))
+            target_name = None
+            if target_labels:
+                target_name = target_labels[0].name.encode('utf-8')
+            if arc.is_contracting:
+                kind = "link"
+            else:
+                kind = "plural link"
+            if target_name:
+                kind = "%s to %s" % (kind, target_name)
+            return kind
+        elif isinstance(arc, SyntaxArc):
+            return "calculated attribute"
+        else:
+            return "attribute"
+
+    def get_arc_description(self, arc):
+        if isinstance(arc, TableArc):
+            table = arc.table
+            yield ""
+            yield "SQL name:"
+            yield "  %s" % table
+            if table.unique_keys:
+                yield ""
+                yield "Unique keys:"
+                for unique_key in table.unique_keys:
+                    yield "  %s" % self.get_key_description(unique_key)
+            if table.foreign_keys or table.referring_foreign_keys:
+                yield ""
+                yield "Foreign keys:"
+                for foreign_key in table.foreign_keys:
+                    yield "  %s" % self.get_key_description(foreign_key)
+                for foreign_key in table.referring_foreign_keys:
+                    if foreign_key.origin is table:
+                        continue
+                    yield "  %s" % self.get_key_description(foreign_key)
+            with self.state.app:
+                identity = localize(arc.target)
+            if identity:
+                identity_names = []
+                for identity_arc in identity:
+                    with self.state.app:
+                        identity_labels = relabel(identity_arc)
+                    if not identity_labels:
+                        break
+                    identity_names.append(
+                            identity_labels[0].name.encode('utf-8'))
+                else:
+                    yield ""
+                    yield "Identity:"
+                    yield "  %s" % ", ".join(identity_names)
+        elif isinstance(arc, ColumnArc):
+            column = arc.column
+            yield ""
+            yield "SQL name:"
+            yield "  %s" % column
+            yield ""
+            yield "Domain:"
+            yield "  %s" % column.domain
+            yield ""
+            yield "Nullable?"
+            if column.is_nullable:
+                yield "  yes"
+            else:
+                yield "  no"
+            if column.unique_keys:
+                yield ""
+                yield "Unique keys:"
+                for unique_key in column.unique_keys:
+                    yield "  %s" % self.get_key_description(unique_key)
+            if column.foreign_keys or column.referring_foreign_keys:
+                yield ""
+                yield "Foreign keys:"
+                for foreign_key in column.foreign_keys:
+                    yield "  %s" % self.get_key_description(foreign_key)
+                for foreign_key in column.referring_foreign_keys:
+                    if column in foreign_key.origin_columns:
+                        continue
+                    yield "  %s" % self.get_key_description(foreign_key)
+            if arc.link is not None and not isinstance(arc.link, InvalidArc):
+                yield ""
+                yield "Link:"
+                yield "  %s" % self.get_arc_kind(arc.link)
+        elif isinstance(arc, ChainArc):
+            yield ""
+            yield "Joins:"
+            for join in arc.joins:
+                yield "  %s" % join
+        elif isinstance(arc, SyntaxArc):
+            yield ""
+            yield "Definition:"
+            yield "  %s" % arc.syntax
+
+    def get_key_description(self, key):
+        description = str(key)
+        flags = []
+        if isinstance(key, UniqueKeyEntity):
+            if key.is_primary:
+                flags.append("primary")
+            if any(column.is_nullable for column in key.origin_columns):
+                flags.append("nullable")
+            if key.is_partial:
+                flags.append("partial")
+        elif isinstance(key, ForeignKeyEntity):
+            if any(column.is_nullable for column in key.origin_columns):
+                flags.append("nullable")
+            if key.is_partial:
+                flags.append("partial")
+        if flags:
+            return "%s {%s}" % (description, ", ".join(flags))
+        else:
+            return description
+
+    def get_label_signature(self, label):
+        if label.arity is None:
+            return label.name.encode('utf-8')
+        elif label.arity == 0:
+            return "%s()" % label.name.encode('utf-8')
+        else:
+            if isinstance(label.arc, SyntaxArc):
+                parameters = []
+                for name, is_reference in label.arc.parameters:
+                    name = name.encode('utf-8')
+                    if is_reference:
+                        name = "$%s" % name
+                    parameters.append(name)
+            else:
+                parameters = ["?"]*len(label.arity)
+            return "%s(%s)" % (label.name.encode('utf-8'),
+                               ",".join(parameters))
 
 
 class ShellRoutine(DBRoutine):
@@ -1240,7 +1398,7 @@ class ShellRoutine(DBRoutine):
                 else:
                     name = prefix.split()[0]
                     if self.command_name_pattern.match(name):
-                        prefix = prefix[len(name):].strip()
+                        prefix = prefix[len(name):].lstrip()
                     else:
                         name = ''
                     if name in self.command_by_name:

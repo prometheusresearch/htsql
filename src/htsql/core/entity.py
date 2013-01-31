@@ -546,8 +546,12 @@ class Join(Printable, Hashable):
 
     def __unicode__(self):
         # Generate a string of the form:
-        #   schema.table -> schema.table
-        return u"%s -> %s" % (self.origin, self.target)
+        #   schema.table(column,...) -> schema.table(column,...)
+        return u"%s(%s) -> %s(%s)" % \
+                (self.origin,
+                 u",".join(column.name for column in self.origin_columns),
+                 self.target,
+                 u",".join(column.name for column in self.target_columns))
 
     def __str__(self):
         return unicode(self).encode('utf-8')

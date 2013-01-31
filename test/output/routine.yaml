@@ -152,7 +152,7 @@ tests:
         version                  : print version and license information
         exit                     : quit the shell
         user [remote_user]       : set the remote user for HTTP requests
-        describe [table]         : list tables, or slots for a given table
+        describe [name]          : describe a database entity
         headers on|off           : display HTTP status line and headers
         pager on|off             : pipe long output to a pager
         [get] /query             : execute an HTSQL query
@@ -243,7 +243,7 @@ tests:
         version                  : print version and license information
         exit                     : quit the shell
         user [remote_user]       : set the remote user for HTTP requests
-        describe [table]         : list tables, or slots for a given table
+        describe [name]          : describe a database entity
         headers on|off           : display HTTP status line and headers
         pager on|off             : pipe long output to a pager
         [get] /query             : execute an HTSQL query
@@ -302,13 +302,103 @@ tests:
       ** remote user is set to 'htsql_demo'
     exit: 0
   - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
-    stdout: "help describe\ndescribe\ndescribe school\ndescribe school.code\ndescribe
-      error\nDESCRIBE - list tables, or slots for a given table\nUsage: describe [table]\n\nType
-      `describe` to list all tables or `describe <table>` to list\nall columns and
-      links for a given table.\n\nTables introspected for this database are:\n\tappointment\n\tclass\n\tclassification\n\tconfidential\n\tcourse\n\tcourse_classification\n\tdepartment\n\tenrollment\n\tinstructor\n\tprerequisite\n\tprogram\n\tprogram_requirement\n\tschool\n\tsemester\n\tstudent\n\nSlots
-      for `school` are:\n\t code       text\n\t name       text\n\t campus     text\n\t
-      department PLURAL(department)\n\t program    PLURAL(program)\n\nUnable to find
-      table: school.code\n\nUnable to find table: error\n\n"
+    stdout: |
+      help describe
+      describe
+      describe department
+      describe department.school_code
+      describe department.course
+      describe error
+      DESCRIBE - describe a database entity
+      Usage: describe [name]
+
+      Type `describe` to list the content of the database.
+
+      Type `describe <table>` to describe a table and list table
+      attributes.
+
+      Typ `describe <table>.<column>` or `describe <table>.<link>`
+      to describe a table attribute.
+
+      SQLITE:///build/regress/sqlite/htsql_demo.sqlite - HTSQL database
+
+      Labels:
+        appointment              : table
+        class                    : table
+        classification           : table
+        confidential             : table
+        course                   : table
+        course_classification    : table
+        department               : table
+        enrollment               : table
+        instructor               : table
+        prerequisite             : table
+        program                  : table
+        program_requirement      : table
+        school                   : table
+        semester                 : table
+        student                  : table
+
+      DEPARTMENT - table
+
+      SQL name:
+        department
+
+      Unique keys:
+        department(code) {primary}
+        department(name)
+
+      Foreign keys:
+        department(school_code) -> school(code) {nullable}
+        appointment(department_code) -> department(code)
+        course(department_code) -> department(code)
+
+      Identity:
+        code
+
+      Labels:
+        code                     : text column
+        name                     : text column
+        school_code              : text column
+        school                   : link to school
+        appointment              : plural link to appointment
+        course                   : plural link to course
+
+      DEPARTMENT.SCHOOL_CODE - text column
+
+      SQL name:
+        department.school_code
+
+      Domain:
+        text
+
+      Nullable?
+        yes
+
+      Foreign keys:
+        department(school_code) -> school(code) {nullable}
+
+      Link:
+        link to school
+
+      DEPARTMENT.COURSE - plural link to course
+
+      Joins:
+        department(code) -> course(department_code)
+
+      Labels:
+        department_code          : text column
+        no                       : integer column
+        title                    : text column
+        credits                  : integer column
+        description              : text column
+        department               : link to department
+        class                    : plural link to class
+        course_classification    : plural link to course_classification
+        prerequisite_via_of_course : plural link to prerequisite
+        prerequisite_via_on_course : plural link to prerequisite
+
+      ** unknown identifier 'error'
     exit: 0
   - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
     stdout: "help headers\nheaders\nheaders on\n/count(school)\nheaders off\n/count(school)\nHEADERS
