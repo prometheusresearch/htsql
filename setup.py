@@ -77,8 +77,6 @@ def get_addons():
         'tweak.timeout = htsql.tweak.timeout:TweakTimeoutAddon',
         'tweak.timeout.pgsql'
             ' = htsql_pgsql.tweak.timeout:TweakTimeoutPGSQLAddon',
-        'tweak.view = htsql.tweak.view:TweakViewAddon',
-        'tweak.view.pgsql = htsql_pgsql.tweak.view:TweakViewPGSQLAddon',
     ]
 
 
