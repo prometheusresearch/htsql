@@ -387,6 +387,32 @@ tests:
   - uri: /sqlite_gw(/nothing)
     expect: 400
 
+# TWEAK.HELLO - 'Hello, World!'
+- title: tweak.hello
+  tests:
+  # Addon description
+  - ctl: [ext, tweak.hello]
+
+  # Load the addon
+  - load: demo
+    extensions:
+      tweak.hello: {}
+
+  # Run the command
+  - uri: /hello()
+
+  # Invalid invocation
+  - uri: /hello('world')
+    expect: 400
+
+  # Plugin parameters
+  - load: demo
+    extensions:
+      tweak.hello:
+        address: home
+        repeat: 3
+  - uri: /hello()
+
 # TWEAK.INET - IPv4 data type
 - title: tweak.inet
   ifdef: pgsql

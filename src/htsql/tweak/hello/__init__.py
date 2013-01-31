@@ -6,26 +6,25 @@
 from ...core.context import context
 from ...core.adapter import adapt, call
 from ...core.addon import Addon, Parameter
-from ...core.tr.fn.bind import BindCommand
-from ...core.tr.binding import CommandBinding
-from ...core.tr.signature import NullarySig
-from ...core.cmd.command import Command
-from ...core.cmd.act import Act, RenderAction
 from ...core.validator import PIntVal, ChoiceVal
+from ...core.error import Error
+from ...core.cmd.command import Command
+from ...core.cmd.summon import Summon
+from ...core.cmd.act import Act, RenderAction
 
 
 class HelloCmd(Command):
     pass
 
 
-class BindHello(BindCommand):
+class SummonHello(Summon):
 
     call('hello')
-    signature = NullarySig
 
-    def expand(self):
-        command = HelloCmd()
-        return CommandBinding(self.state.scope, command, self.syntax)
+    def __call__(self):
+        if self.arguments:
+            raise Error("Expected no arguments")
+        return HelloCmd()
 
 
 class RenderHello(Act):
@@ -38,28 +37,27 @@ class RenderHello(Act):
         repeat = context.app.tweak.hello.repeat
         line = "Hello, " + address.capitalize() + "!\n"
         headers = [('Content-Type', "text/plain; charset=UTF-8")]
-        body = [line * repeat]
+        body = [line]*repeat
         return (status, headers, body)
 
 
 class TweakHelloAddon(Addon):
     
     name = 'tweak.hello'
-    hint = """example plugin and command"""
+    hint = """'Hello, World!' plugin"""
     help = """
-      This is an example plugin and command.  It has two parameters
-      ``address`` which defaults to 'world' and ``repeat`` which
-      defaults to 1.  The plugin registers a command ``/hello()``
-      that prints "Hello, X!" several times.  It can be started 
-      using a command line::
+    This plugin registers command `/hello()`, which displays "Hello, World!".
 
-       htsql-ctl shell htsql_regress -E tweak.hello:address=mom,repeat=3
-
+    The plugin has two parameters: `address` (default: 'world') and
+    `repeat` (default: 1).
     """
 
     parameters = [
-            Parameter('repeat', PIntVal(), default=1),
-            Parameter('address', ChoiceVal(['mom','home','world']), 
-                                 default='world')
+            Parameter('repeat',
+                      PIntVal(), default=1),
+            Parameter('address',
+                      ChoiceVal(['mom', 'home', 'world']),
+                      default='world')
     ]
+
 

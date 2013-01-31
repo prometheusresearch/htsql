@@ -34519,6 +34519,45 @@ tests:
                                    FROM "!source"
                                    WHERE ("!source"."name" = 'volatile')) AS "!source_2"
                                   ON 1
+      - id: tweak.hello
+        tests:
+        - ctl: [ext, tweak.hello]
+          stdout: |+
+            TWEAK.HELLO - 'Hello, World!' plugin
+
+            This plugin registers command `/hello()`, which displays "Hello, World!".
+
+            The plugin has two parameters: `address` (default: 'world') and
+            `repeat` (default: 1).
+
+            Parameters:
+              repeat=REPEAT
+              address=ADDRESS
+
+          exit: 0
+        - uri: /hello()
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            Hello, World!
+        - uri: /hello('world')
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            Expected no arguments
+            While parsing:
+                /hello('world')
+                 ^^^^^^^^^^^^^^
+        - uri: /hello()
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            Hello, Home!
+            Hello, Home!
+            Hello, Home!
       - id: tweak.meta
         tests:
         - ctl: [ext, tweak.meta]
