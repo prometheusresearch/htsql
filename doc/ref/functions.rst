@@ -493,7 +493,7 @@ negative values are permitted.
    :cut: 3
 
    /department^avg_credits {avg_credits, count(department)}
-    :where department.avg_credits := avg(course.credits) :trunc(1)
+    :where(department.avg_credits := avg(course.credits) :trunc(1))
 
 
 String Functions

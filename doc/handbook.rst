@@ -36,31 +36,33 @@ some other tool::
 Then use ``htsql-ctl shell`` to walk through our
 :doc:`overview <overview>` and/or :doc:`tutorial <tutorial>`::
 
-   $ htsql-ctl shell sqlite:htsql_demo.sqlite
-   Type 'help' for more information, 'exit' to quit the shell
-   htsql_demo$ /school
-       school                                       
-       ---------------------------------------------
-       code | name                          | campus
-       -----+-------------------------------+-------
-       art  | School of Art & Design        | old   
-       bus  | School of Business            | south 
-       edu  | College of Education          | old   
-       ...
+    $ htsql-ctl shell sqlite:htsql_demo.sqlite
+    Type 'help' for more information, 'exit' to quit the shell
+    htsql_demo$ /school
+     | school                                        |
+     +------+-------------------------------+--------+
+     | code | name                          | campus |
+    -+------+-------------------------------+--------+-
+     | art  | School of Art & Design        | old    |
+     | bus  | School of Business            | south  |
+     | edu  | College of Education          | old    |
+    ...
 
-There is a ``describe`` command within this ``shell`` which lists
-tables, or, if you provide a table, its columns and links::
+Shell comes with a ``describe`` command, which lists tables, or,
+if you provide a table, its columns and links::
 
-   htsql_demo$ describe school
-       Slots for `school` are:
-       code       VARCHAR(16)
-       name       VARCHAR(64)
-       campus     VARCHAR(5)
-       department PLURAL(department)
-       program    PLURAL(program)
+    htsql_demo$ describe school
+    ...
 
-This ``shell`` command has schema-based completion.  For example, if you
-type ``/s`` and then press *TAB*, it will list all of of the possibe
+    Labels:
+      code                     : text column
+      name                     : text column
+      campus                   : text column
+      department               : plural link to department
+      program                  : plural link to program
+
+Shell has schema-based completion.  For example, if you type ``/s``
+and then press *TAB*, it will list all of of the possibe
 completions: ``school``, ``semester``, and ``student``.   For more
 information, please see the :ref:`htsql-ctl reference <htsql-ctl>`.
 
@@ -76,37 +78,48 @@ For this example, we'll use the ``pgsql`` engine on a local demo
 database using the ``-p`` option to prompt for a password.  The 
 exact connection details will depend upon your local configuration::
    
-   $ htsql-ctl shell -p pgsql://demo@localhost:5432/htsql_demo
-   Password: ******
-   Type 'help' for more information, 'exit' to quit the shell.
-   htsql_demo$ describe
-       Tables introspected for this database are:
-       course
-       department
-       program
-       ...
+    $ htsql-ctl shell -p pgsql://demo@localhost:5432/htsql_demo
+    Password: ******
+    Type 'help' for more information, 'exit' to quit the shell.
+    htsql_demo$ describe
+    PGSQL://demo@localhost:5432/htsql_demo - HTSQL database
 
-If it seems links arn't working properly, you could verify links for a
-specific table using ``describe``::
+    Labels:
+      course                   : table
+      department               : table
+      program                  : table
+    ...
 
-   htsql_demo$ describe department
-       Slots for `department` are:
-       code        VARCHAR(16)
-       name        VARCHAR(64)
-       school_code VARCHAR(16)
-       school      SINGULAR(school)
-       appointment PLURAL(appointment)
-       course      PLURAL(course)
+If it seems links aren't working properly, you could verify links for
+a specific table using ``describe``::
 
-You should see ``SINGULAR`` links for foreign key references in this
-table to other tables and ``PLURAL`` links for foreign keys in other
-tables that reference this one.   In this example, we see that
-``department`` is singular to ``school`` and plural to ``course``.
+    htsql_demo$ describe department
+    DEPARTMENT - table
+    ...
 
-If links arn't introspected, you've got a few options.  The best option
+    Foreign keys:
+      ad.department(school_code) -> ad.school(code) {nullable}
+      ad.course(department_code) -> ad.department(code)
+      id.appointment(department_code) -> ad.department(code)
+    ...
+
+    Labels:
+      code                     : text column
+      name                     : text column
+      school_code              : text column
+      school                   : link to school
+      course                   : plural link to course
+      appointment              : plural link to appointment
+
+You should see a signular link for every foreign key referencing other table
+and a (generally, plural) link for every foreign key referencing this table
+from another table.  In this example, we see that ``department`` has a singular
+link to ``school`` and plural links to ``course`` and ``appointment``.
+
+If links are not introspected, you've got a few options.  The best option
 is to create them in your database if they don't exist (this isn't an
 option for MyISAM).  Otherwise, you have a few configuration options, 
-including manually specifying links or bridging relationship detail 
+including manually specifying links or bridging relationship detail
 from a SQLAlchemy or Django model.
 
 Web Service
@@ -116,22 +129,22 @@ Besides ``shell``, the ``htsql-ctl`` program provides a built-in
 *demonstration* :ref:`webserver <htsql-ctl serve>`.  You could start it
 as follows::
 
-   $ htsql-ctl serve sqlite:htsql_demo.sqlite
-       Starting an HTSQL server on localhost:8080 over htsql_demo.sqlite
+    $ htsql-ctl serve sqlite:htsql_demo.sqlite
+    Starting an HTSQL server on localhost:8080 over htsql_demo.sqlite
 
 Then, it might be accessed using any user agent, such as ``wget``::
 
-   $ wget -q -O - --header='Accept: text/csv' http://localhost:8080/school
-       code,name,campus
-       art,School of Art & Design,old
-       bus,School of Business,south
-       edu,College of Education,old
-       ...
+    $ wget -q -O - --header='Accept: text/csv' http://localhost:8080/school
+    code,name,campus
+    art,School of Art & Design,old
+    bus,School of Business,south
+    edu,College of Education,old
+    ...
 
 On http://demo.htsql.org, we enable a :ref:`tweak.shell` extension::
 
     $ htsql-ctl serve -E tweak.shell.default sqlite:htsql_demo.sqlite
-        Starting an HTSQL server on localhost:8080 over htsql_demo.sqlite
+    Starting an HTSQL server on localhost:8080 over htsql_demo.sqlite
   
 You could then navigate to http://localhost:8080 with your web browser
 and type in queries there.  This plugin replaces the default HTML
@@ -150,15 +163,14 @@ loaded on the command line using ``-E`` or in a configuration file
 format.  You could list installed extensions at the command line::
 
     $ htsql-ctl extension
-        Available extensions:
-        engine          :  provides implementations of HTSQL for specific servers
-        engine.mysql    : implements HTSQL for MySQL
-        engine.pgsql    : implements HTSQL for PostgreSQL
-        engine.sqlite   : implements HTSQL for SQLite
-        htsql           : HTSQL translator and HTTP service
-        tweak           : contain various tweaks for HTSQL
-        tweak.autolimit : limit number of rows returned by queries
-        ...
+    Available extensions:
+      engine                   : provides implementations of HTSQL for specific servers
+      engine.mysql             : implements HTSQL for MySQL
+      engine.pgsql             : implements HTSQL for PostgreSQL
+      engine.sqlite            : implements HTSQL for SQLite
+      htsql                    : HTSQL translator and HTTP service
+      tweak                    : contain various tweaks for HTSQL
+      tweak.autolimit          : limit number of rows returned by queries
 
 One handy extension is :ref:`tweak.autolimit` which limits the number of
 rows returned by default.  Using this plugin lets you explore tables
@@ -168,21 +180,20 @@ of your queries.  In this example, we set the ``limit`` to 5 rows::
     $ htsql-ctl shell -E tweak.autolimit:limit=5 sqlite:htsql_demo.sqlite
     Type 'help' for more information, 'exit' to quit the shell.
     htsql_demo$ /count(department)
-         | count(department) |
-        -+-------------------+-
-         |                27 |
-                   (1 row)
+     | count(department) |
+    -+-------------------+-
+     |                27 |
+
     htsql_demo$ /department
-         | department                             |
-         +----------------------------------------+
-         | code   | name            | school_code |
-        -+--------+-----------------+-------------+-
-         | acc    | Accounting      | bus         |
-         | arthis | Art History     | art         |
-         | astro  | Astronomy       | ns          |
-         | be     | Bioengineering  | eng         |
-         | bursar | Bursar's Office |             |
-                                           (5 rows)
+     | department                                    |
+     +--------+------------------------+-------------+
+     | code   | name                   | school_code |
+    -+--------+------------------------+-------------+-
+     | acc    | Accounting             | bus         |
+     | arthis | Art History            | la          |
+     | astro  | Astronomy              | ns          |
+     | be     | Bioengineering         | eng         |
+     | bursar | Bursar's Office        |             |
 
 One of the more interesting plugins is :ref:`tweak.meta`.  This adds a
 in-memory SQLite database with table and link detail based upon the
@@ -190,14 +201,13 @@ current configuration, and a function ``meta()`` to let you query it::
 
     $ htsql-ctl shell -E tweak.meta sqlite:htsql_demo.sqlite
     Type 'help' for more information, 'exit' to quit the shell.
-    htsql_demo$  /meta(/link{name, is_singular}?table_name='school')
-         | link                     |
-         +--------------------------+
-         | name       | is_singular |
-        -+------------+-------------+-
-         | department | false       |
-         | program    | false       |
-                             (2 rows)
+    htsql_demo$ /meta(/link{name, is_singular}?table_name='school')
+     | link                     |
+     +------------+-------------+
+     | name       | is_singular |
+    -+------------+-------------+-
+     | department | false       |
+     | program    | false       |
 
 The PostgreSQL specific :ref:`tweak.timeout` plugin provides a way to
 automatically kill expensive queries after a specified number of seconds
@@ -205,9 +215,12 @@ have elapsed::
 
     $ htsql-ctl shell -E tweak.timeout:timeout=3 pgsql:htsql_demo
     Type 'help' for more information, 'exit' to quit the shell.
-    htsql_demo$  /count(enrollment.fork().fork())
-    engine failure: failed to execute database query:
-    canceling statement due to statement timeout
+    htsql_demo$ /count(enrollment.fork().fork())
+    Got an error from the database driver:
+        canceling statement due to statement timeout
+    While processing:
+        /count(enrollment.fork().fork())
+        ^
 
 The ``enrollment`` table has 15k rows, and ``fork()`` associates each
 row with every row of the same table (a CROSS JOIN).  Hence, this query
