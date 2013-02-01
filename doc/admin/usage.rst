@@ -169,7 +169,7 @@ An extension can be enabled using ``-E`` parameter on the ``htsql-ctl``
 command line.  For example, to enable the :ref:`tweak.meta` addon on the
 HTSQL demo database, you'd write::
 
-    $ htsql-ctl shell -E tweak.meta pgsql:htsql_demo
+    $ htsql-ctl shell pgsql:htsql_demo -E tweak.meta
 
 Then, you could use the ``/meta()`` command registered by this addon:
 
@@ -184,11 +184,12 @@ For example, the :ref:`tweak.autolimit` extension truncates output at
 ``limit`` number of rows.  The default is 10k, but this value
 can be changed::
 
-    $ htsql-ctl shell -E tweak.autolimit:limit=10 pgsql:htsql_demo
+    $ htsql-ctl shell pgsql:htsql_demo -E tweak.autolimit:limit=10
 
 If more than one parameter is possible, use "," to separate them::
 
-    $ htsql-ctl shell -E tweak.hello:repeat=3,address=home pgsql:htsql_demo
+    $ htsql-ctl serve pgsql:htsql_demo \
+      -E "tweak.shell:server-root='http://demo.htsql.org',limit=10"
 
 HTSQL plugins are found using Python's entry point feature.  When a
 Python package is installed, it can register itself as an
@@ -220,7 +221,7 @@ level are plugin parameters, if any.
     tweak.shell.default:
 
 In this example, there are three plugins enabled, ``htsql`` (which is a
-mandatory plugin), :ref:`tweak.autolimit` and ref:`tweak.shell.default`.
+mandatory plugin), :ref:`tweak.autolimit` and :ref:``tweak.shell.default``.
 The ``htsql`` plugin has one argument, ``db`` which has sub-structure
 providing connection information.  You could then use this
 configuration file using ``-C``::
@@ -230,6 +231,27 @@ configuration file using ``-C``::
 If both ``-E`` and ``-C`` are used, explicit command line options override
 values provided in the configuration file.  This permits a configuration
 file to be used as a default perhaps using a different database URI.
+
+A configuration parameter may be loaded from another file using
+``!include`` tag.  In the following example, definitions of custom
+functions for :ref:`tweak.override` addon are loaded from
+``globals.yaml``.
+
+.. sourcecode:: yaml
+
+    # demo-config.yaml
+    htsql:
+      db:
+        engine: pgsql
+        database: htsql_demo
+    tweak.override:
+      globals: !include "globals.yaml"
+
+.. sourcecode:: yaml
+
+    # globals.yaml
+    num_school: (count(@school))
+    trunc_month($d): (date(year($d), month($d), 1))
 
 .. _YAML: http://yaml.org/
 .. _JSON: http://json.org/
@@ -277,6 +299,18 @@ In the expanded form, a mapping notation is used:
 
 Every component except ``engine`` and ``database`` is optional.
 
+`password`
+    The database password.
+
+The parameter ``password`` allows you to override the database password
+keeping the other connection parameters intact.
+
+`debug`
+    Enable debugging output.
+
+When ``debug`` option is set, text output, as well as some error
+messages will contain a respective SQL query.
+
 .. index:: engine.sqlite, engine.pgsql, engine.mysql, engine.oracle,
            engine.mssql
 
@@ -319,6 +353,7 @@ Parameters:
       limit: 1000
 
 .. index:: tweak.cors
+.. _tweak.cors:
 
 ``tweak.cors``
 --------------
@@ -363,9 +398,49 @@ and http://htsql.com/, we could write:
 
 .. _CORS: http://www.w3.org/TR/cors/
 
+.. index:: tweak.csrf
+.. _tweak.csrf:
+
+``tweak.csrf``
+--------------
+
+This extension provides protection against cross-site request
+forgery (CSRF) attacks.
+
+A CSRF attack tricks the user to visit the attacker's website,
+which then submits database queries to the HTSQL service from
+the user's account.  Even though the browser would not permit
+the malicious website to read the output of the queries, this
+form of attack can be used for denial of service or changing
+the data in the database.  For background on CSRF, see
+http://en.wikipedia.org/wiki/Cross-site_request_forgery.
+
+This addon requires all HTSQL requests to submit a secret
+token in two forms:
+
+* as a cookie `htsql-csrf-token`;
+* as HTTP header `X-HTSQL-CSRF-Token`.
+
+If the token is not submitted, the addon prevents the request
+from reading or updating any data in the database.
+
+Parameters:
+
+`allow_cs_read`
+    If set, a request is permitted to read data from the database
+    even when the secret token is not provided.
+
+`allow_cs_write`
+    If set, a request is permitted to update data in the database
+    even if the secret token is not provided.
+
+.. sourcecode:: yaml
+
+    tweak.csrf:
+      allow_cs_read: true
+      allow_cs_write: false
+
 .. index:: tweak.django, Django
-
-
 .. _tweak.django:
 
 ``tweak.django``
@@ -392,8 +467,119 @@ Parameters:
 
 .. _Django: https://www.djangoproject.com/
 
-.. index:: tweak.meta
+.. index:: tweak.etl, ETL, CRUD
+.. _tweak.etl:
 
+``tweak.etl``
+-------------
+
+This extension provides the following commands:
+
+`insert(feed)`
+    Adds records to a table.
+
+`update(feed)`
+    Updates table records.
+
+`merge(feed)`
+    Adds or updates records in a table.
+
+`delete(feed)`
+    Deletes records from a table.
+
+`truncate(name)`
+    Truncates a table.
+
+`do(command, ...)`
+    Performs a series of command in a single transaction.
+
+.. sourcecode:: yaml
+
+    tweak.etl:
+
+.. warning::
+
+    This extension is work-in-progress.  The interface and
+    implementation of commands may change in the future.
+    Currently only PostgreSQL is supported.
+
+.. index:: tweak.filedb
+.. _tweak.filedb:
+
+``tweak.filedb``
+----------------
+
+This extension makes a database from a set of CSV files.
+Each source CSV file becomes a table in the database.
+The name of the table is derived from the file name;
+the column names are taken from the first row of the CSV file.
+The remaining rows become the records in the table.
+
+The database is realized as an in-memory SQLite database.
+Use optional parameter `cache-file` to specify a persistent
+storage for the database.
+
+Parameters:
+
+`sources`
+    List of entries describing the source files; each
+    entry has the following fields:
+
+    `file`
+        The path to the CSV file.
+
+`cache-file`
+    Persistent storage for the database.
+
+.. sourcecode:: yaml
+
+    tweak.filedb:
+      sources:
+      - file: school.csv
+      - file: department.csv
+      - file: program.csv
+      - file: course.csv
+      cache-file: cache.sqlite
+
+.. index:: tweak.gateway
+.. _tweak.gateway:
+
+``tweak.gateway``
+-----------------
+
+This extensions allows you to create a gateway to another database
+and execute HTSQL queries against it.
+
+Parameters:
+
+`gateways`
+    A mapping of names to datebase configuration.
+
+    Each mapping entry creates a function which takes a query
+    as a parameter and execute it against the gateway database.
+
+    Database configuration could be either connection URI or
+    nested HTSQL configuration.
+
+.. sourcecode:: yaml
+
+    tweak.gateway:
+      gateways:
+        sqlite_gw: sqlite:database.sqlite
+        remote_gw:
+          htsql:
+            db:
+              engine: pgsql
+              database: remote_db
+
+The gateway name becomes a command which executes a query
+against the gateway database:
+
+.. sourcecode:: htsql
+
+   /table/:sqlite_gw
+
+.. index:: tweak.meta
 .. _tweak.meta:
 
 ``tweak.meta``
@@ -447,8 +633,11 @@ To describe the meta database itself, apply ``meta()`` twice:
 
 .. htsql:: /meta(/meta(/table))
 
-.. index:: tweak.override
+.. sourcecode:: yaml
 
+    tweak.meta:
+
+.. index:: tweak.override
 .. _tweak.override:
 
 ``tweak.override``
@@ -746,7 +935,8 @@ an optional list of parameters, the value is an HTSQL expression.
         num_school: (count(@school))
         trunc_month($d): (date(year($d), month($d), 1))
 
-.. index:: tweak.resource
+.. index:: tweak.pool
+.. _tweak.pool:
 
 ``tweak.pool``
 --------------
@@ -755,6 +945,13 @@ This addons caches open database connections so that the same
 connection could be reused to execute more than one query.
 Use this addon with backends where opening a database connection
 is an expensive operation.
+
+.. sourcecode:: yaml
+
+    tweak.pool:
+
+.. index:: tweak.resource
+.. _tweak.resource:
 
 ``tweak.resource``
 ------------------
@@ -768,6 +965,9 @@ Parameters:
 `indicator`
     HTTP root for static files, excluding leading and trailing ``/``
     (default: ``-``)
+
+Usually you don't need to enable this extension explicitly as
+it is done by extensions with static resources.
 
 .. index:: tweak.shell
 .. _tweak.shell:
@@ -795,6 +995,14 @@ Parameters:
       server-root: http://demo.htsql.org
       limit: 100
 
+.. _CodeMirror: http://codemirror.net/
+
+.. index:: tweak.shell.default
+.. _tweak.shell.default:
+
+``tweak.shell.default``
+-----------------------
+
 Enable addon ``tweak.shell.default`` to make the shell the default
 output format.
 
@@ -802,10 +1010,7 @@ output format.
 
     tweak.shell.default:
 
-.. _CodeMirror: http://codemirror.net/
-
 .. index:: tweak.sqlalchemy, SQLAlchemy
-
 .. _tweak.sqlalchemy:
 
 ``tweak.sqlalchemy``
@@ -836,6 +1041,16 @@ The value must have the form ``<module>.<attr>`` or
       metadata: sademo.metadata
 
 .. _SQLAlchemy: http://www.sqlalchemy.org/
+
+.. index:: tweak.system
+.. _tweak.system:
+
+``tweak.system``
+----------------
+
+This extension adds access to system catalog tables.
+
+Currently, only PostgreSQL backend is supported.
 
 .. index:: tweak.timeout
 .. _tweak.timeout:

@@ -2,7 +2,7 @@ List of Changes
 ===============
 
 
-2.3.3 (2013-01-XX)
+2.3.3 (2013-02-01)
 ------------------
 
 * Added a binary attachment operator (`@`).
@@ -16,7 +16,9 @@ List of Changes
 * `tweak.etl`: insert, merge, update and delete commands
   (PostgreSQL only, work in progress)
 * `tweak.django`: fixed the introspector missing auto-created
-  many-to-many models.
+  many-to-many models, respect Django transaction context.
+* `htsql-ctl shell`: improved output of `describe` command,
+  allow multi-line queries when the input is not TTY.
 * Configuration: added support for `!include` tag.
 * Reduced memory footprint for large database schemas.
 * Improved error reporting.
