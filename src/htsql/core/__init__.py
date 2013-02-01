@@ -22,7 +22,7 @@ class HTSQLAddon(Addon):
     This extension implements the HTSQL translator and HTTP service.
     It is included to every HTSQL application.
 
-    The parameter `DB` specifies parameters of the database connection;
+    The parameter `db` specifies parameters of the database connection;
     it must have the form:
 
         ENGINE://USERNAME:PASSWORD@HOST:PORT/DATABASE
@@ -36,6 +36,11 @@ class HTSQLAddon(Addon):
       - HOST:PORT is the address of the database server.
       - DATABASE is the name of the database, or, for file-based
         backends, the path to the file containing the database.
+
+    The parameter `password` sets the database password.  It overrides
+    the password given as a part of `db` parameter.
+
+    The parameter `debug`, if set to `True`, enables debug output.
     """
 
     parameters = [

@@ -34053,9 +34053,9 @@ tests:
           status: 403 Forbidden
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
-          - [Set-Cookie, htsql-csrf-token=b5a8aa7666b3b2b4ffd1dee5b6f336a0; Path=/]
+          - [Set-Cookie, htsql-csrf-token=ed0922cbb304ef5c76a84cb3f0f37c66; Path=/]
           body: |
-            not enough permissions to execute the query
+            No read permissions
             While processing:
                 /school
                 ^
@@ -35455,9 +35455,9 @@ tests:
           status: 403 Forbidden
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
-          - [Set-Cookie, htsql-csrf-token=6770573d046d88b17900983d5957cd6a; Path=/]
+          - [Set-Cookie, htsql-csrf-token=23da943cab5d2cf974af7be77b02da98; Path=/]
           body: |
-            not enough permissions to execute the query
+            No read permissions
             While processing:
                 /meta(/table)
                       ^
@@ -37023,7 +37023,7 @@ tests:
           body: |
             {
               "type": "permissions",
-              "detail": "not enough permissions to execute the query\nWhile processing:\n    \/school:top\n    ^"
+              "detail": "No read permissions\nWhile processing:\n    \/school:top\n    ^"
             }
         - uri: /
           status: 200 OK
@@ -38707,6 +38707,26 @@ tests:
     output:
       id: etl
       tests:
+      - ctl: [ext, tweak.etl]
+        stdout: |+
+          TWEAK.ETL - ETL and CRUD commands
+
+          The extension provides the following commands:
+
+          `insert(feed)` adds records to a table.
+
+          `update(feed)` updates table records.
+
+          `merge(feed)` adds or updates records in a table.
+
+          `delete(feed)` deletes records from a table.
+
+          `truncate(name)` truncates a table.
+
+          `do(command, ...)` performs a series of command in a single
+          transaction.
+
+        exit: 0
       - uri: /truncate(product_line)
         status: 200 OK
         headers:

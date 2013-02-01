@@ -5,7 +5,8 @@
 
 from ....core.util import listof
 from ....core.adapter import Utility, adapt
-from ....core.error import Error
+from ....core.context import context
+from ....core.error import Error, PermissionError
 from ....core.entity import TableEntity, ColumnEntity
 from ....core.model import TableArc
 from ....core.classify import localize, relabel
@@ -201,6 +202,8 @@ class ExecuteUpdatePipe(object):
                     for item, convert in zip(row, self.input_converts))
         if not row:
             return key_row
+        if not context.env.can_write:
+            raise PermissionError("No write permissions")
         with transaction() as connection:
             cursor = connection.cursor()
             cursor.execute(self.sql.encode('utf-8'), row+key_row)

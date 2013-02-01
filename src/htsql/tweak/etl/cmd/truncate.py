@@ -4,7 +4,9 @@
 
 
 from ....core.adapter import adapt
+from ....core.context import context
 from ....core.connect import transaction
+from ....core.error import PermissionError
 from ....core.cmd.act import Act, ProduceAction
 from ....core.domain import Product
 from ....core.tr.binding import VoidBinding
@@ -18,6 +20,8 @@ class ProduceTruncate(Act):
     adapt(TruncateCmd, ProduceAction)
 
     def __call__(self):
+        if not context.env.can_write:
+            raise PermissionError("No write permissions")
         with transaction() as connection:
             sql = serialize_truncate(self.command.table)
             sql = sql.encode('utf-8')

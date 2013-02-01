@@ -5,7 +5,8 @@
 
 from ....core.util import listof
 from ....core.adapter import Utility, adapt
-from ....core.error import Error
+from ....core.error import Error, PermissionError
+from ....core.context import context
 from ....core.entity import TableEntity, ColumnEntity
 from ....core.connect import transaction, scramble
 from ....core.domain import Product
@@ -34,6 +35,8 @@ class ExecuteDeletePipe(object):
     def __call__(self, key_row):
         key_row = tuple(convert(item)
                         for item, convert in zip(key_row, self.key_converts))
+        if not context.env.can_write:
+            raise PermissionError("No write permissions")
         with transaction() as connection:
             cursor = connection.cursor()
             cursor.execute(self.sql.encode('utf-8'), key_row)

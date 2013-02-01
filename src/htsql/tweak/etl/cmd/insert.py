@@ -5,7 +5,8 @@
 
 from ....core.util import listof
 from ....core.adapter import Utility, Adapter, adapt, adapt_many
-from ....core.error import Error
+from ....core.error import Error, PermissionError
+from ....core.context import context
 from ....core.connect import transaction, scramble, unscramble
 from ....core.domain import (Domain, ListDomain, RecordDomain, BooleanDomain,
         IntegerDomain, FloatDomain, DecimalDomain, TextDomain, DateDomain,
@@ -348,6 +349,8 @@ class ExecuteInsertPipe(object):
     def __call__(self, row):
         row = tuple(convert(item)
                for item, convert in zip(row, self.input_converts))
+        if not context.env.can_write:
+            raise PermissionError("No write permissions")
         with transaction() as connection:
             cursor = connection.cursor()
             cursor.execute(self.sql.encode('utf-8'), row)

@@ -117,8 +117,7 @@ class FetchPipe(object):
         data = None
         if self.statement:
             if not context.env.can_read:
-                raise PermissionError("not enough permissions"
-                                      " to execute the query")
+                raise PermissionError("No read permissions")
             stream = None
             with transaction() as connection:
                 cursor = connection.cursor()

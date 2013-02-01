@@ -34050,9 +34050,9 @@ tests:
           status: 403 Forbidden
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
-          - [Set-Cookie, htsql-csrf-token=4780d3ab6ca5c074cc8654f4a52fe4ba; Path=/]
+          - [Set-Cookie, htsql-csrf-token=3ba579dcf9e21f2a62dd605fe8e66cfc; Path=/]
           body: |
-            not enough permissions to execute the query
+            No read permissions
             While processing:
                 /school
                 ^
@@ -35441,9 +35441,9 @@ tests:
           status: 403 Forbidden
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
-          - [Set-Cookie, htsql-csrf-token=340fbc8056469569b31881a44510ea6a; Path=/]
+          - [Set-Cookie, htsql-csrf-token=c8c29ba9ab23e671134a8f0746094f07; Path=/]
           body: |
-            not enough permissions to execute the query
+            No read permissions
             While processing:
                 /meta(/table)
                       ^
@@ -36983,7 +36983,7 @@ tests:
           body: |
             {
               "type": "permissions",
-              "detail": "not enough permissions to execute the query\nWhile processing:\n    \/school:top\n    ^"
+              "detail": "No read permissions\nWhile processing:\n    \/school:top\n    ^"
             }
         - uri: /
           status: 200 OK
