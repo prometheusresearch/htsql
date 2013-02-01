@@ -47,7 +47,7 @@ ${FILES}
 %{python_sitelib}/*
 
 %changelog
-* Thu Jan 24 2013 Kirill Simonov <xi@resolvent.net> - 2.3.3-1
+* Fri Feb 01 2013 Kirill Simonov <xi@resolvent.net> - 2.3.3-1
 - Upstream release
 * Thu Aug 23 2012 Kirill Simonov <xi@resolvent.net> - 2.3.2-1
 - Upstream release

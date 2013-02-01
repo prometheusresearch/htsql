@@ -139,7 +139,7 @@ by ``-C``, you could use ``-`` as a place holder for the mandatory
 database URI parameter so that you could provide a HOST and PORT.  For
 example, to run the server on ``localhost:80`` you would write::
 
-    # htsql-ctl serve -C demo-config.yaml - localhost 80
+    # htsql-ctl serve - localhost 80 -C demo-config.yaml
 
 For more details on the ``server`` routine, run::
 
@@ -221,7 +221,7 @@ level are plugin parameters, if any.
     tweak.shell.default:
 
 In this example, there are three plugins enabled, ``htsql`` (which is a
-mandatory plugin), :ref:`tweak.autolimit` and :ref:``tweak.shell.default``.
+mandatory plugin), :ref:`tweak.autolimit` and :ref:`tweak.shell.default`.
 The ``htsql`` plugin has one argument, ``db`` which has sub-structure
 providing connection information.  You could then use this
 configuration file using ``-C``::
