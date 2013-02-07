@@ -177,7 +177,10 @@ class EmitRaw(Emit):
     adapt(RawFormat)
 
     def __call__(self):
-        return dump_json(purge_null_keys(self.emit()))
+        tokens = self.emit()
+        if not self.format.with_null:
+            tokens = purge_null_keys(tokens)
+        return dump_json(tokens)
 
     def emit(self):
         data_to_raw = to_raw(self.meta.domain)
@@ -196,7 +199,10 @@ class EmitJSON(Emit):
     adapt(JSONFormat)
 
     def __call__(self):
-        return dump_json(purge_null_keys(self.emit()))
+        tokens = self.emit()
+        if not self.format.with_null:
+            tokens = purge_null_keys(tokens)
+        return dump_json(tokens)
 
     def emit(self):
         product_to_json = to_json(self.meta.domain)

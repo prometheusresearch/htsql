@@ -17,11 +17,15 @@ class DefaultFormat(Format):
 
 
 class RawFormat(Format):
-    pass
+
+    def __init__(self, with_null=False):
+        self.with_null = with_null
 
 
 class JSONFormat(Format):
-    pass
+
+    def __init__(self, with_null=False):
+        self.with_null = with_null
 
 
 class CSVFormat(Format):
