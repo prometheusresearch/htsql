@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2012, Prometheus Research, LLC
+# Copyright (c) 2006-2013, Prometheus Research, LLC
 #
 
 
@@ -92,7 +92,7 @@ def get_vendors():
     ]
 
 
-class download_vendor(Command):
+class htsql_download_vendor(Command):
     # Download vendor packages.
 
     user_options = []
@@ -152,7 +152,7 @@ class download_vendor(Command):
             os.rename(build_dir, target)
 
 
-class egg_info(setuptools_egg_info):
+class htsql_egg_info(setuptools_egg_info):
     # Make sure `download_vendor` is executed as early as possible.
 
     def find_sources(self):
@@ -172,7 +172,7 @@ if __name__ == '__main__':
               'htsql.routines': get_routines(),
               'htsql.addons': get_addons()},
           cmdclass={
-              'download_vendor': download_vendor,
-              'egg_info': egg_info})
+              'download_vendor': htsql_download_vendor,
+              'egg_info': htsql_egg_info})
 
 
