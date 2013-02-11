@@ -105,7 +105,9 @@ class htsql_download_vendor(Command):
 
     def run(self):
         info_cmd = self.get_finalized_command('egg_info')
+        setup_dir = os.path.dirname(os.path.abspath(__file__))
         for url, md5_hash, target in get_vendors():
+            target = os.path.join(setup_dir, target)
             if os.path.exists(target):
                 continue
             log.info("downloading vendor package '%s'" % url)
