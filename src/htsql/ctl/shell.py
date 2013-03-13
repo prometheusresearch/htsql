@@ -1340,13 +1340,9 @@ class ShellRoutine(DBRoutine):
         blocks = []
         lines = []
         for line in stream:
-            if not line.strip():
+            if not line.strip() or line.startswith('#'):
                 if lines:
                     lines.append(line)
-            elif line.startswith('#'):
-                if lines:
-                    blocks.append(lines)
-                lines = []
             elif line == line.lstrip():
                 if lines:
                     blocks.append(lines)
