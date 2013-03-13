@@ -1329,9 +1329,9 @@ class ShellRoutine(DBRoutine):
             self.ctl.out()
             return True
 
-        # Skip empty lines.
+        # Skip empty lines and comments.
         line = line.strip()
-        if not line:
+        if not line or line.startswith('#'):
             return
 
         return self.execute(line)
@@ -1343,6 +1343,10 @@ class ShellRoutine(DBRoutine):
             if not line.strip():
                 if lines:
                     lines.append(line)
+            elif line.startswith('#'):
+                if lines:
+                    blocks.append(lines)
+                lines = []
             elif line == line.lstrip():
                 if lines:
                     blocks.append(lines)
