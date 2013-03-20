@@ -7,7 +7,7 @@ from ..util import isfinite, to_name
 from ..adapter import Adapter, adapt, adapt_many
 from ..domain import (UntypedDomain, BooleanDomain, IntegerDomain, FloatDomain,
         DecimalDomain, DateDomain, TimeDomain, DateTimeDomain, ListDomain,
-        Value)
+        IdentityDomain, ID, Value)
 import types
 import datetime
 import decimal
@@ -140,6 +140,19 @@ class EmbedList(Embed):
                    domain.parse(entry_value.data)
                    for entry_value in entry_values]
         return Value(ListDomain(domain), entries)
+
+
+class EmbedIdentity(Embed):
+
+    adapt(ID)
+
+    def __call__(self):
+        entry_values = [Embed.__invoke__(entry) for entry in self.data]
+        if any(value.data is None for value in entry_values):
+            raise TypeError("an ID value should not contain a NULL entry")
+        domain = IdentityDomain([value.domain for value in entry_values])
+        entries = tuple(value.data for value in entry_values)
+        return Value(domain, entries)
 
 
 def embed(base_environment, **parameters):
