@@ -1349,6 +1349,11 @@ def bind(syntax, state=None, scope=None, environment=None):
                                                   value.domain.item_domain)
                                     for item in value.data]
                     recipe = SelectionRecipe(item_recipes)
+                elif isinstance(value.domain, RecordDomain):
+                    item_recipes = [LiteralRecipe(item, profile.domain)
+                                    for item, profile in
+                                        zip(value.data, value.domain.fields)]
+                    recipe = SelectionRecipe(item_recipes)
                 elif isinstance(value.domain, IdentityDomain):
                     def convert(domain, data):
                         items = []
