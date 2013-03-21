@@ -187,6 +187,9 @@ tests:
         settings: test_django_sandbox.settings
   - uri: /polls_poll{question, pub_date, count(polls_choice)}
   - uri: /polls_choice{poll.question, choice, votes}
+  # Escaping issues
+  - uri: /polls_choice?choice~'s'
+    skip: true
 
   # Restore the original `sys.path`
   - py: remove-module-path
