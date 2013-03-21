@@ -61,7 +61,6 @@ variables:
   packages: |
     htsql
     htsql_sqlite
-    sphinxcontrib
   install-requires: |
     setuptools
     pyyaml
