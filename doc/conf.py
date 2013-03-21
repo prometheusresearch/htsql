@@ -35,10 +35,10 @@ build_website = False
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.ifconfig', 'sphinx.ext.autodoc',
-              'sphinxcontrib.htsqldoc', 'sphinxcontrib.texdiag']
+              'sphinxcontrib.htsql', 'sphinxcontrib.texfigure']
 
 # The default URL of an HTSQL service.
-htsql_server = 'http://demo.htsql.org'
+htsql_root = 'http://demo.htsql.org'
 
 # Keep RST error messages in the output.
 keep_warnings = True

@@ -1317,11 +1317,11 @@ format has a customizable template that can be used to provide
 headers and footers.
 
 .. htsql:: /department{school,*}/:html
-   :plain:
-   :hide:
+   :raw:
+   :no-output:
 
 .. htsql:: /department{school,*}/:txt
-   :plain:
+   :raw:
    :cut: 12
 
 Object Output
@@ -1333,10 +1333,10 @@ perfect for post-processing tools that already know about the query
 output structure, such as a Javascript program or XSLT stylesheet.
 
 .. htsql:: /department{school,*}.limit(3)/:json
-   :plain:
+   :raw:
 
 .. htsql:: /department{school,*}.limit(3)/:xml
-   :plain:
+   :raw:
 
 
 Tabular Output
@@ -1347,11 +1347,11 @@ processing tools.  These formats include only column headers and the
 output data on subsequent rows.
 
 .. htsql:: /department{school,*}/:csv
-   :plain:
+   :raw:
    :cut: 3
 
 .. htsql:: /department{school,*}/:tsv
-   :plain:
+   :raw:
    :cut: 3
 
 Generic Output
@@ -1364,7 +1364,7 @@ information and ``data`` has the corresponding output data.
 
 
 .. htsql:: /department{school,*}.limit(3)/:raw
-   :plain:
+   :raw:
 
 Query Debug
 -----------
@@ -1375,7 +1375,7 @@ produces the SQL queries used as an output.  It's useful for
 understanding what's going on under the hood.
 
 .. htsql:: /department{school,*}/:sql
-   :plain:
+   :raw:
 
 
 .. vim: set spell spelllang=en textwidth=72:

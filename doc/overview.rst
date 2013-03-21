@@ -20,7 +20,7 @@ databases and web service gateway.
 HTSQL is a Web Service
 ----------------------
 
-.. vsplit::
+.. container:: vsplit
 
    .. sourcecode:: text
 
@@ -41,10 +41,10 @@ database queries can be shared, tweaked, and used in any number of ways.
 HTSQL is a Relational Database Gateway
 --------------------------------------
 
-.. vsplit::
+.. container:: vsplit
 
    .. htsql:: /school
-      :hide:
+      :no-output:
 
    .. sourcecode:: sql
 
@@ -66,10 +66,10 @@ server implementations.
 HTSQL is an Advanced Query Language
 -----------------------------------
 
-.. vsplit::
+.. container:: vsplit
 
    .. htsql::
-      :hide:
+      :no-output:
 
       /school{name,
               count(program),
@@ -93,7 +93,7 @@ aggregations and projections are easy to understand and use.
 HTSQL is a Communication Tool
 -----------------------------
 
-.. vsplit::
+.. container:: vsplit
 
    .. sourcecode:: html
 
@@ -104,7 +104,7 @@ HTSQL is a Communication Tool
         across each of its departments?
 
    .. htsql::
-      :hide:
+      :no-output:
 
       /school{name, campus,
               count(program),
@@ -123,7 +123,7 @@ processable by a machine, doesn't mean it shouldn't be human readable.
 HTSQL is a Python Library
 -------------------------
 
-.. vsplit::
+.. container:: vsplit
 
    .. sourcecode:: python
 
@@ -215,7 +215,7 @@ semantics.  For a more incremental approach, please read the
 :doc:`tutorial`.  For the purposes of this section, we use a
 fictitious university schema.
 
-.. diagram:: dia/administrative-directory-small-schema.tex
+.. texfigure:: dia/administrative-directory-small-schema.tex
    :align: center
 
 This data model has two top-level tables, ``school`` and ``department``,
@@ -466,7 +466,7 @@ by each row of the output.
 
 .. htsql::
    :cut: 4
-   :hide:
+   :no-output:
 
     /department{name, school.campus}
 
@@ -508,7 +508,7 @@ inquiry by conflating in two ways --- row/column and link/filter.
 
 .. htsql::
    :cut: 4
-   :hide:
+   :no-output:
 
     /department{name, count(course?credits>2)}
 
@@ -543,7 +543,7 @@ are returned and how the aggregate is related to those rows.
 
 .. htsql::
    :cut: 4
-   :hide:
+   :no-output:
 
     /school^campus {campus, count(school.department)}
 
@@ -578,7 +578,7 @@ provides no way to factor the repetitive expression ``COUNT(...)``.
 
 .. htsql::
    :cut: 4
-   :hide:
+   :no-output:
 
     /department.define(
          count_courses($level) := count(course?no>=$level*100
@@ -635,7 +635,7 @@ correct, but aren't.
 
 .. htsql::
    :cut: 4
-   :hide:
+   :no-output:
 
      /school?exists(program)
        {name, avg(department.count(course?credits>3))}

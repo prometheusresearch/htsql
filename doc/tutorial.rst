@@ -29,7 +29,7 @@ HTTP, converts it to a set of SQL queries, executes these queries in a
 single transaction, and returns the results in a format (CSV, HTML,
 JSON, etc.) requested by the user agent:
 
-.. diagram:: dia/htsql-web-service.tex
+.. texfigure:: dia/htsql-web-service.tex
    :alt: HTSQL as a web service
    :align: center
 
@@ -67,7 +67,7 @@ student enrollment system.  There are four tables that describe the
 business units of the university and their relationship to the
 courses offered:
 
-.. diagram:: dia/administrative-directory-schema.tex
+.. texfigure:: dia/administrative-directory-schema.tex
    :alt: Administrative Directory schema
    :align: center
 
@@ -129,7 +129,7 @@ name and the number of associated departments:
 To title an output column, use the ``:as`` decorator:
 
 .. htsql:: /school{name, count(department) :as '%23 of Dept.'}
-   :query: /school{name,%20count(department)%20:as%20'%23%20of%20Dept.'}
+   :output: /school{name,%20count(department)%20:as%20'%23%20of%20Dept.'}
    :cut: 3
 
 Since HTSQL is a web query language, there are two characters that have
@@ -162,7 +162,7 @@ of ``department``; the resulting request is equivalent:
 
 .. htsql:: /course{department{school.name, name}, title}
    :cut: 4
-   :hide:
+   :no-output:
 
 For cases where you don't wish to specify each column explicitly, use
 the wildcard ``*`` selector.  The request below returns all columns from
@@ -260,7 +260,7 @@ overridden with a format decorator, such as ``/:json``.  For example,
 results in JSON format can be requested as follows:
 
 .. htsql:: /school/:json
-   :plain:
+   :raw:
 
 Other formats include ``/:txt`` for plain-text formatting, ``/:html``
 for display in web browsers, and ``/:csv`` for data exchange. 
@@ -285,7 +285,7 @@ Note that the order in which selection and filter operators are applied
 doesn't affect the output. You could also use a functional form:
 
 .. htsql:: /course.filter(credits<3).select(department_code, no, title)
-   :hide:
+   :no-output:
    :cut: 3 
 
 For the following two equivalent examples, we combine 3 operators --
@@ -459,7 +459,7 @@ Compositional Navigation
 Suppose you have an HTSQL query that returns the school of engineering.
 
 .. htsql:: /school.filter(code='eng')
-   :hide:
+   :no-output:
 
 Now you'd like to return departments associated with this school.  This
 could be written as:
@@ -520,7 +520,7 @@ filter criteria.  It is possible to avoid this duplication by defining a
 calculated attribute ``num_dept``.
 
 .. htsql::
-   :hide:
+   :no-output:
    :cut: 3
 
    /school.define(num_dept:=count(department))
@@ -529,7 +529,7 @@ calculated attribute ``num_dept``.
 As syntax sugar, you could combine definition and selection.
 
 .. htsql::
-   :hide:
+   :no-output:
    :cut: 3
 
    /school{name, num_dept:=count(department)}? num_dept>3
@@ -558,7 +558,7 @@ define a ``sophomore`` link to these courses as follows.
 
 .. htsql::
    :cut: 3
-   :hide:
+   :no-output:
 
    /department.define(sophomore := course?no>=200&no<300)
               {name, count(sophomore),
@@ -572,7 +572,7 @@ expression where it is used.  In the following example the usage of
 
 .. htsql::
    :cut: 3
-   :hide:
+   :no-output:
 
    /department{name,
                 {count(sophomore),
@@ -620,7 +620,7 @@ but each time with different set of courses.  We could write this more
 concisely defining a calculation with a parameter.
 
 .. htsql::
-   :hide:
+   :no-output:
    :cut: 3
 
    /department.define(freshman := course?no>=100&no<200,
@@ -678,7 +678,7 @@ Using this technique, we could rewrite the last example from the previous
 section as:
 
 .. htsql::
-   :hide:
+   :no-output:
    :cut: 3
 
    /department.define(
@@ -712,7 +712,7 @@ courses with more credits than average.
 This same request can be written using ``where``.
 
 .. htsql::
-   :hide:
+   :no-output:
    :cut: 3
 
    /course?credits>$avg_credits
@@ -876,13 +876,13 @@ Use the *not-contains* operator (``!~``) to exclude all courses with
 
 .. htsql:: /department?name!~'science'
    :cut: 4
-   :hide:
+   :no-output:
 
 To exclude a specific department, use the *not-equals* operator:
 
 .. htsql:: /department?name!='Management & Marketing'
    :cut: 4
-   :hide:
+   :no-output:
 
 The *equality* (``=``) and *inequality* (``!=``) operators are
 straightforward when used with numbers:
@@ -896,7 +896,7 @@ School of Engineering or the School of Natural Sciences:
 
 .. htsql:: /department?school_code!={'eng','ns'}
    :cut: 4
-   :hide:
+   :no-output:
 
 Use the *greater-than* (``>``) operator to request departments with
 more than 20 offered courses:
@@ -909,7 +909,7 @@ departments with 20 courses or more:
 
 .. htsql:: /department?count(course)>=20
    :cut: 4
-   :hide:
+   :no-output:
 
 Using comparison operators with strings tells HTSQL to compare them
 alphabetically (once again, dependent upon database's collation).  For
@@ -985,7 +985,7 @@ For example, this query returns only ``course`` records having a
 
 .. htsql:: /course?description
    :cut: 4
-   :hide:
+   :no-output:
 
 The predicate ``?description`` is treated as a short-hand for
 ``?(!is_null(description)&description!='')``.  The negated variant of

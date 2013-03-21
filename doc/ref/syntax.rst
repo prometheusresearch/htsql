@@ -23,7 +23,7 @@ percent-encoded octet is serialized as three characters: ``%`` followed
 by two hexdecimal digits encoding the octet value.
 
 .. htsql:: /{'HTSQL', %27HTSQL%27, %27%48%54%53%51%4C%27}
-   :query: /%7B'HTSQL',%20%27HTSQL%27,%20%27%48%54%53%51%4C%27%7D
+   :output: /%7B'HTSQL',%20%27HTSQL%27,%20%27%48%54%53%51%4C%27%7D
 
 Percent-encoding is useful for transmitting an HTSQL query via channels
 that forbid certain characters in literal form.  The list of characters
@@ -31,7 +31,7 @@ that should be encoded depends on the channel type, but the percent
 (``%``) character itself must always be percent-encoded.
 
 .. htsql:: /{'%25'}
-   :query: /%7B'%25'%7D
+   :output: /%7B'%25'%7D
 
 A ``NUL`` character cannot appear in an HTSQL query, neither in literal
 nor in percent-encoded form.
@@ -432,7 +432,7 @@ HTSQL supports the usual set of arithmetic operators:
     `- x`
 
 .. htsql:: /{'HT'+'SQL', today()-1, -6*4/5}
-   :hide:
+   :no-output:
 
 Arithmetic operators have standard precedence and associativity.
 

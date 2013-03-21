@@ -67,7 +67,7 @@ The query uses both prefix and infix call notation.  Rewritten to use
 the prefix notation only, the query takes the form:
 
 .. htsql:: /csv(/school{name, as(count(department), '# of Depts')}?campus='north')
-   :hide:
+   :no-output:
 
 References
 ----------
@@ -142,7 +142,7 @@ domain nodes have no outgoing arrows.
 This following diagram demonstrates local scopes associated with the
 unit node and class node ``school``.
 
-.. diagram:: ../dia/local-scopes.tex
+.. texfigure:: ../dia/local-scopes.tex
    :align: center
 
 Quotient Scope
@@ -163,7 +163,7 @@ Each quotient class ``T ^ x`` has a natural link back to the base node
 that produced this value.  This link is called a *complement* link.
 Attributes of the quotient class are values of the kernel expression.
 
-.. diagram:: ../dia/quotient-class.tex
+.. texfigure:: ../dia/quotient-class.tex
    :align: center
 
 *Quotient scope* is a local scope associated with a quotient class.
@@ -180,7 +180,7 @@ objects:
    :cut: 3
 
 .. htsql:: /program^degree {*, count(^)}
-   :hide:
+   :no-output:
 
 .. **
 

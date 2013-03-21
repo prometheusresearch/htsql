@@ -48,7 +48,7 @@ by a department.  A concrete instance of this model may contain
 a school of *Engineering* with an associated department of *Computer
 Science*, which offers a *Database Theory* course, etc.:
 
-.. diagram:: ../dia/model-and-instance.tex
+.. texfigure:: ../dia/model-and-instance.tex
    :align: center
 
 
@@ -86,7 +86,7 @@ The following diagram shows a fragment of the model graph for the
 student enrollment database (most of the domain nodes and attribute
 arrows are omitted for clarity).
 
-.. diagram:: ../dia/sample-model.tex
+.. texfigure:: ../dia/sample-model.tex
    :align: center
 
 A *navigation* in the model graph is a path, or a sequence of arrows,
@@ -131,7 +131,7 @@ set of departments, etc.
 The unit node contains a single value, which is called a *unit*
 and denoted by ``@``.
 
-.. diagram:: ../dia/sample-instance-1.tex
+.. texfigure:: ../dia/sample-instance-1.tex
    :align: center
 
 .. note::
@@ -158,7 +158,7 @@ elements of these nodes:
 The following diagram visualizes the navigation
 ``school.department.name`` on a specific database instance.
 
-.. diagram:: ../dia/sample-instance-2.tex
+.. texfigure:: ../dia/sample-instance-2.tex
    :align: center
 
 
@@ -190,7 +190,7 @@ the arrow is called *plural*.
 The following diagram visualises a singular link ``program.school``
 and a plural link ``school.department``.
 
-.. diagram:: ../dia/singular-links.tex
+.. texfigure:: ../dia/singular-links.tex
    :align: center
 
 Total and Partial Arrows
@@ -210,7 +210,7 @@ arrow is called *partial*.
 The following diagram shows a total link ``program.school`` and a
 partial attribute ``school.campus``.
 
-.. diagram:: ../dia/total-links.tex
+.. texfigure:: ../dia/total-links.tex
    :align: center
 
 Unique and Non-unique Arrows
@@ -230,7 +230,7 @@ the arrow is *non-unique*.
 The following diagram shows a unique attribute ``department.name`` and a
 non-unique link ``department.school``.
 
-.. diagram:: ../dia/unique-links.tex
+.. texfigure:: ../dia/unique-links.tex
    :align: center
 
 
@@ -421,31 +421,31 @@ Foreign key constraints ``department_school_fk``, ``program_school_fk``,
 ``course_dept_fk`` generate three direct and three reverse links:
 
 .. htsql:: /department.school
-   :hide:
+   :no-output:
 
 .. htsql:: /school.department
-   :hide:
+   :no-output:
 
 .. htsql:: /program.school
-   :hide:
+   :no-output:
 
 .. htsql:: /school.program
-   :hide:
+   :no-output:
 
 .. htsql:: /course.department
-   :hide:
+   :no-output:
 
 .. htsql:: /department.course
-   :hide:
+   :no-output:
 
 A foreign key ``program_part_of_fk`` induces two self-referential links
 on ``program``:
 
 .. htsql:: /program.part_of
-   :hide:
+   :no-output:
 
 .. htsql:: /program.program_via_part_of
-   :hide:
+   :no-output:
 
 
 .. vim: set spell spelllang=en textwidth=72:
