@@ -79,11 +79,11 @@ def emit_headers(format, product):
     return list(EmitHeaders.__invoke__(format, product))
 
 
-def emit(format, headers):
+def emit(format, product):
     if isinstance(format, (str, unicode)):
         format = Accept.__invoke__(format)
         assert not isinstance(format, DefaultFormat), "unknown format"
     return (line.encode('utf-8') if isinstance(line, unicode) else line
-            for line in Emit.__invoke__(format, headers))
+            for line in Emit.__invoke__(format, product))
 
 
