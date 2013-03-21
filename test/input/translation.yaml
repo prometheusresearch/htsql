@@ -301,6 +301,10 @@ tests:
     # Direct product
     - uri: /school.@school
     - uri: /@school.@department.@program.limit(1)
+    # Skew attachment
+    # shadowing issue
+    - uri: /instructor[sfrost].(confidential.pay_grade<^.paygrade)@confidential.instructor
+      skip: true # not a bug
 
   - title: Top
     tests:
