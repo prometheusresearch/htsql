@@ -429,6 +429,17 @@ tests:
                           num_dept := count(department))
                   .match('art'){num_dept}
       skip: true
+    # Guards
+    - uri: /school.guard($c, filter(campus=$c)) :given $c:=null
+    - uri: /school.guard($c, filter(campus=$c)) :given $c:=''
+    - uri: /school.guard($c, filter(campus=$c)) :given $c:='north'
+    - uri: /school.guard($c, filter(campus=$c)) :given $c:={'north','south'}
+    - uri: /school.guard($c, filter(campus=$c), filter(campus='old')) :given $c:=null
+    - uri: /school.guard($c, filter(campus=$c), filter(campus='old')) :given $c:='north'
+    - uri: /school.guard($c, filter(campus=$c))
+      expect: 400
+    - uri: /school.guard(!is_null($c), filter(campus=$c)) :given $c:='north'
+      expect: 400
 
   - title: Projections
     tests:

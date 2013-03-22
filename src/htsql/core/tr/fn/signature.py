@@ -204,6 +204,15 @@ class TruncToSig(Signature):
     ]
 
 
+class GuardSig(Signature):
+
+    slots = [
+            Slot('reference'),
+            Slot('consequent'),
+            Slot('alternative', is_mandatory=False),
+    ]
+
+
 class IfSig(Signature):
 
     slots = [

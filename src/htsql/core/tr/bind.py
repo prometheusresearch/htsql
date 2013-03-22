@@ -596,6 +596,8 @@ class BindAttach(Bind):
         if name is not None:
             scope = DefineBinding(scope, name, None, recipe, self.syntax)
         condition = self.state.bind(self.syntax.larm, scope=scope)
+        condition = ImplicitCastBinding(condition, coerce(BooleanDomain()),
+                                        condition.syntax)
         return AttachBinding(self.state.scope, seed, [], condition, self.syntax)
 
 

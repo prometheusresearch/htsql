@@ -24404,6 +24404,166 @@ tests:
               bind error: parameterized definition is not allowed for an in-segment assignment:
                   /school():=school{code, name}?exists(department)
                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+          - uri: /school.guard($c, filter(campus=$c)) :given $c:=null
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school                                        |
+               +------+-------------------------------+--------+
+               | code | name                          | campus |
+              -+------+-------------------------------+--------+-
+               | art  | School of Art & Design        | old    |
+               | bus  | School of Business            | south  |
+               | edu  | College of Education          | old    |
+               | eng  | School of Engineering         | north  |
+               | la   | School of Arts and Humanities | old    |
+               | mus  | School of Music & Dance       | south  |
+               | ns   | School of Natural Sciences    | old    |
+               | ph   | Public Honorariums            |        |
+               | sc   | School of Continuing Studies  |        |
+
+               ----
+               /school.guard($c,filter(campus=$c)) :given $c:=null
+               SELECT "school"."code",
+                      "school"."name",
+                      "school"."campus"
+               FROM "school"
+               ORDER BY 1 ASC
+          - uri: /school.guard($c, filter(campus=$c)) :given $c:=''
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school                                        |
+               +------+-------------------------------+--------+
+               | code | name                          | campus |
+              -+------+-------------------------------+--------+-
+               | art  | School of Art & Design        | old    |
+               | bus  | School of Business            | south  |
+               | edu  | College of Education          | old    |
+               | eng  | School of Engineering         | north  |
+               | la   | School of Arts and Humanities | old    |
+               | mus  | School of Music & Dance       | south  |
+               | ns   | School of Natural Sciences    | old    |
+               | ph   | Public Honorariums            |        |
+               | sc   | School of Continuing Studies  |        |
+
+               ----
+               /school.guard($c,filter(campus=$c)) :given $c:=''
+               SELECT "school"."code",
+                      "school"."name",
+                      "school"."campus"
+               FROM "school"
+               ORDER BY 1 ASC
+          - uri: /school.guard($c, filter(campus=$c)) :given $c:='north'
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school                                |
+               +------+-----------------------+--------+
+               | code | name                  | campus |
+              -+------+-----------------------+--------+-
+               | eng  | School of Engineering | north  |
+
+               ----
+               /school.guard($c,filter(campus=$c)) :given $c:='north'
+               SELECT "school"."code",
+                      "school"."name",
+                      "school"."campus"
+               FROM "school"
+               WHERE ("school"."campus" = 'north')
+               ORDER BY 1 ASC
+          - uri: /school.guard($c, filter(campus=$c)) :given $c:={'north','south'}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school                                  |
+               +------+-------------------------+--------+
+               | code | name                    | campus |
+              -+------+-------------------------+--------+-
+               | bus  | School of Business      | south  |
+               | eng  | School of Engineering   | north  |
+               | mus  | School of Music & Dance | south  |
+
+               ----
+               /school.guard($c,filter(campus=$c)) :given $c:={'north','south'}
+               SELECT "school"."code",
+                      "school"."name",
+                      "school"."campus"
+               FROM "school"
+               WHERE ("school"."campus" IN ('north', 'south'))
+               ORDER BY 1 ASC
+          - uri: /school.guard($c, filter(campus=$c), filter(campus='old')) :given
+              $c:=null
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school                                        |
+               +------+-------------------------------+--------+
+               | code | name                          | campus |
+              -+------+-------------------------------+--------+-
+               | art  | School of Art & Design        | old    |
+               | edu  | College of Education          | old    |
+               | la   | School of Arts and Humanities | old    |
+               | ns   | School of Natural Sciences    | old    |
+
+               ----
+               /school.guard($c,filter(campus=$c),filter(campus='old')) :given $c:=null
+               SELECT "school"."code",
+                      "school"."name",
+                      "school"."campus"
+               FROM "school"
+               WHERE ("school"."campus" = 'old')
+               ORDER BY 1 ASC
+          - uri: /school.guard($c, filter(campus=$c), filter(campus='old')) :given
+              $c:='north'
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            - [Vary, Accept]
+            body: |2
+               | school                                |
+               +------+-----------------------+--------+
+               | code | name                  | campus |
+              -+------+-----------------------+--------+-
+               | eng  | School of Engineering | north  |
+
+               ----
+               /school.guard($c,filter(campus=$c),filter(campus='old')) :given $c:='north'
+               SELECT "school"."code",
+                      "school"."name",
+                      "school"."campus"
+               FROM "school"
+               WHERE ("school"."campus" = 'north')
+               ORDER BY 1 ASC
+          - uri: /school.guard($c, filter(campus=$c))
+            status: 400 Bad Request
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |
+              Found unknown reference:
+                  $c
+              While translating:
+                  /school.guard($c, filter(campus=$c))
+                                ^^
+          - uri: /school.guard(!is_null($c), filter(campus=$c)) :given $c:='north'
+            status: 400 Bad Request
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |
+              Function 'guard' expects a reference as the first argument
+              While translating:
+                  /school.guard(!is_null($c), filter(campus=$c)) :given $c:='north'
+                                ^^^^^^^^^^^^
         - id: projections
           tests:
           - uri: /distinct(program{degree})

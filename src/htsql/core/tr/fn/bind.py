@@ -16,14 +16,14 @@ from ...domain import (Domain, UntypedDomain, BooleanDomain, TextDomain,
         DateTimeDomain, EnumDomain, ListDomain, RecordDomain)
 from ...syn.syntax import (NumberSyntax, IntegerSyntax, StringSyntax,
         IdentifierSyntax, ComposeSyntax, ApplySyntax, OperatorSyntax,
-        PrefixSyntax, GroupSyntax)
+        PrefixSyntax, GroupSyntax, ReferenceSyntax)
 from ..binding import (LiteralBinding, SortBinding, SieveBinding,
         FormulaBinding, CastBinding, ImplicitCastBinding, WrappingBinding,
         TitleBinding, DirectionBinding, QuotientBinding, AssignmentBinding,
         DefineBinding, DefineReferenceBinding, SelectionBinding, HomeBinding,
         RescopingBinding, CoverBinding, ForkBinding, ClipBinding,
-        SegmentBinding, QueryBinding, Binding, BindingRecipe, ComplementRecipe,
-        KernelRecipe, SubstitutionRecipe, ClosedRecipe)
+        SegmentBinding, QueryBinding, AliasBinding, Binding, BindingRecipe,
+        ComplementRecipe, KernelRecipe, SubstitutionRecipe, ClosedRecipe)
 from ..bind import BindByName, BindingState
 from ...error import Error, translate_guard
 from ..coerce import coerce
@@ -42,7 +42,7 @@ from .signature import (AsSig, LimitSig, SortSig, CastSig, MakeDateSig,
         KeepPolaritySig, ReversePolaritySig, RoundSig, RoundToSig, TruncSig,
         TruncToSig, LengthSig, ContainsSig, ExistsSig, CountSig, MinMaxSig,
         SumSig, AvgSig, AggregateSig, QuantifySig, DefineSig, GivenSig,
-        SelectSig, LinkSig, TopSig)
+        SelectSig, LinkSig, TopSig, GuardSig)
 import sys
 
 
@@ -503,6 +503,33 @@ class BindAs(BindMacro):
                             " or an identifier" % self.name.encode('utf-8'))
         base = self.state.bind(base)
         return TitleBinding(base, title, self.syntax)
+
+
+class BindGuard(BindMacro):
+
+    call('guard')
+    signature = GuardSig
+
+    def expand(self, reference, consequent, alternative=None):
+        if not isinstance(reference, ReferenceSyntax):
+            with translate_guard(reference):
+                raise Error("Function '%s' expects a reference"
+                            " as the first argument"
+                            % self.name.encode('utf-8'))
+        value = self.state.bind(reference)
+        if isinstance(value, AliasBinding):
+            value = value.base
+        if isinstance(value, LiteralBinding):
+            if value.value is None:
+                value = None
+            elif isinstance(value.domain, UntypedDomain) and not value.value:
+                value = None
+        if value is not None:
+            return self.state.bind(consequent)
+        elif alternative is not None:
+            return self.state.bind(alternative)
+        else:
+            return self.state.scope
 
 
 #class BindSieve(BindMacro):
