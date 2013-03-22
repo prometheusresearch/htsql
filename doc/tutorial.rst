@@ -579,9 +579,9 @@ expression where it is used.  In the following example the usage of
                  max(sophomore.credits),
                  min(sophomore.credits),
                  avg(sophomore.credits)
-                } :where(sophomore := course?no>=200&no<300)}
+                } :given(sophomore := course?no>=200&no<300)}
 
-In this example we use infix notation to call the ``where()`` function.
+In this example we use infix notation to call the ``given()`` function.
 Generally, any function call ``f(x,y)`` could be written ``x :f y``.
 
 
@@ -686,7 +686,7 @@ section as:
                                    max(set.credits),
                                    min(set.credits),
                                    avg(set.credits)
-                                   } :where set :=
+                                   } :given set :=
                                     course?no>=$level*100
                                           &no<($level+1)*100)
               {name, stats(1),
@@ -709,14 +709,14 @@ courses with more credits than average.
    /define($avg_credits := avg(course.credits))
    .course?credits>$avg_credits
 
-This same request can be written using ``where``.
+This same request can be written using ``given``.
 
 .. htsql::
    :no-output:
    :cut: 3
 
    /course?credits>$avg_credits
-   :where $avg_credits := avg(course.credits)
+   :given $avg_credits := avg(course.credits)
 
 Suppose that we'd like to return courses that have more than average
 credits for their given department.  We could write this as follows.

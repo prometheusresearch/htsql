@@ -123,19 +123,19 @@ tests:
   tests:
   # invalid reference with a hint
   - uri: /school?code=$scool_code
-          :where $school_code:='art'
+          :given $school_code:='art'
     expect: 400
   # invalid reference with no hints
   - uri: /school?code=$code
-          :where $school_code:='art'
+          :given $school_code:='art'
     expect: 400
   # invalid reference with many hints
   - uri: /school?code=$scool_code
-          :where ($school_code1:='art', $school_code2:='eng', $school_code3:='mus')
+          :given ($school_code1:='art', $school_code2:='eng', $school_code3:='mus')
     expect: 400
   # invalid attribute; missing $
   - uri: /school?code=school_code
-          :where $school_code:='art'
+          :given $school_code:='art'
     expect: 400
   # invalid attribute; missing ()
   - uri: /school{code, count{department}}
@@ -242,7 +242,7 @@ tests:
     expect: 400
   - uri: /define(today()){now()}
     expect: 400
-  - uri: /today() :where now()
+  - uri: /today() :given now()
     expect: 400
   # invalid aggregate expansion
   - uri: /exists(school{code,name})
@@ -270,7 +270,7 @@ tests:
     expect: 400
   # invalid plural quotient base
   - uri: /department{code, count($school^campus)}
-          :where $school:=school
+          :given $school:=school
     expect: 400
   # invalid quotient kernel
   - uri: /school^true()
@@ -299,7 +299,7 @@ tests:
   - uri: /department{code, count(school{code})}
     expect: 400
   - uri: /department{code, count($school{code})}
-          :where $school:=school
+          :given $school:=school
     expect: 400
   - uri: /school{code, count(program|department)}
     expect: 400

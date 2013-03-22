@@ -294,7 +294,7 @@ reference is used to access a value defined in a different naming scope.
    :cut: 3
 
    /course?credits>$avg_credits
-    :where $avg_credits := avg(course.credits)
+    :given $avg_credits := avg(course.credits)
 
 In this example, a reference ``$avg_credits`` is defined in the root
 scope, but accessed in the scope of ``course``.
@@ -584,10 +584,10 @@ the value of a calculated attribute.
    :cut: 3
 
    /school{name, num_dept}?num_dept>=4
-    :where school.num_dept := count(department)
+    :given school.num_dept := count(department)
 
 An assignment expression could be used only as an argument of functions
-`define()` and `where()`, or in a selector expression.
+`define()` and `given()`, or in a selector expression.
 
 
 .. vim: set spell spelllang=en textwidth=72:

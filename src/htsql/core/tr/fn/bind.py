@@ -41,7 +41,7 @@ from .signature import (AsSig, LimitSig, SortSig, CastSig, MakeDateSig,
         TodaySig, NowSig, MultiplySig, DivideSig, IfSig, SwitchSig,
         KeepPolaritySig, ReversePolaritySig, RoundSig, RoundToSig, TruncSig,
         TruncToSig, LengthSig, ContainsSig, ExistsSig, CountSig, MinMaxSig,
-        SumSig, AvgSig, AggregateSig, QuantifySig, DefineSig, WhereSig,
+        SumSig, AvgSig, AggregateSig, QuantifySig, DefineSig, GivenSig,
         SelectSig, LinkSig, TopSig)
 import sys
 
@@ -740,10 +740,10 @@ class BindDefine(BindMacro):
         return binding
 
 
-class BindWhere(BindMacro):
+class BindGiven(BindMacro):
 
-    call('where')
-    signature = WhereSig
+    call('given')
+    signature = GivenSig
 
     def expand(self, lop, rops):
         binding = self.state.scope
@@ -773,6 +773,11 @@ class BindWhere(BindMacro):
                 binding = DefineBinding(binding, name, arity,
                                         recipe, self.syntax)
         return self.state.bind(lop, scope=binding)
+
+
+class BindWhere(BindGiven):
+
+    call('where')
 
 
 class BindId(BindMacro):

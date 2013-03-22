@@ -7859,7 +7859,7 @@ tests:
                                   ON ("DEPARTMENT"."CODE" = "COURSE"."DEPARTMENT_CODE")
              ORDER BY "DEPARTMENT"."CODE" ASC
         - uri: /department{name, {count(sophomore), max(sophomore.credits), min(sophomore.credits),
-            avg(sophomore.credits) } :where(sophomore := course?no>=200&no<300)}
+            avg(sophomore.credits) } :given(sophomore := course?no>=200&no<300)}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
@@ -7900,7 +7900,7 @@ tests:
              | Wind                   |                0 |                        |                        |                                          |
 
              ----
-             /department{name,{count(sophomore),max(sophomore.credits),min(sophomore.credits),avg(sophomore.credits)} :where(sophomore:=course?no>=200&no<300)}
+             /department{name,{count(sophomore),max(sophomore.credits),min(sophomore.credits),avg(sophomore.credits)} :given(sophomore:=course?no>=200&no<300)}
              SELECT "DEPARTMENT"."NAME",
                     COALESCE("COURSE"."count", 0),
                     "COURSE"."max",
@@ -8158,7 +8158,7 @@ tests:
                                   ON ("DEPARTMENT"."CODE" = "COURSE"."DEPARTMENT_CODE")
              ORDER BY "DEPARTMENT"."CODE" ASC
         - uri: /department.define( stats($level) := {count(set), max(set.credits),
-            min(set.credits), avg(set.credits) } :where set := course?no>=$level*100
+            min(set.credits), avg(set.credits) } :given set := course?no>=$level*100
             &no<($level+1)*100) {name, stats(1), stats(2), stats(3), stats(4)}
           status: 200 OK
           headers:
@@ -8200,7 +8200,7 @@ tests:
              | Wind                   |          0 |                  |                  |                                          |          0 |                  |                  |                                          |          0 |                  |                  |                                          |          0 |                  |                  |                                          |
 
              ----
-             /department.define(stats($level):={count(set),max(set.credits),min(set.credits),avg(set.credits)} :where set:=course?no>=$level*100&no<($level+1)*100){name,stats(1),stats(2),stats(3),stats(4)}
+             /department.define(stats($level):={count(set),max(set.credits),min(set.credits),avg(set.credits)} :given set:=course?no>=$level*100&no<($level+1)*100){name,stats(1),stats(2),stats(3),stats(4)}
              SELECT "DEPARTMENT"."NAME",
                     COALESCE("COURSE"."count_1", 0),
                     "COURSE"."max_1",
@@ -8703,7 +8703,7 @@ tests:
                                   ON (1 <> 0)
              WHERE ("COURSE_1"."CREDITS" > "COURSE_2"."avg")
              ORDER BY 1 ASC, 2 ASC
-        - uri: /course?credits>$avg_credits :where $avg_credits := avg(course.credits)
+        - uri: /course?credits>$avg_credits :given $avg_credits := avg(course.credits)
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
@@ -9153,7 +9153,7 @@ tests:
              | tched           | 640 | Practice of Language Teaching    |       6 | " "                              |
 
              ----
-             /course?credits>$avg_credits :where $avg_credits:=avg(course.credits)
+             /course?credits>$avg_credits :given $avg_credits:=avg(course.credits)
              SELECT "COURSE_1"."DEPARTMENT_CODE",
                     "COURSE_1"."NO",
                     "COURSE_1"."TITLE",
@@ -20482,7 +20482,7 @@ tests:
                                      GROUP BY "COURSE_1"."DEPARTMENT_CODE") "COURSE_2"
                                     ON ("DEPARTMENT"."CODE" = "COURSE_2"."DEPARTMENT_CODE")
                ORDER BY 1 ASC
-          - uri: /course?credits=$max_credits :where $max_credits := max(course.credits)
+          - uri: /course?credits=$max_credits :given $max_credits := max(course.credits)
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -20500,7 +20500,7 @@ tests:
                :                 :     :                            :         : industrial setting.              :
 
                ----
-               /course?credits=$max_credits :where $max_credits:=max(course.credits)
+               /course?credits=$max_credits :given $max_credits:=max(course.credits)
                SELECT "COURSE_1"."DEPARTMENT_CODE",
                       "COURSE_1"."NO",
                       "COURSE_1"."TITLE",
@@ -20542,7 +20542,7 @@ tests:
                                     ON (1 <> 0)
                WHERE ("COURSE_1"."CREDITS" = "COURSE_2"."max")
                ORDER BY 1 ASC, 2 ASC
-          - uri: /department{code, count(course?credits=$max_credits)}.limit(10) :where
+          - uri: /department{code, count(course?credits=$max_credits)}.limit(10) :given
               department.$max_credits := max(course.credits)
             status: 200 OK
             headers:
@@ -20565,7 +20565,7 @@ tests:
                | edpol  |                                 15 |
 
                ----
-               /department{code,count(course?credits=$max_credits)}.limit(10) :where department.$max_credits:=max(course.credits)
+               /department{code,count(course?credits=$max_credits)}.limit(10) :given department.$max_credits:=max(course.credits)
                SELECT "DEPARTMENT"."CODE",
                       COALESCE("COURSE"."count", 0)
                FROM (SELECT "DEPARTMENT"."CODE"
@@ -22602,7 +22602,7 @@ tests:
                WHERE (CAST(COALESCE("STUDENT"."count", 0) AS NUMBER) > "PROGRAM_2"."avg")
                ORDER BY "SCHOOL"."CODE" ASC, 1 ASC, 2 ASC
           - uri: /program{school_code,code,count(student)}?count(student)>avg(fork().count(student))
-              :where program := program?school_code='eng'
+              :given program := program?school_code='eng'
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -22619,7 +22619,7 @@ tests:
                | eng         | umech    |             11 |
 
                ----
-               /program{school_code,code,count(student)}?count(student)>avg(fork().count(student)) :where program:=program?school_code='eng'
+               /program{school_code,code,count(student)}?count(student)>avg(fork().count(student)) :given program:=program?school_code='eng'
                SELECT "PROGRAM_1"."SCHOOL_CODE",
                       "PROGRAM_1"."CODE",
                       COALESCE("STUDENT"."count", 0)
@@ -22644,7 +22644,7 @@ tests:
                      AND ("PROGRAM_1"."SCHOOL_CODE" = 'eng')
                ORDER BY 1 ASC, 2 ASC
           - uri: /program{school_code,code,count(student)}?count(student)>avg(fork(school_code).count(student))
-              :where program := program.limit(10,15)
+              :given program := program.limit(10,15)
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -22661,7 +22661,7 @@ tests:
                | eng         | umech    |             11 |
 
                ----
-               /program{school_code,code,count(student)}?count(student)>avg(fork(school_code).count(student)) :where program:=program.limit(10,15)
+               /program{school_code,code,count(student)}?count(student)>avg(fork(school_code).count(student)) :given program:=program.limit(10,15)
                SELECT "PROGRAM_1"."SCHOOL_CODE",
                       "PROGRAM_1"."CODE",
                       COALESCE("STUDENT"."count", 0)
@@ -24018,7 +24018,7 @@ tests:
                  FROM "PROGRAM"
                  WHERE ("PROGRAM"."DEGREE" IS NOT NULL)
                  ORDER BY 3 ASC NULLS FIRST, 1 ASC, 2 ASC
-          - uri: /school[$id] :where $id:='ns'
+          - uri: /school[$id] :given $id:='ns'
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -24031,14 +24031,14 @@ tests:
                | ns   | School of Natural Sciences | old    |
 
                ----
-               /school[$id] :where $id:='ns'
+               /school[$id] :given $id:='ns'
                SELECT "SCHOOL"."CODE",
                       "SCHOOL"."NAME",
                       "SCHOOL"."CAMPUS"
                FROM "SCHOOL"
                WHERE ("SCHOOL"."CODE" = 'ns')
                ORDER BY 1 ASC
-          - uri: /course[$id]{id(), title} :where $id:=[astro.105]
+          - uri: /course[$id]{id(), title} :given $id:=[astro.105]
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -24051,7 +24051,7 @@ tests:
                | astro.105 | General Astronomy I |
 
                ----
-               /course[$id]{id(),title} :where $id:=[astro.105]
+               /course[$id]{id(),title} :given $id:=[astro.105]
                SELECT "COURSE"."DEPARTMENT_CODE",
                       "COURSE"."NO",
                       "COURSE"."TITLE"
@@ -24059,7 +24059,7 @@ tests:
                WHERE ("COURSE"."DEPARTMENT_CODE" = 'astro')
                      AND ("COURSE"."NO" = 105)
                ORDER BY 1 ASC, 2 ASC
-          - uri: /class[$course.$season.001] :where ($course:=[astro.105], $season:=[2009.spring])
+          - uri: /class[$course.$season.001] :given ($course:=[astro.105], $season:=[2009.spring])
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -24072,7 +24072,7 @@ tests:
                | astro           |       105 | 2009 | spring | 001     | mtriplett       |      1167 |
 
                ----
-               /class[$course.$season.001] :where($course:=[astro.105],$season:=[2009.spring])
+               /class[$course.$season.001] :given($course:=[astro.105],$season:=[2009.spring])
                SELECT "CLASS"."DEPARTMENT_CODE",
                       "CLASS"."COURSE_NO",
                       "CLASS"."YEAR",
@@ -24123,14 +24123,14 @@ tests:
               While translating:
                   /program^degree{id()}
                                   ^^^^
-          - uri: /course[$id]{id(), title} :where $id:='astro.105'
+          - uri: /course[$id]{id(), title} :given $id:='astro.105'
             status: 400 Bad Request
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
               Found ill-formed locator
               While translating:
-                  /course[$id]{id(), title} :where $id:='astro.105'
+                  /course[$id]{id(), title} :given $id:='astro.105'
                          ^^^^^
         - id: table-expressions
           tests:
@@ -24471,7 +24471,7 @@ tests:
                WHERE (NOT ("STUDENT"."IS_ACTIVE" <> 0))
                ORDER BY "STUDENT"."ID" ASC
           - uri: /school{code,{count(student), count(student?gender='m'), count(student?gender='f')}
-              :where(student:=program.student?is_active)}
+              :given(student:=program.student?is_active)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -24494,7 +24494,7 @@ tests:
                | sc   |              0 |                         0 |                         0 |
 
                ----
-               /school{code,{count(student),count(student?gender='m'),count(student?gender='f')} :where(student:=program.student?is_active)}
+               /school{code,{count(student),count(student?gender='m'),count(student?gender='f')} :given(student:=program.student?is_active)}
                SELECT "SCHOOL"."CODE",
                       COALESCE("STUDENT"."count_1", 0),
                       COALESCE("STUDENT"."count_2", 0),
@@ -24621,7 +24621,7 @@ tests:
               While translating:
                   /school.define(student_by_year($year) := program.student?year(dob)=$year) {code, student_by_year(1990).$year}
                                                                                                                          ^^^^^
-          - uri: /define(f($x) := $x*2){{$x, f($x)} :where $x := 21}
+          - uri: /define(f($x) := $x*2){{$x, f($x)} :given $x := 21}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -24632,7 +24632,7 @@ tests:
                | 21 |    42 |
 
                ----
-               /define(f($x):=$x*2){{$x,f($x)} :where $x:=21}
+               /define(f($x):=$x*2){{$x,f($x)} :given $x:=21}
                SELECT 21,
                       (21 * 2)
                FROM DUAL "!"
@@ -38314,7 +38314,7 @@ tests:
                          ^^^^^^^
       - id: lookup-hints
         tests:
-        - uri: /school?code=$scool_code :where $school_code:='art'
+        - uri: /school?code=$scool_code :given $school_code:='art'
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
@@ -38324,9 +38324,9 @@ tests:
             Perhaps you had in mind:
                 $school_code
             While translating:
-                /school?code=$scool_code :where $school_code:='art'
+                /school?code=$scool_code :given $school_code:='art'
                              ^^^^^^^^^^^
-        - uri: /school?code=$code :where $school_code:='art'
+        - uri: /school?code=$code :given $school_code:='art'
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
@@ -38334,9 +38334,9 @@ tests:
             Found unknown reference:
                 $code
             While translating:
-                /school?code=$code :where $school_code:='art'
+                /school?code=$code :given $school_code:='art'
                              ^^^^^
-        - uri: /school?code=$scool_code :where ($school_code1:='art', $school_code2:='eng',
+        - uri: /school?code=$scool_code :given ($school_code1:='art', $school_code2:='eng',
             $school_code3:='mus')
           status: 400 Bad Request
           headers:
@@ -38349,9 +38349,9 @@ tests:
                 $school_code2
                 $school_code3
             While translating:
-                /school?code=$scool_code :where ($school_code1:='art', $school_code2:='eng', $school_code3:='mus')
+                /school?code=$scool_code :given ($school_code1:='art', $school_code2:='eng', $school_code3:='mus')
                              ^^^^^^^^^^^
-        - uri: /school?code=school_code :where $school_code:='art'
+        - uri: /school?code=school_code :given $school_code:='art'
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
@@ -38361,7 +38361,7 @@ tests:
             Perhaps you had in mind:
                 a reference '$school_code'
             While translating:
-                /school?code=school_code :where $school_code:='art'
+                /school?code=school_code :given $school_code:='art'
                              ^^^^^^^^^^^
         - uri: /school{code, count{department}}
           status: 400 Bad Request
@@ -38787,14 +38787,14 @@ tests:
             While translating:
                 /define(today()){now()}
                         ^^^^^^^
-        - uri: /today() :where now()
+        - uri: /today() :given now()
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            Function 'where' expects an assignment expression
+            Function 'given' expects an assignment expression
             While translating:
-                /today() :where now()
+                /today() :given now()
                                 ^^^^^
         - uri: /exists(school{code,name})
           status: 400 Bad Request
@@ -38870,14 +38870,14 @@ tests:
             While translating:
                 /department.(school^campus)
                              ^^^^^^
-        - uri: /department{code, count($school^campus)} :where $school:=school
+        - uri: /department{code, count($school^campus)} :given $school:=school
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             Expected a descendant expression
             While translating:
-                /department{code, count($school^campus)} :where $school:=school
+                /department{code, count($school^campus)} :given $school:=school
                                                                          ^^^^^^
         - uri: /school^true()
           status: 400 Bad Request
@@ -38978,14 +38978,14 @@ tests:
             While translating:
                 /department{code, count(school{code})}
                                   ^^^^^^^^^^^^^^^^^^^
-        - uri: /department{code, count($school{code})} :where $school:=school
+        - uri: /department{code, count($school{code})} :given $school:=school
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             Expected a descendant operand
             While translating:
-                /department{code, count($school{code})} :where $school:=school
+                /department{code, count($school{code})} :given $school:=school
                                   ^^^^^^^^^^^^^^^^^^^^
         - uri: /school{code, count(program|department)}
           status: 400 Bad Request

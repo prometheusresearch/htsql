@@ -97,7 +97,7 @@ tests:
                  max(sophomore.credits),
                  min(sophomore.credits),
                  avg(sophomore.credits)
-                } :where(sophomore := course?no>=200&no<300)}
+                } :given(sophomore := course?no>=200&no<300)}
   - uri: /department.define(freshman := course?no>=100&no<200,
                             sophomore := course?no>=200&no<300,
                             junior := course?no>=300&no<400,
@@ -153,7 +153,7 @@ tests:
                                   max(set.credits),
                                   min(set.credits),
                                   avg(set.credits)
-                                 } :where set :=
+                                 } :given set :=
                                         course?no>=$level*100
                                               &no<($level+1)*100)
                 {name, stats(1), stats(2), stats(3), stats(4)}
@@ -161,7 +161,7 @@ tests:
   - uri: /define($avg_credits := avg(course.credits))
                 .course?credits>$avg_credits
   - uri: /course?credits>$avg_credits
-                :where $avg_credits := avg(course.credits)
+                :given $avg_credits := avg(course.credits)
   - uri: /department.define($avg_credits:=avg(course.credits))
                 .course?credits>$avg_credits
 

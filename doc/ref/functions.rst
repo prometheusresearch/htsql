@@ -493,7 +493,7 @@ negative values are permitted.
    :cut: 3
 
    /department^avg_credits {avg_credits, count(department)}
-    :where(department.avg_credits := avg(course.credits) :trunc(1))
+    :given(department.avg_credits := avg(course.credits) :trunc(1))
 
 
 String Functions
@@ -877,7 +877,7 @@ extracted value is a float number.
    /{date($dt), time($dt),
      year($d), month($d), day($d),
      hour($t), minute($t), second($t)}
-    :where ($d := date('2010-04-15'),
+    :given ($d := date('2010-04-15'),
             $t := time('20:13'),
             $dt := datetime($d,$t))
 
@@ -965,7 +965,7 @@ is converted to Boolean first (see function `boolean()`).
    /{exists(astro_course.credits>=5),
      every(astro_course.credits>=5),
      count(astro_course.credits>=5)}
-    :where astro_course := course?department.code='astro'
+    :given astro_course := course?department.code='astro'
 
 .. htsql:: /course?department.code='pia'
 
@@ -974,7 +974,7 @@ is converted to Boolean first (see function `boolean()`).
    /{exists(pia_course.credits>=5),
      every(pia_course.credits>=5),
      count(pia_course.credits>=5)}
-    :where pia_course := course?department.code='pia'
+    :given pia_course := course?department.code='pia'
 
 .. index:: min(), max()
 
@@ -993,12 +993,12 @@ empty,  *NULL* is returned.
 .. htsql::
 
    /{min(astro_course.credits), max(astro_course.credits)}
-    :where astro_course := course?department.code='astro'
+    :given astro_course := course?department.code='astro'
 
 .. htsql::
 
    /{min(pia_course.credits), max(pia_course.credits)}
-    :where pia_course := course?department.code='pia'
+    :given pia_course := course?department.code='pia'
 
 .. index:: sum(), avg()
 
@@ -1018,12 +1018,12 @@ and *float* result for a *float* argument.
 .. htsql::
 
    /{sum(astro_course.credits), avg(astro_course.credits)}
-    :where astro_course := course?department.code='astro'
+    :given astro_course := course?department.code='astro'
 
 .. htsql::
 
    /{sum(pia_course.credits), avg(pia_course.credits)}
-    :where pia_course := course?department.code='pia'
+    :given pia_course := course?department.code='pia'
 
 
 Flow Operations
@@ -1191,7 +1191,7 @@ Scope Operations
 | `define(x:=...)`     | add names to the current  | |define-in|               |
 |                      | scope                     |                           |
 +----------------------+---------------------------+---------------------------+
-| `where(expr,x:=...)` | evaluate an expression    | |where-in|                |
+| `given(expr,x:=...)` | evaluate an expression    | |given-in|                |
 |                      | with extra names in the   |                           |
 |                      | current scope             |                           |
 +----------------------+---------------------------+---------------------------+
@@ -1204,16 +1204,16 @@ Scope Operations
 +----------------------+---------------------------+---------------------------+
 
 .. |define-in| replace:: ``define(num_prog:=count(program))``
-.. |where-in| replace:: ``count(course?credits>$c) :where $c:=avg(course.credits)``
+.. |given-in| replace:: ``count(course?credits>$c) :given $c:=avg(course.credits)``
 
-.. index:: define(), where()
+.. index:: define(), given()
 
 Calculated Attributes
 ---------------------
 
 `define(x:=...)`
     Add a calculated attribute to the current scope.
-`where(expr,x:=...)`
+`given(expr,x:=...)`
     Evaluate an expression in a current scope with a calculated
     attribute.
 

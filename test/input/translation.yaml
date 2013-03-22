@@ -194,10 +194,10 @@ tests:
             {code, count(course_level), count(course_level.course)}
     # Optimized gluing.
     - uri: /course?credits=$max_credits
-            :where $max_credits := max(course.credits)
+            :given $max_credits := max(course.credits)
     - uri: /course?credits=max(fork().credits)
     - uri: /department{code, count(course?credits=$max_credits)}.limit(10)
-            :where department.$max_credits := max(course.credits)
+            :given department.$max_credits := max(course.credits)
     - uri: /department{code, count(course?credits=max(fork().credits))}.limit(10)
     # Test for a bug with LIMIT preventing unmasking a filter
     - uri: /school?code='art'{code, count(department.limit(10))}
@@ -279,9 +279,9 @@ tests:
     - uri: /program{school_code,code,count(student)}?count(student)>avg(fork(school_code).count(student))
     - uri: /school.program{school_code,code,count(student)}?count(student)>avg(fork().count(student))
     - uri: /program{school_code,code,count(student)}?count(student)>avg(fork().count(student))
-            :where program := program?school_code='eng'
+            :given program := program?school_code='eng'
     - uri: /program{school_code,code,count(student)}?count(student)>avg(fork(school_code).count(student))
-            :where program := program.limit(10,15)
+            :given program := program.limit(10,15)
     # fork() with projections
     - uri: /program^degree?count(^.student)=max(fork().count(^.student))
     # fork() with nullable kernel
@@ -346,10 +346,10 @@ tests:
     - uri: /department{id(), school{id()}}
     - uri: /course[astro.105].class.id()
     - uri: /program^degree{*, /^.id()}
-    - uri: /school[$id] :where $id:='ns'
-    - uri: /course[$id]{id(), title} :where $id:=[astro.105]
+    - uri: /school[$id] :given $id:='ns'
+    - uri: /course[$id]{id(), title} :given $id:=[astro.105]
     - uri: /class[$course.$season.001]
-            :where ($course:=[astro.105], $season:=[2009.spring])
+            :given ($course:=[astro.105], $season:=[2009.spring])
     - uri: /program[ns]
       expect: 400
     - uri: /school[ns.uchem]
@@ -358,7 +358,7 @@ tests:
       expect: 400
     - uri: /program^degree{id()}
       expect: 400
-    - uri: /course[$id]{id(), title} :where $id:='astro.105'
+    - uri: /course[$id]{id(), title} :given $id:='astro.105'
       expect: 400
 
   - title: Table Expressions
@@ -396,7 +396,7 @@ tests:
     - uri: /school{code,{count(student),
                          count(student?gender='m'),
                          count(student?gender='f')}
-                        :where(student:=program.student?is_active)}
+                        :given(student:=program.student?is_active)}
     - uri: /department.define(stats(c):={min(c.credits) :as min,max(c.credits) :as max})
                 {stats(course), stats(course?no>=100&no<200)}?code='acc'
     - uri: /school.define($school_name:=name).filter(code='eng')
@@ -407,7 +407,7 @@ tests:
     - uri: /school.define(student_by_year($year) := program.student?year(dob)=$year)
                   {code, student_by_year(1990).$year}
       expect: 400
-    - uri: /define(f($x) := $x*2){{$x, f($x)} :where $x := 21}
+    - uri: /define(f($x) := $x*2){{$x, f($x)} :given $x := 21}
     - uri: /school{code, num_dept := count(department)}?num_dept>3
     - uri: /school{code, $num_dept := count(department)}?$num_dept>3
     - uri: /school{code, program.num_stud := count(student)}

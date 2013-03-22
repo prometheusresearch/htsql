@@ -364,7 +364,7 @@ class DefineSig(ConnectiveSig):
     pass
 
 
-class WhereSig(NArySig):
+class GivenSig(NArySig):
     pass
 
 

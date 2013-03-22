@@ -219,7 +219,7 @@ evaluating the right operand:
 Scope-Augmenting Functions
 --------------------------
 
-Functions ``define()`` and ``where()`` allows you to add new names to
+Functions ``define()`` and ``given()`` allows you to add new names to
 the current scope.
 
 Function ``define()`` takes one or more assignment and adds the names
@@ -249,16 +249,16 @@ references to the top local scope:
    /define($avg_credits := avg(course.credits))
     .course?credits>$avg_credits
 
-Function ``where()`` takes an expression as the first parameter, a list
+Function ``given()`` takes an expression as the first parameter, a list
 of assignments as subsequent parameters and evaluates the expression in
-an augmented scope.  Function ``where()`` is typically used in infix
+an augmented scope.  Function ``given()`` is typically used in infix
 notation:
 
 .. htsql::
    :cut: 3
 
    /department{name, count(course?credits>$avg_credits)
-                     :where $avg_credits := avg(course.credits)}
+                     :given $avg_credits := avg(course.credits)}
 
 Resolving Plain Identifiers
 ---------------------------
