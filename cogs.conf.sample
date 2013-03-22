@@ -1,0 +1,64 @@
+#
+# Configuration parameters used by various development tasks.
+# Copy `cogs.conf.sample` to `cogs.conf` and make your edits.
+#
+
+
+#
+# Paths to executables.
+#
+
+#python: python
+#sphinx-build: sphinx-build
+#pyflakes: pyflakes
+#coverage: coverage
+#htsql-ctl: htsql-ctl
+
+
+#
+# The address of the demo HTSQL/HTTP server started by `cogs serve`.
+#
+
+#htsql-host: localhost
+#htsql-port: 8080
+
+
+#
+# Database servers for regression testing.  The database user must
+# have the right to create and drop users and databases.
+#
+
+#pgsql-username: postgres
+#pgsql-password:
+#pgsql-host: localhost
+#pgsql-port: 5432
+
+#mysql-username: root
+#mysql-password:
+#mysql-host: localhost
+#mysql-port: 3306
+
+#oracle-username: system
+#oracle-password:
+#oracle-host: localhost
+#oracle-port: 1521
+#oracle-sid: XE
+
+#mssql-username: sa
+#mssql-password:
+#mssql-host: localhost
+#mssql-port: 1433
+
+
+#
+# ISO images for VM.
+#
+
+#debian-iso: ./debian-6.0.3-i386-netinst.iso
+#ubuntu-iso: ./ubuntu-12.04.1-server-i386.iso
+#centos-iso: ./CentOS-6.0-i386-minimal.iso
+#windows-iso: ./en_win_srv_2003_r2_standard_with_sp2_cd1_x13-04790.iso
+#windows-key: '#####-#####-#####-#####-#####'
+
+
+# vim: set syntax=yaml:

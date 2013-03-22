@@ -3,9 +3,17 @@
 #
 
 
-from job import (job, settings, run, pipe, exe, log, debug, warn, fatal, prompt,
-                 ls, cp, mv, rm, mktree, rmtree)
-import os, os.path, urllib2, socket, datetime, time, re, tempfile
+from cogs import task, setting, env
+from cogs.fs import sh, pipe, exe, cp, mv, rm, mktree, rmtree
+from cogs.log import log, debug, warn, fail, prompt
+import os, os.path
+import glob
+import urllib2
+import socket
+import datetime
+import time
+import re
+import tempfile
 
 
 VM_ROOT = "./vm-build"
@@ -13,7 +21,7 @@ IMG_DIR = VM_ROOT+"/img"
 CTL_DIR = VM_ROOT+"/ctl"
 TMP_DIR = VM_ROOT+"/tmp"
 
-DATA_ROOT = "./tool/data"
+DATA_ROOT = "./cogs.local/data"
 
 DISK_SIZE = "8G"
 MEM_SIZE = "512"
@@ -42,31 +50,34 @@ WGET_EXE_URLS = [
     "http://downloads.sourceforge.net/gnuwin32/wget-1.11.4-1-setup.exe",
 ]
 
+env.add(vms=[])
+
+
 class VM(object):
     # A virtual machine.
 
     @classmethod
     def find(cls, name):
         # Get an instance by name.
-        for vm in settings.vms:
+        for vm in env.vms:
             if vm.name == name:
                 return vm
-        raise fatal("unknown VM: %s" % name)
+        raise fail("unknown VM: {}", name)
 
     @classmethod
     def list(cls):
         # List all VM instances.
-        return settings.vms[:]
+        return env.vms[:]
 
     def __init__(self, name, system, state=None):
         # Create an instance with the given name.
-        assert not any(vm.name == name for vm in settings.vms)
+        assert not any(vm.name == name for vm in env.vms)
         self.name = name
         self.system = system
         self.state = state
         self.img_path = IMG_DIR+"/%s.qcow2" % name
         self.ctl_path = CTL_DIR+"/%s.ctl" % name
-        settings.vms.append(self)
+        env.vms.append(self)
 
     def missing(self):
         # Check if the VM is built.
@@ -87,7 +98,7 @@ class VM(object):
         if not self.running():
             return []
         ports = []
-        for filename in ls(CTL_DIR+"/port.*"):
+        for filename in glob.glob(CTL_DIR+"/port.*"):
             name = open(filename).read().strip()
             if name == self.name:
                 port = int(filename.rsplit(".", 1)[-1])
@@ -98,29 +109,29 @@ class VM(object):
     def build(self):
         # Generate a VM image.
         if not self.missing():
-            raise fatal("VM is already built")
+            raise fail("VM is already built")
         for path in [IMG_DIR, CTL_DIR, TMP_DIR]:
             if not os.path.exists(path):
                 mktree(path)
         identity_path = CTL_DIR+"/identity"
         if not os.path.exists(identity_path):
-            run("ssh-keygen -q -N \"\" -f %s" % identity_path)
+            sh("ssh-keygen -q -N \"\" -f %s" % identity_path)
         config_path = CTL_DIR+"/ssh_config"
         if not os.path.exists(config_path):
             config_template_path = DATA_ROOT+"/vm/ssh_config"
             config_template = open(config_template_path).read()
             config = config_template.replace("$VM_ROOT", VM_ROOT)
             assert config != config_template
-            debug("translating: %s => %s" % (config_template_path, config_path))
+            debug("translating: {} => {}", config_template_path, config_path)
             open(config_path, 'w').write(config)
 
     def delete(self):
         # Delete the VM image.
         if self.missing():
-            raise fatal("VM is not built: %s" % self.name)
+            raise fail("VM is not built: {}", self.name)
         if self.running():
-            raise fatal("VM is running: %s" % self.name)
-        log("deleting VM: %s" % self.name)
+            raise fail("VM is running: {}", self.name)
+        log("deleting VM: {}", self.name)
         rm(self.img_path)
         if os.path.exists(self.ctl_path):
             rm(self.ctl_path)
@@ -128,11 +139,11 @@ class VM(object):
     def start(self):
         # Start a VM.
         if self.missing():
-            raise fatal("VM is not built: %s" % self.name)
+            raise fail("VM is not built: {}", self.name)
         if self.running():
-            raise fatal("VM is already running: %s" % self.name)
-        log("starting VM: %s" % self.name)
-        for filename in ls(CTL_DIR+"/port.*"):
+            raise fail("VM is already running: {}", self.name)
+        log("starting VM: {}", self.name)
+        for filename in glob.glob(CTL_DIR+"/port.*"):
             name = open(filename).read().strip()
             if name == self.name:
                 rm(filename)
@@ -144,10 +155,10 @@ class VM(object):
     def stop(self):
         # Stop a VM.
         if self.missing():
-            raise fatal("VM is not built: %s" % self.name)
+            raise fail("VM is not built: {}", self.name)
         if not self.running():
-            raise fatal("VM is not running: %s" % self.name)
-        log("stopping VM: %s" % self.name)
+            raise fail("VM is not running: {}", self.name)
+        log("stopping VM: {}", self.name)
         for port in self.ports():
             self.unforward(port)
         self.ctl("quit")
@@ -160,7 +171,7 @@ class VM(object):
             if os.path.exists(path):
                 return path
             data = None
-            debug("downloading: %s => %s" % (url, path))
+            debug("downloading: {} => {}", url, path)
             try:
                 data = urllib2.urlopen(url).read()
             except urllib2.HTTPError:
@@ -170,26 +181,25 @@ class VM(object):
                 stream.write(data)
                 stream.close()
                 return path
-        raise fatal("failed to download: %s"
-                    % ", ".join(urls))
+        raise fail("failed to download: {}", ", ".join(urls))
 
     def unpack_iso(self, iso_path, target_path):
         # Unpack an ISO image.
         assert os.path.isfile(iso_path)
         if not os.path.exists(target_path):
             mktree(target_path)
-        debug("unpacking: %s => %s" % (iso_path, target_path))
+        debug("unpacking: {} => {}", iso_path, target_path)
         listing = pipe("isoinfo -i %s -R -f" % iso_path)
         for entry in listing.splitlines():
             filename = target_path+entry
             dirname = os.path.dirname(filename)
             if not os.path.exists(dirname):
                 mktree(dirname)
-            content = pipe("isoinfo -i %s -R -x '%s'" % (iso_path, entry),
-                           verbose=False)
+            with env(debug=False):
+                content = pipe("isoinfo -i %s -R -x '%s'" % (iso_path, entry))
             if not content:
                 continue
-            #debug("extracting: %s => %s" % (entry, filename))
+            #debug("extracting: {} => {}", entry, filename)
             stream = open(filename, 'w')
             stream.write(content)
             stream.close()
@@ -197,8 +207,8 @@ class VM(object):
     def unpack_iso_boot(self, iso_path, boot_path):
         # Unpack El Torito boot image from and ISO.
         assert os.path.isfile(iso_path)
-        debug("unpacking boot image: %s => %s" % (iso_path, boot_path))
-        run("geteltorito -o %s %s" % (boot_path, iso_path))
+        debug("unpacking boot image: {} => {}", iso_path, boot_path)
+        sh("geteltorito -o %s %s" % (boot_path, iso_path))
 
     def wait(self):
         # Wait till the VM stops.
@@ -212,19 +222,18 @@ class VM(object):
         time.sleep(0.1)
         sock.recv(4096)
         for line in command.splitlines():
-            debug("writing: %s << %s" % (self.ctl_path, line))
+            debug("writing: {} << {}", self.ctl_path, line)
         sock.send(command+"\n")
         time.sleep(0.1)
         data = sock.recv(4096)
         for line in data.splitlines():
-            debug("reading: %s >> %s" % (self.ctl_path, line))
+            debug("reading: {} >> {}", self.ctl_path, line)
         sock.close()
 
     def forward(self, port):
         # Forward a port from a local host to the VM.
         local_port = port+10000
-        debug("forwarding: localhost:%s -> %s:%s"
-              % (local_port, self.name, port))
+        debug("forwarding: localhost:{} -> {}:{}", local_port, self.name, port)
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             sock.connect(('127.0.0.1', local_port))
@@ -239,14 +248,14 @@ class VM(object):
                 if name != self.name:
                     vm = VM.find(name)
                     if not vm.running():
-                        raise fatal("unable to forward port: %s -> %s:%s"
-                                    % (local_port, self.name, port))
-                    raise fatal("unable to forward port: %s -> %s:%s"
-                                " (already forwarded by VM %s)"
-                                % (local_port, self.name, port, name))
+                        raise fail("unable to forward port: {} -> {}:{}",
+                                   local_port, self.name, port)
+                    raise fail("unable to forward port: {} -> {}:{}"
+                               " (already forwarded by VM {})",
+                               local_port, self.name, port, name)
             else:
-                raise fatal("unable to forward port: %s -> %s:%s"
-                           % (local_port, self.name, port))
+                raise fail("unable to forward port: {} -> {}:{}",
+                           local_port, self.name, port)
         else:
             self.ctl("hostfwd_add tcp:127.0.0.1:%s-:%s"
                      % (local_port, port))
@@ -255,8 +264,8 @@ class VM(object):
     def unforward(self, port):
         # Remove a forwarding rule.
         local_port = port+10000
-        debug("unforwarding: localhost:%s -> %s:%s"
-              % (local_port, self.name, port))
+        debug("unforwarding: localhost:{} -> {}:{}",
+              local_port, self.name, port)
         self.ctl("hostfwd_remove tcp:127.0.0.1:%s-:%s" % (local_port, port))
         port_path = CTL_DIR+"/port.%s" % port
         if os.path.exists(port_path):
@@ -264,15 +273,15 @@ class VM(object):
 
     def kvm_img(self):
         # Run `kvm-img create -f qcow2 <img_path> <DISK_SIZE>`.
-        run("kvm-img create -f qcow2 %s %s" % (self.img_path, DISK_SIZE))
+        sh("kvm-img create -f qcow2 %s %s" % (self.img_path, DISK_SIZE))
 
     def compress(self, backing_name=None):
         # Run `kvm-img convert -c ...`.
         opts = "convert -c -f qcow2 -O qcow2"
         if backing_name:
             opts += " -o backing_file=%s.qcow2" % backing_name
-        run("kvm-img %s %s.qcow2 %s-compressed.qcow2"
-            % (opts, self.name, self.name), cd=IMG_DIR)
+        sh("kvm-img %s %s.qcow2 %s-compressed.qcow2"
+           % (opts, self.name, self.name), cd=IMG_DIR)
         mv(IMG_DIR+"/%s-compressed.qcow2" % self.name,
            IMG_DIR+"/%s.qcow2" % self.name)
 
@@ -281,14 +290,14 @@ class VM(object):
         net_model = "virtio"
         if self.system == 'windows':
             net_model = "rtl8139"
-        run("kvm -name %s -monitor unix:%s,server,nowait"
-            " -drive file=%s,cache=writeback"
-            " -net nic,model=%s -net user -vga cirrus"
-            " -rtc clock=vm -m %s"
-            % (self.name, self.ctl_path, self.img_path, 
-               net_model, MEM_SIZE)
-            + ((" "+opts) if opts else "")
-            + ("" if settings.verbose else " -vnc none"))
+        sh("kvm -name %s -monitor unix:%s,server,nowait"
+           " -drive file=%s,cache=writeback"
+           " -net nic,model=%s -net user -vga cirrus"
+           " -rtc clock=vm -m %s"
+           % (self.name, self.ctl_path, self.img_path, 
+              net_model, MEM_SIZE)
+           + ((" "+opts) if opts else "")
+           + ("" if env.debug else " -vnc none"))
 
     def run(self, command):
         # Run a shell command in the VM.
@@ -296,7 +305,7 @@ class VM(object):
         host = "linux-vm"
         if self.system == 'windows':
             host = "windows-vm"
-        run("ssh -F %s %s \"%s\"" % (CTL_DIR+"/ssh_config", host, command))
+        sh("ssh -F %s %s \"%s\"" % (CTL_DIR+"/ssh_config", host, command))
         self.unforward(22)
 
     def put(self, src_filename, dst_filename):
@@ -305,8 +314,8 @@ class VM(object):
         host = "linux-vm"
         if self.system == 'windows':
             host = "windows-vm"
-        run("scp -rF %s \"%s\" %s:\"%s\""
-            % (CTL_DIR+"/ssh_config", src_filename, host, dst_filename))
+        sh("scp -rF %s \"%s\" %s:\"%s\""
+           % (CTL_DIR+"/ssh_config", src_filename, host, dst_filename))
         self.unforward(22)
 
     def write(self, dst_filename, content):
@@ -325,24 +334,24 @@ class VM(object):
         host = "linux-vm"
         if self.system == 'windows':
             host = "windows-vm"
-        run("scp -rF %s %s:\"%s\" \"%s\""
-            % (CTL_DIR+"/ssh_config", host, src_filename, dst_filename))
+        sh("scp -rF %s %s:\"%s\" \"%s\""
+           % (CTL_DIR+"/ssh_config", host, src_filename, dst_filename))
         self.unforward(22)
 
 
 class DebianTemplateVM(VM):
     # Debian 6.0 "squeeze" (32-bit) VM.
 
-    def __init__(self, name, iso_env="DEBIAN_ISO", iso_urls=DEBIAN_ISO_URLS):
+    def __init__(self, name, iso_env='debian_iso', iso_urls=DEBIAN_ISO_URLS):
         super(DebianTemplateVM, self).__init__(name, 'linux')
         self.iso_env = iso_env
         self.iso_urls = iso_urls
 
     def build(self):
         super(DebianTemplateVM, self).build()
-        log("building VM: `%s`..." % self.name)
+        log("building VM: `{}`...", self.name)
         start_time = datetime.datetime.now()
-        src_iso_path = os.environ.get(self.iso_env)
+        src_iso_path = getattr(env, self.iso_env)
         if not (src_iso_path and os.path.isfile(src_iso_path)):
             src_iso_path = self.download(self.iso_urls)
         unpack_path = TMP_DIR+"/"+self.name
@@ -356,17 +365,17 @@ class DebianTemplateVM(VM):
         cp(DATA_ROOT+"/vm/%s-install.sh" % self.name,
            unpack_path+"/install.sh")
         cp(CTL_DIR+"/identity.pub", unpack_path+"/identity.pub")
-        run("cd %s && md5sum"
-            " `find ! -name \"md5sum.txt\""
-            " ! -path \"./isolinux/*\" -follow -type f` > md5sum.txt"
-            % unpack_path)
+        sh("md5sum"
+           " `find ! -name \"md5sum.txt\""
+           " ! -path \"./isolinux/*\" -follow -type f` > md5sum.txt",
+           cd=unpack_path)
         iso_path = TMP_DIR+"/%s.iso" % self.name
         if os.path.exists(iso_path):
             rm(iso_path)
-        run("mkisofs -o %s"
-            " -q -r -J -no-emul-boot -boot-load-size 4 -boot-info-table"
-            " -b isolinux/isolinux.bin -c isolinux/boot.cat %s"
-              % (iso_path, unpack_path))
+        sh("mkisofs -o %s"
+           " -q -r -J -no-emul-boot -boot-load-size 4 -boot-info-table"
+           " -b isolinux/isolinux.bin -c isolinux/boot.cat %s"
+           % (iso_path, unpack_path))
         rmtree(unpack_path)
         try:
             self.kvm_img()
@@ -378,8 +387,8 @@ class DebianTemplateVM(VM):
                 rm(self.img_path)
             raise
         stop_time = datetime.datetime.now()
-        log("VM is built successfully: `%s` (%s)"
-            % (self.name, stop_time-start_time))
+        log("VM is built successfully: `{}` ({})",
+            self.name, stop_time-start_time)
 
 
 class CentOSTemplateVM(VM):
@@ -390,9 +399,9 @@ class CentOSTemplateVM(VM):
 
     def build(self):
         super(CentOSTemplateVM, self).build()
-        log("building VM: `%s`..." % self.name)
+        log("building VM: `{}`...", self.name)
         start_time = datetime.datetime.now()
-        src_iso_path = os.environ.get("CENTOS_ISO")
+        src_iso_path = env.centos_iso
         if not (src_iso_path and os.path.isfile(src_iso_path)):
             src_iso_path = self.download(CENTOS_ISO_URLS)
         unpack_path = TMP_DIR+"/"+self.name
@@ -407,10 +416,10 @@ class CentOSTemplateVM(VM):
         iso_path = TMP_DIR+"/%s.iso" % self.name
         if os.path.exists(iso_path):
             rm(iso_path)
-        run("mkisofs -o %s"
-            " -q -r -J -T -no-emul-boot -boot-load-size 4 -boot-info-table"
-            " -b isolinux/isolinux.bin -c isolinux/boot.cat %s"
-              % (iso_path, unpack_path))
+        sh("mkisofs -o %s"
+           " -q -r -J -T -no-emul-boot -boot-load-size 4 -boot-info-table"
+           " -b isolinux/isolinux.bin -c isolinux/boot.cat %s"
+           % (iso_path, unpack_path))
         rmtree(unpack_path)
         try:
             self.kvm_img()
@@ -422,8 +431,8 @@ class CentOSTemplateVM(VM):
                 rm(self.img_path)
             raise
         stop_time = datetime.datetime.now()
-        log("VM is built successfully: `%s` (%s)"
-            % (self.name, stop_time-start_time))
+        log("VM is built successfully: `{}` ({})",
+            (self.name, stop_time-start_time))
 
 
 class WindowsTemplateVM(VM):
@@ -434,9 +443,9 @@ class WindowsTemplateVM(VM):
 
     def build(self):
         super(WindowsTemplateVM, self).build()
-        log("building VM: `%s`..." % self.name)
+        log("building VM: `{}`...", self.name)
         start_time = datetime.datetime.now()
-        src_iso_path = os.environ.get("WINDOWS_ISO")
+        src_iso_path = env.windows_iso
         if not (src_iso_path and os.path.isfile(src_iso_path)):
             src_iso_path = None
             output = pipe("locate %s || true"
@@ -449,9 +458,9 @@ class WindowsTemplateVM(VM):
             log("unable to find an ISO image for Windows XP or Windows 2003")
             src_iso_path = prompt("enter path to an ISO image:")
             if not (src_iso_path and os.path.isfile(src_iso_path)):
-                raise fatal("invalid path: %s" % src_iso_path)
+                raise fail("invalid path: %s" % src_iso_path)
         key_regexp = re.compile(r'^\w{5}-\w{5}-\w{5}-\w{5}-\w{5}$')
-        key = os.environ.get("WINDOWS_KEY")
+        key = env.windows_key
         if not (key and key_regexp.match(key)):
             key = None
             key_path = os.path.splitext(src_iso_path)[0]+".key"
@@ -463,7 +472,7 @@ class WindowsTemplateVM(VM):
             log("unable to find a Windows product key")
             key = prompt("enter product key:")
             if not key_regexp.match(key):
-                raise fatal("invalid product key: %s" % key)
+                raise fail("invalid product key: {}", key)
         wget_path = self.download(WGET_EXE_URLS)
         unpack_path = TMP_DIR+"/"+self.name
         boot_path = unpack_path+"/eltorito.img"
@@ -473,7 +482,7 @@ class WindowsTemplateVM(VM):
         self.unpack_iso_boot(src_iso_path, boot_path)
         sif_template_path = DATA_ROOT+"/vm/%s-winnt.sif" % self.name
         sif_path = unpack_path+"/I386/WINNT.SIF"
-        debug("translating: %s => %s" % (sif_template_path, sif_path))
+        debug("translating: {} => {}", sif_template_path, sif_path)
         sif_template = open(sif_template_path).read()
         sif = sif_template.replace("#####-#####-#####-#####-#####", key)
         assert sif != sif_template
@@ -486,10 +495,10 @@ class WindowsTemplateVM(VM):
         iso_path = TMP_DIR+"/%s.iso" % self.name
         if os.path.exists(iso_path):
             rm(iso_path)
-        run("mkisofs -o %s -q -iso-level 2 -J -l -D -N"
-            " -joliet-long -relaxed-filenames -no-emul-boot"
-            " -boot-load-size 4 -b eltorito.img %s"
-            % (iso_path, unpack_path))
+        sh("mkisofs -o %s -q -iso-level 2 -J -l -D -N"
+           " -joliet-long -relaxed-filenames -no-emul-boot"
+           " -boot-load-size 4 -b eltorito.img %s"
+           % (iso_path, unpack_path))
         rmtree(unpack_path)
         try:
             self.kvm_img()
@@ -501,8 +510,8 @@ class WindowsTemplateVM(VM):
                 rm(self.img_path)
             raise
         stop_time = datetime.datetime.now()
-        log("VM is built successfully: `%s` (%s)"
-            % (self.name, stop_time-start_time))
+        log("VM is built successfully: `{}` ({})",
+            self.name, stop_time-start_time)
 
 
 class LinuxBenchVM(VM):
@@ -519,13 +528,13 @@ class LinuxBenchVM(VM):
         if parent_vm.missing():
             parent_vm.build()
         if parent_vm.running():
-            raise fatal("unable to copy VM while it is running: %s"
-                        % parent_vm.name)
-        log("building VM: `%s`..." % self.name)
+            raise fail("unable to copy VM while it is running: {}",
+                       parent_vm.name)
+        log("building VM: `{}`...", self.name)
         start_time = datetime.datetime.now()
         try:
-            run("kvm-img create -b %s.qcow2 -f qcow2 %s.qcow2"
-                % (parent_vm.name, self.name), cd=IMG_DIR)
+            sh("kvm-img create -b %s.qcow2 -f qcow2 %s.qcow2"
+               % (parent_vm.name, self.name), cd=IMG_DIR)
             self.kvm("-daemonize")
             time.sleep(60.0)
             self.put(DATA_ROOT+"/vm/%s-update.sh" % self.name, "/root/update.sh")
@@ -547,8 +556,8 @@ class LinuxBenchVM(VM):
                 rm(self.img_path)
             raise
         stop_time = datetime.datetime.now()
-        log("VM is built successfully: `%s` (%s)"
-            % (self.name, stop_time-start_time))
+        log("VM is built successfully: `{}` ({})",
+            self.name, stop_time-start_time)
 
     def start(self):
         super(LinuxBenchVM, self).start()
@@ -579,9 +588,9 @@ class WindowsBenchVM(VM):
         if parent_vm.missing():
             parent_vm.build()
         if parent_vm.running():
-            raise fatal("unable to copy VM while it is running: %s"
-                        % parent_vm.name)
-        log("building VM: `%s`..." % self.name)
+            raise fail("unable to copy VM while it is running: {}",
+                       parent_vm.name)
+        log("building VM: `{}`...", self.name)
         start_time = datetime.datetime.now()
         try:
             cp(parent_vm.img_path, self.img_path)
@@ -607,8 +616,8 @@ class WindowsBenchVM(VM):
                 rm(self.img_path)
             raise
         stop_time = datetime.datetime.now()
-        log("VM is built successfully: `%s` (%s)"
-            % (self.name, stop_time-start_time))
+        log("VM is built successfully: `{}` ({})",
+            self.name, stop_time-start_time)
 
     def start(self):
         super(WindowsBenchVM, self).start()
@@ -629,22 +638,52 @@ debian_vm = DebianTemplateVM('debian')
 centos_vm = CentOSTemplateVM('centos')
 windows_vm = WindowsTemplateVM('windows')
 ubuntu_vm = DebianTemplateVM('ubuntu',
-                             iso_env="UBUNTU_ISO",
+                             iso_env="ubuntu_iso",
                              iso_urls=UBUNTU_ISO_URLS)
 
 
-@job
-def vm_list():
+@setting
+def DEBIAN_ISO(path=None):
+    """path to Debian 6.0 CDROM image"""
+    env.add(debian_iso=path or None)
+
+
+@setting
+def UBUNTU_ISO(path=None):
+    """path to Ubuntu 12.04 CDROM image"""
+    env.add(ubuntu_iso=path or None)
+
+
+@setting
+def CENTOS_ISO(path=None):
+    """path to CentOS 6 CDROM image"""
+    env.add(centos_iso=path or None)
+
+
+@setting
+def WINDOWS_ISO(path=None):
+    """path to MS Windows XP or 2003 CDROM image"""
+    env.add(windows_iso=path or None)
+
+
+@setting
+def WINDOWS_KEY(key=None):
+    """registration key for MS Windows CDROM image"""
+    env.add(windows_key=key or None)
+
+
+@task
+def VM_LIST():
     """list all virtual machines
 
-    This job lists all registered virtual machines and their states.
+    This task lists all registered virtual machines and their states.
     A VM could be in one of three states:
 
     - `missing`: the VM image is not built;
     - `stopped`: the VM image exists; the VM is not active.
     - `running`: the VM image exists and the VM is active.
 
-    For running VMs, the job lists all ports forwarded from the local
+    For running VMs, the task lists all ports forwarded from the local
     host to the VM.
     """
     log("Available virtual machines:")
@@ -659,19 +698,19 @@ def vm_list():
                 status += " (%s)" \
                         % (", ".join("%s -> %s" % (port+10000, port)
                                      for port in ports))
-        log("  %-24s : %s" % (vm.name, status))
+        log("  {:<24} : {}", vm.name, status)
     log()
 
 
-@job
-def vm_build(*names):
+@task
+def VM_BUILD(*names):
     """build a virtual machine
 
-    This job builds a virtual machine image from scratch.  This
+    This task builds a virtual machine image from scratch.  This
     usually takes some time and may require the original ISO
     image and a product key of the operating system.
 
-    Run this job without arguments to build images for all
+    Run this task without arguments to build images for all
     registered VMs.
     """
     if names:
@@ -680,51 +719,51 @@ def vm_build(*names):
         vms = [vm for vm in VM.list() if vm.missing()]
     for vm in vms:
         if not vm.missing():
-            warn("VM is already built: %s" % vm.name)
+            warn("VM is already built: {}", vm.name)
             continue
         vm.build()
 
 
-@job
-def vm_delete(*names):
+@task
+def VM_DELETE(*names):
     """delete a virtual machine
 
-    This job deletes an existing virtual machine image.
+    This task deletes an existing virtual machine image.
     """
     if not names:
-        raise fatal("VM is not specified")
+        raise fail("VM is not specified")
     vms = [VM.find(name) for name in names]
     for vm in vms:
         if vm.missing():
-            warn("VM is not built: %s" % vm.name)
+            warn("VM is not built: {}", vm.name)
             continue
         if vm.running():
-            warn("VM is running: %s" % vm.name)
+            warn("VM is running: {}", vm.name)
             continue
         vm.delete()
 
 
-@job
-def vm_start(*names):
+@task
+def VM_START(*names):
     """start a virtual machine
 
-    This job starts a virtual machine.
+    This task starts a virtual machine.
     """
     if not names:
-        raise fatal("VM is not specified")
+        raise fail("VM is not specified")
     vms = [VM.find(name) for name in names]
     for vm in vms:
         if vm.running():
-            warn("VM is already running: %s" % vm.name)
+            warn("VM is already running: {}", vm.name)
             continue
         vm.start()
 
 
-@job
-def vm_stop(*names):
+@task
+def VM_STOP(*names):
     """stop a virtual machine
 
-    This job stops a running virtual machine.  Run this job without
+    This task stops a running virtual machine.  Run this task without
     any arguments to stop all running VMs.
     """
     if names:
@@ -733,38 +772,39 @@ def vm_stop(*names):
         vms = [vm for vm in VM.list() if vm.running()]
     for vm in vms:
         if not vm.running():
-            warn("VM is not running: %s" % vm.name)
+            warn("VM is not running: {}", vm.name)
             continue
         vm.stop()
 
 
-@job
-def vm_ssh(name):
+@task
+def VM_SSH(name):
     """open a shell to a virtual machine
 
     Open an SSH session to a running virtual machine.
     """
     vm = VM.find(name)
     if not vm.running():
-        raise fatal("VM is not running: %s" % vm.name)
+        raise fail("VM is not running: {}", vm.name)
     vm.forward(22)
     host = "linux-vm"
     if vm.system == 'windows':
         host = "windows-vm"
-    exe("ssh -F %s %s" % (CTL_DIR+"/ssh_config", host))
+    with env(debug=True):
+        exe("ssh -F %s %s" % (CTL_DIR+"/ssh_config", host))
 
 
-@job
-def vm_ctl(name, cmd):
+@task
+def VM_CTL(name, cmd):
     """send a command to a virtual machine
 
-    This job sends a low-level command to the virtual machine monitor.
+    This task sends a low-level command to the virtual machine monitor.
     For the list of commands, see:
       `http://en.wikibooks.org/wiki/QEMU/Monitor`
     """
     vm = VM.find(name)
     if not vm.running():
-        raise fatal("VM is not running: %s" % vm.name)
+        raise fail("VM is not running: {}", vm.name)
     vm.ctl(cmd)
 
 

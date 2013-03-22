@@ -3,9 +3,12 @@
 #
 
 
-from job import job, log, debug, fatal, warn, run
-from vm import LinuxBenchVM, WindowsBenchVM, CTL_DIR
-import sys, subprocess
+from cogs import task
+from cogs.fs import sh
+from cogs.log import log, debug, warn, fail
+from .vm import LinuxBenchVM, WindowsBenchVM, CTL_DIR
+import sys
+import subprocess
 
 
 py26_vm = LinuxBenchVM('py26', 'debian', 22)
@@ -21,38 +24,38 @@ mssql2008_vm = WindowsBenchVM('mssql2008', 'windows', 1433)
 
 def trial(command, description):
     # Run a command on VM; complain if exited with non-zero error code.
-    log("%s..." % description)
+    log("{}...", description)
     command = "ssh -F %s linux-vm \"cd src/htsql && %s\"" \
               % (CTL_DIR+"/ssh_config", command)
     stream = subprocess.PIPE
-    debug("trying: %s" % command)
+    debug("trying: {}", command)
     proc = subprocess.Popen(command, shell=True,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT)
     out, err = proc.communicate()
     if proc.returncode == 0:
-        log("%s: PASSED" % description)
+        log("{}: PASSED", description)
         return 0
     out = out.strip()
-    log("%s: [!!] FAILED!" % description)
+    log("{}: :warning:`FAILED!`", description)
     log("*"*72)
     sys.stdout.write(out+"\n")
     log("*"*72)
     return 1
 
 
-@job
-def check_all():
+@task
+def CHECK_ALL():
     """run regression tests for all supported backends
 
-    This job runs HTSQL regression tests on all combinations of client
+    This task runs HTSQL regression tests on all combinations of client
     and server platforms.
     """
     vms = [py26_vm, py27_vm, pgsql84_vm, pgsql90_vm, pgsql91_vm,
            mysql51_vm, oracle10g_vm, mssql2005_vm, mssql2008_vm]
     for vm in vms:
         if vm.missing():
-            warn("VM is not built: %s" % vm.name)
+            warn("VM is not built: {}", vm.name)
     for vm in vms:
         if vm.running():
             vm.stop()
@@ -62,8 +65,8 @@ def check_all():
             if client_vm.missing():
                 continue
             client_vm.start()
-            run("hg clone --ssh='ssh -F %s' . ssh://linux-vm/src/htsql"
-                % (CTL_DIR+"/ssh_config"))
+            sh("hg clone --ssh='ssh -F %s' . ssh://linux-vm/src/htsql"
+               % (CTL_DIR+"/ssh_config"))
             errors += trial("hg update && python setup.py install",
                             "installing HTSQL under %s" % client_vm.name)
             errors += trial("htsql-ctl regress -qi test/regress.yaml sqlite",
@@ -112,7 +115,7 @@ def check_all():
         if errors == 1:
             warn("1 failed test")
         else:
-            warn("%s failed tests" % errors)
+            warn("{} failed tests", errors)
     else:
         log("`All tests passed`")
 

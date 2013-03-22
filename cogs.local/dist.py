@@ -3,20 +3,22 @@
 #
 
 
-from job import job, ls, rm, rmtree, run, pipe, log
+from cogs import task, setting, env
+from cogs.fs import sh, pipe, rm, rmtree
+from cogs.log import log
 import os, os.path
+import glob
 
 
 def pipe_python(command, cd=None):
     # Run `python <command>` and return the output.
-    PYTHON = os.environ.get("PYTHON", "python")
-    return pipe(PYTHON+" "+command, cd=cd)
+    return pipe(env.python_path+" "+command, cd=cd)
 
 
 def python(command, cd=None):
     # Run `python <command>`.
-    PYTHON = os.environ.get("PYTHON", "python")
-    run(PYTHON+" "+command, verbose=True, cd=cd)
+    with env(debug=True):
+        sh(env.python_path+" "+command, cd=cd)
 
 
 def setup_py(command, cd=None):
@@ -26,15 +28,35 @@ def setup_py(command, cd=None):
 
 def sphinx(command, cd=None):
     # Run `sphinx-build <command>`.
-    SPHINX = os.environ.get("SPHINX_BUILD", "sphinx-build")
-    run(SPHINX+" "+command, verbose=True, cd=cd)
+    with env(debug=True):
+        sh(env.sphinx_path+" "+command, cd=cd)
 
 
-@job
-def build():
+@setting
+def PYTHON(path=None):
+    """path to Python executable"""
+    if not path:
+        path = 'python'
+    if not isinstance(path, str):
+        raise ValueError("expected a string value")
+    env.add(python_path=path)
+
+
+@setting
+def SPHINX_BUILD(path=None):
+    """path to sphinx-build executable"""
+    if not path:
+        path = 'sphinx-build'
+    if not isinstance(path, str):
+        raise ValueError("expected a string value")
+    env.add(sphinx_path=path)
+
+
+@task
+def BUILD():
     """build HTSQL library
 
-    This job copies HTSQL source files to the build directory:
+    This task copies HTSQL source files to the build directory:
       `./build/lib`
     """
     setup_py("build --build-base=build/lib")
@@ -43,13 +65,13 @@ def build():
     log()
 
 
-@job
-def install():
+@task
+def INSTALL():
     """install HTSQL
 
-    This job installs HTSQL to the local filesystem.
+    This task installs HTSQL to the local filesystem.
 
-    This job may require root privileges.
+    This task may require root privileges.
     """
     setup_py("build --build-base=build/lib install")
     log()
@@ -58,11 +80,11 @@ def install():
     log()
 
 
-@job
-def develop():
+@task
+def DEVELOP():
     """install HTSQL in a development mode
 
-    This job installs HTSQL in a development mode so that any changes
+    This task installs HTSQL in a development mode so that any changes
     to the source tree affect subsequent calls of `htsql-ctl`.
     """
     setup_py("develop")
@@ -72,11 +94,11 @@ def develop():
     log()
 
 
-@job
-def doc():
+@task
+def DOC():
     """build HTSQL documentation
 
-    This job compiles HTSQL documentation and places it to:
+    This task compiles HTSQL documentation and places it to:
       `./build/doc/`
     """
     sphinx("-b html doc build/doc")
@@ -86,11 +108,11 @@ def doc():
     log()
 
 
-@job
-def clean():
+@task
+def CLEAN():
     """delete generated files
 
-    This job deletes generated files.
+    This task deletes generated files.
     """
     if os.path.exists("./build"):
         rmtree("./build")
@@ -105,7 +127,7 @@ def clean():
             if dirname == "vendor":
                 dirname = os.path.join(dirpath, dirname)
                 rmtree(dirname)
-    for filename in ls("./HTSQL-*"):
+    for filename in glob.glob("./HTSQL-*"):
         if os.path.isdir(filename):
             rmtree(filename)
 

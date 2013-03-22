@@ -3,10 +3,15 @@
 #
 
 
-from job import job, log, debug, fatal, warn, run, ls, cp, rmtree, mktree, pipe
-from vm import LinuxBenchVM, WindowsBenchVM, DATA_ROOT, CTL_DIR
-from dist import pipe_python, setup_py
-import os, re, shutil
+from cogs import task
+from cogs.fs import sh, pipe, cp, mktree, rmtree
+from cogs.log import log, debug, warn, fail
+from .vm import LinuxBenchVM, WindowsBenchVM, DATA_ROOT, CTL_DIR
+from .dist import pipe_python, setup_py
+import os
+import glob
+import re
+import shutil
 import setuptools
 import yaml
 
@@ -119,14 +124,14 @@ def get_addons():
                                  " print yaml.dump(setup.get_addons())'"))
 
 
-@job
-def pkg_src():
+@task
+def PKG_SRC():
     """create a source package
 
-    This job creates Python source distribution.
+    This task creates Python source distribution.
     """
     if src_vm.missing():
-        raise fatal("VM is not built: %s" % src_vm.name)
+        raise fail("VM is not built: {}", src_vm.name)
     if src_vm.running():
         src_vm.stop()
     if os.path.exists("./build/pkg/src"):
@@ -152,10 +157,10 @@ def pkg_src():
             move.variables['htsql-routines'] = routines
             move.variables['htsql-addons'] = addons
             mktree("./build/tmp")
-            run("hg archive ./build/tmp/htsql")
+            sh("hg archive ./build/tmp/htsql")
             if with_doc:
                 setup_py("-q download_vendor", cd="./build/tmp/htsql")
-            for dirname in ls("./build/tmp/htsql/src/*"):
+            for dirname in glob.glob("./build/tmp/htsql/src/*"):
                 if os.path.basename(dirname) not in packages:
                     rmtree(dirname)
             packages = setuptools.find_packages("./build/tmp/htsql/src")
@@ -168,7 +173,7 @@ def pkg_src():
             if with_doc:
                 src_vm.run("cd htsql &&"
                            " PYTHONPATH=src sphinx-build -d doc doc doc/html")
-                for filename in ls("./build/tmp/htsql/doc/man/*.?.rst"):
+                for filename in glob.glob("./build/tmp/htsql/doc/man/*.?.rst"):
                     basename = os.path.basename(filename)
                     target = basename[:-4]
                     src_vm.run("rst2man htsql/doc/man/%s htsql/doc/man/%s"
@@ -183,19 +188,19 @@ def pkg_src():
         src_vm.stop()
     log()
     log("The generated source packages are placed in:")
-    for filename in ls("./build/pkg/src/*"):
-        log("  `%s`" % filename)
+    for filename in glob.glob("./build/pkg/src/*"):
+        log("  `{}`", filename)
     log()
 
 
-@job
-def pkg_deb():
+@task
+def PKG_DEB():
     """create Debian packages
 
-    This job creates Debian packages from source packages.
+    This task creates Debian packages from source packages.
     """
     if deb_vm.missing():
-        raise fatal("VM is not built: %s" % deb_vm.name)
+        raise fail("VM is not built: {}", deb_vm.name)
     if deb_vm.running():
         deb_vm.stop()
     if os.path.exists("./build/pkg/deb"):
@@ -216,8 +221,8 @@ def pkg_deb():
             debian_package = "%s_%s" % (move.code, debian_version)
             archive = "./build/pkg/src/%s.tar.gz" % package
             if not os.path.exists(archive):
-                raise fatal("cannot find a source package;"
-                            " run `job pkg-src` first")
+                raise fail("cannot find a source package;"
+                           " run `cogs pkg-src` first")
             changelog = open(DATA_ROOT+"/pkg/debian/changelog").read()
             if ('htsql (%s-1)' % debian_version) not in changelog:
                 raise fatal("run `job pkg-deb-changelog`"
@@ -225,7 +230,7 @@ def pkg_deb():
             changelog = changelog.replace('htsql (', '%s (' % move.code)
             mktree("./build/tmp")
             cp(archive, "./build/tmp/%s.orig.tar.gz" % debian_package)
-            run("tar -xzf %s -C ./build/tmp" % archive)
+            sh("tar -xzf %s -C ./build/tmp" % archive)
             move(DATA_ROOT+"/pkg/debian", "./build/tmp/%s" % package)
             open("./build/tmp/%s/debian/changelog" % package, 'w') \
                     .write(changelog)
@@ -241,16 +246,16 @@ def pkg_deb():
         deb_vm.stop()
     log()
     log("The generated Debian packages are placed in:")
-    for filename in ls("./build/pkg/deb/*"):
-        log("  `%s`" % filename)
+    for filename in glob.glob("./build/pkg/deb/*"):
+        log("  `{}`", filename)
     log()
 
 
-@job
-def pkg_deb_changelog(message=None):
+@task
+def PKG_DEB_CHANGELOG(message=None):
     """update the Debian changelog
 
-    This job updates the Debian changelog to the current HTSQL version.
+    This task updates the Debian changelog to the current HTSQL version.
     """
     if message is None:
         message = "new upstream release"
@@ -259,23 +264,23 @@ def pkg_deb_changelog(message=None):
     debian_version += "-1"
     changelog = open(DATA_ROOT+"/pkg/debian/changelog").read()
     if ('htsql (%s)' % debian_version) in changelog:
-        raise fatal("changelog is already up-to-date")
-    run("dch --check-dirname-level 0 -D unstable -v %s %s"
-        % (debian_version, message),
-        cd=DATA_ROOT+"/pkg/debian")
+        raise fail("changelog is already up-to-date")
+    sh("dch --check-dirname-level 0 -D unstable -v %s %s"
+       % (debian_version, message),
+       cd=DATA_ROOT+"/pkg/debian")
     log("The Debian changelog is updated to version:")
-    log("  `%s`" % debian_version)
+    log("  `{}`", debian_version)
     log()
 
 
-@job
-def pkg_rpm():
+@task
+def PKG_RPM():
     """create RedHat/CentOS packages
 
-    This job creates RedHat/CentOS packages from source packages.
+    This task creates RedHat/CentOS packages from source packages.
     """
     if rpm_vm.missing():
-        raise fatal("VM is not built: %s" % rpm_vm.name)
+        raise fail("VM is not built: {}", rpm_vm.name)
     if rpm_vm.running():
         rpm_vm.stop()
     if os.path.exists("./build/pkg/rpm"):
@@ -299,8 +304,8 @@ def pkg_rpm():
             package = "%s-%s" % (name, version)
             archive = "./build/pkg/src/%s.tar.gz" % package
             if not os.path.exists(archive):
-                raise fatal("cannot find a source package;"
-                            " run `job pkg-src` first")
+                raise fail("cannot find a source package;"
+                           " run `cogs pkg-src` first")
             mktree("./build/tmp")
             move(DATA_ROOT+"/pkg/redhat", "./build/tmp")
             cp(archive, "./build/tmp/SOURCES")
@@ -316,27 +321,27 @@ def pkg_rpm():
         rpm_vm.stop()
     log()
     log("The generated RedHat/CentOS packages are placed in:")
-    for filename in ls("./build/pkg/rpm/*"):
-        log("  `%s`" % filename)
+    for filename in glob.glob("./build/pkg/rpm/*"):
+        log("  `{}`", filename)
     log()
 
 
-@job
-def pypi():
+@task
+def PYPI():
     """upload the source distribution to PyPI
 
-    This job uploads `zip` and `tar.gz` source distributions
+    This task uploads `zip` and `tar.gz` source distributions
     to PyPI.  The distributions must be already built with
-    `job pkg-src`.
+    `cogs pkg-src`.
     """
-    if not (ls("./build/pkg/src/HTSQL-*.tar.gz") and
-            ls("./build/pkg/src/HTSQL-*.zip")):
-        raise fatal("cannot find source packages; run `job pkg-src` first")
+    if not (glob.glob("./build/pkg/src/HTSQL-*.tar.gz") and
+            glob.glob("./build/pkg/src/HTSQL-*.zip")):
+        raise fail("cannot find source packages; run `cogs pkg-src` first")
     if os.path.exists("./build/tmp"):
         rmtree("./build/tmp")
     mktree("./build/tmp")
     archives = []
-    for tgzname in ls("./build/pkg/src/*.tar.gz"):
+    for tgzname in glob.glob("./build/pkg/src/*.tar.gz"):
         dirname = tgzname[:-7]
         zipname = dirname+".zip"
         dirname = os.path.basename(dirname)
@@ -355,7 +360,7 @@ def pypi():
     log()
     log("Source distribution archives are uploaded to:")
     for project, version in archives:
-        log("  `http://pypi.python.org/pypi/%s/%s/`" % (project, version))
+        log("  `http://pypi.python.org/pypi/{}/{}/`", project, version)
     log()
 
 
