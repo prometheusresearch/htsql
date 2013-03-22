@@ -253,7 +253,7 @@ class UntypedDomain(Domain):
     @staticmethod
     def parse(text):
         # Sanity check on the argument.
-        assert isinstance(data, maybe(unicode))
+        assert isinstance(text, maybe(unicode))
         # No conversion is required.
         return text
 

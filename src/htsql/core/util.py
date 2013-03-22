@@ -461,7 +461,7 @@ class TextBuffer(object):
         start = excerpt.rfind(u"\n", 0, index)+1
         end = excerpt.find(u"\n", start)
         if end == -1:
-            end = len(text)
+            end = len(self.text)
         excerpt = excerpt[start:end].encode('utf-8')
         # Make a pointer to the buffer head.
         indent = index-start
@@ -725,7 +725,7 @@ class omap(frozenomap, collections.MutableMapping):
         self._keys = []
         self._value_by_key = {}
 
-    def update(iterable):
+    def update(self, iterable):
         if isinstance(iterable, collections.Mapping):
             iterable = iterable.iteritems()
         for key, value in iterable:
