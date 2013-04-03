@@ -171,6 +171,9 @@ tests:
   # Load `test_django_sandbox` and deploy the database
   - py: |
       # add-module-path
+      if 'sqlite' in __pbbt__:
+          import sqlite3
+          __pbbt__['sqlite3_converters'] = sqlite3.converters.copy()
       import __builtin__, sys, os, os.path
       from htsql.core.util import DB
       path = os.path.join(os.getcwd(), "test/code")
@@ -206,6 +209,11 @@ tests:
           if name.startswith(('test_django_sandbox', 'django')):
               del sys.modules[name]
       del __builtin__.sandbox
+      if 'sqlite' in __pbbt__:
+          import sqlite3
+          sqlite3.converters.clear()
+          sqlite3.converters.update(__pbbt__['sqlite3_converters'])
+          del __pbbt__['sqlite3_converters']
 
 # TWEAK.FILEDB - make a database from a set of CSV files
 - title: tweak.filedb
@@ -346,7 +354,7 @@ tests:
   - uri: /new
   - uri: /_source
     ignore: true
-  - uri: /{_source[permanent].timestamp<_source[volatile].timestamp}
+  - uri: /{_source[permanent].timestamp<=_source[volatile].timestamp}
 
   # Cleanup
   - rm:

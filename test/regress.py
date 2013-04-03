@@ -258,12 +258,11 @@ class QueryCase(RunAndCompareMixin):
             return super(QueryCase.Output, cls).__load__(mapping)
 
         def __dump__(self):
-            mapping = {}
-            mapping['uri'] = self.uri
-            mapping['status'] = self.status
-            mapping['headers'] = [list(header) for header in self.headers]
-            mapping['body'] = self.body
-            return mapping
+            return [
+                    ('uri', self.uri),
+                    ('status', self.status),
+                    ('headers', [list(header) for header in self.headers]),
+                    ('body', self.body)]
 
     def run(self):
         app = self.ctl.state.get('htsql')

@@ -1,8 +1,3 @@
-#
-# This file contains expected test output data for regression tests.
-# It was generated automatically by the `regress` routine.
-#
-
 suite: sqlite
 tests:
 - suite: createdb
@@ -34651,19 +34646,19 @@ tests:
                     "!source"."timestamp"
              FROM "!source"
              ORDER BY 1 ASC
-        - uri: /{_source[permanent].timestamp<_source[volatile].timestamp}
+        - uri: /{_source[permanent].timestamp<=_source[volatile].timestamp}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | _source[permanent].timestamp<_source[volatile].timestamp |
-            -+----------------------------------------------------------+-
-             | true                                                     |
+             | _source[permanent].timestamp<=_source[volatile].timestamp |
+            -+-----------------------------------------------------------+-
+             | true                                                      |
 
              ----
-             /{_source[permanent].timestamp<_source[volatile].timestamp}
-             SELECT ("!source_1"."timestamp" < "!source_2"."timestamp")
+             /{_source[permanent].timestamp<=_source[volatile].timestamp}
+             SELECT ("!source_1"."timestamp" <= "!source_2"."timestamp")
              FROM (SELECT 1 AS "/") AS "!"
                   LEFT OUTER JOIN (SELECT "!source"."timestamp"
                                    FROM "!source"
