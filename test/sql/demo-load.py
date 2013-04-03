@@ -15,7 +15,8 @@ import data_generator
 
 REGRESS_DATA = 'test/sql/demo-data.yaml'
 
-assert state.app is not None
+assert __pbbt__.get('htsql') is not None
+app = __pbbt__['htsql']
 
 converter = (lambda item: item)
 with_schema = True
@@ -23,19 +24,19 @@ with_pyparams = False
 with_numparams = False
 prelude = []
 
-if state.app.htsql.db.engine == 'sqlite':
+if app.htsql.db.engine == 'sqlite':
     with_schema = False
-if state.app.htsql.db.engine == 'pgsql':
+if app.htsql.db.engine == 'pgsql':
     with_pyparams = True
-if state.app.htsql.db.engine == 'mysql':
+if app.htsql.db.engine == 'mysql':
     with_schema = False
     with_pyparams = True
-if state.app.htsql.db.engine == 'mssql':
+if app.htsql.db.engine == 'mssql':
     converter = (lambda item: 'TRUE' if item is True else
                               'FALSE' if item is False else item)
     with_pyparams = True
     prelude = ["SET IDENTITY_INSERT cd.class ON"]
-if state.app.htsql.db.engine == 'oracle':
+if app.htsql.db.engine == 'oracle':
     converter = (lambda item: 1 if item is True else
                               0 if item is False else
                               item.encode('utf-8')
@@ -69,7 +70,7 @@ def insert_table_data(line, cursor):
     cursor.executemany(sql, data)
 
 
-with state.app:
+with app:
 
     connection = connect()
     cursor = connection.cursor()

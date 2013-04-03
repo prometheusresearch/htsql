@@ -3,7 +3,7 @@
 #
 
 title: The Regression Schema
-id: schema
+suite: schema
 tests:
 
 - title: Tables

@@ -3,12 +3,12 @@
 #
 
 title: PostgreSQL regression tests
-id: pgsql
+suite: pgsql
 output: test/output/pgsql.yaml
 tests:
 
 - title: Remove any existing regression database
-  id: drop-pgsql
+  suite: dropdb
   tests:
   - connect: &admin-connect
       engine: pgsql
@@ -29,7 +29,7 @@ tests:
     autocommit: true
 
 - title: Deploy the regression database
-  id: create-pgsql
+  suite: createdb
   tests:
   # Create the `demo` database
   - connect: *admin-connect
@@ -45,9 +45,9 @@ tests:
       password: secret
       host: ${PGSQL_HOST}
       port: ${PGSQL_PORT}
-    sql-include: test/sql/demo-pgsql.sql
+    sql: test/sql/demo-pgsql.sql
   - db: *connect-demo
-  - py-include: test/sql/demo-load.py
+  - py: test/sql/demo-load.py
   # Create the `edge` database
   - connect: *admin-connect
     sql: |
@@ -62,7 +62,7 @@ tests:
       password: secret
       host: ${PGSQL_HOST}
       port: ${PGSQL_PORT}
-    sql-include: test/sql/edge-pgsql.sql
+    sql: test/sql/edge-pgsql.sql
   # Create the `etl` database
   - connect: *admin-connect
     sql: |
@@ -77,7 +77,7 @@ tests:
       password: secret
       host: ${PGSQL_HOST}
       port: ${PGSQL_PORT}
-    sql-include: test/sql/etl-pgsql.sql
+    sql: test/sql/etl-pgsql.sql
   # Create the `sandbox` database
   - connect: *admin-connect
     sql: |
@@ -96,9 +96,9 @@ tests:
         -- The `sandbox` database is populated by the tests.
 
 - title: Run the test collection
-  id: test-pgsql
+  suite: test
   tests:
-  - define: pgsql
+  - set: pgsql
   - db: *connect-sandbox
     extensions:
       htsql: {debug: true}

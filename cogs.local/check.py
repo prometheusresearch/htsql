@@ -65,11 +65,13 @@ def CHECK_ALL():
             if client_vm.missing():
                 continue
             client_vm.start()
+            client_vm.run("~/bin/pip -q install"
+                          " hg+http://bitbucket.org/prometheus/pbbt")
             sh("hg clone --ssh='ssh -F %s' . ssh://linux-vm/src/htsql"
                % (CTL_DIR+"/ssh_config"))
             errors += trial("hg update && python setup.py install",
                             "installing HTSQL under %s" % client_vm.name)
-            errors += trial("htsql-ctl regress -qi test/regress.yaml sqlite",
+            errors += trial("pbbt test/regress.yaml -q -S /all/sqlite",
                             "testing sqlite backend")
             for server_vm, suite in [(pgsql84_vm, 'pgsql'),
                                      (pgsql90_vm, 'pgsql'),
@@ -92,17 +94,16 @@ def CHECK_ALL():
                 password_value = "admin"
                 host_value = "10.0.2.2"
                 port_value = 10000+server_vm.port
-                command = "%s=%s %s=%s %s=%s %s=%s" \
-                          " htsql-ctl regress -qi test/regress.yaml %s" \
-                          % (username_key, username_value,
+                command = "pbbt test/regress.yaml -q -S /all/%s" \
+                          " -D %s=%s -D %s=%s -D %s=%s -D %s=%s" \
+                          % (suite, username_key, username_value,
                              password_key, password_value,
-                             host_key, host_value, port_key, port_value,
-                             suite)
+                             host_key, host_value, port_key, port_value)
                 message = "testing %s backend against %s" \
                           % (suite, server_vm.name)
                 errors += trial(command, message)
                 server_vm.stop()
-            errors += trial("htsql-ctl regress -qi test/regress.yaml routine",
+            errors += trial("pbbt test/regress.yaml -q -S /all/routine",
                             "testing htsql-ctl routines")
             client_vm.stop()
     except:

@@ -3,7 +3,7 @@
 #
 
 title: Examples from the Tutorial
-id: tutorial
+suite: tutorial
 tests:
 
 - title: Getting Started

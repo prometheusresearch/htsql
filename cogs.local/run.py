@@ -21,14 +21,20 @@ def exe_htsql_ctl(command, environ=None):
         exe(env.ctl_path+" "+command, environ=environ)
 
 
-def regress(command, environ=None):
-    # Run `htsql-ctl regress -i test/regress.yaml <command>`.
-    htsql_ctl("regress -i test/regress.yaml "+command, environ=environ)
+def regress(command):
+    # Run `pbbt test/regress.yaml <command>`.
+    variables = make_variables()
+    with env(debug=True):
+        sh(env.pbbt_path+" test/regress.yaml -E test/regress.py "
+           +variables+command)
 
 
-def exe_regress(command, environ=None):
-    # Run `htsql-ctl regress -i test/regress.yaml <command>`.
-    exe_htsql_ctl("regress -i test/regress.yaml "+command, environ=environ)
+def exe_regress(command):
+    # Run `pbbt test/regress.yaml <command>`.
+    variables = make_variables()
+    with env(debug=True):
+        exe(env.pbbt_path+" test/regress.yaml -E test/regress.py "
+            +variables+command)
 
 
 def pyflakes(command):
@@ -67,7 +73,7 @@ def make_db(engine, name):
     if engine == 'sqlite':
         return "sqlite:build/regress/sqlite/htsql_%s.sqlite" % name
     elif engine in ['pgsql', 'mysql', 'mssql']:
-        host = getattr(env, '%s_host' % engine)
+        host = getattr(env, '%s_host' % engine) or ''
         if host:
             port = getattr(env, '%s_port' % engine)
             if port:
@@ -75,24 +81,25 @@ def make_db(engine, name):
         return ("%s://htsql_%s:secret@%s/htsql_%s"
                 % (engine, name, host, name))
     elif engine == 'oracle':
-        host = env.oracle_host
+        host = env.oracle_host or ''
         if host and env.oracle_port:
             host = "%s:%s" % (host, env.oracle_port)
         sid = env.oracle_sid
         return "oracle://htsql_%s:secret@%s/%s" % (name, host, sid)
 
 
-def make_environ():
-    # Populate environment variables with database configuration.
-    environ = {}
+def make_variables():
+    # Generate conditional variables for pbbt.
+    variables = []
     for engine in ['pgsql', 'mysql', 'oracle', 'mssql']:
         for name in ['username', 'password', 'host', 'port']:
             value = getattr(env, '%s_%s' % (engine, name))
             if value:
-                environ['%s_%s' % (engine.upper(), name.upper())] = str(value)
-    if env.oracle_sid:
-        environ['ORACLE_SID'] = env.oracle_sid
-    return environ
+                variables.append('-D %s_%s=%s '
+                                 % (engine.upper(), name.upper(), str(value)))
+        if engine == 'oracle' and env.oracle_sid:
+            variables.append('-D ORACLE_SID=%s ' % env.oracle_sid)
+    return "".join(variables)
 
 
 def make_client(engine, name=None):
@@ -200,6 +207,16 @@ def HTSQL_CTL(path=None):
 
 
 @setting
+def PBBT(path=None):
+    """path to pbbt executable"""
+    if not path:
+        path = 'pbbt'
+    if not isinstance(path, str):
+        raise ValueError("expected a string value")
+    env.add(pbbt_path=path)
+
+
+@setting
 def HTSQL_HOST(host=None):
     """host of the demo HTSQL server"""
     env.add(htsql_host=host or 'localhost')
@@ -218,137 +235,137 @@ def HTSQL_PORT(port=None):
 @setting
 def PGSQL_USERNAME(name=None):
     """user name for PostgreSQL regression database"""
-    env.add(pgsql_username=name or '')
-    if not isinstance(env.pgsql_username, str):
+    if not (name is None or isinstance(name, str)):
         raise ValueError("expected a string value")
+    env.add(pgsql_username=name)
 
 
 @setting
 def PGSQL_PASSWORD(passwd=None):
     """password for PostgreSQL regression database"""
-    env.add(pgsql_password=passwd or '')
-    if not isinstance(env.pgsql_password, str):
+    if not (passwd is None or isinstance(passwd, str)):
         raise ValueError("expected a string value")
+    env.add(pgsql_password=passwd)
 
 
 @setting
 def PGSQL_HOST(host=None):
     """host for PostgreSQL regression database"""
-    env.add(pgsql_host=host or '')
-    if not isinstance(env.pgsql_host, str):
+    if not (host is None or isinstance(host, str)):
         raise ValueError("expected a string value")
+    env.add(pgsql_host=host)
 
 
 @setting
 def PGSQL_PORT(port=None):
     """port for PostgreSQL regression database"""
-    env.add(pgsql_port=port or 0)
-    if not isinstance(env.pgsql_port, int):
+    if not (port is None or isinstance(port, int)):
         raise ValueError("expected an integer value")
+    env.add(pgsql_port=port)
 
 
 @setting
 def MYSQL_USERNAME(name=None):
     """user name for MySQL regression database"""
-    env.add(mysql_username=name or '')
-    if not isinstance(env.mysql_username, str):
+    if not (name is None or isinstance(name, str)):
         raise ValueError("expected a string value")
+    env.add(mysql_username=name)
 
 
 @setting
 def MYSQL_PASSWORD(passwd=None):
     """password for MySQL regression database"""
-    env.add(mysql_password=passwd or '')
-    if not isinstance(env.mysql_password, str):
+    if not (passwd is None or isinstance(passwd, str)):
         raise ValueError("expected a string value")
+    env.add(mysql_password=passwd)
 
 
 @setting
 def MYSQL_HOST(host=None):
     """host for MySQL regression database"""
-    env.add(mysql_host=host or '')
-    if not isinstance(env.mysql_host, str):
+    if not (host is None or isinstance(host, str)):
         raise ValueError("expected a string value")
+    env.add(mysql_host=host)
 
 
 @setting
 def MYSQL_PORT(port=None):
     """port for MySQL regression database"""
-    env.add(mysql_port=port or 0)
-    if not isinstance(env.mysql_port, int):
+    if not (port is None or isinstance(port, int)):
         raise ValueError("expected an integer value")
+    env.add(mysql_port=port)
 
 
 @setting
 def ORACLE_USERNAME(name=None):
     """user name for Oracle regression database"""
-    env.add(oracle_username=name or '')
-    if not isinstance(env.oracle_username, str):
+    if not (name is None or isinstance(name, str)):
         raise ValueError("expected a string value")
+    env.add(oracle_username=name)
 
 
 @setting
 def ORACLE_PASSWORD(passwd=None):
     """password for Oracle regression database"""
-    env.add(oracle_password=passwd or '')
-    if not isinstance(env.oracle_password, str):
+    if not (passwd is None or isinstance(passwd, str)):
         raise ValueError("expected a string value")
+    env.add(oracle_password=passwd)
 
 
 @setting
 def ORACLE_HOST(host=None):
     """host for Oracle regression database"""
-    env.add(oracle_host=host or '')
-    if not isinstance(env.oracle_host, str):
+    if not (host is None or isinstance(host, str)):
         raise ValueError("expected a string value")
-
-
-@setting
-def ORACLE_SID(sid=None):
-    """SID for Oracle regression database"""
-    env.add(oracle_sid=sid or 'XE')
-    if not isinstance(env.oracle_sid, str):
-        raise ValueError("expected a string value")
+    env.add(oracle_host=host)
 
 
 @setting
 def ORACLE_PORT(port=None):
     """port for Oracle regression database"""
-    env.add(oracle_port=port or 0)
-    if not isinstance(env.oracle_port, int):
+    if not (port is None or isinstance(port, int)):
         raise ValueError("expected an integer value")
+    env.add(oracle_port=port)
+
+
+@setting
+def ORACLE_SID(sid=None):
+    """SID for Oracle regression database"""
+    if not (sid is None or isinstance(sid, str)):
+        raise ValueError("expected a string value")
+    env.add(oracle_sid=sid or 'XE')
 
 
 @setting
 def MSSQL_USERNAME(name=None):
     """user name for MS SQL Server regression database"""
-    env.add(mssql_username=name or '')
-    if not isinstance(env.mssql_username, str):
+    if not (name is None or isinstance(name, str)):
         raise ValueError("expected a string value")
+    env.add(mssql_username=name)
 
 
 @setting
 def MSSQL_PASSWORD(passwd=None):
     """password for MS SQL Server regression database"""
-    env.add(mssql_password=passwd or '')
-    if not isinstance(env.mssql_password, str):
+    if not (passwd is None or isinstance(passwd, str)):
         raise ValueError("expected a string value")
+    env.add(mssql_password=passwd)
 
 
 @setting
 def MSSQL_HOST(host=None):
     """host for MS SQL Server regression database"""
-    env.add(mssql_host=host or '')
-    if not isinstance(env.mssql_host, str):
+    if not (host is None or isinstance(host, str)):
         raise ValueError("expected a string value")
+    env.add(mssql_host=host)
 
 
 @setting
 def MSSQL_PORT(port=None):
     """port for MS SQL Server regression database"""
-    env.add(mssql_port=port or 0)
-    if not isinstance(env.mssql_port, int):
+    if not (port is None or isinstance(port, int)):
         raise ValueError("expected an integer value")
+    env.add(mssql_port=port)
 
 
 @task
@@ -367,9 +384,11 @@ def TEST(*suites):
       mssql                    : test MS SQL Server backend
     """
     command = "-q"
-    if suites:
-        command += " "+" ".join(suites)
-    exe_regress(command, environ=make_environ())
+    for suite in suites:
+        if not suite.startswith('/'):
+            suite = '/all/'+suite
+        command += " -S "+suite
+    exe_regress(command)
 
 
 @task
@@ -388,7 +407,11 @@ def TRAIN(*suites):
     command = "--train"
     if suites:
         command += " "+" ".join(suites)
-    exe_regress(command, environ=make_environ())
+    for suite in suites:
+        if not suite.startswith('/'):
+            suite = '/all/'+suite
+        command += " -S "+suite
+    exe_regress(command)
 
 
 @task
@@ -398,7 +421,7 @@ def PURGE_TEST():
     Run this task to remove stale output data for deleted
     or modified tests.
     """
-    exe_regress("-q --train --purge", environ=make_environ())
+    exe_regress("-q --train --purge")
 
 
 @task
@@ -420,7 +443,7 @@ def COVERAGE():
                 " --source=htsql,htsql_sqlite,htsql_pgsql,htsql_oracle,"
                 "htsql_mssql,htsql_django"
                 " `which \"%s\"` regress -i test/regress.yaml -q"
-                % env.ctl_path,
+                % env.pbbt_path,
                 environ=environ)
     coverage_py("html --directory=build/coverage",
                 "./build/coverage/coverage.dat")
@@ -454,7 +477,7 @@ def CREATEDB(engine):
       sandbox                  : empty database
     """
     db = make_db(engine, 'demo')
-    regress("-q drop-%s create-%s" % (engine, engine), environ=make_environ())
+    regress("-q -S /all/%s/dropdb -S /all/%s/createdb" % (engine, engine))
     log()
     log("The demo regression database has been deployed at:")
     log("  `{}`", db)
@@ -472,7 +495,7 @@ def DROPDB(engine):
       `cogs help createdb`
     """
     db = make_db(engine, 'demo')
-    regress("-q drop-%s" % engine, environ=make_environ())
+    regress("-q -S /all/%s/dropdb" % engine)
     log()
     log("Regression databases has beeen deleted.")
     log()

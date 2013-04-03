@@ -24,6 +24,7 @@ apt-get -qy install python-setuptools
 apt-get -qy install python-yaml
 apt-get -qy install python-pip
 apt-get -qy install python-virtualenv
+apt-get -qy install python-argparse
 
 # Install development files for Python and database drivers.
 apt-get -qy install python2.6-dev

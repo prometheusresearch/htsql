@@ -3,12 +3,12 @@
 #
 
 title: MySQL regression tests
-id: mysql
+suite: mysql
 output: test/output/mysql.yaml
 tests:
 
 - title: Remove any existing regression database
-  id: drop-mysql
+  suite: dropdb
   tests:
   - connect: &connect-admin
       engine: mysql
@@ -42,7 +42,7 @@ tests:
     ignore: true
 
 - title: Deploy the regression database
-  id: create-mysql
+  suite: createdb
   tests:
   # Create the `demo` database
   - connect: *connect-admin
@@ -60,9 +60,9 @@ tests:
       password: secret
       host: ${MYSQL_HOST}
       port: ${MYSQL_PORT}
-    sql-include: test/sql/demo-mysql.sql
+    sql: test/sql/demo-mysql.sql
   - db: *connect-demo
-  - py-include: test/sql/demo-load.py
+  - py: test/sql/demo-load.py
   # Create the `edge` database
   - connect: *connect-admin
     sql: |
@@ -79,7 +79,7 @@ tests:
       password: secret
       host: ${MYSQL_HOST}
       port: ${MYSQL_PORT}
-    sql-include: test/sql/edge-mysql.sql
+    sql: test/sql/edge-mysql.sql
   # Create the `sandbox` database
   - connect: *connect-admin
     sql: |
@@ -100,9 +100,9 @@ tests:
         -- The `sandbox` database is populated by the tests.
 
 - title: Run the test collection
-  id: test-mysql
+  suite: test
   tests:
-  - define: mysql
+  - set: mysql
   - db: *connect-sandbox
     extensions:
       htsql: {debug: true}

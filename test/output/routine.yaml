@@ -3,9 +3,9 @@
 # It was generated automatically by the `regress` routine.
 #
 
-id: routine
+suite: routine
 tests:
-- id: htsql-ctl
+- suite: htsql-ctl
   tests:
   - ctl: []
     stdout: |
@@ -14,7 +14,6 @@ tests:
 
       Run `htsql-ctl help` for general usage and list of routines.
       Run `htsql-ctl help <routine>` for help on a specific routine.
-    exit: 0
   - ctl: [--help]
     stdout: |+
       HTSQL-CTL - HTSQL command-line administrative application
@@ -33,7 +32,6 @@ tests:
         ui                       : start a visual HTSQL browser
         version                  : display the version of the application
 
-    exit: 0
   - ctl: [--version]
     stdout: |+
       HTSQL 2.3.3
@@ -47,8 +45,7 @@ tests:
       The HTSQL language and implementation were developed by members
       of the HTSQL Project (http://htsql.org/).
 
-    exit: 0
-- id: htsql-ctl-help
+- suite: htsql-ctl-help
   tests:
   - ctl: [help, help]
     stdout: |+
@@ -69,7 +66,6 @@ tests:
         ROUTINE                  : the name of the routine to describe
         FEATURE                  : the feature to describe
 
-    exit: 0
   - ctl: [help]
     stdout: |+
       HTSQL-CTL - HTSQL command-line administrative application
@@ -88,8 +84,7 @@ tests:
         ui                       : start a visual HTSQL browser
         version                  : display the version of the application
 
-    exit: 0
-- id: htsql-ctl-version
+- suite: htsql-ctl-version
   tests:
   - ctl: [help, version]
     stdout: |+
@@ -98,7 +93,6 @@ tests:
 
       Run 'htsql-ctl version' to display the version of HTSQL.
 
-    exit: 0
   - ctl: [version]
     stdout: |+
       HTSQL 2.3.3
@@ -112,8 +106,7 @@ tests:
       The HTSQL language and implementation were developed by members
       of the HTSQL Project (http://htsql.org/).
 
-    exit: 0
-- id: htsql-ctl-shell
+- suite: htsql-ctl-shell
   tests:
   - ctl: [help, shell]
     stdout: |+
@@ -167,7 +160,6 @@ tests:
         -E [--extension] EXT [+] : include extra extensions
         -C [--config] FILE       : read HTSQL configuration from FILE
 
-    exit: 0
   - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
     stdout: |+
       /count(school)
@@ -175,7 +167,6 @@ tests:
       -+---------------+-
        |             9 |
 
-    exit: 0
   - ctl: [shell, -E, 'htsql:db=''sqlite:build/regress/sqlite/htsql_demo.sqlite''']
     stdout: |+
       /count(school)
@@ -183,7 +174,6 @@ tests:
       -+---------------+-
        |             9 |
 
-    exit: 0
   - ctl: [shell, -C, build/regress/sqlite/htsql_demo.yaml]
     stdout: |+
       /count(school)
@@ -191,7 +181,6 @@ tests:
       -+---------------+-
        |             9 |
 
-    exit: 0
   - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite', -E, 'htsql:debug=true',
       -E, tweak.meta]
     stdout: |
@@ -206,7 +195,6 @@ tests:
        FROM (SELECT COUNT(1) AS "count"
              FROM "table") AS "table"
        WHERE ("table"."count" IS NOT NULL)
-    exit: 0
   - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite', -E, 'htsql:debug=false',
       -E, 'htsql:debug=true']
     stdout: |+
@@ -215,7 +203,6 @@ tests:
       -+---------------+-
        |             9 |
 
-    exit: 0
   - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
     stdout: |
       help help
@@ -252,7 +239,6 @@ tests:
 
       ** unknown command 'error'
       ** unknown command 'error'
-    exit: 0
   - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
     stdout: |+
       help version
@@ -274,7 +260,6 @@ tests:
       The HTSQL language and implementation were developed by members
       of the HTSQL Project (http://htsql.org/).
 
-    exit: 0
   - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
     stdout: |+
       help exit
@@ -285,7 +270,6 @@ tests:
 
       Type `exit` or Ctrl-D to quit the shell.
 
-    exit: 0
   - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
     stdout: |
       help user
@@ -300,7 +284,6 @@ tests:
 
       ** remote user is unset
       ** remote user is set to 'htsql_demo'
-    exit: 0
   - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
     stdout: |
       help describe
@@ -399,7 +382,6 @@ tests:
         prerequisite_via_on_course : plural link to prerequisite
 
       ** unknown identifier 'error'
-    exit: 0
   - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
     stdout: "help headers\nheaders\nheaders on\n/count(school)\nheaders off\n/count(school)\nHEADERS
       - display HTTP status line and headers\nUsage: headers on|off\n\nType `headers
@@ -409,7 +391,6 @@ tests:
       are turned on\n200 OK\r\nContent-Type: text/plain; charset=UTF-8\r\nVary: Accept\r\n\r\n
       | count(school) |\n-+---------------+-\n |             9 |\n\n** headers are
       turned off\n | count(school) |\n-+---------------+-\n |             9 |\n\n"
-    exit: 0
   - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
     stdout: |
       help pager
@@ -435,7 +416,6 @@ tests:
       ** expected 'on' or 'off'
       ** pager cannot be enabled in the non-interactive mode
       ** pager is disabled
-    exit: 0
   - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
     stdout: |
       help get
@@ -471,7 +451,6 @@ tests:
       While translating:
           /error
            ^^^^^
-    exit: 0
   - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
     stdout: |
       help post
@@ -503,7 +482,6 @@ tests:
       POST requests are not permitted.
       POST requests are not permitted.
       ** file 'error' does not exist
-    exit: 0
   - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
     stdout: |
       help run
@@ -618,8 +596,7 @@ tests:
        :                 :     :                               :         : recognition.                     :
 
       ** file 'error' does not exist
-    exit: 0
-- id: htsql-ctl-server
+- suite: htsql-ctl-server
   tests:
   - ctl: [help, server]
     stdout: |+
@@ -664,7 +641,6 @@ tests:
         --port PORT              : port to listen for incoming connections
         -q [--quiet]             : display as little as possible
 
-    exit: 0
   - py: GET-1
     stdout: |2+
        | count(school) |

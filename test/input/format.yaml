@@ -3,7 +3,7 @@
 #
 
 title: Formatting Output Data
-id: format
+suite: format
 tests:
 
 - title: Supported Output Formats

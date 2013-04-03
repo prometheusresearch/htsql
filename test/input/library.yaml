@@ -3,7 +3,7 @@
 #
 
 title: Standard Data Types, Functions, and Operations
-id: library
+suite: library
 tests:
 
 ########################################################################
@@ -27,13 +27,13 @@ tests:
   - uri: /{text(''), text('HTSQL'), text('O''Reilly'),
            text('%ce%bb%cf%8c%ce%b3%ce%bf%cf%82'),
            text('$-b \pm \sqrt{b^2 - 4ac} \over 2a$')}
-    ifndef: mssql
+    unless: mssql
   # The regression database for MS SQL Server uses Latin1 locale and therefore
   # is unable to represent greek characters.
   - uri: /{text(''), text('HTSQL'), text('O''Reilly'),
            text('zo%c3%b6logy'),
            text('$-b \pm \sqrt{b^2 - 4ac} \over 2a$')}
-    ifdef: mssql
+    if: mssql
   - uri: /{text('832040')}
 
   # Integer values
@@ -48,17 +48,17 @@ tests:
   # Out of range
   - uri: /{18446744073709551616}
     expect: 400
-    ifndef: oracle
+    unless: oracle
   # Oracle does not have a range limitation for the `INTEGER` data type.
   - uri: /{18446744073709551616, 340282366920938463463374607431768211456}
-    ifdef: oracle
+    if: oracle
 
   # Decimal values
   - uri: /{1.0, -2.5, 0.875}
   - uri: /{decimal('1E-10')}
   # Arbitrary length
   - uri: /{4154781481226426191177580544000000.808017424794512875886459904961710757005754368000000000}
-    ifndef: mssql
+    unless: mssql
   # Invalid decimal literals
   - uri: /{decimal('vingt-cinq')}
     expect: 400
@@ -258,25 +258,25 @@ tests:
     expect: 400
   # Not a number
   - uri: /{integer(text('zero'))}
-    ifdef: [sqlite, mysql]
+    if: [sqlite, mysql]
   - uri: /{float(text('zero'))}
-    ifdef: [sqlite, mysql]
+    if: [sqlite, mysql]
   - uri: /{integer(text('cinq'))}
     expect: 409
     ignore: true
-    ifndef: [sqlite, mysql]
+    unless: [sqlite, mysql]
   # Integer overflow
   - uri: /{integer(4294967296.0)}
     expect: 409
     ignore: true
-    ifdef: [pgsql, mssql]
+    if: [pgsql, mssql]
   - uri: /{integer(1.8446744073709552e+19)}
     expect: 409
     ignore: true
-    ifdef: [pgsql, mssql]
+    if: [pgsql, mssql]
   - uri: /{integer(4294967296.0),
            integer(1.8446744073709552e+19)}
-    ifndef: [pgsql, mssql]
+    unless: [pgsql, mssql]
 
   # Arithmetics
   - uri: /{+7, -7, +2.125, -2.125, +271828e-5, -271828e-5}
@@ -300,33 +300,33 @@ tests:
   - uri: /{7*2147483647}
     expect: 409
     ignore: true
-    ifdef: [pgsql, mssql]
+    if: [pgsql, mssql]
   - uri: /{9223372036854775807+1}
     # FIXME: silent overflow under MySQL 5.1; error under MySQL 5.5.
     expect: 409
     ignore: true
-    ifdef: [pgsql, mssql]
+    if: [pgsql, mssql]
   - uri: /{7*2147483647, 9223372036854775807+1}
     # FIXME: Older SQLite silently truncates the result, newer SQLite
     # converts the result to float.
-    ifdef: [oracle]
+    if: [oracle]
   # Division by zero
   - uri: /{7/0}
     expect: 409
     ignore: true
-    ifndef: [sqlite, mysql]
+    unless: [sqlite, mysql]
   - uri: /{7/0.0}
     expect: 409
     ignore: true
-    ifndef: [sqlite, mysql]
+    unless: [sqlite, mysql]
   - uri: /{7/0e0}
     expect: 409
     ignore: true
-    ifndef: [sqlite, mysql, oracle]
+    unless: [sqlite, mysql, oracle]
   - uri: /{7/0, 7/0.0, 7/0e0}
-    ifdef: [sqlite, mysql]
+    if: [sqlite, mysql]
   - uri: /{0e0/0e0, 7/0e0}
-    ifdef: [oracle]
+    if: [oracle]
 
   # Rounding and Truncating
   - uri: /{round(3272.78125), round(3272.78125,2), round(3272.78125,-2)}
@@ -345,7 +345,7 @@ tests:
   # Bug in MSSQL 2008R2, see
   # https://connect.microsoft.com/SQLServer/feedback/details/646516/bad-example-for-round
   - uri: /{round(9973,-2)}
-    ifndef: [mssql]
+    unless: [mssql]
   # Inadmissible operand
   - uri: /{round(271828e-5,2)}
     expect: 400
@@ -386,11 +386,11 @@ tests:
   # Bug in MSSQL 2005, `SELECT (CASE WHEN ('LOL' LIKE NULL) THEN 1 END)`
   # generates [<1>].
   - uri: /{null()~'LOL', 'LOL'~null(), null()~null()}
-    ifndef: mssql
+    unless: mssql
   - uri: /{null()~'LOL', null()~null()}
-    ifdef: mssql
+    if: mssql
   - uri: /this(){true()}?'LOL'~null()
-    ifdef: mssql
+    if: mssql
 
   # Slicing
   - uri: /{head('OMGWTFBBQ'), head('OMGWTFBBQ',3), head('OMGWTFBBQ',-3)}
@@ -416,14 +416,14 @@ tests:
   - uri: /{replace('OMGWTFBBQ','WTF','LOL')}
   - uri: /{replace('OMGWTFBBQ','wtf','LOL'),
            replace('OMGWTFBBQ','WTF','lol')}
-    ifndef: [mssql, oracle]
+    unless: [mssql, oracle]
   # `REPLACE` in MSSQL respects the database collation, which is
   # case-insensitive for the regression database.  Same with Oracle
   # when `NLS_SORT = BINARY_CI` and `NLS_COMP = LINGUISTIC`.
   - uri: /{replace('OMGWTFBBQ','wtf','LOL')}
-    ifdef: [mssql, oracle]
+    if: [mssql, oracle]
   - uri: /{replace('OMGWTFBBQ','WTF','lol')}
-    ifdef: [mssql, oracle]
+    if: [mssql, oracle]
   - uri: /{replace('floccinaucinihilipilification','ili','LOL')}
   - uri: /{replace('OMGWTFBBQ','','LOL'),
            replace('OMGWTFBBQ','WTF','')}
@@ -453,18 +453,18 @@ tests:
   - uri: /{date(text('birthday'))}
     expect: 409
     ignore: true
-    ifndef: [sqlite, mysql]
+    unless: [sqlite, mysql]
   - uri: /{date(text('2010-13-07'))}
     expect: 409
     ignore: true
-    ifndef: [sqlite, mysql]
+    unless: [sqlite, mysql]
   - uri: /{date(text('birthday')),
            date(text('2010-13-07'))}
-    ifdef: [sqlite, mysql]
+    if: [sqlite, mysql]
 
   # Construction
   - uri: /{today()}
-    ignore: true
+    ignore: \d{4}-\d{2}-\d{2}
   - uri: /{date(2010,4,15), date(2010,3,46), date(2011,-8,15)}
 
   # Components
@@ -485,9 +485,9 @@ tests:
   # Conversion
   - uri: /{time(null()), time('20:03')}
   - uri: /{time(text('20:03'))}
-    ifndef: oracle
+    unless: oracle
   - uri: /{time(text('20:03:00'))}
-    ifdef: oracle
+    if: oracle
   - uri: /{time(datetime('2010-04-15 20:13'))}
   # Inadmissible operand
   - uri: /{time('29:04')}
@@ -502,14 +502,14 @@ tests:
   - uri: /{time(text('just a moment ago'))}
     expect: 409
     ignore: true
-    ifndef: [sqlite, mysql]
+    unless: [sqlite, mysql]
   - uri: /{time(text('29:04'))}
     expect: 409
     ignore: true
-    ifndef: [sqlite, mysql]
+    unless: [sqlite, mysql]
   - uri: /{time(text('just a moment ago')),
            time(text('29:04'))}
-    ifdef: [sqlite, mysql]
+    if: [sqlite, mysql]
 
   # Components
   - uri: /{hour(time('20:13:04.5')),
@@ -524,9 +524,9 @@ tests:
   # Conversion
   - uri: /{datetime(null()), datetime('2010-04-15 20:13')}
   - uri: /{datetime(text('2010-04-15 20:13'))}
-    ifndef: oracle
+    unless: oracle
   - uri: /{datetime(text('2010-04-15 20:13:00'))}
-    ifdef: oracle
+    if: oracle
   - uri: /{datetime(date('2010-04-15'))}
   # Inadmissible operand
   - uri: /{datetime('2010-13-07 17:43')}
@@ -541,14 +541,14 @@ tests:
   - uri: /{datetime(text('just a moment ago'))}
     expect: 409
     ignore: true
-    ifndef: [sqlite, mysql]
+    unless: [sqlite, mysql]
   - uri: /{datetime(text('2010-13-07 17:43'))}
     expect: 409
     ignore: true
-    ifndef: [sqlite, mysql]
+    unless: [sqlite, mysql]
   - uri: /{datetime(text('just a moment ago')),
            datetime(text('2010-13-07 17:43'))}
-    ifdef: [sqlite, mysql]
+    if: [sqlite, mysql]
 
   # Construction
   - uri: /{now()}
@@ -581,39 +581,39 @@ tests:
   - uri: /{exists(course?department_code='lang'),
            every(course?department_code='lang'),
            count(course?department_code='lang')}
-    ifndef: oracle
+    unless: oracle
   - uri: /{exists(course?department_code='lang'),
            every(course?department_code='lang')}
-    ifdef: oracle
+    if: oracle
   - uri: /{count(course?department_code='lang')}
-    ifdef: oracle
+    if: oracle
   # Applied to an empty set
   - uri: /course?department_code='str'
   - uri: /{exists(course?department_code='str'),
            every(course?department_code='str'),
            count(course?department_code='str')}
-    ifndef: oracle
+    unless: oracle
   # Applied to all-TRUE, all-FALSE, mixed sets
   - uri: /course{department_code,no,credits,credits>3}
                 ?department_code={'me','mth','phys'}
   - uri: /{exists(course{credits>3}?department_code='me'),
            every(course{credits>3}?department_code='me'),
            count(course{credits>3}?department_code='me')}
-    ifndef: oracle
+    unless: oracle
   - uri: /{exists(course{credits>3}?department_code='mth'),
            every(course{credits>3}?department_code='mth'),
            count(course{credits>3}?department_code='mth')}
-    ifndef: oracle
+    unless: oracle
   - uri: /{exists(course{credits>3}?department_code='phys'),
            every(course{credits>3}?department_code='phys'),
            count(course{credits>3}?department_code='phys')}
-    ifndef: oracle
+    unless: oracle
   # Coercion
   - uri: /department{code,school.code,boolean(school)}
   - uri: /{exists(department{school}),
            every(department{school}),
            count(department{school})}
-    ifndef: oracle
+    unless: oracle
   # Singular operand
   - uri: /{exists(true())}
     expect: 400

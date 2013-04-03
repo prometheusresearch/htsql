@@ -3,7 +3,7 @@
 #
 
 title: HTSQL Extensions
-id: addon
+suite: addon
 tests:
 
 # TWEAK - tweaks for HTSQL
@@ -97,14 +97,15 @@ tests:
     extensions:
       tweak.csrf: {}
   - uri: /
-    ignore-headers: true
+    ignore: &ignore-htsql-csrf-token |
+      Set-Cookie:.htsql-csrf-token=([0-9A-Za-z]+)
   - uri: /school
-    ignore-headers: true
+    ignore: *ignore-htsql-csrf-token
     expect: 403
 
   # Passing CSRF token back to the server
-  - py: pass-csrf-token
-    code: |
+  - py: |
+      # pass-csrf-token
       import wsgiref.util
       class response:
           status = None
@@ -117,7 +118,7 @@ tests:
           wsgiref.util.setup_testing_defaults(environ)
           response.status = None
           response.headers = None
-          response.body = ''.join(state.app(environ, start_response))
+          response.body = ''.join(__pbbt__['htsql'](environ, start_response))
           return (response.status, response.headers, response.body)
       status, headers, body = request({'PATH_INFO': "/"})
       token = None
@@ -149,31 +150,32 @@ tests:
       tweak.csrf:
         allow_cs_read: true
   - uri: /school
-    ignore-headers: true
+    ignore: *ignore-htsql-csrf-token
 
 # TWEAK.DJANGO - adapt to Django
-- py: has-django
-  ifdef: [sqlite, pgsql, mysql, oracle]
-  code: |
+- py: |
+    # has-django
     try:
         import django
         if django.VERSION > (1, 3):
-            state.toggles.add('django')
+            __pbbt__['django'] = True
     except ImportError:
         pass
+  if: [sqlite, pgsql, mysql, oracle]
 - title: tweak.django
-  ifdef: django
+  if: django
   tests:
   # Addon description
   - ctl: [ext, tweak.django]
 
   # Load `test_django_sandbox` and deploy the database
-  - py: add-module-path
-    code: |
+  - py: |
+      # add-module-path
       import __builtin__, sys, os, os.path
+      from htsql.core.util import DB
       path = os.path.join(os.getcwd(), "test/code")
       sys.path.insert(0, path)
-      __builtin__.sandbox = state.saves['sandbox'][0]
+      __builtin__.sandbox = DB.parse(__pbbt__['sandbox'].db)
       os.environ['DJANGO_SETTINGS_MODULE'] = 'test_django_sandbox.settings'
       from test_django_sandbox import createdb
       createdb()
@@ -192,8 +194,8 @@ tests:
     skip: true
 
   # Restore the original `sys.path`
-  - py: remove-module-path
-    code: |
+  - py: |
+      # remove-module-path
       from test_django_sandbox import dropdb
       dropdb()
       import __builtin__, sys, os, os.path
@@ -207,7 +209,7 @@ tests:
 
 # TWEAK.FILEDB - make a database from a set of CSV files
 - title: tweak.filedb
-  ifdef: sqlite
+  if: sqlite
   tests:
   # Addon description
   - ctl: [ext, tweak.filedb]
@@ -347,7 +349,7 @@ tests:
   - uri: /{_source[permanent].timestamp<_source[volatile].timestamp}
 
   # Cleanup
-  - remove:
+  - rm:
     - build/regress/table.csv
     - build/regress/Names.csv
     - build/regress/irregular-fields.csv
@@ -363,7 +365,7 @@ tests:
 
 # TWEAK.GATEWAY - define gateways to other databases
 - title: tweak.gateway
-  ifdef: mysql
+  if: mysql
   tests:
   # Addon description
   - ctl: [ext, tweak.gateway]
@@ -418,7 +420,7 @@ tests:
 
 # TWEAK.INET - IPv4 data type
 - title: tweak.inet
-  ifdef: pgsql
+  if: pgsql
   tests:
   # Addon description
   - ctl: [ext, tweak.inet]
@@ -536,7 +538,7 @@ tests:
       tweak.csrf: {}
       tweak.meta: {}
   - uri: /meta(/table)
-    ignore-headers: true
+    ignore: *ignore-htsql-csrf-token
     expect: 403
 
 # TWEAK.OVERRIDE - adjust database metadata
@@ -578,12 +580,12 @@ tests:
     extensions:
       tweak.override:
         included-tables: [ad.*]
-    ifdef: [pgsql, mssql]
+    if: [pgsql, mssql]
   - uri: /count(program)
-    ifdef: [pgsql, mssql]
+    if: [pgsql, mssql]
   - uri: /count(student)
     expect: 400
-    ifdef: [pgsql, mssql]
+    if: [pgsql, mssql]
 
   # Test `included-columns`
   - load: demo
@@ -794,28 +796,29 @@ tests:
     ignore: true
 
 # TWEAK.SQLALCHEMY - adapt to SQLAlchemy
-- py: has-sqlalchemy
-  code: |
+- py: |
+    # has-sqlalchemy
     try:
         import sqlalchemy
         if sqlalchemy.__version__ > '0.7.':
-            state.toggles.add('sqlalchemy')
+            __pbbt__['sqlalchemy'] = True
     except ImportError:
         pass
 - title: tweak.sqlalchemy
-  ifdef: sqlalchemy
+  if: sqlalchemy
   tests:
   # Addon description
   - ctl: [ext, tweak.sqlalchemy]
 
   # Make sure `test_sqlalchemy_*` could be found
-  - py: add-module-path
-    code: |
+  - py: |
+      # add-module-path
       import __builtin__, sys, os, os.path
+      from htsql.core.util import DB
       path = os.path.join(os.getcwd(), "test/code")
       sys.path.insert(0, path)
-      __builtin__.demo = state.saves['demo'][0]
-      __builtin__.sandbox = state.saves['sandbox'][0]
+      __builtin__.demo = DB.parse(__pbbt__['demo'].db)
+      __builtin__.sandbox = DB.parse(__pbbt__['sandbox'].db)
       from test_sqlalchemy_sandbox import createdb
       createdb()
 
@@ -860,8 +863,8 @@ tests:
   - uri: /addresses{user.name, email_address}
 
   # Restore the original `sys.path`
-  - py: remove-module-path
-    code: |
+  - py: |
+      # remove-module-path
       from test_sqlalchemy_sandbox import dropdb
       dropdb()
       import __builtin__, sys, os, os.path
@@ -874,7 +877,7 @@ tests:
 
 # TWEAK.SYSTEM - add access to system tables
 - title: tweak.system
-  ifdef: pgsql
+  if: pgsql
   tests:
   # Addon description
   - ctl: [ext, tweak.system]
@@ -887,7 +890,7 @@ tests:
 
 # TWEAK.TIMEOUT - limit query execution time
 - title: tweak.system
-  ifdef: pgsql
+  if: pgsql
   tests:
   # Addon description
   - ctl: [ext, tweak.timeout]

@@ -3,12 +3,12 @@
 #
 
 title: MS SQL Server regression tests
-id: mssql
+suite: mssql
 output: test/output/mssql.yaml
 tests:
 
 - title: Remove any existing regression databases
-  id: drop-mssql
+  suite: dropdb
   tests:
   - connect: &connect-admin
       engine: mssql
@@ -34,7 +34,7 @@ tests:
     ignore: true
 
 - title: Deploy the regression databases
-  id: create-mssql
+  suite: createdb
   tests:
   # Create the `demo` database
   - connect: *connect-admin
@@ -52,9 +52,9 @@ tests:
       password: secret
       host: ${MSSQL_HOST}
       port: ${MSSQL_PORT}
-    sql-include: test/sql/demo-mssql.sql
+    sql: test/sql/demo-mssql.sql
   - db: *connect-demo
-  - py-include: test/sql/demo-load.py
+  - py: test/sql/demo-load.py
   # Create the `edge` database
   - connect: *connect-admin
     sql: |
@@ -71,7 +71,7 @@ tests:
       password: secret
       host: ${MSSQL_HOST}
       port: ${MSSQL_PORT}
-    sql-include: test/sql/edge-mssql.sql
+    sql: test/sql/edge-mssql.sql
   # Create the `sandbox` database
   - connect: *connect-admin
     sql: |
@@ -92,9 +92,9 @@ tests:
         -- The `sandbox` database is populated by the tests.
 
 - title: Run the test collection
-  id: test-mssql
+  suite: test
   tests:
-  - define: mssql
+  - set: mssql
   - db: *connect-sandbox
     extensions:
       htsql: {debug: true}

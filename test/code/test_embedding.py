@@ -2,7 +2,7 @@
 from htsql import HTSQL
 import sys, decimal, datetime
 
-db = str(state.app.htsql.db)
+db = __pbbt__['demo'].db
 
 htsql = HTSQL(db)
 
@@ -55,7 +55,7 @@ boolean_value = True
 integer_value = 3571
 float_value = -57721e-5
 decimal_value = decimal.Decimal("0.875")
-if 'sqlite' in state.toggles:
+if 'sqlite' in __pbbt__:
     decimal_value = None
 date_value = datetime.date(2010, 4, 15)
 time_value = datetime.time(20, 3)

@@ -3,7 +3,7 @@
 #
 
 title: HTSQL-CTL Command-Line Tool
-id: routine
+suite: routine
 output: test/output/routine.yaml
 tests:
 
@@ -50,7 +50,7 @@ tests:
   - ctl: [shell, -C, "build/regress/sqlite/htsql_demo.yaml"]
     stdin: |
       /count(school)
-  - remove: [build/regress/sqlite/htsql_demo.yaml]
+  - rm: build/regress/sqlite/htsql_demo.yaml
   # Multiple extension options
   - ctl: [shell, *db, -E, "htsql:debug=true", -E, "tweak.meta"]
     stdin: |
@@ -135,7 +135,7 @@ tests:
       post build/regress/post.json /school
       post build/regress/post.data application/x-www-form-urlencoded /school
       post error /school
-  - remove: [build/regress/post.json, build/regress/post.data]
+  - rm: [build/regress/post.json, build/regress/post.data]
   # Run
   - write: build/regress/run.htsql
     data: |
@@ -151,7 +151,7 @@ tests:
       run
       run build/regress/run.htsql
       run error
-  - remove: [build/regress/run.htsql]
+  - rm: build/regress/run.htsql
 
 # Server routine
 - title: htsql-ctl server
@@ -164,33 +164,37 @@ tests:
   # Default address
   - start-ctl: &server-1 [server, *db, -q]
     sleep: 1
-  - py: GET-1
-    code: |
+  - py: |
+      # GET-1
       import time, urllib
       tries = 0
-      while tries < 5:
+      while tries < 60:
           try:
               print urllib.urlopen("http://127.0.0.1:8080/count(school)").read()
               break
           except:
               tries += 1
               time.sleep(0.5)
+      else:
+          print "Unable to connect to the server!"
   - end-ctl: *server-1
 
   # Custom address
   - start-ctl: &server-2 [server, *db, --host, "127.0.0.1", --port, "8088", -q]
     sleep: 1
-  - py: GET-2
-    code: |
+  - py: |
+      # GET-2
       import time, urllib
       tries = 0
-      while tries < 5:
+      while tries < 60:
           try:
               print urllib.urlopen("http://127.0.0.1:8088/count(school)").read()
               break
           except:
               tries += 1
               time.sleep(0.5)
+      else:
+          print "Unable to connect to the server!"
   - end-ctl: *server-2
 
 

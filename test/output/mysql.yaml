@@ -3,19 +3,19 @@
 # It was generated automatically by the `regress` routine.
 #
 
-id: mysql
+suite: mysql
 tests:
-- id: create-mysql
+- suite: createdb
   tests:
-  - py-include: test/sql/demo-load.py
+  - py: test/sql/demo-load.py
     stdout: ''
-- id: test-mysql
+- suite: test
   tests:
   - include: test/input/schema.yaml
     output:
-      id: schema
+      suite: schema
       tests:
-      - id: tables
+      - suite: tables
         tests:
         - uri: /school
           status: 200 OK
@@ -1303,7 +1303,7 @@ tests:
              FROM `program_requirement`
              ORDER BY 1 ASC, 2 ASC, 3 ASC
              LIMIT 50
-      - id: links
+      - suite: links
         tests:
         - uri: /(school?code='art').department
           status: 200 OK
@@ -2601,9 +2601,9 @@ tests:
              ORDER BY `program_requirement`.`school_code` ASC, `program_requirement`.`program_code` ASC, 1 ASC
   - include: test/input/tutorial.yaml
     output:
-      id: tutorial
+      suite: tutorial
       tests:
-      - id: getting-started
+      - suite: getting-started
         tests:
         - uri: /school
           status: 200 OK
@@ -6349,7 +6349,7 @@ tests:
             of Arts and Humanities,Foreign Languages,21\r\nSchool of Arts and Humanities,Art
             History,20\r\nSchool of Arts and Humanities,Political Science,19\r\nSchool
             of Art & Design,Studio Art,19\r\n"
-      - id: relating-and-aggregating-data
+      - suite: relating-and-aggregating-data
         tests:
         - uri: /course{department.name, title}
           status: 200 OK
@@ -7451,7 +7451,7 @@ tests:
                   INNER JOIN `department`
                              ON (`school`.`code` = `department`.`school_code`)
              ORDER BY `school`.`code` ASC, 1 ASC
-      - id: calculations-&-references
+      - suite: calculations-references
         tests:
         - uri: /school{name, count(department)}? count(department)>3
           status: 200 OK
@@ -9441,7 +9441,7 @@ tests:
                                   ON (`department`.`code` = `course_2`.`department_code`)
              WHERE (CAST(`course_1`.`credits` AS DECIMAL(65,30)) > `course_2`.`avg`)
              ORDER BY `department`.`code` ASC, 1 ASC, 2 ASC
-      - id: projections
+      - suite: projections
         tests:
         - uri: /program{degree}
           status: 200 OK
@@ -9830,7 +9830,7 @@ tests:
              WHERE (`program`.`degree` IS NOT NULL)
              GROUP BY 1
              ORDER BY 1 ASC
-      - id: logical-expressions
+      - suite: logical-expressions
         tests:
         - uri: /department?name='Economics'
           status: 200 OK
@@ -12275,7 +12275,7 @@ tests:
              FROM `course`
              WHERE (NULLIF(`course`.`description`, '') IS NULL)
              ORDER BY 1 ASC, 2 ASC
-      - id: types-and-functions
+      - suite: types-and-functions
         tests:
         - uri: /department?school_code=null()
           status: 200 OK
@@ -12365,9 +12365,9 @@ tests:
              ORDER BY 1 ASC
   - include: test/input/library.yaml
     output:
-      id: library
+      suite: library
       tests:
-      - id: literals
+      - suite: literals
         tests:
         - uri: /{null(), '', 'HTSQL', '%ce%bb%cf%8c%ce%b3%ce%bf%cf%82'}
           status: 200 OK
@@ -12697,7 +12697,7 @@ tests:
             While translating:
                 /{datetime('2010-06-05 29:04')}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      - id: logical-and-comparison-operators
+      - suite: logical-and-comparison-operators
         tests:
         - uri: /{true(), false()}
           status: 200 OK
@@ -13494,7 +13494,7 @@ tests:
             While translating:
                 /{switch(1, 1, 'George', 2, false())}
                                ^^^^^^^^
-      - id: numeric-functions-and-operators
+      - suite: numeric-functions-and-operators
         tests:
         - uri: /{integer(null()), integer('60'), integer(60)}
           status: 200 OK
@@ -14088,7 +14088,7 @@ tests:
             While translating:
                 /{trunc(271828e-5,2)}
                   ^^^^^^^^^^^^^^^^^^
-      - id: text-functions-and-operators
+      - suite: text-functions-and-operators
         tests:
         - uri: /{text(null()), text('OMGWTFBBQ')}
           status: 200 OK
@@ -14573,7 +14573,7 @@ tests:
              SELECT REPLACE(NULL, 'WTF', 'LOL'),
                     REPLACE('OMGWTFBBQ', '', 'LOL'),
                     REPLACE('OMGWTFBBQ', 'WTF', '')
-      - id: date-functions-and-operators
+      - suite: date-functions-and-operators
         tests:
         - uri: /{date(null()), date('2010-04-15')}
           status: 200 OK
@@ -14723,7 +14723,7 @@ tests:
              SELECT ADDDATE(DATE('1991-08-20'), 6813),
                     SUBDATE(DATE('2010-04-15'), 6813),
                     DATEDIFF(DATE('2010-04-15'), DATE('1991-08-20'))
-      - id: time-functions-and-operators
+      - suite: time-functions-and-operators
         tests:
         - uri: /{time(null()), time('20:03')}
           status: 200 OK
@@ -14830,7 +14830,7 @@ tests:
              SELECT EXTRACT(HOUR FROM TIME('20:13:04.500000')),
                     EXTRACT(MINUTE FROM TIME('20:13:04.500000')),
                     (1E0 * EXTRACT(SECOND FROM TIME('20:13:04.500000')))
-      - id: datetime-functions-and-operators
+      - suite: datetime-functions-and-operators
         tests:
         - uri: /{datetime(null()), datetime('2010-04-15 20:13')}
           status: 200 OK
@@ -15023,7 +15023,7 @@ tests:
              /{datetime('1991-08-20 02:01')+6813.75838544,datetime('2010-04-15 20:13:04.5')-6813.75838544}
              SELECT ADDDATE(TIMESTAMP('1991-08-20 02:01:00'), INTERVAL 86400 * 6813.75838544e0 SECOND),
                     SUBDATE(TIMESTAMP('2010-04-15 20:13:04'), INTERVAL 86400 * 6813.75838544e0 SECOND)
-      - id: aggregate-functions
+      - suite: aggregate-functions
         tests:
         - uri: /course?department_code='lang'
           status: 200 OK
@@ -15654,7 +15654,7 @@ tests:
             While translating:
                 /{avg(student.name)}
                   ^^^^^^^^^^^^^^^^^
-      - id: table-functions-and-operators
+      - suite: table-functions-and-operators
         tests:
         - uri: /school.program
           status: 200 OK
@@ -17680,7 +17680,7 @@ tests:
                   LEFT OUTER JOIN `school`
                                   ON (`department`.`school_code` = `school`.`code`)
              ORDER BY 4 ASC
-      - id: decorators
+      - suite: decorators
         tests:
         - uri: /(school :as 'List of Schools')
           status: 200 OK
@@ -17831,11 +17831,11 @@ tests:
              ORDER BY 1 DESC, 2 ASC, `course`.`department_code` ASC
   - include: test/input/translation.yaml
     output:
-      id: translation
+      suite: translation
       tests:
-      - id: random-collection-of-tests
+      - suite: random-collection-of-tests
         tests:
-        - id: simple-filters
+        - suite: simple-filters
           tests:
           - uri: /school?code='ns'
             status: 200 OK
@@ -18206,7 +18206,7 @@ tests:
                                     ON (`department`.`school_code` = `school`.`code`)
                WHERE (`school`.`code` IN ('art', 'la'))
                ORDER BY 1 ASC
-        - id: simple-selectors
+        - suite: simple-selectors
           tests:
           - uri: /school{name}
             status: 200 OK
@@ -18422,7 +18422,7 @@ tests:
                     LEFT OUTER JOIN `school`
                                     ON (`department`.`school_code` = `school`.`code`)
                ORDER BY 4 ASC
-        - id: aggregates
+        - suite: aggregates
           tests:
           - uri: /exists(school)
             status: 200 OK
@@ -20308,7 +20308,7 @@ tests:
                                     ON (`school`.`code` = `department`.`code`)
                WHERE (`school`.`code` = 'art')
                ORDER BY 1 ASC
-        - id: root,-this,-direct-and-fiber-functions
+        - suite: root-this-direct-and-fiber-functions
           tests:
           - uri: /{count(school)*count(department),count(school.({} -> department))}
             status: 200 OK
@@ -20877,7 +20877,7 @@ tests:
                                     ON TRUE
                WHERE (CAST(COALESCE(`department`.`count`, 0) AS DECIMAL(65,30)) > `school_2`.`avg`)
                ORDER BY 1 ASC
-        - id: link-and-fork
+        - suite: link-and-fork
           tests:
           - uri: /school.moniker(department)
             status: 200 OK
@@ -22824,7 +22824,7 @@ tests:
                     CROSS JOIN `program`
                ORDER BY `school`.`code` ASC, `department`.`code` ASC, 1 ASC, 2 ASC
                LIMIT 1
-        - id: top
+        - suite: top
           tests:
           - uri: /school :top
             status: 200 OK
@@ -23371,7 +23371,7 @@ tests:
             - [Content-Type, text/csv; charset=UTF-8]
             - [Content-Disposition, attachment; filename="school.csv"]
             body: "code,name,campus\r\nart,School of Art & Design,old\r\n"
-        - id: identity
+        - suite: identity
           tests:
           - uri: /school[ns]
             status: 200 OK
@@ -23798,7 +23798,7 @@ tests:
               While translating:
                   /course[$id]{id(), title} :given $id:='astro.105'
                          ^^^^^
-        - id: table-expressions
+        - suite: table-expressions
           tests:
           - uri: /(school?code='art').department
             status: 200 OK
@@ -23834,7 +23834,7 @@ tests:
             - [Content-Type, text/plain; charset=UTF-8]
             - [Vary, Accept]
             body: ''
-        - id: assignments
+        - suite: assignments
           tests:
           - uri: /school.define(c:=department.course.credits) {code,min(c),max(c),sum(c),avg(c)}?exists(c)
             status: 200 OK
@@ -24591,7 +24591,7 @@ tests:
               While translating:
                   /school.guard(!is_null($c), filter(campus=$c)) :given $c:='north'
                                 ^^^^^^^^^^^^
-        - id: projections
+        - suite: projections
           tests:
           - uri: /distinct(program{degree})
             status: 200 OK
@@ -26881,7 +26881,7 @@ tests:
               While translating:
                   /{(school^campus).campus}
                                     ^^^^^^
-        - id: nested-segments
+        - suite: nested-segments
           tests:
           - uri: /school{code, /department{name}, /program{title}}
             status: 200 OK
@@ -28156,7 +28156,7 @@ tests:
               While translating:
                   /school{code, /root().department}
                                 ^^^^^^^^^^^^^^^^^^
-      - id: known-issues
+      - suite: known-issues
         tests:
         - uri: /school?code={'art','art'}
           status: 200 OK
@@ -28403,9 +28403,9 @@ tests:
                               WHERE FALSE) AS `confidential`
   - include: test/input/format.yaml
     output:
-      id: format
+      suite: format
       tests:
-      - id: supported-output-formats
+      - suite: supported-output-formats
         tests:
         - uri: /school/:raw
           status: 200 OK
@@ -28720,7 +28720,7 @@ tests:
             While translating:
                 /school/:unknown
                 ^^^^^^^^^^^^^^^^
-      - id: format-selection-by-`accept`
+      - suite: format-selection-by-accept
         tests:
         - uri: /school
           status: 200 OK
@@ -29114,7 +29114,7 @@ tests:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: ''
-      - id: the-`as`-decorator
+      - suite: the-as-decorator
         tests:
         - uri: /(school :as 'List of Schools') {name :as Name, count(department) :as
             '# of Departments'} /:raw
@@ -29394,7 +29394,7 @@ tests:
                                    GROUP BY 2) AS `department`
                                   ON (`school`.`code` = `department`.`school_code`)
              ORDER BY `school`.`code` ASC
-      - id: data-types
+      - suite: data-types
         tests:
         - uri: /{null(), 'HTSQL', true(), false(), 60, 2.125, 271828e-5, text(null()),
             text(''), text('OMGWTFBBQ'), date('2010-04-15'), time('20:13:04.5'), datetime('2010-04-15
@@ -29713,7 +29713,7 @@ tests:
             </table>
             </body>
             </html>
-      - id: identity
+      - suite: identity
         tests:
         - uri: /enrollment[1010.((mth.101).(2008.fall).001)]{id()} /:raw
           status: 200 OK
@@ -29865,7 +29865,7 @@ tests:
                    AND (`class_1`.`season` = 'fall')
                    AND (`class_1`.`section` = '001')
              ORDER BY 1 ASC, `class_1`.`department_code` ASC, `class_1`.`course_no` ASC, `class_1`.`year` ASC, `class_1`.`season` ASC, `class_1`.`section` ASC
-      - id: no-rows
+      - suite: no-rows
         tests:
         - uri: /school?false()/:raw
           status: 200 OK
@@ -30009,7 +30009,7 @@ tests:
              FROM `school`
              WHERE FALSE
              ORDER BY 1 ASC
-      - id: empty-selector
+      - suite: empty-selector
         tests:
         - uri: /{}/:raw
           status: 200 OK
@@ -30476,7 +30476,7 @@ tests:
                                   ON (`department`.`school_code` = `school_2`.`code`)
              WHERE ((`school_1`.`school` IS NULL) OR (`school_2`.`campus` = 'north'))
              ORDER BY `department`.`code` ASC
-      - id: special-characters
+      - suite: special-characters
         tests:
         - uri: /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10', '%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F',
             '%CE%BE', '\/%25''"&<>#', ''}/:raw
@@ -30597,7 +30597,7 @@ tests:
             | \"\\u0011\\u0012\\u0013\\u0014\\u0015\\u0016\\u0017\\u0018\\u0019\\u001a\\u001b\\u001c\\u001d\\u001e\\u001f\x7F\"
             | \u03BE   | \\/%'\"&<>#      | \"\" |\n\n ----\n /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10','%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F','\u03BE','\\/%25''\"&<>#',''}\n
             SELECT TRUE\n"
-      - id: nested-segments
+      - suite: nested-segments
         tests:
         - uri: /{/null, /school.limit(3), /department.limit(5)}/:raw
           status: 200 OK
@@ -32161,7 +32161,7 @@ tests:
                    SELECT TRUE
 
                      SELECT TRUE
-      - id: scalar-data
+      - suite: scalar-data
         tests:
         - uri: /fetch(null)/:raw
           status: 200 OK
@@ -33185,7 +33185,7 @@ tests:
                                     ON (`department`.`school_code` = `school`.`code`)
                WHERE (`school`.`campus` = 'old')
                ORDER BY 1 ASC
-      - id: commands
+      - suite: commands
         tests:
         - uri: /school/:fetch
           status: 200 OK
@@ -33407,16 +33407,15 @@ tests:
                          ^^^^
   - include: test/input/addon.yaml
     output:
-      id: addon
+      suite: addon
       tests:
-      - id: tweak
+      - suite: tweak
         tests:
         - ctl: [ext, tweak]
           stdout: |+
             TWEAK - contain various tweaks for HTSQL
 
-          exit: 0
-      - id: tweak.autolimit
+      - suite: tweak.autolimit
         tests:
         - ctl: [ext, tweak.autolimit]
           stdout: |+
@@ -33433,7 +33432,6 @@ tests:
             Parameters:
               limit=LIMIT              : max. number of rows (default: 10000)
 
-          exit: 0
         - uri: /{2+2}
           status: 200 OK
           headers:
@@ -34049,7 +34047,7 @@ tests:
                     `school`.`campus`
              FROM `school`
              ORDER BY 1 ASC
-      - id: tweak.cors
+      - suite: tweak.cors
         tests:
         - ctl: [ext, tweak.cors]
           stdout: |+
@@ -34076,7 +34074,6 @@ tests:
             Parameters:
               origin=ORIGIN            : URI that may access the server (default: *)
 
-          exit: 0
         - uri: /school
           status: 200 OK
           headers:
@@ -34160,7 +34157,7 @@ tests:
                     `school`.`campus`
              FROM `school`
              ORDER BY 1 ASC
-      - id: tweak.csrf
+      - suite: tweak.csrf
         tests:
         - ctl: [ext, tweak.csrf]
           stdout: |+
@@ -34198,7 +34195,6 @@ tests:
               allow-cs-read=ALLOW-CS-READ : permit cross-site read requests
               allow-cs-write=ALLOW-CS-WRITE : permit cross-site write requests
 
-          exit: 0
         - uri: /
           status: 200 OK
           headers:
@@ -34274,7 +34270,7 @@ tests:
              ORDER BY 1 ASC
       - py: has-django
         stdout: ''
-      - id: tweak.django
+      - suite: tweak.django
         tests:
         - ctl: [ext, tweak.django]
           stdout: |+
@@ -34289,7 +34285,6 @@ tests:
             Parameters:
               settings=PROJECT.MODULE  : name of the `settings` module
 
-          exit: 0
         - py: add-module-path
           stdout: ''
         - uri: /polls_poll{question, pub_date, count(polls_choice)}
@@ -34341,7 +34336,7 @@ tests:
              ORDER BY `polls_choice`.`id` ASC
         - py: remove-module-path
           stdout: ''
-      - id: tweak.gateway
+      - suite: tweak.gateway
         tests:
         - ctl: [ext, tweak.gateway]
           stdout: |+
@@ -34358,7 +34353,6 @@ tests:
             Parameters:
               gateways={NAME:DB}       : gateway definitions
 
-          exit: 0
         - uri: /sqlite_gw(/school)
           status: 200 OK
           headers:
@@ -34470,7 +34464,7 @@ tests:
             While translating:
                 /sqlite_gw(/nothing)
                             ^^^^^^^
-      - id: tweak.hello
+      - suite: tweak.hello
         tests:
         - ctl: [ext, tweak.hello]
           stdout: |+
@@ -34485,7 +34479,6 @@ tests:
               repeat=REPEAT
               address=ADDRESS
 
-          exit: 0
         - uri: /hello()
           status: 200 OK
           headers:
@@ -34509,7 +34502,7 @@ tests:
             Hello, Home!
             Hello, Home!
             Hello, Home!
-      - id: tweak.meta
+      - suite: tweak.meta
         tests:
         - ctl: [ext, tweak.meta]
           stdout: |+
@@ -34530,7 +34523,6 @@ tests:
 
                 /table/:meta
 
-          exit: 0
         - uri: /table/:meta
           status: 200 OK
           headers:
@@ -35607,7 +35599,7 @@ tests:
             While processing:
                 /meta(/table)
                       ^
-      - id: tweak.override
+      - suite: tweak.override
         tests:
         - ctl: [ext, tweak.override]
           stdout: |+
@@ -35690,7 +35682,6 @@ tests:
               unlabeled-columns=COLUMNS : ignored columns
               globals=LABELS           : global definitions
 
-          exit: 0
         - uri: /avg(school.count(program))
           status: 200 OK
           headers:
@@ -36593,7 +36584,7 @@ tests:
              WHERE (ADDDATE(ADDDATE(ADDDATE(DATE('2001-01-01'), INTERVAL (EXTRACT(YEAR FROM `student`.`dob`) - 2001) YEAR), INTERVAL (1 - 1) MONTH), INTERVAL (1 - 1) DAY) IS NOT NULL)
              GROUP BY 1
              ORDER BY 1 ASC
-      - id: tweak.pool
+      - suite: tweak.pool
         tests:
         - ctl: [ext, tweak.pool]
           stdout: |+
@@ -36602,8 +36593,7 @@ tests:
             This addon caches database connections so that a single
             connection could be used to execute more than one query.
 
-          exit: 0
-      - id: tweak.resource
+      - suite: tweak.resource
         tests:
         - ctl: [ext, tweak.resource]
           stdout: |+
@@ -36619,7 +36609,6 @@ tests:
             Parameters:
               indicator=STR            : location for static files (default: `-`)
 
-          exit: 0
         - uri: /-/not-found
           status: 404 Not Found
           headers:
@@ -36642,7 +36631,7 @@ tests:
           - [Content-Type, text/plain]
           body: |
             Resourse does not exist: '/not-found'.
-      - id: tweak.shell
+      - suite: tweak.shell
         tests:
         - ctl: [ext, tweak.shell]
           stdout: |+
@@ -36665,7 +36654,6 @@ tests:
               server-root=URL          : root of HTSQL server
               limit=LIMIT              : max. number of output rows (default: 1000)
 
-          exit: 0
         - ctl: [ext, tweak.shell.default]
           stdout: |+
             TWEAK.SHELL.DEFAULT - make `/shell()` the default output format
@@ -36683,7 +36671,6 @@ tests:
               on-default=TRUE|FALSE    : invoke on a query without format
               on-error=TRUE|FALSE      : invoke on errors
 
-          exit: 0
         - uri: /shell()
           status: 200 OK
           headers:
@@ -37279,7 +37266,7 @@ tests:
 
       - py: has-sqlalchemy
         stdout: ''
-      - id: tweak.sqlalchemy
+      - suite: tweak.sqlalchemy
         tests:
         - ctl: [ext, tweak.sqlalchemy]
           stdout: |+
@@ -37299,7 +37286,6 @@ tests:
               engine=MODULE.NAME       : the SQLAlchemy `engine` object
               metadata=MODULE.NAME     : the SQLAlchemy `metadata` object
 
-          exit: 0
         - py: add-module-path
           stdout: ''
         - uri: /school{code, name, campus}?code='art'
@@ -37623,9 +37609,9 @@ tests:
           stdout: ''
   - include: test/input/error.yaml
     output:
-      id: error
+      suite: error
       tests:
-      - id: scan-errors
+      - suite: scan-errors
         tests:
         - uri: /'?%@$'
           status: 400 Bad Request
@@ -37660,7 +37646,7 @@ tests:
             While parsing:
                 /`Hello'
                  ^
-      - id: parse-errors
+      - suite: parse-errors
         tests:
         - uri: /'Hello','World'
           status: 400 Bad Request
@@ -37770,7 +37756,7 @@ tests:
             While parsing:
                 /{count(school))
                                ^
-      - id: bind-errors
+      - suite: bind-errors
         tests:
         - uri: /department{school, code}
           status: 400 Bad Request
@@ -37960,7 +37946,7 @@ tests:
             While translating:
                 /program.program
                          ^^^^^^^
-      - id: lookup-hints
+      - suite: lookup-hints
         tests:
         - uri: /school?code=$scool_code :given $school_code:='art'
           status: 400 Bad Request
@@ -38124,7 +38110,7 @@ tests:
             While translating:
                 /program{code, count(student_by_year(2010))}
                                      ^^^^^^^^^^^^^^^^^^^^^
-      - id: function-bind-errors
+      - suite: function-bind-errors
         tests:
         - uri: /count()
           status: 400 Bad Request
@@ -38480,7 +38466,7 @@ tests:
             While translating:
                 /max(school{code,name})
                            ^^^^^^^^^^^
-      - id: encode-errors
+      - suite: encode-errors
         tests:
         - uri: /true().fork()
           status: 400 Bad Request
@@ -38644,7 +38630,7 @@ tests:
             While translating:
                 /school{code, count(program|department)}
                               ^^^^^^^^^^^^^^^^^^^^^^^^^
-      - id: compile-errors
+      - suite: compile-errors
         tests:
         - uri: /school{code, department.code}
           status: 400 Bad Request
@@ -38682,7 +38668,7 @@ tests:
             While translating:
                 /school{department^count(course){*}}
                                                 ^^^
-      - id: serialize-errors
+      - suite: serialize-errors
         tests:
         - uri: /18446744073709551616
           status: 400 Bad Request
@@ -38695,9 +38681,9 @@ tests:
                  ^^^^^^^^^^^^^^^^^^^^
   - include: test/input/embedding.yaml
     output:
-      id: embedding
+      suite: embedding
       tests:
-      - py-include: test/code/test_embedding.py
+      - py: test/code/test_embedding.py
         stdout: |
           URI: /school{code, count(program), count(department)}
           school(code=u'art', [1]=3L, [2]=1L)

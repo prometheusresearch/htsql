@@ -3,8 +3,8 @@
 #
 
 title: ETL/CRUD
-id: etl
-ifdef: pgsql
+suite: etl
+if: pgsql
 tests:
 - load: etl
 - ctl: [ext, tweak.etl]

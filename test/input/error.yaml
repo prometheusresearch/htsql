@@ -3,7 +3,7 @@
 #
 
 title: Error Reporting
-id: error
+suite: error
 tests:
 
 - title: Scan Errors
@@ -321,7 +321,7 @@ tests:
   tests:
   # invalid integer value
   - uri: /18446744073709551616
-    ifndef: [oracle]
+    unless: [oracle]
     expect: 400
 
 

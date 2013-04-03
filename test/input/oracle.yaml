@@ -3,12 +3,12 @@
 #
 
 title: Oracle regression tests
-id: oracle
+suite: oracle
 output: test/output/oracle.yaml
 tests:
 
 - title: Remove any existing regression database
-  id: drop-oracle
+  suite: dropdb
   tests:
   - connect: &connect-admin
       engine: oracle
@@ -33,7 +33,7 @@ tests:
     ignore: true
 
 - title: Deploy the regression database
-  id: create-oracle
+  suite: createdb
   tests:
   # Create the `demo` database
   - connect: *connect-admin
@@ -52,9 +52,9 @@ tests:
       password: secret
       host: ${ORACLE_HOST}
       port: ${ORACLE_PORT}
-    sql-include: test/sql/demo-oracle.sql
+    sql: test/sql/demo-oracle.sql
   - db: *connect-demo
-  - py-include: test/sql/demo-load.py
+  - py: test/sql/demo-load.py
   # Create the `edge` database
   - connect: *connect-admin
     sql: |
@@ -72,7 +72,7 @@ tests:
       password: secret
       host: ${ORACLE_HOST}
       port: ${ORACLE_PORT}
-    sql-include: test/sql/edge-oracle.sql
+    sql: test/sql/edge-oracle.sql
   # Create the `sandbox` database
   - connect: *connect-admin
     sql: |
@@ -94,9 +94,9 @@ tests:
         -- The `sandbox` database is populated by the tests.
 
 - title: Run the test collection
-  id: test-oracle
+  suite: test
   tests:
-  - define: oracle
+  - set: oracle
   - db: *connect-sandbox
     extensions:
       htsql: {debug: true}

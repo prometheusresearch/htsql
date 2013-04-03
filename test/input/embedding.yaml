@@ -3,7 +3,7 @@
 #
 
 title: Embedding HTSQL
-id: embedding
+suite: embedding
 tests:
-- py-include: test/code/test_embedding.py
+- py: test/code/test_embedding.py
 

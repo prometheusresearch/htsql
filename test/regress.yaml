@@ -16,7 +16,7 @@
 #
 
 title: HTSQL regression tests
-id: all
+suite: all
 tests:
 - include: test/input/sqlite.yaml
 - include: test/input/pgsql.yaml
