@@ -99,6 +99,8 @@ def make_variables():
                                  % (engine.upper(), name.upper(), str(value)))
         if engine == 'oracle' and env.oracle_sid:
             variables.append('-D ORACLE_SID=%s ' % env.oracle_sid)
+    if env.ctl_path != 'htsql-ctl':
+        variables.append('-D HTSQL_CTL=%s ' % env.ctl_path)
     return "".join(variables)
 
 
@@ -405,8 +407,6 @@ def TRAIN(*suites):
       `cogs help test`
     """
     command = "--train"
-    if suites:
-        command += " "+" ".join(suites)
     for suite in suites:
         if not suite.startswith('/'):
             suite = '/all/'+suite

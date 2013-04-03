@@ -462,7 +462,8 @@ class StartCtlCase(TestCaseMixin):
 
     def check(self):
         key = tuple(self.input.start_ctl)
-        fork = Fork.start(env.ctl_path,
+        ctl_path = self.state.get('HTSQL_CTL', 'htsql-ctl')
+        fork = Fork.start(ctl_path,
                           self.input.start_ctl,
                           self.input.stdin)
         Fork.push(key, fork)

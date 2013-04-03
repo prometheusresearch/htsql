@@ -641,7 +641,7 @@ tests:
         --port PORT              : port to listen for incoming connections
         -q [--quiet]             : display as little as possible
 
-  - py: GET-1
+  - py: get-1
     stdout: |2+
        | count(school) |
       -+---------------+-
@@ -650,7 +650,7 @@ tests:
 
   - end-ctl: [server, 'sqlite:build/regress/sqlite/htsql_demo.sqlite', -q]
     stdout: ''
-  - py: GET-2
+  - py: get-2
     stdout: |2+
        | count(school) |
       -+---------------+-

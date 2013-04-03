@@ -71,7 +71,8 @@ def CHECK_ALL():
                % (CTL_DIR+"/ssh_config"))
             errors += trial("hg update && python setup.py install",
                             "installing HTSQL under %s" % client_vm.name)
-            errors += trial("pbbt test/regress.yaml -q -S /all/sqlite",
+            errors += trial("pbbt test/regress.yaml -E test/regress.py"
+                            " -q -S /all/sqlite",
                             "testing sqlite backend")
             for server_vm, suite in [(pgsql84_vm, 'pgsql'),
                                      (pgsql90_vm, 'pgsql'),
@@ -94,7 +95,8 @@ def CHECK_ALL():
                 password_value = "admin"
                 host_value = "10.0.2.2"
                 port_value = 10000+server_vm.port
-                command = "pbbt test/regress.yaml -q -S /all/%s" \
+                command = "pbbt test/regress.yaml -E test/regress.py" \
+                          " -q -S /all/%s" \
                           " -D %s=%s -D %s=%s -D %s=%s -D %s=%s" \
                           % (suite, username_key, username_value,
                              password_key, password_value,
@@ -103,7 +105,8 @@ def CHECK_ALL():
                           % (suite, server_vm.name)
                 errors += trial(command, message)
                 server_vm.stop()
-            errors += trial("pbbt test/regress.yaml -q -S /all/routine",
+            errors += trial("pbbt test/regress.yaml -E test/regress.py"
+                            " -q -S /all/routine",
                             "testing htsql-ctl routines")
             client_vm.stop()
     except:
