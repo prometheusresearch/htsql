@@ -3,7 +3,7 @@
 #
 
 
-from pbbt import test, test_type, test_field, TestCaseMixin, RunAndCompareMixin
+from pbbt import Test, Field, TestCaseMixin, RunAndCompareMixin
 from pbbt.check import choiceof, maybe, oneof, listof, tupleof, dictof
 from pbbt.std import is_filename, to_identifier
 import re
@@ -18,26 +18,6 @@ import time
 
 
 class TermStringIO(StringIO.StringIO):
-    """
-    A readable file-like object with an "echo".  Whenever some content is read
-    from it, the same content is echoed to the specified `output` stream.
-
-    Use :class:`TermStringIO` to preserve the content of interactive
-    sessions with pre-recorded input.  Assign::
-
-        sys.stdout = StringIO.StringIO()
-        sys.stdin = TermStringIO(input, sys.stdout)
-
-    where `input` contains the pre-recorded input data.  After the
-    session is done, the content of `sys.stdout` will be the same as
-    if the session was performed on a real terminal with echo enabled.
-
-    `buf` (a string)
-        The content of the stream.
-
-    `output` (a writable file-like object)
-        A stream that records data being read.
-    """
 
     def __init__(self, buf, output):
         StringIO.StringIO.__init__(self, buf)
@@ -54,14 +34,14 @@ class TermStringIO(StringIO.StringIO):
         return data
 
 
-@test_type
+@Test
 class SQLCase(TestCaseMixin):
 
     class Input:
-        connect = test_field(maybe(oneof(str, dictof(str, object))))
-        sql = test_field(str)
-        autocommit = test_field(bool, default=False)
-        ignore = test_field(bool, default=False)
+        connect = Field(maybe(oneof(str, dictof(str, object))))
+        sql = Field(str)
+        autocommit = Field(bool, default=False)
+        ignore = Field(bool, default=False)
 
         @property
         def sql_key(self):
@@ -156,13 +136,13 @@ class SavedDB(object):
         self.extensions = extensions
 
 
-@test_type
+@Test
 class DBCase(TestCaseMixin):
 
     class Input:
-        db = test_field(maybe(oneof(str, dictof(str, object))))
-        extensions = test_field(dictof(str, dictof(str, object)), default={})
-        save = test_field(str, default=None)
+        db = Field(maybe(oneof(str, dictof(str, object))))
+        extensions = Field(dictof(str, dictof(str, object)), default={})
+        save = Field(str, default=None)
 
         def __str__(self):
             if not self.db:
@@ -199,13 +179,13 @@ class DBCase(TestCaseMixin):
         return
 
 
-@test_type
+@Test
 class DBLoadCase(TestCaseMixin):
 
     class Input:
-        load = test_field(str)
-        extensions = test_field(dictof(str, dictof(str, object)), default={})
-        save = test_field(str, default=None)
+        load = Field(str)
+        extensions = Field(dictof(str, dictof(str, object)), default={})
+        save = Field(str, default=None)
 
     def check(self):
         if not isinstance(self.ctl.state.get(self.input.load), SavedDB):
@@ -231,23 +211,23 @@ class DBLoadCase(TestCaseMixin):
         self.ctl.passed()
 
 
-@test_type
+@Test
 class QueryCase(RunAndCompareMixin):
 
     class Input:
-        uri = test_field(str)
-        method = test_field(choiceof(['GET', 'POST']), default='GET')
-        remote_user = test_field(str, default=None)
-        headers = test_field(dictof(str, str), default=None)
-        content_type = test_field(str, default=None)
-        content_body = test_field(str, default=None)
-        expect = test_field(int, default=200)
+        uri = Field(str)
+        method = Field(choiceof(['GET', 'POST']), default='GET')
+        remote_user = Field(str, default=None)
+        headers = Field(dictof(str, str), default=None)
+        content_type = Field(str, default=None)
+        content_body = Field(str, default=None)
+        expect = Field(int, default=200)
 
     class Output:
-        uri = test_field(str)
-        status = test_field(str)
-        headers = test_field(listof(tupleof(str, str)))
-        body = test_field(str)
+        uri = Field(str)
+        status = Field(str)
+        headers = Field(listof(tupleof(str, str)))
+        body = Field(str)
 
         @classmethod
         def __load__(cls, mapping):
@@ -315,20 +295,20 @@ class QueryCase(RunAndCompareMixin):
         return "\n".join(lines)+"\n"
 
 
-@test_type
+@Test
 class CtlCase(RunAndCompareMixin):
 
     class Input:
-        ctl = test_field(listof(str))
-        stdin = test_field(str, default='')
-        expect = test_field(int, default=0)
+        ctl = Field(listof(str))
+        stdin = Field(str, default='')
+        expect = Field(int, default=0)
 
         def __str__(self):
             return "CTL: %s" % " ".join(self.ctl)
 
     class Output:
-        ctl = test_field(listof(str))
-        stdout = test_field(str)
+        ctl = Field(listof(str))
+        stdout = Field(str)
 
     def run(self):
         stdout = StringIO.StringIO()
@@ -448,13 +428,13 @@ class Fork(object):
         return output
 
 
-@test_type
+@Test
 class StartCtlCase(TestCaseMixin):
 
     class Input:
-        start_ctl = test_field(listof(str))
-        stdin = test_field(str, default='')
-        sleep = test_field(oneof(int, float), default=0)
+        start_ctl = Field(listof(str))
+        stdin = Field(str, default='')
+        sleep = Field(oneof(int, float), default=0)
 
         def __str__(self):
             return "START-CTL: %s" % " ".join(self.start_ctl)
@@ -468,18 +448,18 @@ class StartCtlCase(TestCaseMixin):
         Fork.push(key, fork)
 
 
-@test_type
+@Test
 class EndCtlCase(RunAndCompareMixin):
 
     class Input:
-        end_ctl = test_field(listof(str))
+        end_ctl = Field(listof(str))
 
         def __str__(self):
             return "END-CTL: %s" % " ".join(self.end_ctl)
 
     class Output:
-        end_ctl = test_field(listof(str))
-        stdout = test_field(str)
+        end_ctl = Field(listof(str))
+        stdout = Field(str)
 
     def run(self):
         key = tuple(self.input.end_ctl)
