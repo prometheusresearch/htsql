@@ -75,12 +75,12 @@ class Classify(Adapter):
         for signature in sorted(rejections_by_signature):
             name, arity = signature
             alternatives = []
-            duplicates = set()
+            seen = set()
             for arc in rejections_by_signature[signature]:
-                if arc in duplicates:
+                if arc in seen:
                     continue
                 alternatives.append(arc)
-                duplicates.add(arc)
+                seen.add(arc)
             arc = AmbiguousArc(arity, alternatives)
             label = Label(name, arc, False)
             labels.append(label)
@@ -91,23 +91,23 @@ class Classify(Adapter):
 
     def trace(self, node):
         arcs = []
-        duplicates = set()
+        seen = set()
         for arc in Trace.__invoke__(node):
-            if arc in duplicates:
+            if arc in seen:
                 continue
             arcs.append(arc)
-            duplicates.add(arc)
+            seen.add(arc)
         return arcs
 
     def call(self, arc):
         bids = []
-        duplicates = set()
+        seen = set()
         for name, weight in Call.__invoke__(arc):
             name = normalize(name)
-            if (name, weight) in duplicates:
+            if (name, weight) in seen:
                 continue
             bids.append((name, weight))
-            duplicates.add((name, weight))
+            seen.add((name, weight))
         return bids
 
     def order(self, labels):
@@ -364,13 +364,13 @@ def relabel(arc):
     assert isinstance(arc, Arc)
     cache = context.app.htsql.cache
     labels = classify(arc.origin)
-    duplicates = set()
+    seen = set()
     labels_by_arc = {}
     labels_by_arc[arc] = []
     arcs = [arc]
     for label in labels:
-        assert label.name not in duplicates, label
-        duplicates.add(label.name)
+        assert label.name not in seen, label
+        seen.add(label.name)
         arc = label.arc
         if arc not in labels_by_arc:
             labels_by_arc[arc] = []

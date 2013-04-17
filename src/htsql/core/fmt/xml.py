@@ -201,12 +201,12 @@ class RecordToXML(ToXML):
     def __init__(self, domain, tag):
         super(RecordToXML, self).__init__(domain, tag)
         self.fields_to_xml = []
-        duplicates = set()
+        used = set()
         for idx, field in enumerate(self.domain.fields):
-            if (field.tag and field.tag not in duplicates and
+            if (field.tag and field.tag not in used and
                     not re.match(r"""^[Xx][Mm][Ll]|^_\d*$""", field.tag)):
                 tag = field.tag
-                duplicates.add(tag)
+                used.add(tag)
             else:
                 tag = u"_%s" % (idx+1)
             field_to_xml = to_xml(field.domain, tag)

@@ -946,7 +946,7 @@ class Record(tuple):
             name = cls.__name__
 
         # Names already taken.
-        duplicates = set()
+        seen = set()
         # Process all field names.
         for idx, field in enumerate(fields):
             if field is None:
@@ -965,11 +965,11 @@ class Record(tuple):
                 if keyword.iskeyword(field):
                     field = field+'_'
                 # Skip names already taken.
-                if field in duplicates:
+                if field in seen:
                     field = None
                 # Store the normalized name.
                 fields[idx] = field
-                duplicates.add(field)
+                seen.add(field)
 
         # Prepare the class namespace and generate the class.
         bases = (cls,)

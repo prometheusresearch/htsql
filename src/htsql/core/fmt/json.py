@@ -499,11 +499,11 @@ class RecordToJSON(ToJSON):
         super(RecordToJSON, self).__init__(domain)
         self.fields_to_json = [to_json(field.domain) for field in domain.fields]
         self.field_keys = []
-        duplicates = set()
+        used = set()
         for idx, field in enumerate(self.domain.fields):
-            if field.tag and field.tag not in duplicates:
+            if field.tag and field.tag not in used:
                 key = field.tag
-                duplicates.add(key)
+                used.add(key)
             else:
                 key = unicode(idx)
             self.field_keys.append(key)

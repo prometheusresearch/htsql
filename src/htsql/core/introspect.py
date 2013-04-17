@@ -47,35 +47,35 @@ class IntrospectCleanup(Introspect):
 
         for schema in catalog.schemas:
             for table in schema.tables:
-                duplicates = {}
+                seen = {}
                 for unique_key in list(table.unique_keys):
                     key = tuple(unique_key.origin_columns)
-                    if key in duplicates:
-                        other_key = duplicates[key]
+                    if key in seen:
+                        other_key = seen[key]
                         if (unique_key.is_primary or
                             (not unique_key.is_partial and
                                 other_key.is_partial)):
                             other_key.remove()
-                            duplicates[key] = unique_key
+                            seen[key] = unique_key
                         else:
                             unique_key.remove()
                     else:
-                        duplicates[key] = unique_key
-                duplicates = {}
+                        seen[key] = unique_key
+                seen = {}
                 for foreign_key in list(table.foreign_keys):
                     key = (tuple(foreign_key.origin_columns),
                            foreign_key.target,
                            tuple(foreign_key.target_columns))
-                    if key in duplicates:
-                        other_key = duplicates[key]
+                    if key in seen:
+                        other_key = seen[key]
                         if (not foreign_key.is_partial and
                                 other_key.is_partial):
                             other_key.remove()
-                            duplicates[key] = foreign_key
+                            seen[key] = foreign_key
                         else:
                             foreign_key.remove()
                     else:
-                        duplicates[key] = foreign_key
+                        seen[key] = foreign_key
 
         return catalog
 

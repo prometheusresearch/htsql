@@ -87,15 +87,15 @@ class BuildMetaDatabase(Utility):
         cursor = self.connection.cursor()
 
         home_arcs = []
-        duplicates = set()
+        seen = set()
         for label in classify(HomeNode()):
             arc = label.arc
             if not isinstance(arc, TableArc):
                 continue
-            if arc in duplicates:
+            if arc in seen:
                 continue
             home_arcs.append(arc)
-            duplicates.add(arc)
+            seen.add(arc)
 
         for arc in home_arcs:
             labels = relabel(arc)
@@ -112,18 +112,18 @@ class BuildMetaDatabase(Utility):
         for home_arc in home_arcs:
             origin = home_arc.target
             table_arcs = []
-            duplicates = set()
+            seen = set()
             for label in classify(origin):
                 arc = label.arc
                 if not isinstance(arc, (ColumnArc, ChainArc)):
                     continue
-                if arc in duplicates:
+                if arc in seen:
                     continue
                 if (isinstance(arc, ChainArc) and
                         not relabel(TableArc(arc.target.table))):
                     continue
                 table_arcs.append(arc)
-                duplicates.add(arc)
+                seen.add(arc)
 
             table_name = relabel(TableArc(origin.table))[0].name
             last_sort = 0

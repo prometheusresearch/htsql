@@ -611,12 +611,12 @@ class Protocol(Component):
         Returns all names assigned to protocol implementations.
         """
         names = []
-        duplicates = set()
+        seen = set()
         for component in interface.__implementations__():
             for name in component.__names__:
-                if name not in duplicates:
+                if name not in seen:
                     names.append(name)
-                    duplicates.add(name)
+                    seen.add(name)
         names.sort()
         return names
 
