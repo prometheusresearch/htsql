@@ -38,15 +38,15 @@ class IntrospectCleanup(Introspect):
     def __call__(self):
         catalog = super(IntrospectCleanup, self).__call__()
 
-        for schema in reversed(list(catalog.schemas)):
-            for table in reversed(list(schema.tables)):
+        for schema in reversed(list(catalog)):
+            for table in reversed(list(schema)):
                 if not table.columns:
                     table.remove()
-            if not schema.tables:
+            if not schema:
                 schema.remove()
 
-        for schema in catalog.schemas:
-            for table in schema.tables:
+        for schema in catalog:
+            for table in schema:
                 seen = {}
                 for unique_key in list(table.unique_keys):
                     key = tuple(unique_key.origin_columns)

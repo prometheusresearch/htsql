@@ -1011,7 +1011,7 @@ class DumpTable(Dump):
             if table.schema.priority > 0:
                 need_schema = False
                 if any(schema.priority > table.schema.priority
-                       for schema in table.schema.catalog.schemas):
+                       for schema in table.schema.catalog):
                     need_schema = True
         # Serialize the table name.
         if need_schema:

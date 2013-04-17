@@ -48,8 +48,8 @@ class IntrospectPGSQL(Introspect):
         search_path = cursor.fetchone()[0]
         for idx, name in enumerate(search_path):
             priority = len(search_path)-idx
-            if name in catalog.schemas:
-                catalog.schemas[name].set_priority(priority)
+            if name in catalog:
+                catalog[name].set_priority(priority)
 
         table_by_oid = {}
         cursor.execute("""

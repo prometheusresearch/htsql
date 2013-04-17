@@ -43,9 +43,9 @@ class SQLAlchemyIntrospect(Introspect):
         for table_record in metadata.sorted_tables:
             schema_name = decode(table_record.schema,
                                  table_record.quote_schema)
-            if schema_name not in catalog.schemas:
+            if schema_name not in catalog:
                 catalog.add_schema(schema_name)
-            schema = catalog.schemas[schema_name]
+            schema = catalog[schema_name]
             name = decode(table_record.name, table_record.quote)
             table = schema.add_table(name)
 
@@ -59,18 +59,18 @@ class SQLAlchemyIntrospect(Introspect):
         for table_record in metadata.sorted_tables:
             schema_name = decode(table_record.schema,
                                  table_record.quote_schema)
-            schema = catalog.schemas[schema_name]
+            schema = catalog[schema_name]
             name = decode(table_record.name, table_record.quote)
-            table = schema.tables[name]
+            table = schema[name]
 
             for key_record in table_record.constraints:
                 if isinstance(key_record, (PrimaryKeyConstraint,
                                            UniqueConstraint)):
                     names = [decode(column_record.name, column_record.quote)
                              for column_record in key_record.columns]
-                    if not all(name in table.columns for name in names):
+                    if not all(name in table for name in names):
                         continue
-                    columns = [table.columns[name] for name in names]
+                    columns = [table[name] for name in names]
                     is_primary = isinstance(key_record, PrimaryKeyConstraint)
                     table.add_unique_key(columns, is_primary)
                 elif isinstance(key_record, ForeignKeyConstraint):
@@ -80,29 +80,29 @@ class SQLAlchemyIntrospect(Introspect):
                                       for column_record in key_record.columns]
                     names = [decode(column_record.name, column_record.quote)
                              for column_record in column_records]
-                    if not all(name in table.columns for name in names):
+                    if not all(name in table for name in names):
                         continue
-                    columns = [table.columns[name] for name in names]
+                    columns = [table[name] for name in names]
                     target_records = [element.column
                                       for element in key_record.elements]
                     target_table_record = target_records[0].table
                     target_schema_name = decode(target_table_record.schema,
                                             target_table_record.quote_schema)
-                    if target_schema_name not in catalog.schemas:
+                    if target_schema_name not in catalog:
                         continue
-                    target_schema = catalog.schemas[target_schema_name]
+                    target_schema = catalog[target_schema_name]
                     target_table_name = decode(target_table_record.name,
                                                target_table_record.quote)
-                    if target_table_name not in target_schema.tables:
+                    if target_table_name not in target_schema:
                         continue
-                    target_table = target_schema.tables[target_table_name]
+                    target_table = target_schema[target_table_name]
                     target_names = [decode(target_record.name,
                                            target_record.quote)
                                     for target_record in target_records]
-                    if not all(name in target_table.columns
+                    if not all(name in target_table
                                for name in target_names):
                         continue
-                    target_columns = [target_table.columns[name]
+                    target_columns = [target_table[name]
                                       for name in target_names]
                     table.add_foreign_key(columns, target_table, target_columns)
 

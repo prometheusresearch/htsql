@@ -34,13 +34,13 @@ class OverrideIntrospect(Introspect):
             exclude = addon.excluded_tables
             unused.update(include)
             unused.update(exclude)
-            for schema in catalog.schemas:
+            for schema in catalog:
                 schema_exclude = [pattern
                                   for pattern in exclude
                                   if pattern.matches(schema)]
                 if not (include or schema_exclude):
                     continue
-                for table in reversed(list(schema.tables)):
+                for table in reversed(list(schema)):
                     include_matches = [pattern
                                        for pattern in include
                                        if pattern.matches(table)]
@@ -57,19 +57,19 @@ class OverrideIntrospect(Introspect):
             exclude = addon.excluded_columns
             unused.update(include)
             unused.update(exclude)
-            for schema in catalog.schemas:
+            for schema in catalog:
                 schema_exclude = [pattern
                                   for pattern in exclude
                                   if pattern.matches(schema)]
                 if not (include or schema_exclude):
                     continue
-                for table in schema.tables:
+                for table in schema:
                     table_exclude = [pattern
                                      for pattern in schema_exclude
                                      if pattern.matches(table)]
                     if not (include or table_exclude):
                         continue
-                    for column in reversed(list(table.columns)):
+                    for column in reversed(list(table)):
                         include_matches = [pattern
                                            for pattern in include
                                            if pattern.matches(column)]
@@ -83,19 +83,19 @@ class OverrideIntrospect(Introspect):
 
         if addon.not_nulls:
             unused.update(addon.not_nulls)
-            for schema in catalog.schemas:
+            for schema in catalog:
                 schema_patterns = [pattern
                                    for pattern in addon.not_nulls
                                    if pattern.matches(schema)]
                 if not schema_patterns:
                     continue
-                for table in schema.tables:
+                for table in schema:
                     table_patterns = [pattern
                                       for pattern in schema_patterns
                                       if pattern.matches(table)]
                     if not table_patterns:
                         continue
-                    for column in reversed(list(table.columns)):
+                    for column in reversed(list(table)):
                         matches = [pattern
                                    for pattern in table_patterns
                                    if pattern.matches(column)]
@@ -105,13 +105,13 @@ class OverrideIntrospect(Introspect):
 
         if addon.unique_keys:
             unused.update(addon.unique_keys)
-            for schema in catalog.schemas:
+            for schema in catalog:
                 schema_keys = [pattern
                                for pattern in addon.unique_keys
                                if pattern.matches(schema)]
                 if not schema_keys:
                     continue
-                for table in schema.tables:
+                for table in schema:
                     table_keys = [pattern
                                   for pattern in schema_keys
                                   if pattern.matches(table)]
@@ -130,13 +130,13 @@ class OverrideIntrospect(Introspect):
 
         if addon.foreign_keys:
             unused.update(addon.foreign_keys)
-            for schema in catalog.schemas:
+            for schema in catalog:
                 schema_keys = [pattern
                                for pattern in addon.foreign_keys
                                if pattern.matches(schema)]
                 if not schema_keys:
                     continue
-                for table in schema.tables:
+                for table in schema:
                     table_keys = [pattern
                                   for pattern in schema_keys
                                   if pattern.matches(table)]
@@ -145,9 +145,9 @@ class OverrideIntrospect(Introspect):
                         if columns is None:
                             continue
                         targets = [target_table
-                                   for target_schema in catalog.schemas
+                                   for target_schema in catalog
                                    if pattern.matches_target(target_schema)
-                                   for target_table in target_schema.tables
+                                   for target_table in target_schema
                                    if pattern.matches_target(target_table)
                                    and pattern.extract_target(target_table)]
                         if len(targets) != 1:
@@ -161,13 +161,13 @@ class OverrideIntrospect(Introspect):
 
         if addon.unlabeled_tables:
             unused.update(addon.unlabeled_tables)
-            for schema in catalog.schemas:
+            for schema in catalog:
                 schema_matches = [pattern
                                   for pattern in addon.unlabeled_tables
                                   if pattern.matches(schema)]
                 if not schema_matches:
                     continue
-                for table in schema.tables:
+                for table in schema:
                     matches = [pattern
                                for pattern in schema_matches
                                if pattern.matches(table)]
@@ -175,19 +175,19 @@ class OverrideIntrospect(Introspect):
 
         if addon.unlabeled_columns:
             unused.update(addon.unlabeled_columns)
-            for schema in catalog.schemas:
+            for schema in catalog:
                 schema_matches = [pattern
                                   for pattern in addon.unlabeled_columns
                                   if pattern.matches(schema)]
                 if not schema_matches:
                     continue
-                for table in schema.tables:
+                for table in schema:
                     table_matches = [pattern
                                      for pattern in schema_matches
                                      if pattern.matches(table)]
                     if not table_matches:
                         continue
-                    for column in table.columns:
+                    for column in table:
                         matches = [pattern
                                    for pattern in table_matches
                                    if pattern.matches(column)]

@@ -48,8 +48,8 @@ class IntrospectOracle(Introspect):
             SELECT USER FROM DUAL
         """)
         current_user = cursor.fetchone()[0]
-        if current_user in catalog.schemas:
-            catalog.schemas[current_user].set_priority(1)
+        if current_user in catalog:
+            catalog[current_user].set_priority(1)
 
         cursor.execute("""
             SELECT owner, table_name
@@ -61,9 +61,9 @@ class IntrospectOracle(Introspect):
         for row in cursor.fetchnamed():
             if '$' in row.table_name:
                 continue
-            if row.owner not in catalog.schemas:
+            if row.owner not in catalog:
                 continue
-            schema = catalog.schemas[row.owner]
+            schema = catalog[row.owner]
             schema.add_table(row.table_name)
 
         cursor.execute("""
@@ -89,12 +89,12 @@ class IntrospectOracle(Introspect):
         for row in cursor.fetchnamed():
             if '$' in row.column_name:
                 continue
-            if row.owner not in catalog.schemas:
+            if row.owner not in catalog:
                 continue
-            schema = catalog.schemas[row.owner]
-            if row.table_name not in schema.tables:
+            schema = catalog[row.owner]
+            if row.table_name not in schema:
                 continue
-            table = schema.tables[row.table_name]
+            table = schema[row.table_name]
             name = row.column_name
             check = None
             check_key = (row.owner, row.table_name)
@@ -142,12 +142,12 @@ class IntrospectOracle(Introspect):
             if key not in column_rows_by_constraint:
                 continue
             column_rows = column_rows_by_constraint[key]
-            if row.owner not in catalog.schemas:
+            if row.owner not in catalog:
                 continue
-            schema = catalog.schemas[row.owner]
-            if row.table_name not in schema.tables:
+            schema = catalog[row.owner]
+            if row.table_name not in schema:
                 continue
-            table = schema.tables[row.table_name]
+            table = schema[row.table_name]
             if not all(column_row.column_name in table.columns
                        for column_row in column_rows):
                 continue
@@ -164,12 +164,12 @@ class IntrospectOracle(Introspect):
                     continue
                 target_row = constraint_row_by_constraint[target_key]
                 target_column_rows = column_rows_by_constraint[target_key]
-                if target_row.owner not in catalog.schemas:
+                if target_row.owner not in catalog:
                     continue
-                target_schema = catalog.schemas[target_row.owner]
-                if target_row.table_name not in target_schema.tables:
+                target_schema = catalog[target_row.owner]
+                if target_row.table_name not in target_schema:
                     continue
-                target_table = target_schema.tables[target_row.table_name]
+                target_table = target_schema[target_row.table_name]
                 if not all(column_row.column_name in target_table.columns
                            for column_row in target_column_rows):
                     continue

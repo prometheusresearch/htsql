@@ -131,8 +131,8 @@ class TraceHome(Trace):
 
     def __call__(self):
         catalog = introspect()
-        for schema in catalog.schemas:
-            for table in schema.tables:
+        for schema in catalog:
+            for table in schema:
                 yield TableArc(table)
 
 

@@ -43,8 +43,8 @@ class IntrospectMSSQL(Introspect):
             WHERE principal_id = USER_ID()
         """)
         default_schema_name = cursor.fetchone()[0]
-        if default_schema_name in catalog.schemas:
-            catalog.schemas[default_schema_name].set_priority(1)
+        if default_schema_name in catalog:
+            catalog[default_schema_name].set_priority(1)
 
         table_by_id = {}
         cursor.execute("""

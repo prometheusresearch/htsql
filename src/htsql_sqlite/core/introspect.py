@@ -35,7 +35,7 @@ class IntrospectSQLite(Introspect):
         for row in cursor.fetchnamed():
             schema.add_table(row.name)
 
-        for table in schema.tables:
+        for table in schema:
             cursor.execute("""PRAGMA table_info(%s)"""
                            % self.escape_name(table.name))
             primary_key_columns = []
@@ -55,7 +55,7 @@ class IntrospectSQLite(Introspect):
                 else:
                     table.add_primary_key(primary_key_columns)
 
-        for table in schema.tables:
+        for table in schema:
             cursor.execute("""PRAGMA index_list(%s)"""
                            % self.escape_name(table.name))
             for index_row in cursor.fetchnamed():
@@ -65,10 +65,10 @@ class IntrospectSQLite(Introspect):
                                % self.escape_name(index_row.name))
                 columns = []
                 for row in cursor.fetchnamed():
-                    columns.append(table.columns[row.name])
+                    columns.append(table[row.name])
                 table.add_unique_key(columns)
 
-        for table in schema.tables:
+        for table in schema:
             ids = set()
             columns_by_id = {}
             target_by_id = {}
@@ -88,10 +88,10 @@ class IntrospectSQLite(Introspect):
                     if (target_name.startswith(u'"') and
                             target_name.endswith(u'"')):
                         target_name = target_name[1:-1].replace(u'""', u'"')
-                    target_by_id[row.id] = schema.tables[target_name]
+                    target_by_id[row.id] = schema[target_name]
                     target_columns_by_id[row.id] = []
                 target = target_by_id[row.id]
-                column = table.columns[row.from_]
+                column = table[row.from_]
                 target_column = target.columns[row.to]
                 columns_by_id[row.id].append(column)
                 target_columns_by_id[row.id].append(target_column)

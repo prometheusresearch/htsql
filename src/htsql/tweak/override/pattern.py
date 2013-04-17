@@ -123,7 +123,7 @@ class UniqueKeyPattern(Pattern):
         assert self.matches(table)
         columns = []
         for pattern in self.column_patterns:
-            matching = [column for column in table.columns
+            matching = [column for column in table
                                if matches(column, pattern)]
             if len(matching) != 1:
                 return
@@ -189,7 +189,7 @@ class ForeignKeyPattern(Pattern):
         assert self.matches(table)
         columns = []
         for pattern in self.column_patterns:
-            matching = [column for column in table.columns
+            matching = [column for column in table
                                if matches(column, pattern)]
             if len(matching) != 1:
                 return
@@ -206,7 +206,7 @@ class ForeignKeyPattern(Pattern):
         if self.target_column_patterns:
             columns = []
             for pattern in self.target_column_patterns:
-                matching = [column for column in table.columns
+                matching = [column for column in table
                                    if matches(column, pattern)]
                 if len(matching) != 1:
                     return
@@ -266,7 +266,7 @@ class ColumnArcPattern(ArcPattern):
         if parameters is not None:
             return
         matched_column = None
-        for column in node.table.columns:
+        for column in node.table:
             if not matches(column, self.column_pattern):
                 continue
             if matched_column is not None:
@@ -298,10 +298,10 @@ class TableArcPattern(ArcPattern):
             return
         catalog = introspect()
         matched_table = None
-        for schema in catalog.schemas:
+        for schema in catalog:
             if not matches(schema, self.schema_pattern):
                 continue
-            for table in schema.tables:
+            for table in schema:
                 if not matches(table, self.table_pattern):
                     continue
                 if matched_table is not None:

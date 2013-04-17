@@ -290,12 +290,12 @@ class PGCatalogIntrospectPGSQL(IntrospectPGSQL):
             schema_name = unicode(schema_name)
             table_name = unicode(table_name)
             column_names = map(unicode, column_names)
-            if schema_name not in catalog.schemas:
+            if schema_name not in catalog:
                 continue
-            schema = catalog.schemas[schema_name]
-            if table_name not in schema.tables:
+            schema = catalog[schema_name]
+            if table_name not in schema:
                 continue
-            table = schema.tables[table_name]
+            table = schema[table_name]
             if any(column_name not in table.columns
                    for column_name in column_names):
                 continue
@@ -310,12 +310,12 @@ class PGCatalogIntrospectPGSQL(IntrospectPGSQL):
             keys = self.foreign_keys[origin_schema_name, origin_table_name]
             origin_schema_name = unicode(origin_schema_name)
             origin_table_name = unicode(origin_table_name)
-            if origin_schema_name not in catalog.schemas:
+            if origin_schema_name not in catalog:
                 continue
-            origin_schema = catalog.schemas[schema_name]
-            if origin_table_name not in origin_schema.tables:
+            origin_schema = catalog[schema_name]
+            if origin_table_name not in origin_schema:
                 continue
-            origin = origin_schema.tables[origin_table_name]
+            origin = origin_schema[origin_table_name]
             for (origin_column_names, (target_schema_name, target_table_name),
                     target_column_names) in keys:
                 origin_column_names = map(unicode, origin_column_names)
@@ -327,12 +327,12 @@ class PGCatalogIntrospectPGSQL(IntrospectPGSQL):
                     continue
                 origin_columns = [origin.columns[column_name]
                                   for column_name in origin_column_names]
-                if target_schema_name not in catalog.schemas:
+                if target_schema_name not in catalog:
                     continue
-                target_schema = catalog.schemas[schema_name]
-                if target_table_name not in target_schema.tables:
+                target_schema = catalog[schema_name]
+                if target_table_name not in target_schema:
                     continue
-                target = target_schema.tables[target_table_name]
+                target = target_schema[target_table_name]
                 if any(column_name not in target.columns
                        for column_name in target_column_names):
                     continue

@@ -145,6 +145,21 @@ class CatalogEntity(Entity):
 
     __slots__ = ('schemas', '__weakref__')
 
+    def __contains__(self, name):
+        return (name in self.schemas)
+
+    def __getitem__(self, name):
+        return self.schemas[name]
+
+    def __iter__(self):
+        return iter(self.schemas)
+
+    def __len__(self):
+        return len(self.schemas)
+
+    def get(self, name, default=None):
+        return self.schemas.get(name, default)
+
 
 class MutableCatalogEntity(CatalogEntity, MutableEntity):
 
@@ -174,6 +189,21 @@ class SchemaEntity(NamedEntity):
     @property
     def catalog(self):
         return self.owner()
+
+    def __contains__(self, name):
+        return (name in self.tables)
+
+    def __getitem__(self, name):
+        return self.tables[name]
+
+    def __iter__(self):
+        return iter(self.tables)
+
+    def __len__(self):
+        return len(self.tables)
+
+    def get(self, name, default=None):
+        return self.tables.get(name, default)
 
 
 class MutableSchemaEntity(SchemaEntity, MutableEntity):
@@ -221,6 +251,21 @@ class TableEntity(NamedEntity):
         if not self.schema.name:
             return self.name
         return u"%s.%s" % (self.schema, self.name)
+
+    def __contains__(self, name):
+        return (name in self.columns)
+
+    def __getitem__(self, name):
+        return self.columns[name]
+
+    def __iter__(self):
+        return iter(self.columns)
+
+    def __len__(self):
+        return len(self.columns)
+
+    def get(self, name, default=None):
+        return self.columns.get(name, default)
 
 
 class MutableTableEntity(TableEntity, MutableEntity):
@@ -366,6 +411,18 @@ class UniqueKeyEntity(Entity):
                             u",".join(column.name
                                       for column in self.origin_columns))
 
+    def __contains__(self, column):
+        return (column in self.origin_columns)
+
+    def __getitem__(self, index):
+        return self.origin_columns[index]
+
+    def __iter__(self):
+        return iter(self.origin_columns)
+
+    def __len__(self):
+        return len(self.origin_columns)
+
 
 class MutableUniqueKeyEntity(UniqueKeyEntity, MutableEntity):
 
@@ -441,6 +498,18 @@ class ForeignKeyEntity(Entity):
                    u",".join(column.name for column in self.origin_columns),
                    self.target,
                    u",".join(column.name for column in self.target_columns)))
+
+    def __contains__(self, column_pair):
+        return (column_pair in zip(self.origin_columns, self.target_columns))
+
+    def __getitem__(self, index):
+        return (self.origin_columns[index], self.target_columns[index])
+
+    def __iter__(self):
+        return iter(zip(self.origin_columns, self.target_columns))
+
+    def __len__(self):
+        return len(self.origin_columns)
 
 
 class MutableForeignKeyEntity(ForeignKeyEntity, MutableEntity):
@@ -555,6 +624,18 @@ class Join(Printable, Hashable):
 
     def __str__(self):
         return unicode(self).encode('utf-8')
+
+    def __contains__(self, column_pair):
+        return (column_pair in zip(self.origin_columns, self.target_columns))
+
+    def __getitem__(self, index):
+        return (self.origin_columns[index], self.target_columns[index])
+
+    def __iter__(self):
+        return iter(zip(self.origin_columns, self.target_columns))
+
+    def __len__(self):
+        return len(self.origin_columns)
 
 
 class DirectJoin(Join):

@@ -323,7 +323,7 @@ class BuildExtractTable(Utility):
                     extract_by_column[column] = extract
         columns = []
         extracts = []
-        for column in table.columns:
+        for column in table:
             if column in extract_by_column:
                 columns.append(column)
                 extracts.append(extract_by_column[column])

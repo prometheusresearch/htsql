@@ -35,8 +35,8 @@ class IntrospectMySQL(Introspect):
             SELECT DATABASE()
         """)
         database_name = cursor.fetchone()[0]
-        if database_name in catalog.schemas:
-            catalog.schemas[database_name].set_priority(1)
+        if database_name in catalog:
+            catalog[database_name].set_priority(1)
 
         cursor.execute("""
             SELECT t.table_schema, t.table_name
@@ -45,9 +45,9 @@ class IntrospectMySQL(Introspect):
             ORDER BY 1, 2
         """)
         for row in cursor.fetchnamed():
-            if row.table_schema not in catalog.schemas:
+            if row.table_schema not in catalog:
                 continue
-            schema = catalog.schemas[row.table_schema]
+            schema = catalog[row.table_schema]
             schema.add_table(row.table_name)
 
         cursor.execute("""
@@ -59,12 +59,12 @@ class IntrospectMySQL(Introspect):
             ORDER BY 1, 2, 3
         """)
         for row in cursor.fetchnamed():
-            if row.table_schema not in catalog.schemas:
+            if row.table_schema not in catalog:
                 continue
-            schema = catalog.schemas[row.table_schema]
-            if row.table_name not in schema.tables:
+            schema = catalog[row.table_schema]
+            if row.table_name not in schema:
                 continue
-            table = schema.tables[row.table_name]
+            table = schema[row.table_name]
             name = row.column_name
             is_nullable = (row.is_nullable == 'YES')
             has_default = (row.column_default is not None)
@@ -118,12 +118,12 @@ class IntrospectMySQL(Introspect):
             if key not in usage_rows_by_constraint_key:
                 continue
             usage_rows = usage_rows_by_constraint_key[key]
-            if constraint_row.table_schema not in catalog.schemas:
+            if constraint_row.table_schema not in catalog:
                 continue
-            schema = catalog.schemas[constraint_row.table_schema]
-            if constraint_row.table_name not in schema.tables:
+            schema = catalog[constraint_row.table_schema]
+            if constraint_row.table_name not in schema:
                 continue
-            table = schema.tables[constraint_row.table_name]
+            table = schema[constraint_row.table_name]
             if not all(row.column_name in table.columns
                        for row in usage_rows):
                 continue
@@ -133,12 +133,12 @@ class IntrospectMySQL(Introspect):
                 table.add_unique_key(columns, is_primary)
             elif constraint_row.constraint_type == 'FOREIGN KEY':
                 row = usage_rows[0]
-                if row.referenced_table_schema not in catalog.schemas:
+                if row.referenced_table_schema not in catalog:
                     continue
-                target_schema = catalog.schemas[row.referenced_table_schema]
-                if row.referenced_table_name not in target_schema.tables:
+                target_schema = catalog[row.referenced_table_schema]
+                if row.referenced_table_name not in target_schema:
                     continue
-                target_table = target_schema.tables[row.referenced_table_name]
+                target_table = target_schema[row.referenced_table_name]
                 if not all(row.referenced_column_name in target_table.columns
                            for row in usage_rows):
                     continue
