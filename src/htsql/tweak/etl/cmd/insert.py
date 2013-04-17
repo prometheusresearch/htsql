@@ -17,7 +17,7 @@ from ....core.model import (HomeNode, TableNode, Arc, TableArc, ColumnArc,
         ChainArc)
 from ....core.entity import TableEntity, ColumnEntity
 from ....core.cmd.act import Act, ProduceAction, act
-from ....core.cmd.fetch import RowStream, build_fetch
+from ....core.tr.translate import translate
 from ....core.tr.bind import BindingState, Select
 from ....core.syn.syntax import VoidSyntax, IdentifierSyntax
 from ....core.tr.binding import (VoidBinding, RootBinding, FormulaBinding,
@@ -458,7 +458,7 @@ class BuildResolveIdentity(Utility):
         binding = SegmentBinding(state.scope, binding, domain, syntax)
         profile = decorate(binding)
         binding = QueryBinding(state.scope, binding, profile, syntax)
-        pipe = build_fetch(binding)
+        pipe = translate(binding)
         profile = pipe.profile
         if not self.is_list:
             profile = profile.clone(domain=profile.domain.item_domain)
@@ -547,7 +547,7 @@ class BuildResolveChain(Utility):
         binding = SegmentBinding(state.root, binding, domain, syntax)
         profile = decorate(binding)
         binding = QueryBinding(state.root, binding, profile, syntax)
-        pipe =  build_fetch(binding)
+        pipe =  translate(binding)
         columns = joins[0].origin_columns[:]
         domain = identity.domain
         return ResolveChainPipe(target_name, columns, domain, pipe)

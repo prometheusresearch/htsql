@@ -12,7 +12,7 @@ from ....core.model import TableArc
 from ....core.classify import localize, relabel
 from ....core.connect import transaction, scramble, unscramble
 from ....core.domain import IdentityDomain, RecordDomain, ListDomain, Product
-from ....core.cmd.fetch import build_fetch
+from ....core.cmd.fetch import translate
 from ....core.cmd.act import Act, ProduceAction, act
 from ....core.tr.bind import BindingState, Select
 from ....core.syn.syntax import VoidSyntax
@@ -169,7 +169,7 @@ class BuildResolveKey(Utility):
         binding = SegmentBinding(state.root, binding, domain, syntax)
         profile = decorate(binding)
         binding = QueryBinding(state.root, binding, profile, syntax)
-        pipe =  build_fetch(binding)
+        pipe =  translate(binding)
         domain = identity.domain
         return ResolveKeyPipe(name, columns, domain, pipe, self.with_error)
 
