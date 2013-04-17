@@ -12,6 +12,7 @@ import pkgutil
 import datetime, time
 import collections
 import unicodedata
+import yaml
 
 
 #
@@ -767,7 +768,7 @@ class Clonable(object):
 
     def __init__(self):
         # Must be overriden in subclasses.
-        raise NotImplementedError()
+        raise NotImplementedError("%s.__init__()" % self.__class__.__name__)
 
     def clone(self, **replacements):
         """
@@ -950,6 +951,97 @@ class Printable(object):
 
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, self)
+
+
+class YAMLable(object):
+    """
+    An object with YAML representation.
+
+    Subclasses of :class:`YAMLable` must override :meth:`__yaml__` to generate
+    a list of ``(field, value)`` pairs.
+    """
+
+    def to_yaml(self):
+        """
+        Returns YAML representation of the object.
+        """
+        return yaml.dump(self, Dumper=YAMLableDumper)
+
+    def __yaml__(self):
+        # Override in subclasses.
+        return []
+
+    def __str__(self):
+        return self.to_yaml()
+
+    def __unicode__(self):
+        return self.to_yaml().decode('utf-8')
+
+    def __repr__(self):
+        return "<%s>" % self.__class__.__name__
+
+
+class YAMLableDumper(yaml.Dumper):
+    # Serializer for `YAMLable` instances.
+
+    def represent_str(self, data):
+        # Represent both `str` and `unicode` objects as YAML strings.
+        # Use block style for multiline strings.
+        if isinstance(data, unicode):
+            data = data.encode('utf-8')
+        tag = None
+        style = None
+        if data.endswith('\n'):
+            style = '|'
+        try:
+            data = data.decode('utf-8')
+            tag = u'tag:yaml.org,2002:str'
+        except UnicodeDecodeError:
+            data = data.encode('base64')
+            tag = u'tag:yaml.org,2002:binary'
+            style = '|'
+        return self.represent_scalar(tag, data, style=style)
+
+    def represent_yamlable(self, data):
+        # Represent `YAMLable` objects.
+        tag = unicode('!'+data.__class__.__name__)
+        mapping = list(data.__yaml__())
+        # Use block style if any field value is a multiline string.
+        flow_style = None
+        if any(isinstance(item, (str, unicode)) and '\n' in item
+                for key, item in mapping):
+            flow_style = False
+        return self.represent_mapping(tag, mapping, flow_style=flow_style)
+
+    def generate_anchor(self, node):
+        # Use the class name for anchor names.
+        if not isinstance(self.last_anchor_id, dict):
+            self.last_anchor_id = { u'': 1 }
+        if node.tag.startswith(u'!'):
+            text = node.tag[1:]
+        else:
+            text = u''
+        self.last_anchor_id.setdefault(text, 1)
+        index = self.last_anchor_id[text]
+        self.last_anchor_id[text] += 1
+        if text:
+            text += u'-%s' % index
+        else:
+            text = unicode(index)
+        return text
+
+
+YAMLableDumper.add_representer(str, YAMLableDumper.represent_str)
+YAMLableDumper.add_representer(unicode, YAMLableDumper.represent_str)
+YAMLableDumper.add_multi_representer(YAMLable,
+        YAMLableDumper.represent_yamlable)
+
+
+def to_yaml(data):
+    """
+    Represents the value in YAML format.
+    """
+    return yaml.dump(data, Dumper=YAMLableDumper)
 
 
 #

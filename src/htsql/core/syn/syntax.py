@@ -4,12 +4,12 @@
 
 
 from ..util import (maybe, listof, oneof, Clonable, Hashable, Printable,
-        to_name, to_literal)
+        YAMLable, to_name, to_literal)
 import re
 import decimal
 
 
-class Syntax(Clonable, Hashable, Printable):
+class Syntax(Clonable, Hashable, Printable, YAMLable):
     """
     A syntax node.
     """
@@ -77,6 +77,10 @@ class AssignSyntax(Syntax):
     def __unicode__(self):
         return u"%s:=%s" % (self.larm, self.rarm)
 
+    def __yaml__(self):
+        yield ('larm', self.larm)
+        yield ('rarm', self.rarm)
+
 
 class SpecifySyntax(Syntax):
     """
@@ -133,6 +137,11 @@ class SpecifySyntax(Syntax):
             chunks.append(u")")
         return u"".join(chunks)
 
+    def __yaml__(self):
+        yield ('larms', self.larms)
+        if self.rarms is not None:
+            yield ('rarms', self.rarms)
+
 
 class ApplySyntax(Syntax):
     """
@@ -183,6 +192,10 @@ class FunctionSyntax(ApplySyntax):
     def __unicode__(self):
         return u"%s(%s)" % (self.identifier,
                             u",".join(unicode(arm) for arm in self.arms))
+
+    def __yaml__(self):
+        yield ('identifier', self.identifier)
+        yield ('arms', self.arms)
 
 
 class PipeSyntax(ApplySyntax):
@@ -247,6 +260,14 @@ class PipeSyntax(ApplySyntax):
             chunks.append(u")")
         return u"".join(chunks)
 
+    def __yaml__(self):
+        yield ('is_flow', self.is_flow)
+        yield ('is_open', self.is_open)
+        yield ('identifier', self.identifier)
+        yield ('larm', self.larm)
+        if self.rarms or not self.is_open:
+            yield ('rarms', self.rarms)
+
 
 class OperatorSyntax(ApplySyntax):
     """
@@ -281,6 +302,11 @@ class OperatorSyntax(ApplySyntax):
     def __unicode__(self):
         return u"%s%s%s" % (self.larm, self.symbol, self.rarm)
 
+    def __yaml__(self):
+        yield ('symbol', self.symbol)
+        yield ('larm', self.larm)
+        yield ('rarm', self.rarm)
+
 
 class PrefixSyntax(ApplySyntax):
     """
@@ -310,6 +336,10 @@ class PrefixSyntax(ApplySyntax):
     def __unicode__(self):
         return u"%s%s" % (self.symbol, self.arm)
 
+    def __yaml__(self):
+        yield ('symbol', self.symbol)
+        yield ('arm', self.arm)
+
 
 class FilterSyntax(OperatorSyntax):
     """
@@ -322,6 +352,10 @@ class FilterSyntax(OperatorSyntax):
 
     def __init__(self, larm, rarm):
         super(FilterSyntax, self).__init__(u'?', larm, rarm)
+
+    def __yaml__(self):
+        yield ('larm', self.larm)
+        yield ('rarm', self.rarm)
 
 
 class ProjectSyntax(OperatorSyntax):
@@ -336,6 +370,10 @@ class ProjectSyntax(OperatorSyntax):
     def __init__(self, larm, rarm):
         super(ProjectSyntax, self).__init__(u'^', larm, rarm)
 
+    def __yaml__(self):
+        yield ('larm', self.larm)
+        yield ('rarm', self.rarm)
+
 
 class LinkSyntax(OperatorSyntax):
     """
@@ -348,6 +386,10 @@ class LinkSyntax(OperatorSyntax):
 
     def __init__(self, larm, rarm):
         super(LinkSyntax, self).__init__(u'->', larm, rarm)
+
+    def __yaml__(self):
+        yield ('larm', self.larm)
+        yield ('rarm', self.rarm)
 
 
 class AttachSyntax(OperatorSyntax):
@@ -362,6 +404,10 @@ class AttachSyntax(OperatorSyntax):
     def __init__(self, larm, rarm):
         super(AttachSyntax, self).__init__(u'@', larm, rarm)
 
+    def __yaml__(self):
+        yield ('larm', self.larm)
+        yield ('rarm', self.rarm)
+
 
 class DetachSyntax(PrefixSyntax):
     """
@@ -375,6 +421,9 @@ class DetachSyntax(PrefixSyntax):
     def __init__(self, arm):
         super(DetachSyntax, self).__init__(u'@', arm)
 
+    def __yaml__(self):
+        yield ('arm', self.arm)
+
 
 class CollectSyntax(PrefixSyntax):
     """
@@ -387,6 +436,9 @@ class CollectSyntax(PrefixSyntax):
 
     def __init__(self, arm):
         super(CollectSyntax, self).__init__(u'/', arm)
+
+    def __yaml__(self):
+        yield ('arm', self.arm)
 
 
 class DirectSyntax(Syntax):
@@ -416,6 +468,10 @@ class DirectSyntax(Syntax):
 
     def __unicode__(self):
         return u"%s%s" % (self.arm, self.symbol)
+
+    def __yaml__(self):
+        yield ('symbol', self.symbol)
+        yield ('arm', self.arm)
 
 
 class ComposeSyntax(Syntax):
@@ -455,6 +511,10 @@ class ComposeSyntax(Syntax):
         chunks.append(unicode(self.rarm))
         return u"".join(chunks)
 
+    def __yaml__(self):
+        yield ('larm', self.larm)
+        yield ('rarm', self.rarm)
+
 
 class UnpackSyntax(Syntax):
     """
@@ -492,6 +552,11 @@ class UnpackSyntax(Syntax):
         if not self.is_open:
             chunks.append(u")")
         return u"".join(chunks)
+
+    def __yaml__(self):
+        if self.index is not None:
+            yield ('is_open', self.is_open)
+            yield ('index', self.index)
 
 
 class LiftSyntax(Syntax):
@@ -532,6 +597,9 @@ class GroupSyntax(Syntax):
     def __unicode__(self):
         return u"(%s)" % self.arm
 
+    def __yaml__(self):
+        yield ('arm', self.arm)
+
 
 class SelectSyntax(Syntax):
     """
@@ -559,6 +627,10 @@ class SelectSyntax(Syntax):
 
     def __unicode__(self):
         return u"%s%s" % (self.larm, self.rarm)
+
+    def __yaml__(self):
+        yield ('larm', self.larm)
+        yield ('rarm', self.rarm)
 
 
 class LocateSyntax(Syntax):
@@ -588,6 +660,10 @@ class LocateSyntax(Syntax):
     def __unicode__(self):
         return u"%s%s" % (self.larm, self.rarm)
 
+    def __yaml__(self):
+        yield ('larm', self.larm)
+        yield ('rarm', self.rarm)
+
 
 class RecordSyntax(Syntax):
     """
@@ -610,6 +686,9 @@ class RecordSyntax(Syntax):
 
     def __unicode__(self):
         return u"{%s}" % u",".join(unicode(arm) for arm in self.arms)
+
+    def __yaml__(self):
+        yield ('arms', self.arms)
 
 
 class ListSyntax(Syntax):
@@ -639,6 +718,9 @@ class ListSyntax(Syntax):
             chunks.append(u",")
         chunks.append(u")")
         return u"".join(chunks)
+
+    def __yaml__(self):
+        yield ('arms', self.arms)
 
 
 class IdentitySyntax(Syntax):
@@ -680,6 +762,10 @@ class IdentitySyntax(Syntax):
             chunks.append(u")")
         return u"".join(chunks)
 
+    def __yaml__(self):
+        yield ('is_hard', self.is_hard)
+        yield ('arms', self.arms)
+
 
 class ReferenceSyntax(Syntax):
     """
@@ -706,6 +792,9 @@ class ReferenceSyntax(Syntax):
 
     def __unicode__(self):
         return u"$%s" % self.identifier
+
+    def __yaml__(self):
+        yield ('identifier', self.identifier)
 
 
 class IdentifierSyntax(Syntax):
@@ -734,6 +823,11 @@ class IdentifierSyntax(Syntax):
     def __unicode__(self):
         return self.text
 
+    def __yaml__(self):
+        yield ('text', self.text)
+        if self.name != self.text:
+            yield ('name', self.name)
+
 
 class LiteralSyntax(Syntax):
     """
@@ -755,6 +849,9 @@ class LiteralSyntax(Syntax):
 
     def __unicode__(self):
         return self.text
+
+    def __yaml__(self):
+        yield ('text', self.text)
 
 
 class StringSyntax(LiteralSyntax):

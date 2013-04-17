@@ -3,11 +3,11 @@
 #
 
 
-from ..util import Clonable, Hashable, Printable
+from ..util import Clonable, Hashable, Printable, YAMLable
 import urllib
 
 
-class Token(Clonable, Hashable, Printable):
+class Token(Clonable, Hashable, Printable, YAMLable):
     """
     A lexical token.
 
@@ -29,6 +29,10 @@ class Token(Clonable, Hashable, Printable):
     def __basis__(self):
         return (self.code, self.text)
 
+    def __nonzero__(self):
+        # `False` for EOF token; `True` otherwise.
+        return bool(self.code)
+
     def __unicode__(self):
         # '$', '`<code>`:<text>' or '%<code>:<text>'
         chunks = []
@@ -46,9 +50,10 @@ class Token(Clonable, Hashable, Printable):
             chunks.append(text)
         return u"".join(chunks)
 
-    def __nonzero__(self):
-        # `False` for EOF token; `True` otherwise.
-        return bool(self.code)
+    def __yaml__(self):
+        yield ('code', self.code)
+        if self.code.isalpha() or self.code != self.text:
+            yield ('text', self.text)
 
 
 #
