@@ -10,7 +10,7 @@ from ..syn.syntax import Syntax
 from ..tr.bind import bind
 from ..tr.binding import Binding
 from ..tr.encode import encode
-from ..tr.flow import OrderedFlow
+from ..tr.space import OrderedSpace
 from ..tr.rewrite import rewrite
 from ..tr.compile import compile
 from ..tr.assemble import assemble
@@ -146,19 +146,19 @@ def safe_patch(expression, limit):
     segment = expression.segment
     if segment is None:
         return expression
-    flow = segment.flow
-    while not flow.is_axis:
-        if (isinstance(flow, OrderedFlow) and flow.limit is not None
-                                          and flow.limit <= limit):
+    space = segment.space
+    while not space.is_axis:
+        if (isinstance(space, OrderedSpace) and space.limit is not None
+                                          and space.limit <= limit):
             return expression
-        flow = flow.base
-    if flow.is_root:
+        space = space.base
+    if space.is_root:
         return expression
-    if isinstance(segment.flow, OrderedFlow):
-        flow = segment.flow.clone(limit=limit)
+    if isinstance(segment.space, OrderedSpace):
+        space = segment.space.clone(limit=limit)
     else:
-        flow = OrderedFlow(segment.flow, [], limit, None, segment.binding)
-    segment = segment.clone(flow=flow)
+        space = OrderedSpace(segment.space, [], limit, None, segment.binding)
+    segment = segment.clone(space=space)
     expression = expression.clone(segment=segment)
     return expression
 

@@ -922,11 +922,11 @@ class DubFrame(Dub):
     def __call__(self):
         # For a frame, a good alias is the name of the table
         # represented by the frame.
-        flow = self.clause.flow
-        while flow.family.is_quotient:
-            flow = flow.family.seed
-        if flow.family.is_table:
-            return flow.family.table.name
+        space = self.clause.space
+        while space.family.is_quotient:
+            space = space.family.seed
+        if space.family.is_table:
+            return space.family.table.name
         # Use the default alias when the frame does not represent
         # any table.
         return super(DubFrame, self).__call__()

@@ -338,7 +338,7 @@ class CollapseBranch(Collapse):
         # subframe but the first one.  It may be even trickier because
         # we need to carry over the `JOIN` condition.  There are some
         # cases when we may want to absorb the second subframe
-        # (see a special case in `InjectFlow` when we grow a missing
+        # (see a special case in `InjectSpace` when we grow a missing
         # axis).
 
         # No subframes in the `FROM` clause -- nothing to do.
@@ -450,23 +450,23 @@ class CollapseBranch(Collapse):
             # the head frame to the outer frame.  It is only safe when
             # both the outer and the inner frames produce the same
             # number of rows.  However we cannot deduce that from the
-            # frame structure only, so we analyze the flows from which
+            # frame structure only, so we analyze the spaces from which
             # the frames were compiled.
             # The inner and the outer frames would produce the same number
-            # of rows if they are compiled from the same flow, or, at
-            # least, the flows they are compiled from conform to each
-            # other.  We also verify that their baseline flows are equal,
+            # of rows if they are compiled from the same space, or, at
+            # least, the spaces they are compiled from conform to each
+            # other.  We also verify that their baseline spaces are equal,
             # but this is a redundant check -- precense of a non-trivial
             # `LIMIT` or `OFFSET` implies that the baseline is the scalar
-            # flow (see `CompileOrdered` in `htsql.core.tr.compile`).
+            # space (see `CompileOrdered` in `htsql.core.tr.compile`).
             # Other than that, we also need to check that the `ORDER BY`
             # clauses of the inner and outer frames coincide (if they
             # both are non-empty).  We cannot compare the clauses directly
             # since they contain different export references, but we
-            # can compare the ordering of the underlying flows.
-            if not (head.flow.conforms(self.frame.flow) and
+            # can compare the ordering of the underlying spaces.
+            if not (head.space.conforms(self.frame.space) and
                     head.baseline == self.frame.baseline and
-                    arrange(head.flow) == arrange(self.frame.flow)):
+                    arrange(head.space) == arrange(self.frame.space)):
                 # Another safe case is when the outer frame contains
                 # no clauses that may change the cardinality of the inner
                 # frame, including no other `FROM` subframes.
@@ -478,7 +478,7 @@ class CollapseBranch(Collapse):
                         self.frame.offset is None and
                         not tail):
                     return self.frame
-            # Since the inner and the outer flows conform to each other,
+            # Since the inner and the outer spaces conform to each other,
             # the outer frame cannot contain non-trivial `LIMIT` and `OFFSET`
             # clauses.
             assert self.frame.limit is None and self.frame.offset is None

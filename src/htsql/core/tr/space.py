@@ -3,16 +3,8 @@
 #
 
 
-"""
-:mod:`htsql.core.tr.flow`
-=========================
-
-This module declares flow and code nodes.
-"""
-
-
 from ..util import (maybe, listof, tupleof, Clonable, Hashable, Printable,
-                    cachedproperty)
+        cachedproperty)
 from ..entity import TableEntity, ColumnEntity, Join
 from ..domain import Domain, BooleanDomain, ListDomain, IdentityDomain
 from ..error import point
@@ -25,17 +17,17 @@ class Expression(Hashable, Clonable, Printable):
     Represents an expression node.
 
     This is an abstract class; most of its subclasses belong to one of the
-    two categories: *flow* and *code* nodes (see :class:`Flow` and
+    two categories: *space* and *code* nodes (see :class:`Space` and
     :class:`Code`).
 
-    A flow graph is an intermediate phase of the HTSQL translator.  It is
-    translated from the binding graph by the *encoding* process.  The flow
+    A space graph is an intermediate phase of the HTSQL translator.  It is
+    translated from the binding graph by the *encoding* process.  The space
     graph is used to *compile* the term tree and then *assemble* the frame
     structure.
 
-    A flow graph reflects the flow structure of the HTSQL query: each
-    expression node represents either a data flow or an expression over
-    a data flow.
+    A space graph reflects the space structure of the HTSQL query: each
+    expression node represents either a data space or an expression over
+    a data space.
 
     Expression nodes support equality by value: that is, two expression
     nodes are equal if they are of the same type and all their (essential)
@@ -92,16 +84,16 @@ class QueryExpr(Expression):
 
 class Family(object):
     """
-    Represents the target class of a flow.
+    Represents the target class of a space.
 
-    The flow family specifies the type of values produced by
-    a flow.  There are three distinct flow families:
+    The space family specifies the type of values produced by
+    a space.  There are three distinct space families:
 
-    - *scalar*, which indicates that the flow produces
+    - *scalar*, which indicates that the space produces
       scalar values;
-    - *table*, which indicates that the flow produces
+    - *table*, which indicates that the space produces
       records from a database table;
-    - *quotient*, which indicates that the flow produces
+    - *quotient*, which indicates that the space produces
       records from a derived *quotient* class.
 
     Class attributes:
@@ -123,9 +115,9 @@ class Family(object):
 
 class ScalarFamily(Family):
     """
-    Represents a scalar flow family.
+    Represents a scalar space family.
 
-    A scalar flow produces values of a primitive type.
+    A scalar space produces values of a primitive type.
     """
 
     is_scalar = True
@@ -133,9 +125,9 @@ class ScalarFamily(Family):
 
 class TableFamily(Family):
     """
-    Represents a table flow family.
+    Represents a table space family.
 
-    A table flow produces records from a database table.
+    A table space produces records from a database table.
 
     `table` (:class:`htsql.core.entity.TableEntity`)
         The table.
@@ -150,18 +142,18 @@ class TableFamily(Family):
 
 class QuotientFamily(Family):
     """
-    Represents a quotient flow family.
+    Represents a quotient space family.
 
-    A quotient flow produces records from a derived quotient class.
+    A quotient space produces records from a derived quotient class.
 
     The quotient class contains records formed from the kernel expressions
-    as they run over the `seed` flow.
+    as they run over the `seed` space.
 
-    `seed` (:class:`Flow`)
-        The dividend flow.
+    `seed` (:class:`Space`)
+        The dividend space.
 
-    `ground` (:class:`Flow`)
-        The ground flow of the dividend.
+    `ground` (:class:`Space`)
+        The ground space of the dividend.
 
     `kernels` (list of :class:`Code`)
         The kernel expressions of the quotient.
@@ -170,8 +162,8 @@ class QuotientFamily(Family):
     is_quotient = True
 
     def __init__(self, seed, ground, kernels):
-        assert isinstance(seed, Flow)
-        assert isinstance(ground, Flow)
+        assert isinstance(seed, Space)
+        assert isinstance(ground, Space)
         assert ground.is_axis and seed.concludes(ground)
         assert isinstance(kernels, listof(Code))
         self.seed = seed
@@ -179,107 +171,107 @@ class QuotientFamily(Family):
         self.kernels = kernels
 
 
-class Flow(Expression):
+class Space(Expression):
     """
-    Represents a flow node.
+    Represents a space node.
 
-    A data flow is a sequence of homogeneous values.  A flow is generated
-    by a series of flow operations applied sequentially to the root flow.
+    A data space is a sequence of homogeneous values.  A space is generated
+    by a series of space operations applied sequentially to the root space.
 
-    Each flow operation takes an input flow as an argument and produces
-    an output flow as a result.  The operation transforms each element
+    Each space operation takes an input space as an argument and produces
+    an output space as a result.  The operation transforms each element
     from the input row into zero, one, or more elements of the output
-    flow; the generating element is called *the origin* of the generated
-    elements.  Thus, with every element of a flow, we could associate
-    a sequence of origin elements, one per each elementary flow operation
-    that together produce the flow.
+    space; the generating element is called *the origin* of the generated
+    elements.  Thus, with every element of a space, we could associate
+    a sequence of origin elements, one per each elementary space operation
+    that together produce the space.
 
-    Each instance of :class:`Flow` represents a single flow operation
-    applied to some input flow.  The `base` attribute of the instance
-    represents the input flow while the type of the instance and the
+    Each instance of :class:`Space` represents a single space operation
+    applied to some input space.  The `base` attribute of the instance
+    represents the input space while the type of the instance and the
     other attributes reflect the properies of the operation.  The root
-    flow is denoted by an instance of:class:`RootFlow`, different
-    subclasses of :class:`Flow` correspond to different types of
-    flow operations.
+    space is denoted by an instance of:class:`RootSpace`, different
+    subclasses of :class:`Space` correspond to different types of
+    space operations.
 
-    The type of values produced by a flow is indicated by the `family`
-    attribute.  We distinguish three flow families: *scalar*, *table*
-    and *quotient*.  A scalar flow produces values of an elementary data
-    type; a table flow produces records of some table; a quotient flow
+    The type of values produced by a space is indicated by the `family`
+    attribute.  We distinguish three space families: *scalar*, *table*
+    and *quotient*.  A scalar space produces values of an elementary data
+    type; a table space produces records of some table; a quotient space
     produces elements of a derived quotient class.
 
-    Among others, we consider the following flow operations:
+    Among others, we consider the following space operations:
 
-    *The root flow* `I`
-        The initial flow that contains one empty record.
+    *The root space* `I`
+        The initial space that contains one empty record.
 
     *A direct product* `A * T`
-        Given a scalar flow `A` and a table `T`, the direct product
+        Given a scalar space `A` and a table `T`, the direct product
         `A * T` generates all records of `T` for each element of `A`.
 
     *A fiber product* `A . T`
-        Given an input flow `A` that produces records of some table `S`
+        Given an input space `A` that produces records of some table `S`
         and a table `T` linked to `S`, for each element of `A`,
         the fiber product `A . T` generates all associated records
         from `T`.
 
     *Filtering* `A ? p`
-        Given a flow `A` and a predicate `p` defined on `A`,
-        the filtered flow `A ? p` consists of all elements of `A`
+        Given a space `A` and a predicate `p` defined on `A`,
+        the filtered space `A ? p` consists of all elements of `A`
         satisfying condition `p`.
 
     *Ordering* `A [e,...]`
-        Given a flow `A` and a list of expressions `e,...`, the
-        ordered flow `A [e,...]` consists of elements of `A` reordered
+        Given a space `A` and a list of expressions `e,...`, the
+        ordered space `A [e,...]` consists of elements of `A` reordered
         by the values of `e,...`.
 
     *Quotient* `A ^ k`
-        Given a flow `A` and a kernel expression `k` defined on `A`,
+        Given a space `A` and a kernel expression `k` defined on `A`,
         a quotient `A ^ k` produces all unique values of the kernel
         as it runs over `A`.
 
-    Flow operations for which the output flow does not consist of
-    elements of the input flow are called *axial*.  If we take an
-    arbitrary flow `A`, disassemble it into individual operations,
-    and then reapply only axial operations, we get the new flow `A'`,
+    Space operations for which the output space does not consist of
+    elements of the input space are called *axial*.  If we take an
+    arbitrary space `A`, disassemble it into individual operations,
+    and then reapply only axial operations, we get the new space `A'`,
     which we call *the inflation* of `A`.  Note that elements of `A`
     form a subset of elements of `A'`.
 
-    Now we can establish how different flows are related to each other.
-    Formally, for each pair of flows `A` and `B`, we define a relation
+    Now we can establish how different spaces are related to each other.
+    Formally, for each pair of spaces `A` and `B`, we define a relation
     `<->` ("converges to") on elements from `A` and `B`, that is,
     a subset of the Cartesian product `A x B`, by the following rules:
 
-    (1) For any flow `A`, `<->` is the identity relation on `A`,
+    (1) For any space `A`, `<->` is the identity relation on `A`,
         that is, each element converges only to itself.
 
-        For a flow `A` and its inflation `A'`, each element from `A`
+        For a space `A` and its inflation `A'`, each element from `A`
         converges to an equal element from `A'`.
 
-    (2) Suppose `A` and `B` are flows such that `A` is produced
-        from `B` as a result of some axial flow operation.  Then
+    (2) Suppose `A` and `B` are spaces such that `A` is produced
+        from `B` as a result of some axial space operation.  Then
         each element from `A` converges to its origin element
         from `B`.
 
         By transitivity, we could extend `<->` on `A` and any of its
-        *ancestor flows*, that is, the parent flow of `A`, the
+        *ancestor spaces*, that is, the parent space of `A`, the
         parent of the parent of `A` and so on.
 
-        In particular, this defines `<->` on an arbitrary flow `A`
-        and the root flow `I` since `I` is an ancestor of any flow.
+        In particular, this defines `<->` on an arbitrary space `A`
+        and the root space `I` since `I` is an ancestor of any space.
         By the above definition, any element of `A` converges to
         the (only) record of `I`.
 
     (3) Finally, we are ready to define `<->` on an arbitrary pair
-        of flows `A` and `B`.  First, suppose that `A` and `B`
-        share the same inflated flow: `A' = B'`.  Then we could
+        of spaces `A` and `B`.  First, suppose that `A` and `B`
+        share the same inflated space: `A' = B'`.  Then we could
         define `<->` on `A` and `B` transitively via `A'`: `a` from `A`
         converges to `b` from `B` if there exists `a'` from `A'` such
         that `a <-> a'` and `a' <-> b`.
 
         In the general case, find the closest ancestors `C` of `A`
         and `D` of `B` such that `C` and `D` have the same
-        inflated flow: `C' = D'`.  Rules `(1)` and `(2)` establish
+        inflated space: `C' = D'`.  Rules `(1)` and `(2)` establish
         `<->` for the pairs `A` and `C`, `C` and `C' = D'`,
         `C' = D'` and `D`, and `D` and `B`.  We define `<->`
         on `A` and `B` transitively: `a` from `A` converges to
@@ -288,16 +280,16 @@ class Flow(Expression):
         `a <-> c <-> c' <-> d <-> b`.
 
         Note that it is important that we take among the common inflated
-        ancestors the closest one.  Any two flows have a common inflated
-        ancestor: the root flow.  If the root flow is, indeed, the closest
+        ancestors the closest one.  Any two spaces have a common inflated
+        ancestor: the root space.  If the root space is, indeed, the closest
         common inflated ancestor of `A` and `B`, then each element of `A`
         converges to every element of `B`.
 
     Now we are ready to introduce several important relations between
-    flows:
+    spaces:
 
     `A` *spans* `B`
-        A flow `A` spans a flow `B` if for every element `a` from `A`:
+        A space `A` spans a space `B` if for every element `a` from `A`:
 
             `card { b` from `B | a <-> b } <= 1`.
 
@@ -312,7 +304,7 @@ class Flow(Expression):
         produce the same number of rows.
 
     `A` *dominates* `B`
-        A flow `A` dominates a flow `B` if `A` spans `B` and
+        A space `A` dominates a space `B` if `A` spans `B` and
         for every element `b` from `B`:
 
             `card { a` from `A | a <-> b } >= 1`.
@@ -328,7 +320,7 @@ class Flow(Expression):
         produce the same number of rows.
 
     `A` *conforms* `B`
-        A flow `A` conforms a flow `B` if `A` dominates `B`
+        A space `A` conforms a space `B` if `A` dominates `B`
         and `B` dominates `A`.  Alternatively, we could say
         `A` conforms `B` if the `<->` relation establishes
         a bijection between `A` and `B`.
@@ -347,47 +339,47 @@ class Flow(Expression):
         to `B`; even if `A` conforms `B`,  elements of `A` and `B` may
         be of different types, therefore as sets, they are different.
 
-    Now take an arbitrary flow `A` and its parent flow `B`.  We say:
+    Now take an arbitrary space `A` and its parent space `B`.  We say:
 
     `A` *contracts* `B`
-        A flow `A` contracts its parent `B` if for any element from `B`
+        A space `A` contracts its parent `B` if for any element from `B`
         there is no more than one converging element from `A`.
 
-        Typically, it is non-axis flows that contract their bases,
-        although in some cases, an axis flow could do it too.
+        Typically, it is non-axis spaces that contract their bases,
+        although in some cases, an axis space could do it too.
 
     `A` *expands* `B`
-        A flow `A` expands its parent `B` if for any element from `B`
+        A space `A` expands its parent `B` if for any element from `B`
         there is at least one converging element from `A`.
 
-        Note that it is possible that a flow `A` both contracts and
+        Note that it is possible that a space `A` both contracts and
         expands its base `B`, and also that `A` neither contracts
         nor expands `B`.  The former means that `A` conforms `B`.
-        The latter holds, in particular, for the direct table flow
+        The latter holds, in particular, for the direct table space
         `A * T`.  `A * T` violates the contraction condition when
         `T` contains more than one record and violates the expansion
         condition when `T` has no records.
 
-    A few words about how elements of a flow are ordered.  The default
+    A few words about how elements of a space are ordered.  The default
     (also called *weak*) ordering rules are:
 
-    - a table flow `T = I * T` is sorted by the lexicographic order
+    - a table space `T = I * T` is sorted by the lexicographic order
       of the table primary key;
 
-    - a non-axial flow keeps the order of its base;
+    - a non-axial space keeps the order of its base;
 
-    - an axial table flow `A * T` or `A . T` respects the order its
+    - an axial table space `A * T` or `A . T` respects the order its
       base `A`; records with the same origin are sorted by the table order.
 
     An alternative sort order could be specified explicitly (also called
     *strong* ordering).  Whenever strong ordering is  specified, it
-    overrides the weak ordering.  Thus, elements of an ordered flow `A [e]`
+    overrides the weak ordering.  Thus, elements of an ordered space `A [e]`
     are sorted first by expression `e`, and then elements which are not
     differentiated by `e` are sorted using the weak ordering of `A`.
     However, if `A` already has a strong ordering, it must be respected.
     Therefore, the general rule for sorting `A [e]` is:
 
-    - first, sort the flow by the strong ordering of `A`;
+    - first, sort the space by the strong ordering of `A`;
 
     - then, by `e`;
 
@@ -396,30 +388,30 @@ class Flow(Expression):
     Class attributes:
 
     `is_axis` (Boolean)
-        Indicates whether the flow is axial, that is, the elements
-        of the flow do not necessarily coincide with their origins.
+        Indicates whether the space is axial, that is, the elements
+        of the space do not necessarily coincide with their origins.
 
     `is_root` (Boolean)
-        Indicates that the flow is the root flow.
+        Indicates that the space is the root space.
 
     The constructor arguments:
 
-    `base` (:class:`Flow` or ``None``)
-        The parent input flow; ``None`` for the root flow.
+    `base` (:class:`Space` or ``None``)
+        The parent input space; ``None`` for the root space.
 
     `family` (:class:`Family`)
-        Specifies the type of the elements produced by the flow.
+        Specifies the type of the elements produced by the space.
 
     `is_contracting` (Boolean)
-        Indicates if the flow contracts its base flow.
+        Indicates if the space contracts its base space.
 
     `is_expanding` (Boolean)
-        Indicates if the flow expands its base flow.
+        Indicates if the space expands its base space.
 
     Other attributes:
 
     `is_inflated` (Boolean)
-        Indicates if the flow is an inflation, that is, this flow
+        Indicates if the space is an inflation, that is, this space
         operation and all its ancestors are axial.
     """
 
@@ -428,44 +420,44 @@ class Flow(Expression):
     is_commutative = True
 
     def __init__(self, base, family, is_contracting, is_expanding, binding):
-        assert isinstance(base, maybe(Flow))
+        assert isinstance(base, maybe(Space))
         assert isinstance(family, Family)
         assert isinstance(is_contracting, bool)
         assert isinstance(is_expanding, bool)
-        super(Flow, self).__init__(binding)
+        super(Space, self).__init__(binding)
         self.base = base
         self.family = family
         self.is_contracting = is_contracting
         self.is_expanding = is_expanding
-        # Indicates that the flow itself and all its ancestors are axes.
+        # Indicates that the space itself and all its ancestors are axes.
         self.is_inflated = (self.is_root or
                             (base.is_inflated and self.is_axis))
 
     def unfold(self):
         """
-        Produces a list of ancestor flows.
+        Produces a list of ancestor spaces.
 
-        The method returns a list composed of the flow itself,
+        The method returns a list composed of the space itself,
         its base, the base of its base and so on.
         """
         ancestors = []
         ancestor = self
         while ancestor is not None:
             ancestors.append(ancestor)
-            # Note: `ancestor.base` is None for the root flow.
+            # Note: `ancestor.base` is None for the root space.
             ancestor = ancestor.base
         return ancestors
 
     def resembles(self, other):
         """
-        Verifies if the flows represent the same operation.
+        Verifies if the spaces represent the same operation.
 
         Typically, it means that `self` and `other` have the same type
         and equal attributes, but may have different bases.
         """
-        # We rely upon an assumption that the equality vector of a flow node
+        # We rely upon an assumption that the equality vector of a space node
         # is a tuple of all its essential attributes and the first element
-        # of the tuple is the flow base.  So we skip the base flow and
+        # of the tuple is the space base.  So we skip the base space and
         # compare the remaining attributes.
         if not isinstance(other, self.__class__):
             return False
@@ -483,47 +475,47 @@ class Flow(Expression):
 
     def inflate(self):
         """
-        Produces the inflation of the flow.
+        Produces the inflation of the space.
 
-        If we represent a flow as a series of operations sequentially
-        applied to the scalar flow, the inflation of the flow is obtained
+        If we represent a space as a series of operations sequentially
+        applied to the scalar space, the inflation of the space is obtained
         by ignoring any non-axial operations and applying axial operations
         only.
         """
-        # Shortcut: check if the flow is already an inflation.
+        # Shortcut: check if the space is already an inflation.
         if self.is_inflated:
             return self
-        # This is going to become a new inflated flow.
-        flow = None
-        # Iterate over all ancestors starting from the scalar flow.
+        # This is going to become a new inflated space.
+        space = None
+        # Iterate over all ancestors starting from the scalar space.
         for ancestor in reversed(self.unfold()):
             # Skip non-axial operations, reapply axial operations to
             # a new base.
             if ancestor.is_axis:
-                flow = ancestor.clone(base=flow)
-        # This is the inflated flow now.
-        return flow
+                space = ancestor.clone(base=space)
+        # This is the inflated space now.
+        return space
 
     def prune(self, other):
         """
         Prunes shared non-axial operations.
 
-        Given flows `A` and `B`, this function produces a new flow
+        Given spaces `A` and `B`, this function produces a new space
         `A'` such that `A` is a subset of `A'` and the convergence
         of `A` and `B` coincides with the convergence of `A'` and `B`.
         This is done by pruning any non-axial operations of `A` that
         also occur in `B`.
         """
         # Sanity check on the argument.
-        assert isinstance(other, Flow)
-        # Shortcut: we cannot further prune an inflated flow.
+        assert isinstance(other, Space)
+        # Shortcut: we cannot further prune an inflated space.
         if self.is_inflated:
             return self
-        # Unfold the flows into individual operations.
+        # Unfold the spaces into individual operations.
         my_ancestors = self.unfold()
         their_ancestors = other.unfold()
-        # This is going to become the pruned flow.
-        flow = None
+        # This is going to become the pruned space.
+        space = None
         # Iterate until the ancestors are exhausted or diverged.
         while my_ancestors and their_ancestors:
             # Get the next operation.
@@ -534,13 +526,13 @@ class Flow(Expression):
                 # So both ancestors represent the same operation.
                 # If it is an axis operation, apply it; otherwise,
                 # discard it.
-                # FIXME: may break if the flow contains a non-matching
+                # FIXME: may break if the space contains a non-matching
                 # `limit/offset` operation?
                 if not (my_ancestor.is_commutative or
                         my_ancestor == their_ancestor):
                     return self
                 if my_ancestor.is_axis:
-                    flow = my_ancestor.clone(base=flow)
+                    space = my_ancestor.clone(base=space)
                 my_ancestors.pop()
                 their_ancestors.pop()
             elif not their_ancestor.is_axis:
@@ -557,7 +549,7 @@ class Flow(Expression):
                 # `A`'s ancestor.
                 if not my_ancestor.is_commutative:
                     return self
-                flow = my_ancestor.clone(base=flow)
+                space = my_ancestor.clone(base=space)
                 my_ancestors.pop()
             else:
                 # The ancestors are both axial and differ from each other.
@@ -569,20 +561,20 @@ class Flow(Expression):
             my_ancestor = my_ancestors.pop()
             if not my_ancestor.is_commutative:
                 return self
-            flow = my_ancestor.clone(base=flow)
-        # We have a pruned flow here.
-        return flow
+            space = my_ancestor.clone(base=space)
+        # We have a pruned space here.
+        return space
 
     def spans(self, other):
         """
-        Verifies if the flow spans another flow.
+        Verifies if the space spans another space.
         """
         # Sanity check on the argument.
-        assert isinstance(other, Flow)
-        # Shortcut: any flow spans itself.
+        assert isinstance(other, Space)
+        # Shortcut: any space spans itself.
         if self == other:
             return True
-        # Extract axial ancestors from both flows.
+        # Extract axial ancestors from both spaces.
         my_axes = [ancestor for ancestor in self.unfold()
                             if ancestor.is_axis]
         their_axes = [ancestor for ancestor in other.unfold()
@@ -598,7 +590,7 @@ class Flow(Expression):
                 # Otherwise, the axes diverge.
                 break
         # At this point, all processed pairs of axes converge by identity.
-        # If the other flow has no more axes left, it is spanned.  Otherwise,
+        # If the other space has no more axes left, it is spanned.  Otherwise,
         # it is spanned only if its remaining unprocessed axes represent
         # contracting operations.
         for their_axis in their_axes:
@@ -608,14 +600,14 @@ class Flow(Expression):
 
     def conforms(self, other):
         """
-        Verifies if the flow conforms another flow.
+        Verifies if the space conforms another space.
         """
         # Sanity check on the argument.
-        assert isinstance(other, Flow)
-        # Shortcut: any flow conforms itself.
+        assert isinstance(other, Space)
+        # Shortcut: any space conforms itself.
         if self == other:
             return True
-        # Unfold the flows into individual operations.
+        # Unfold the spaces into individual operations.
         my_ancestors = self.unfold()
         their_ancestors = other.unfold()
         # Iterate until the ancestors are exhausted or diverged.
@@ -645,7 +637,7 @@ class Flow(Expression):
             else:
                 # The ancestors start to diverge; break from the loop.
                 break
-        # If all ancestors are processed, the flows conform each other.
+        # If all ancestors are processed, the spaces conform each other.
         # Otherwise, they conform each other only if the remaining unprocessed
         # ancestors do not change the cardinality of their bases.
         for ancestor in my_ancestors + their_ancestors:
@@ -655,14 +647,14 @@ class Flow(Expression):
 
     def dominates(self, other):
         """
-        Verifies if the flow dominates another flow.
+        Verifies if the space dominates another space.
         """
         # Sanity check on the argument.
-        assert isinstance(other, Flow)
-        # Shortcut: any flow dominates itself.
+        assert isinstance(other, Space)
+        # Shortcut: any space dominates itself.
         if self == other:
             return True
-        # Unfold the flows into individual operations.
+        # Unfold the spaces into individual operations.
         my_ancestors = self.unfold()
         their_ancestors = other.unfold()
         # Iterate until the ancestors are exhausted or diverged.
@@ -685,10 +677,10 @@ class Flow(Expression):
             else:
                 # The ancestors start to diverge; break from the loop.
                 break
-        # If all ancestors are processed, the flow dominates the other.
+        # If all ancestors are processed, the space dominates the other.
         # Otherwise, it is only possible if the remaining ancestors of
-        # the flow do not decrease the base cardinality while the
-        # remaining ancestors of the other flow do not increase the
+        # the space do not decrease the base cardinality while the
+        # remaining ancestors of the other space do not increase the
         # base cardinality.
         for my_ancestor in my_ancestors:
             if not my_ancestor.is_expanding:
@@ -700,45 +692,45 @@ class Flow(Expression):
 
     def concludes(self, other):
         """
-        Verifies if the other flow is a ancestor of the flow.
+        Verifies if the other space is a ancestor of the space.
         """
         # Sanity check on the argument.
-        assert isinstance(other, Flow)
-        # Iterate over all ancestors of the flow comparing them with
-        # the given other flow.
-        flow = self
-        while flow is not None:
-            if flow == other:
+        assert isinstance(other, Space)
+        # Iterate over all ancestors of the space comparing them with
+        # the given other space.
+        space = self
+        while space is not None:
+            if space == other:
                 return True
-            flow = flow.base
-        # None of the ancestors matched, the flows must be unrelated.
+            space = space.base
+        # None of the ancestors matched, the spaces must be unrelated.
         return False
 
 
-class RootFlow(Flow):
+class RootSpace(Space):
     """
-    Represents a root scalar flow.
+    Represents a root scalar space.
 
-    A root flow `I` contains one record ``()``.  Any other flow is generated
-    by applying a sequence of elementary flow operations to `I`.
+    A root space `I` contains one record ``()``.  Any other space is generated
+    by applying a sequence of elementary space operations to `I`.
 
     `base` (always ``None``)
-        The root flow (and only the root flow) has no parent flow.
+        The root space (and only the root space) has no parent space.
     """
 
-    # Scalar flow is an axial flow.
+    # Scalar space is an axial space.
     is_axis = True
     is_root = True
 
     def __init__(self, base, binding):
         # We keep `base` among constructor arguments despite it always being
         # equal to `None` to make
-        #   flow = flow.clone(base=new_base)
-        # work for all types of flows.
+        #   space = space.clone(base=new_base)
+        # work for all types of spaces.
         assert base is None
         # Note that we must satisfy the assumption that the first element
-        # of the equality vector is the flow base (used by `Flow.resembles`).
-        super(RootFlow, self).__init__(
+        # of the equality vector is the space base (used by `Space.resembles`).
+        super(RootSpace, self).__init__(
                     base=None,
                     family=ScalarFamily(),
                     is_contracting=False,
@@ -753,18 +745,18 @@ class RootFlow(Flow):
         return "I"
 
 
-class ScalarFlow(Flow):
+class ScalarSpace(Space):
     """
     Represents a link to the scalar class.
 
     Traversing a link to the scalar class produces an empty record ``()``
-    for each element of the input flow.
+    for each element of the input space.
     """
 
     is_axis = True
 
     def __init__(self, base, binding):
-        super(ScalarFlow, self).__init__(
+        super(ScalarSpace, self).__init__(
                     base=base,
                     family=ScalarFamily(),
                     is_contracting=True,
@@ -780,40 +772,40 @@ class ScalarFlow(Flow):
         return "(%s * I)" % self.base
 
 
-class TableFlow(Flow):
+class TableSpace(Space):
     """
-    Represents a product of an input flow to a table.
+    Represents a product of an input space to a table.
 
     A product operation generates a subset of a Cartesian product
-    between the base flow and records of a table.  This is an abstract
-    class, see concrete subclasses :class:`DirectTableFlow` and
-    :class:`FiberTableFlow`.
+    between the base space and records of a table.  This is an abstract
+    class, see concrete subclasses :class:`DirectTableSpace` and
+    :class:`FiberTableSpace`.
 
     `table` (:class:`htsql.core.entity.TableEntity`)
         The table.
     """
 
-    # All subclasses of `TableFlow` are axial flows.
+    # All subclasses of `TableSpace` are axial spaces.
     is_axis = True
 
 
-class DirectTableFlow(TableFlow):
+class DirectTableSpace(TableSpace):
     """
-    Represents a direct product between a scalar flow and a table.
+    Represents a direct product between a scalar space and a table.
 
     A direct product `A * T` produces all records of the table `T`
-    for each element of the input flow `A`.
+    for each element of the input space `A`.
 
-    `base` (:class:`Flow`)
-        The base flow.
+    `base` (:class:`Space`)
+        The base space.
 
     `table` (:class:`htsql.core.entity.TableEntity`)
         The table.
     """
 
     def __init__(self, base, table, binding):
-        assert isinstance(base, Flow) and base.family.is_scalar
-        super(DirectTableFlow, self).__init__(
+        assert isinstance(base, Space) and base.family.is_scalar
+        super(DirectTableSpace, self).__init__(
                     base=base,
                     family=TableFamily(table),
                     is_contracting=False,
@@ -830,19 +822,19 @@ class DirectTableFlow(TableFlow):
         return "(%s * %s)" % (self.base, self.family.table)
 
 
-class FiberTableFlow(TableFlow):
+class FiberTableSpace(TableSpace):
     """
-    Represents a fiber product between a table flow and a linked table.
+    Represents a fiber product between a table space and a linked table.
 
-    Let `A` be a flow producing records of table `S`, `j` be a join
+    Let `A` be a space producing records of table `S`, `j` be a join
     condition between tables `S` and `T`.  A fiber product `A .j T`
-    (or `A . T` when the join condition is implied) of the flow `A`
+    (or `A . T` when the join condition is implied) of the space `A`
     and the table `T` is a sequence of records of `T` that for each
     record of `A` generates all records of `T` satisfying the join
     condition `j`.
 
-    `base` (:class:`Flow`)
-        The base flow.
+    `base` (:class:`Space`)
+        The base space.
 
     `join` (:class:`htsql.core.entity.Join`)
         The join condition.
@@ -850,10 +842,10 @@ class FiberTableFlow(TableFlow):
 
     def __init__(self, base, join, binding):
         assert isinstance(join, Join)
-        # Check that the join origin is the table of the base flow.
-        assert isinstance(base, Flow) and base.family.is_table
+        # Check that the join origin is the table of the base space.
+        assert isinstance(base, Space) and base.family.is_table
         assert base.family.table is join.origin
-        super(FiberTableFlow, self).__init__(
+        super(FiberTableSpace, self).__init__(
                     base=base,
                     family=TableFamily(join.target),
                     is_contracting=join.is_contracting,
@@ -870,45 +862,45 @@ class FiberTableFlow(TableFlow):
         return "(%s . %s)" % (self.base, self.family.table)
 
 
-class QuotientFlow(Flow):
+class QuotientSpace(Space):
     """
     Represents a quotient operation.
 
-    A quotient operation takes three arguments: an input flow `A`,
-    a seed flow `S`, which should be a descendant of the input flow,
-    and a kernel expression `k` on the seed flow.  For each element
-    of the input flow, the output flow `A . (S ^ k)` generates unique
+    A quotient operation takes three arguments: an input space `A`,
+    a seed space `S`, which should be a descendant of the input space,
+    and a kernel expression `k` on the seed space.  For each element
+    of the input space, the output space `A . (S ^ k)` generates unique
     values of `k` as it runs over convergent elements of `S`.
 
-    `base` (:class:`Flow`)
-        The base flow.
+    `base` (:class:`Space`)
+        The base space.
 
-    `seed` (:class:`Flow`)
-        The seed flow of the quotient; must be a descendant
-        of the base flow.
+    `seed` (:class:`Space`)
+        The seed space of the quotient; must be a descendant
+        of the base space.
 
     `kernels` (a list of :class:`Code`)
         Kernel expressions of the quotient.
 
     `companions` (a list of :class:`Code`)
         An auxiliary hint to the compiler indicating that the term
-        representing the flow needs to export extra aggregate units.
+        representing the space needs to export extra aggregate units.
         The value of this attribute has no effect on the semantics of
-        the flow graph and node comparison.
+        the space graph and node comparison.
 
     Other attributes:
 
-    `ground` (:class:`Flow`)
+    `ground` (:class:`Space`)
         The closest axial ancestor of `seed` that is spanned
-        by the `base` flow.
+        by the `base` space.
     """
 
     is_axis = True
 
     def __init__(self, base, seed, kernels, binding,
                  companions=[]):
-        assert isinstance(base, Flow)
-        assert isinstance(seed, Flow)
+        assert isinstance(base, Space)
+        assert isinstance(seed, Space)
         # Check that `seed` is a plural descendant of `base`.
         assert seed.spans(base)
         assert not base.spans(seed)
@@ -918,13 +910,13 @@ class QuotientFlow(Flow):
         ground = seed
         while not base.spans(ground.base):
             ground = ground.base
-        # The quotient flow conforms its base flow only when
+        # The quotient space conforms its base space only when
         # the kernel expression is constant.
         is_contracting = (not kernels)
         # FIXME: this is wrong, but the assembler relies on it
         # to collapse `GROUP BY` to the segment frame.
         is_expanding = (base.is_root and not kernels)
-        super(QuotientFlow, self).__init__(
+        super(QuotientSpace, self).__init__(
                     base=base,
                     family=QuotientFamily(seed, ground, kernels),
                     is_contracting=is_contracting,
@@ -945,29 +937,29 @@ class QuotientFlow(Flow):
                         ", ".join(str(kernel) for kernel in self.kernels))
 
 
-class ComplementFlow(Flow):
+class ComplementSpace(Space):
     """
     Represents a complement to a quotient.
 
-    A complement takes a quotient as an input flow and generates
+    A complement takes a quotient as an input space and generates
     elements of the quotient seed.
 
-    `base` (:class:`Flow`)
-        The base flow.
+    `base` (:class:`Space`)
+        The base space.
 
     `companions` (list of :class:`Code`)
         An auxiliary hint to the compiler indicating that the term
-        representing the flow needs to export extra covering units.
+        representing the space needs to export extra covering units.
         The value of this attribute has no effect on the semantics of
-        the flow graph and node comparison.
+        the space graph and node comparison.
 
     Other attributes:
 
-    `seed` (:class:`Flow`)
-        The seed flow of the quotient.
+    `seed` (:class:`Space`)
+        The seed space of the quotient.
 
-    `ground` (:class:`Flow`)
-        The grond flow of the quotient.
+    `ground` (:class:`Space`)
+        The grond space of the quotient.
 
     `kernels` (list of :class:`Code`)
         Kernel expressions of the quotient.
@@ -976,10 +968,10 @@ class ComplementFlow(Flow):
     is_axis = True
 
     def __init__(self, base, binding, companions=[]):
-        assert isinstance(base, Flow)
+        assert isinstance(base, Space)
         assert base.family.is_quotient
         assert isinstance(companions, listof(Code))
-        super(ComplementFlow, self).__init__(
+        super(ComplementSpace, self).__init__(
                     base=base,
                     family=base.family.seed.family,
                     is_contracting=False,
@@ -999,36 +991,36 @@ class ComplementFlow(Flow):
         return "(%s . ^)" % self.base
 
 
-class MonikerFlow(Flow):
+class MonikerSpace(Space):
     """
     Represents an moniker operation.
 
     A moniker masks an arbitrary sequence of operations
-    as a single axial flow operation.
+    as a single axial space operation.
 
-    `base` (:class:`Flow`)
-        The base flow.
+    `base` (:class:`Space`)
+        The base space.
 
-    `seed` (:class:`Flow`)
-        The seed flow.
+    `seed` (:class:`Space`)
+        The seed space.
 
     `companions` (list of :class:`Code`)
         An auxiliary hint to the compiler indicating that the term
-        representing the flow must export extra covering units.
+        representing the space must export extra covering units.
         The value of this attribute has no effect on the semantics of
-        the flow graph and node comparison.
+        the space graph and node comparison.
 
     Other attributes:
 
-    `ground` (:class:`Flow`)
+    `ground` (:class:`Space`)
         The closest axial ancestor of `seed` spanned by `base`.
     """
 
     is_axis = True
 
     def __init__(self, base, seed, binding, companions=[]):
-        assert isinstance(base, Flow)
-        assert isinstance(seed, Flow)
+        assert isinstance(base, Space)
+        assert isinstance(seed, Space)
         assert seed.spans(base)
         # We don't need `seed` to be plural or even axial against `base`.
         #assert not base.spans(seed)
@@ -1041,7 +1033,7 @@ class MonikerFlow(Flow):
         if not base.spans(ground):
             while not base.spans(ground.base):
                 ground = ground.base
-        super(MonikerFlow, self).__init__(
+        super(MonikerSpace, self).__init__(
                     base=base,
                     family=seed.family,
                     is_contracting=base.spans(seed),
@@ -1060,47 +1052,47 @@ class MonikerFlow(Flow):
         return "(%s . (%s))" % (self.base, self.seed)
 
 
-class ForkedFlow(Flow):
+class ForkedSpace(Space):
     """
     Represents a fork expression.
 
-    A fork expression associated each element of the input flow
-    with every element of the input flow sharing the same origin
+    A fork expression associated each element of the input space
+    with every element of the input space sharing the same origin
     and values of the kernel expression.
 
-    `base` (:class:`Flow`)
-        The base flow.
+    `base` (:class:`Space`)
+        The base space.
 
-    `seed` (:class:`Flow`)
-        The flow to fork (typically coincides with the base flow).
+    `seed` (:class:`Space`)
+        The space to fork (typically coincides with the base space).
 
     `kernels` (list of :class:`Code`)
         The kernel expressions.
 
     `companions` (list of :class:`Code`)
         An auxiliary hint to the compiler indicating that the term
-        representing the flow must export extra covering units.
+        representing the space must export extra covering units.
         The value of this attribute has no effect on the semantics of
-        the flow graph and node comparison.
+        the space graph and node comparison.
 
     Other attributes:
 
-    `ground` (:class:`Flow`)
-        The closest axial ancestor of the seed flow.
+    `ground` (:class:`Space`)
+        The closest axial ancestor of the seed space.
     """
 
     is_axis = True
 
     def __init__(self, base, seed, kernels, binding, companions=[]):
-        assert isinstance(base, Flow)
-        assert isinstance(seed, Flow)
+        assert isinstance(base, Space)
+        assert isinstance(seed, Space)
         assert isinstance(kernels, listof(Code))
         assert base.spans(seed) and seed.spans(base)
         # FIXME: this condition could be violated after the rewrite step
         # (also, equal-by-value is not implemented for `Family`):
         #assert base.family == seed.family
         # FIXME: we don't check for this constraint in the encoder anymore.
-        #assert all(base.spans(unit.flow) for code in kernels
+        #assert all(base.spans(unit.space) for code in kernels
         #                                  for unit in code.units)
         assert isinstance(companions, listof(Code))
         ground = seed
@@ -1108,7 +1100,7 @@ class ForkedFlow(Flow):
             ground = ground.base
         is_contracting = ground.is_contracting
         is_expanding = (not kernels and seed.dominates(base))
-        super(ForkedFlow, self).__init__(
+        super(ForkedSpace, self).__init__(
                     base=base,
                     family=base.family,
                     is_contracting=is_contracting,
@@ -1129,39 +1121,39 @@ class ForkedFlow(Flow):
                 % (self.base, ", ".join(str(code) for code in self.kernels))
 
 
-class AttachFlow(Flow):
+class AttachSpace(Space):
     """
     Represents a linking operation.
 
-    A linking operation generates, for every element of the input flow,
-    convergent elements from the seed flow with the same image value.
+    A linking operation generates, for every element of the input space,
+    convergent elements from the seed space with the same image value.
 
-    `base` (:class:`Flow`)
-        The base flow.
+    `base` (:class:`Space`)
+        The base space.
 
-    `seed` (:class:`Flow`)
-        The seed flow.
+    `seed` (:class:`Space`)
+        The seed space.
 
     `images` (list of pairs of :class:`Code`)
         Pairs of expressions forming a fiber join condition.
 
     `companions` (list of :class:`Code`)
         An auxiliary hint to the compiler indicating that the term
-        representing the flow must export extra covering units.
+        representing the space must export extra covering units.
         The value of this attribute has no effect on the semantics of
-        the flow graph and node comparison.
+        the space graph and node comparison.
 
     Other attributes:
 
-    `ground` (:class:`Flow`)
+    `ground` (:class:`Space`)
         The closest axial ancestor of `seed` spanned by `base`.
     """
 
     is_axis = True
 
     def __init__(self, base, seed, images, filter, binding, companions=[]):
-        assert isinstance(base, Flow)
-        assert isinstance(seed, Flow)
+        assert isinstance(base, Space)
+        assert isinstance(seed, Space)
         assert seed.spans(base)
         assert not base.spans(seed)
         assert isinstance(images, listof(tupleof(Code, Code)))
@@ -1172,7 +1164,7 @@ class AttachFlow(Flow):
         ground = seed
         while not base.spans(ground.base):
             ground = ground.base
-        super(AttachFlow, self).__init__(
+        super(AttachSpace, self).__init__(
                     base=base,
                     family=seed.family,
                     is_contracting=False,
@@ -1195,13 +1187,13 @@ class AttachFlow(Flow):
                    self.seed, ", ".join(str(rop) for lop, rop in self.images))
 
 
-class ClippedFlow(Flow):
+class ClippedSpace(Space):
 
     is_axis = True
 
     def __init__(self, base, seed, limit, offset, binding, companions=[]):
-        assert isinstance(base, Flow)
-        assert isinstance(seed, Flow)
+        assert isinstance(base, Space)
+        assert isinstance(seed, Space)
         assert seed.spans(base)
         assert not base.spans(seed)
         assert isinstance(limit, maybe(int))
@@ -1217,7 +1209,7 @@ class ClippedFlow(Flow):
         is_contracting = (limit is None)
         is_expanding = (seed.dominates(base) and offset is None
                         and (limit is None or limit > 0))
-        super(ClippedFlow, self).__init__(
+        super(ClippedSpace, self).__init__(
                     base=base,
                     family=seed.family,
                     is_contracting=is_contracting,
@@ -1242,13 +1234,13 @@ class ClippedFlow(Flow):
                    self.limit if self.limit is not None else 1)
 
 
-class LocatorFlow(AttachFlow):
+class LocatorSpace(AttachSpace):
 
     is_axis = True
 
     def __init__(self, base, seed, images, filter, binding, companions=[]):
-        assert isinstance(base, Flow)
-        assert isinstance(seed, Flow)
+        assert isinstance(base, Space)
+        assert isinstance(seed, Space)
         assert isinstance(images, listof(tupleof(Code, Code)))
         assert isinstance(filter, maybe(Code))
         if filter is not None:
@@ -1270,7 +1262,7 @@ class LocatorFlow(AttachFlow):
             axis = axis.base
         is_contracting = (axis.base is None or base.spans(axis.base))
         # Note: skip Attach constructor.
-        super(AttachFlow, self).__init__(
+        super(AttachSpace, self).__init__(
                     base=base,
                     family=seed.family,
                     is_contracting=is_contracting,
@@ -1286,16 +1278,16 @@ class LocatorFlow(AttachFlow):
         return (self.base, self.seed, tuple(self.images), self.filter)
 
 
-class FilteredFlow(Flow):
+class FilteredSpace(Space):
     """
     Represents a filtering operation.
 
-    A filtered flow `A ? f`, where `A` is the input flow and `f` is
+    A filtered space `A ? f`, where `A` is the input space and `f` is
     a predicate expression on `A`, consists of rows of `A` satisfying
     the condition `f`.
 
-    `base` (:class:`Flow`)
-        The base flow.
+    `base` (:class:`Space`)
+        The base space.
 
     `filter` (:class:`Code`)
         The predicate expression.
@@ -1304,7 +1296,7 @@ class FilteredFlow(Flow):
     def __init__(self, base, filter, binding):
         assert isinstance(filter, Code)
         assert isinstance(filter.domain, BooleanDomain)
-        super(FilteredFlow, self).__init__(
+        super(FilteredSpace, self).__init__(
                     base=base,
                     family=base.family,
                     is_contracting=True,
@@ -1321,34 +1313,34 @@ class FilteredFlow(Flow):
         return "(%s ? %s)" % (self.base, self.filter)
 
 
-class OrderedFlow(Flow):
+class OrderedSpace(Space):
     """
-    Represents an ordered flow.
+    Represents an ordered space.
 
-    An ordered flow `A [e,...;p:q]` is a flow with explicitly specified
-    strong ordering.  It also may extract a slice of the input flow.
+    An ordered space `A [e,...;p:q]` is a space with explicitly specified
+    strong ordering.  It also may extract a slice of the input space.
 
-    `base` (:class:`Flow`)
-        The base flow.
+    `base` (:class:`Space`)
+        The base space.
 
     `order` (a list of pairs `(code, direction)`)
-        Expressions to sort the flow by.
+        Expressions to sort the space by.
 
         Here `code` is a :class:`Code` instance, `direction` is either
         ``+1`` (indicates ascending order) or ``-1`` (indicates descending
         order).
 
     `limit` (a non-negative integer or ``None``)
-        If set, the flow extracts the first `limit` rows from the base
-        flow (with respect to the flow ordering).  The remaining rows
+        If set, the space extracts the first `limit` rows from the base
+        space (with respect to the space ordering).  The remaining rows
         are discarded.
 
     `offset` (a non-negative integer or ``None``)
-        If set, indicates that when extracting rows from the base flow,
+        If set, indicates that when extracting rows from the base space,
         the first `offset` rows should be skipped.
     """
 
-    # FIXME: Non-commutativity of the ordered flow may affect `prune`
+    # FIXME: Non-commutativity of the ordered space may affect `prune`
     # and other functions.  Add class attribute `is_commutative`?
     # Or override `resembles` to return `True` only for equal nodes?
 
@@ -1358,7 +1350,7 @@ class OrderedFlow(Flow):
         assert isinstance(offset, maybe(int))
         assert limit is None or limit >= 0
         assert offset is None or offset >= 0
-        super(OrderedFlow, self).__init__(
+        super(OrderedSpace, self).__init__(
                     base=base,
                     family=base.family,
                     is_contracting=True,
@@ -1396,14 +1388,14 @@ class Code(Expression):
     """
     Represents a code expression.
 
-    A code expression is a function on flows.  Specifically, it is a
-    functional (possibly of several variables) that maps a flow
-    (or a Cartesian product of several flows) to some scalar domain.
+    A code expression is a function on spaces.  Specifically, it is a
+    functional (possibly of several variables) that maps a space
+    (or a Cartesian product of several spaces) to some scalar domain.
     :class:`Code` is an abstract base class for all code expressions;
     see its subclasses for concrete types of expressions.
 
     Among all code expressions, we distinguish *unit expressions*:
-    elementary functions on flows.  There are several kinds of units:
+    elementary functions on spaces.  There are several kinds of units:
     among them are table columns and aggregate functions (see :class:`Unit`
     for more detail).  A non-unit code could be expressed as
     a composition of a scalar function and one or several units:
@@ -1414,7 +1406,7 @@ class Code(Expression):
 
     - `f` is a code expression;
     - `F` is a scalar function;
-    - `a`, `b`, ... are elements of flows `A`, `B`, ...;
+    - `a`, `b`, ... are elements of spaces `A`, `B`, ...;
     - `u`, `v`, ... are unit expressions on `A`, `B`, ....
 
     Note: special forms like `COUNT` or `EXISTS` are also expressed
@@ -1453,24 +1445,24 @@ class SegmentCode(Code):
     """
     Represents a segment of an HTSQL query.
 
-    `flow` (:class:`Flow`)
-        The output flow of the segment.
+    `space` (:class:`Space`)
+        The output space of the segment.
     """
 
-    def __init__(self, root, flow, code, binding):
-        assert isinstance(root, Flow)
-        assert isinstance(flow, Flow)
+    def __init__(self, root, space, code, binding):
+        assert isinstance(root, Space)
+        assert isinstance(space, Space)
         assert isinstance(code, Code)
         assert isinstance(binding, SegmentBinding)
         super(SegmentCode, self).__init__(
                 domain=ListDomain(code.domain),
                 binding=binding)
         self.root = root
-        self.flow = flow
+        self.space = space
         self.code = code
 
     def __basis__(self):
-        return (self.root, self.flow, self.code)
+        return (self.root, self.space, self.code)
 
     @property
     def segments(self):
@@ -1647,40 +1639,40 @@ class Unit(Code):
     """
     Represents a unit expression.
 
-    A unit is an elementary function on a flow.  There are several kinds
+    A unit is an elementary function on a space.  There are several kinds
     of units; see subclasses :class:`ColumnUnit`, :class:`ScalarUnit`,
     :class:`AggregateUnit`, and :class:`CorrelatedUnit` for more detail.
 
     Units are divided into two categories: *primitive* and *compound*.
 
-    A primitive unit is an intrinsic function of its flow; no additional
+    A primitive unit is an intrinsic function of its space; no additional
     calculations are required to generate a primitive unit.  Currently,
     the only example of a primitive unit is :class:`ColumnUnit`.
 
     A compound unit requires calculating some non-intrinsic function
-    on the target flow.  Among compound units there are :class:`ScalarUnit`
+    on the target space.  Among compound units there are :class:`ScalarUnit`
     and :class:`AggregateUnit`, which correspond respectively to
-    scalar and aggregate functions on a flow.
+    scalar and aggregate functions on a space.
 
-    Note that it is easy to *lift* a unit code from one flow to another.
-    Specifically, suppose a unit `u` is defined on a flow `A` and `B`
-    is another flow such that `B` spans `A`.  Then for each row `b`
+    Note that it is easy to *lift* a unit code from one space to another.
+    Specifically, suppose a unit `u` is defined on a space `A` and `B`
+    is another space such that `B` spans `A`.  Then for each row `b`
     from `B` there is no more than one row `a` from `A` such that `a <-> b`.
     Therefore we could define `u` on `B` as follows:
 
     - `u(b) = u(a)` if there exists `a` from `A` such that `a <-> b`;
     - `u(b) =` ``NULL`` if there is no rows in `A` convergent to `b`.
 
-    When a flow `B` spans the flow `A` of a unit `u`, we say that
+    When a space `B` spans the space `A` of a unit `u`, we say that
     `u` is *singular* on `B`.  By the previous argument, `u` could be
     lifted to `B`.  Thus any unit is well-defined not only on the
-    flow where it is originally defined, but also on any flow where
+    space where it is originally defined, but also on any space where
     it is singular.
 
     Attributes:
 
-    `flow` (:class:`Flow`)
-        The flow on which the unit is defined.
+    `space` (:class:`Space`)
+        The space on which the unit is defined.
 
     `domain` (:class:`htsql.core.domain.Domain`)
         The unit co-domain.
@@ -1697,12 +1689,12 @@ class Unit(Code):
     is_primitive = False
     is_compound = False
 
-    def __init__(self, flow, domain, binding):
-        assert isinstance(flow, Flow)
+    def __init__(self, space, domain, binding):
+        assert isinstance(space, Space)
         super(Unit, self).__init__(
                     domain=domain,
                     binding=binding)
-        self.flow = flow
+        self.space = space
 
     @property
     def units(self):
@@ -1710,18 +1702,18 @@ class Unit(Code):
         # creating a reference cycle.
         return [self]
 
-    def singular(self, flow):
+    def singular(self, space):
         """
-        Verifies if the unit is singular (well-defined) on the given flow.
+        Verifies if the unit is singular (well-defined) on the given space.
         """
-        return flow.spans(self.flow)
+        return space.spans(self.space)
 
 
 class PrimitiveUnit(Unit):
     """
     Represents a primitive unit.
 
-    A primitive unit is an intrinsic function on a flow.
+    A primitive unit is an intrinsic function on a space.
 
     This is an abstract class; for the (only) concrete subclass, see
     :class:`ColumnUnit`.
@@ -1734,21 +1726,21 @@ class CompoundUnit(Unit):
     """
     Represents a compound unit.
 
-    A compound unit is some non-intrinsic function on a flow.
+    A compound unit is some non-intrinsic function on a space.
 
     This is an abstract class; for concrete subclasses, see
     :class:`ScalarUnit`, :class:`AggregateUnit`, etc.
 
     `code` (:class:`Code`)
-        The expression to evaluate on the unit flow.
+        The expression to evaluate on the unit space.
     """
 
     is_compound = True
 
-    def __init__(self, code, flow, domain, binding):
+    def __init__(self, code, space, domain, binding):
         assert isinstance(code, Code)
         super(CompoundUnit, self).__init__(
-                    flow=flow,
+                    space=space,
                     domain=domain,
                     binding=binding)
         self.code = code
@@ -1761,36 +1753,36 @@ class ColumnUnit(PrimitiveUnit):
     """
     Represents a column unit.
 
-    A column unit is a function on a flow that returns a column of the
-    prominent table of the flow.
+    A column unit is a function on a space that returns a column of the
+    prominent table of the space.
 
     `column` (:class:`htsql.core.entity.ColumnEntity`)
         The column produced by the unit.
 
-    `flow` (:class:`Flow`)
-        The unit flow.  The flow must be of a table family and the flow
+    `space` (:class:`Space`)
+        The unit space.  The space must be of a table family and the space
         table must coincide with the column table.
     """
 
-    def __init__(self, column, flow, binding):
+    def __init__(self, column, space, binding):
         assert isinstance(column, ColumnEntity)
-        assert (flow.family.is_table and
-                flow.family.table == column.table)
+        assert (space.family.is_table and
+                space.family.table == column.table)
         super(ColumnUnit, self).__init__(
-                    flow=flow,
+                    space=space,
                     domain=column.domain,
                     binding=binding)
         self.column = column
 
     def __basis__(self):
-        return (self.column, self.flow)
+        return (self.column, self.space)
 
 
 class ScalarUnit(CompoundUnit):
     """
     Represents a scalar unit.
 
-    A scalar unit is an expression evaluated in the specified flow.
+    A scalar unit is an expression evaluated in the specified space.
 
     Recall that any expression has the following form:
 
@@ -1799,41 +1791,41 @@ class ScalarUnit(CompoundUnit):
     where
 
     - `F` is a scalar function;
-    - `a`, `b`, ... are elements of flows `A`, `B`, ...;
+    - `a`, `b`, ... are elements of spaces `A`, `B`, ...;
     - `u`, `v`, ... are unit expressions on `A`, `B`, ....
 
     We require that the units of the expression are singular on the given
-    flow.  If so, the expression units `u`, `v`, ... could be lifted to
+    space.  If so, the expression units `u`, `v`, ... could be lifted to
     the given slace (see :class:`Unit`).  The scalar unit is defined as
 
         `F(u(x),v(x),...)`,
 
-    where `x` is an element of the flow where the scalar unit is defined.
+    where `x` is an element of the space where the scalar unit is defined.
 
     `code` (:class:`Code`)
         The expression to evaluate.
 
-    `flow` (:class:`Flow`)
-        The flow on which the unit is defined.
+    `space` (:class:`Space`)
+        The space on which the unit is defined.
 
     `companions` (list of :class:`Code`)
         An auxiliary hint to the compiler indicating that the term
         exporting the unit must also export extra scalar units.
         The value of this attribute has no effect on the semantics of
-        the flow graph and node comparison.
+        the space graph and node comparison.
     """
 
-    def __init__(self, code, flow, binding, companions=[]):
+    def __init__(self, code, space, binding, companions=[]):
         assert isinstance(companions, listof(Code))
         super(ScalarUnit, self).__init__(
                     code=code,
-                    flow=flow,
+                    space=space,
                     domain=code.domain,
                     binding=binding)
         self.companions = companions
 
     def __basis__(self):
-        return (self.code, self.flow)
+        return (self.code, self.space)
 
 
 class AggregateUnitBase(CompoundUnit):
@@ -1841,7 +1833,7 @@ class AggregateUnitBase(CompoundUnit):
     Represents an aggregate unit.
 
     Aggregate units express functions on sets.  Specifically, let `A` and `B`
-    be flows such that `B` spans `A`, but  `A` does not span `B`, and
+    be spaces such that `B` spans `A`, but  `A` does not span `B`, and
     let `g` be a function that takes subsets of `B` as an argument.  Then
     we could define an aggregate unit `u` on `A` as follows:
 
@@ -1850,37 +1842,37 @@ class AggregateUnitBase(CompoundUnit):
     Here, for each row `a` from `A`, we take the subset of convergent
     rows from `B` and apply `g` to it; the result is the value of `u(a)`.
 
-    The flow `A` is the unit flow, the flow `B` is called *the plural
-    flow* of an aggregate unit, and `g` is called *the composite expression*
+    The space `A` is the unit space, the space `B` is called *the plural
+    space* of an aggregate unit, and `g` is called *the composite expression*
     of an aggregate unit.
 
     `code` (:class:`Code`)
         The composite expression of the aggregate unit.
 
-    `plural_flow` (:class:`Flow`)
-        The plural flow of the aggregate unit, that is, the flow
+    `plural_space` (:class:`Space`)
+        The plural space of the aggregate unit, that is, the space
         which subsets form the argument of the composite expression.
 
-    `flow` (:class:`Flow`)
-        The flow on which the unit is defined.
+    `space` (:class:`Space`)
+        The space on which the unit is defined.
     """
 
-    def __init__(self, code, plural_flow, flow, binding):
+    def __init__(self, code, plural_space, space, binding):
         assert isinstance(code, Code)
-        assert isinstance(plural_flow, Flow)
+        assert isinstance(plural_space, Space)
         # FIXME: consider lifting the requirement that the plural
-        # flow spans the unit flow.  Is it really necessary?
-        assert plural_flow.spans(flow)
-        assert not flow.spans(plural_flow)
+        # space spans the unit space.  Is it really necessary?
+        assert plural_space.spans(space)
+        assert not space.spans(plural_space)
         super(AggregateUnitBase, self).__init__(
                     code=code,
-                    flow=flow,
+                    space=space,
                     domain=code.domain,
                     binding=binding)
-        self.plural_flow = plural_flow
+        self.plural_space = plural_space
 
     def __basis__(self):
-        return (self.code, self.plural_flow, self.flow)
+        return (self.code, self.plural_space, self.space)
 
 
 class AggregateUnit(AggregateUnitBase):
@@ -1894,12 +1886,12 @@ class AggregateUnit(AggregateUnitBase):
         An auxiliary hint to the compiler indicating that the term
         exporting the unit must also export extra aggregate units.
         The value of this attribute has no effect on the semantics of
-        the flow graph and node comparison.
+        the space graph and node comparison.
     """
 
-    def __init__(self, code, plural_flow, flow, binding, companions=[]):
+    def __init__(self, code, plural_space, space, binding, companions=[]):
         assert isinstance(companions, listof(Code))
-        super(AggregateUnit, self).__init__(code, plural_flow, flow, binding)
+        super(AggregateUnit, self).__init__(code, plural_space, space, binding)
         self.companions = companions
 
 
@@ -1914,60 +1906,60 @@ class CorrelatedUnit(AggregateUnitBase):
 
 class KernelUnit(CompoundUnit):
     """
-    Represents a value generated by a quotient flow.
+    Represents a value generated by a quotient space.
 
     A value generated by a quotient is either a part of a kernel
-    expression or a unit from a ground flow.
+    expression or a unit from a ground space.
 
     `code` (:class:`Code`)
-        An expression (calculated against the seed flow of the quotient).
+        An expression (calculated against the seed space of the quotient).
 
-    `flow` (:class:`Flow`)
-        The flow of the quotient family on which the unit is defined.
+    `space` (:class:`Space`)
+        The space of the quotient family on which the unit is defined.
     """
 
-    def __init__(self, code, flow, binding):
-        assert flow.family.is_quotient
+    def __init__(self, code, space, binding):
+        assert space.family.is_quotient
         super(KernelUnit, self).__init__(
                     code=code,
-                    flow=flow,
+                    space=space,
                     domain=code.domain,
                     binding=binding)
 
     def __basis__(self):
-        return (self.code, self.flow)
+        return (self.code, self.space)
 
 
 class CoveringUnit(CompoundUnit):
     """
-    Represents a value generated by a covering flow.
+    Represents a value generated by a covering space.
 
-    A covering flow represents another flow expression as
-    a single axial flow operation.
+    A covering space represents another space expression as
+    a single axial space operation.
 
     `code` (:class:`Code`)
-        An expression (calculated against the seed flow of
-        the covering flow).
+        An expression (calculated against the seed space of
+        the covering space).
 
-    `flow` (:class:`Flow`)
-        The flow on which the unit is defined.
+    `space` (:class:`Space`)
+        The space on which the unit is defined.
     """
 
-    def __init__(self, code, flow, binding):
-        assert isinstance(flow, (ComplementFlow,
-                                 MonikerFlow,
-                                 ForkedFlow,
-                                 AttachFlow,
-                                 ClippedFlow,
-                                 LocatorFlow))
+    def __init__(self, code, space, binding):
+        assert isinstance(space, (ComplementSpace,
+                                 MonikerSpace,
+                                 ForkedSpace,
+                                 AttachSpace,
+                                 ClippedSpace,
+                                 LocatorSpace))
         super(CoveringUnit, self).__init__(
                     code=code,
-                    flow=flow,
+                    space=space,
                     domain=code.domain,
                     binding=binding)
 
     def __basis__(self):
-        return (self.code, self.flow)
+        return (self.code, self.space)
 
 
 class CorrelationCode(Code):

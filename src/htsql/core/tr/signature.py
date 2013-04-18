@@ -226,7 +226,7 @@ class Formula(Printable):
     Represents a formula node.
 
     This is a mixin class; it is mixed with
-    :class:`htsql.core.tr.binding.Binding`, :class:`htsql.core.tr.flow.Code`
+    :class:`htsql.core.tr.binding.Binding`, :class:`htsql.core.tr.space.Code`
     and :class:`htsql.core.tr.frame.Phrase` to produce respective formula node
     types.
 

@@ -6,7 +6,7 @@
 from ...core.adapter import adapt, adapt_many
 from ...core.domain import IntegerDomain, TextDomain
 from ...core.tr.encode import Convert
-from ...core.tr.flow import CastCode
+from ...core.tr.space import CastCode
 from .domain import INetDomain
 
 

@@ -16,7 +16,7 @@ from ..entity import TableEntity, ColumnEntity
 from ..domain import Domain, BooleanDomain
 from ..error import point
 from .coerce import coerce
-from .flow import Expression
+from .space import Expression
 from .term import Term, QueryTerm
 from .signature import Signature, Bag, Formula
 
@@ -52,7 +52,7 @@ class Clause(Hashable, Clonable, Printable):
 
     The constructor arguments:
 
-    `expression` (:class:`htsql.core.tr.flow.Expression`)
+    `expression` (:class:`htsql.core.tr.space.Expression`)
         The expression node that gave rise to the clause; for debugging
         and error reporting only.
 
@@ -136,11 +136,11 @@ class Frame(Clause):
     `tag` (an integer)
         A unique identifier of the frame; inherited from the term.
 
-    `flow` (:class:`htsql.core.tr.flow.Flow`)
-        The flow represented by the frame; inherited from the term.
+    `space` (:class:`htsql.core.tr.space.Space`)
+        The space represented by the frame; inherited from the term.
 
-    `baseline` (:class:`htsql.core.tr.flow.Flow`)
-        The baseline flow of the frame; inherited from the term.
+    `baseline` (:class:`htsql.core.tr.space.Space`)
+        The baseline space of the frame; inherited from the term.
     """
 
     is_leaf = False
@@ -159,7 +159,7 @@ class Frame(Clause):
         self.term = term
         # Extract semantically important attributes of the term.
         self.tag = term.tag
-        self.flow = term.flow
+        self.space = term.space
         self.baseline = term.baseline
 
     def __str__(self):

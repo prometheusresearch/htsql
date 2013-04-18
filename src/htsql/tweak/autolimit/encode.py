@@ -5,7 +5,7 @@
 
 from ...core.context import context
 from ...core.tr.encode import EncodeSegment
-from ...core.tr.flow import OrderedFlow
+from ...core.tr.space import OrderedSpace
 
 
 class AutolimitEncodeSegment(EncodeSegment):
@@ -15,15 +15,15 @@ class AutolimitEncodeSegment(EncodeSegment):
         limit = context.app.tweak.autolimit.limit
         if limit is None or limit <= 0:
             return code
-        flow = code.flow
-        while flow.is_contracting:
-            if (isinstance(flow, OrderedFlow) and flow.limit is not None
-                                              and flow.limit <= limit):
+        space = code.space
+        while space.is_contracting:
+            if (isinstance(space, OrderedSpace) and space.limit is not None
+                                              and space.limit <= limit):
                 return code
-            flow = flow.base
-        if flow.is_root:
+            space = space.base
+        if space.is_root:
             return code
-        flow = OrderedFlow(code.flow, [], limit, None, code.binding)
-        return code.clone(flow=flow)
+        space = OrderedSpace(code.space, [], limit, None, code.binding)
+        return code.clone(space=space)
 
 

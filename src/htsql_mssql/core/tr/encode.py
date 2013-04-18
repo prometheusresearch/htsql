@@ -3,7 +3,7 @@
 #
 
 
-from htsql.core.tr.flow import LiteralCode, FormulaCode
+from htsql.core.tr.space import LiteralCode, FormulaCode
 from htsql.core.tr.fn.signature import ReplaceSig, ConcatenateSig, LikeSig
 from htsql.core.tr.fn.encode import EncodeContains
 

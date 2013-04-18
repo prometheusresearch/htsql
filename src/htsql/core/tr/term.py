@@ -15,17 +15,17 @@ from ..util import (listof, dictof, tupleof, maybe,
                     Clonable, Printable, Hashable)
 from ..domain import BooleanDomain
 from ..error import point
-from .flow import Expression, Flow, Code, Unit, QueryExpr, SegmentCode
+from .space import Expression, Space, Code, Unit, QueryExpr, SegmentCode
 
 
 class Joint(Hashable, Clonable, Printable):
     """
     Represents a join condition.
 
-    `lop` (:class:`htsql.core.tr.flow.Code`)
+    `lop` (:class:`htsql.core.tr.space.Code`)
         The left operand of join expression.
 
-    `rop` (:class:`htsql.core.tr.flow.Code`)
+    `rop` (:class:`htsql.core.tr.space.Code`)
         The right operand of join expression.
     """
 
@@ -60,7 +60,7 @@ class PreTerm(Clonable, Printable):
     The following adapters are associated with the compiling process and
     generate new term nodes::
 
-        Compile: (Flow, CompilingState) -> Term
+        Compile: (Space, CompilingState) -> Term
         Inject: (Unit, Term, CompilingState) -> Term
 
     See :class:`htsql.core.tr.compile.Compile` and
@@ -74,7 +74,7 @@ class PreTerm(Clonable, Printable):
 
     Arguments:
 
-    `expression` (:class:`htsql.core.tr.flow.Expression`)
+    `expression` (:class:`htsql.core.tr.space.Expression`)
         The expression node which gave rise to the term node; used only for
         presentation or error reporting.
 
@@ -112,13 +112,13 @@ class Term(PreTerm):
     terms represent relational expressions with two arguments (for example,
     :class:`JoinTerm`).
 
-    Each term represents some flow, called *the term flow*.  It means
+    Each term represents some space, called *the term space*.  It means
     that, *as a part of some relational expression*, the term will produce
-    the rows of the flow.  Note that taken alone, the term does not
-    necessarily generates the rows of the flow: some of the operations
-    that comprise the flow may be missing from the term.  Thus the term
-    flow represents a promise: once the term is tied with some other
-    appropriate term, it will generate the rows of the flow.
+    the rows of the space.  Note that taken alone, the term does not
+    necessarily generates the rows of the space: some of the operations
+    that comprise the space may be missing from the term.  Thus the term
+    space represents a promise: once the term is tied with some other
+    appropriate term, it will generate the rows of the space.
 
     Each term node has a unique (in the context of the term tree) identifier,
     called the term *tag*.  Tags are used to refer to term objects indirectly.
@@ -146,15 +146,15 @@ class Term(PreTerm):
     `kids` (a list of zero, one or two :class:`Term` objects)
         The operands of the relational expression.
 
-    `flow` (:class:`htsql.core.tr.flow.Flow`)
-        The flow represented by the term.
+    `space` (:class:`htsql.core.tr.space.Space`)
+        The space represented by the term.
 
-    `routes` (a mapping from :class:`htsql.core.tr.flow.Unit` to term tag)
+    `routes` (a mapping from :class:`htsql.core.tr.space.Unit` to term tag)
         A mapping from unit objects to term tags that specifies the units
         which the term is capable to produce.
 
-        A key of the mapping is either a :class:`htsql.core.tr.flow.Unit`
-        or a :class:`htsql.core.tr.flow.Flow` node.  A value of the mapping
+        A key of the mapping is either a :class:`htsql.core.tr.space.Unit`
+        or a :class:`htsql.core.tr.space.Space` node.  A value of the mapping
         is a term tag, either of the term itself or of one of its
         descendants.
 
@@ -163,16 +163,16 @@ class Term(PreTerm):
         term tag indicates the term directly responsible for evaluating
         the unit.
 
-        A flow node being a key in the `routes` table indicates that
-        any column of the flow could be produced by the term.
+        A space node being a key in the `routes` table indicates that
+        any column of the space could be produced by the term.
 
     Other attributes:
 
-    `backbone` (:class:`htsql.core.tr.flow.Flow`)
-        The inflation of the term flow.
+    `backbone` (:class:`htsql.core.tr.space.Space`)
+        The inflation of the term space.
 
-    `baseline` (:class:`htsql.core.tr.flow.Flow`)
-        The leftmost axis of the term flow that the term is capable
+    `baseline` (:class:`htsql.core.tr.space.Space`)
+        The leftmost axis of the term space that the term is capable
         to produce.
 
     `offsprings` (a dictionary `tag -> tag`)
@@ -184,16 +184,16 @@ class Term(PreTerm):
     is_unary = False
     is_binary = False
 
-    def __init__(self, tag, kids, flow, baseline, routes):
+    def __init__(self, tag, kids, space, baseline, routes):
         assert isinstance(tag, int)
         assert isinstance(kids, listof(Term))
-        assert isinstance(flow, Flow)
-        assert isinstance(baseline, Flow)
-        assert flow.concludes(baseline)
+        assert isinstance(space, Space)
+        assert isinstance(baseline, Space)
+        assert space.concludes(baseline)
         assert baseline.is_inflated
         assert isinstance(routes, dictof(Unit, int))
-        # The inflation of the term flow.
-        backbone = flow.inflate()
+        # The inflation of the term space.
+        backbone = space.inflate()
         # For each descendant term, determine the immediate child whose
         # subtree contain the descendant.
         offsprings = {}
@@ -201,10 +201,10 @@ class Term(PreTerm):
             offsprings[kid.tag] = kid.tag
             for offspring in kid.offsprings:
                 offsprings[offspring] = kid.tag
-        super(Term, self).__init__(flow)
+        super(Term, self).__init__(space)
         self.tag = tag
         self.kids = kids
-        self.flow = flow
+        self.space = space
         self.backbone = backbone
         self.baseline = baseline
         self.routes = routes
@@ -218,8 +218,8 @@ class NullaryTerm(Term):
 
     is_nullary = True
 
-    def __init__(self, tag, flow, baseline, routes):
-        super(NullaryTerm, self).__init__(tag, [], flow, baseline, routes)
+    def __init__(self, tag, space, baseline, routes):
+        super(NullaryTerm, self).__init__(tag, [], space, baseline, routes)
 
 
 class UnaryTerm(Term):
@@ -232,8 +232,8 @@ class UnaryTerm(Term):
 
     is_unary = True
 
-    def __init__(self, tag, kid, flow, baseline, routes):
-        super(UnaryTerm, self).__init__(tag, [kid], flow, baseline, routes)
+    def __init__(self, tag, kid, space, baseline, routes):
+        super(UnaryTerm, self).__init__(tag, [kid], space, baseline, routes)
         self.kid = kid
 
 
@@ -250,9 +250,9 @@ class BinaryTerm(Term):
 
     is_binary = True
 
-    def __init__(self, tag, lkid, rkid, flow, baseline, routes):
+    def __init__(self, tag, lkid, rkid, space, baseline, routes):
         super(BinaryTerm, self).__init__(tag, [lkid, rkid],
-                                         flow, baseline, routes)
+                                         space, baseline, routes)
         self.lkid = lkid
         self.rkid = rkid
 
@@ -269,11 +269,11 @@ class ScalarTerm(NullaryTerm):
         (SELECT ... FROM DUAL)
     """
 
-    def __init__(self, tag, flow, baseline, routes):
-        # The flow itself is not required to be a scalar, but it
+    def __init__(self, tag, space, baseline, routes):
+        # The space itself is not required to be a scalar, but it
         # should not contain any other axes.
-        assert flow.family.is_scalar
-        super(ScalarTerm, self).__init__(tag, flow, baseline, routes)
+        assert space.family.is_scalar
+        super(ScalarTerm, self).__init__(tag, space, baseline, routes)
 
     def __str__(self):
         return "I"
@@ -291,13 +291,13 @@ class TableTerm(NullaryTerm):
         (SELECT ... FROM <table>)
     """
 
-    def __init__(self, tag, flow, baseline, routes):
+    def __init__(self, tag, space, baseline, routes):
         # We assume that the table of the term is the prominent table
-        # of the term flow.
-        assert flow.family.is_table
-        assert flow == baseline
-        super(TableTerm, self).__init__(tag, flow, baseline, routes)
-        self.table = flow.family.table
+        # of the term space.
+        assert space.family.is_table
+        assert space == baseline
+        super(TableTerm, self).__init__(tag, space, baseline, routes)
+        self.table = space.family.table
 
     def __str__(self):
         # Display:
@@ -319,14 +319,14 @@ class FilterTerm(UnaryTerm):
     `kid` (:class:`Term`)
         The operand of the filter expression.
 
-    `filter` (:class:`htsql.core.tr.flow.Code`)
+    `filter` (:class:`htsql.core.tr.space.Code`)
         The conditional expression.
     """
 
-    def __init__(self, tag, kid, filter, flow, baseline, routes):
+    def __init__(self, tag, kid, filter, space, baseline, routes):
         assert (isinstance(filter, Code) and
                 isinstance(filter.domain, BooleanDomain))
-        super(FilterTerm, self).__init__(tag, kid, flow, baseline, routes)
+        super(FilterTerm, self).__init__(tag, kid, space, baseline, routes)
         self.filter = filter
 
     def __str__(self):
@@ -364,7 +364,7 @@ class JoinTerm(BinaryTerm):
     `rkid` (:class:`Term`)
         The right operand of the join.
 
-    `joints` (a list of pairs of :class:`htsql.core.tr.flow.Code`)
+    `joints` (a list of pairs of :class:`htsql.core.tr.space.Code`)
         A list of pairs `(lop, rop)` that establish join conditions
         of the form `lop = rop`.
 
@@ -376,13 +376,13 @@ class JoinTerm(BinaryTerm):
     """
 
     def __init__(self, tag, lkid, rkid, joints,
-                 is_left, is_right, flow, baseline, routes):
+                 is_left, is_right, space, baseline, routes):
         assert isinstance(joints, listof(Joint))
         assert isinstance(is_left, bool) and isinstance(is_right, bool)
         # Note: currently we never generate right outer joins.
         assert is_right is False
         super(JoinTerm, self).__init__(tag, lkid, rkid,
-                                       flow, baseline, routes)
+                                       space, baseline, routes)
         self.joints = joints
         self.is_left = is_left
         self.is_right = is_right
@@ -430,12 +430,12 @@ class EmbeddingTerm(BinaryTerm):
 
     """
 
-    def __init__(self, tag, lkid, rkid, correlations, flow, baseline, routes):
+    def __init__(self, tag, lkid, rkid, correlations, space, baseline, routes):
         # Verify that the right child is a correlation term and the left
         # child is its link term.
         assert isinstance(correlations, listof(Code))
         super(EmbeddingTerm, self).__init__(tag, lkid, rkid,
-                                            flow, baseline, routes)
+                                            space, baseline, routes)
         self.correlations = correlations
 
     def __str__(self):
@@ -449,9 +449,9 @@ class CorrelationTerm(UnaryTerm):
     Represents a correlation term.
     """
 
-    def __init__(self, tag, kid, flow, baseline, routes):
+    def __init__(self, tag, kid, space, baseline, routes):
         super(CorrelationTerm, self).__init__(tag, kid,
-                                              flow, baseline, routes)
+                                              space, baseline, routes)
 
 
 class ProjectionTerm(UnaryTerm):
@@ -471,13 +471,13 @@ class ProjectionTerm(UnaryTerm):
     `kid` (:class:`Term`)
         The operand of the projection.
 
-    `kernels` (a list of :class:`htsql.core.tr.flow.Code`)
+    `kernels` (a list of :class:`htsql.core.tr.space.Code`)
         The kernel expressions.
     """
 
-    def __init__(self, tag, kid, kernels, flow, baseline, routes):
+    def __init__(self, tag, kid, kernels, space, baseline, routes):
         assert isinstance(kernels, listof(Code))
-        super(ProjectionTerm, self).__init__(tag, kid, flow, baseline, routes)
+        super(ProjectionTerm, self).__init__(tag, kid, space, baseline, routes)
         self.kernels = kernels
 
     def __str__(self):
@@ -506,7 +506,7 @@ class OrderTerm(UnaryTerm):
     `order` (a list of pairs `(code, direction)`)
         Expressions to sort the rows by.
 
-        Here `code` is a :class:`htsql.core.tr.flow.Code` instance, `direction`
+        Here `code` is a :class:`htsql.core.tr.space.Code` instance, `direction`
         is either ``+1`` (indicates ascending order) or ``-1`` (indicates
         descending order).
 
@@ -520,13 +520,13 @@ class OrderTerm(UnaryTerm):
     """
 
     def __init__(self, tag, kid, order, limit, offset,
-                 flow, baseline, routes):
+                 space, baseline, routes):
         assert isinstance(order, listof(tupleof(Code, int)))
         assert isinstance(limit, maybe(int))
         assert isinstance(offset, maybe(int))
         assert limit is None or limit >= 0
         assert offset is None or offset >= 0
-        super(OrderTerm, self).__init__(tag, kid, flow, baseline, routes)
+        super(OrderTerm, self).__init__(tag, kid, space, baseline, routes)
         self.order = order
         self.limit = limit
         self.offset = offset
@@ -534,7 +534,7 @@ class OrderTerm(UnaryTerm):
     def __str__(self):
         # Display:
         #   <kid> [<code>,...;<offset>:<limit>+<offset>]
-        # FIXME: duplicated from `OrderedFlow.__str__`.
+        # FIXME: duplicated from `OrderedSpace.__str__`.
         indicators = []
         if self.order:
             indicator = ",".join(str(code) for code, dir in self.order)
@@ -595,13 +595,13 @@ class SegmentTerm(UnaryTerm):
     """
 
     def __init__(self, tag, kid, code, superkeys, keys, subtrees,
-                 flow, baseline, routes):
+                 space, baseline, routes):
         assert isinstance(code, SegmentCode)
         assert isinstance(superkeys, listof(Code))
         assert isinstance(keys, listof(Code))
         assert isinstance(subtrees, dictof(SegmentCode, SegmentTerm))
         super(SegmentTerm, self).__init__(tag, kid,
-                                          flow, baseline, routes)
+                                          space, baseline, routes)
         self.code = code
         self.superkeys = superkeys
         self.keys = keys

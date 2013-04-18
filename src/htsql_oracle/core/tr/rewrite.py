@@ -5,7 +5,7 @@
 
 from htsql.core.adapter import adapt
 from htsql.core.domain import TextDomain
-from htsql.core.tr.flow import LiteralCode
+from htsql.core.tr.space import LiteralCode
 from htsql.core.tr.rewrite import Rewrite
 
 
