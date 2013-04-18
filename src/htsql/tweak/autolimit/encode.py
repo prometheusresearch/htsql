@@ -23,7 +23,7 @@ class AutolimitEncodeSegment(EncodeSegment):
             space = space.base
         if space.is_root:
             return code
-        space = OrderedSpace(code.space, [], limit, None, code.binding)
+        space = OrderedSpace(code.space, [], limit, None, code.flow)
         return code.clone(space=space)
 
 

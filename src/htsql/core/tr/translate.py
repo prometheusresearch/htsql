@@ -9,6 +9,7 @@ from ..domain import ListDomain, RecordDomain, Profile, Product
 from ..syn.syntax import Syntax
 from ..tr.bind import bind
 from ..tr.binding import Binding
+from ..tr.route import route
 from ..tr.encode import encode
 from ..tr.space import OrderedSpace
 from ..tr.rewrite import rewrite
@@ -131,7 +132,8 @@ def translate(syntax, environment=None, limit=None):
         binding = bind(syntax, environment=environment)
     else:
         binding = syntax
-    expression = encode(binding)
+    flow = route(binding)
+    expression = encode(flow)
     if limit is not None:
         expression = safe_patch(expression, limit)
     expression = rewrite(expression)
@@ -157,7 +159,7 @@ def safe_patch(expression, limit):
     if isinstance(segment.space, OrderedSpace):
         space = segment.space.clone(limit=limit)
     else:
-        space = OrderedSpace(segment.space, [], limit, None, segment.binding)
+        space = OrderedSpace(segment.space, [], limit, None, segment.flow)
     segment = segment.clone(space=space)
     expression = expression.clone(segment=segment)
     return expression

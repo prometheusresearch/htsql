@@ -438,7 +438,7 @@ class Recombine(Utility):
                 if len(code_filters) > 1:
                     code_filter = FormulaCode(AndSig(),
                                               coerce(BooleanDomain()),
-                                              unit.space.binding,
+                                              unit.space.flow,
                                               ops=code_filters)
                 else:
                     [code_filter] = code_filters
@@ -450,7 +450,7 @@ class Recombine(Utility):
                 # signature, and that the aggregate ignores `NULL` values;
                 # need a way to check this and abort if it's not true.
                 op = code.op
-                op = FormulaCode(IfSig(), op.domain, op.binding,
+                op = FormulaCode(IfSig(), op.domain, op.flow,
                                  predicates=[code_filter],
                                  consequents=[op],
                                  alternative=None)
@@ -468,11 +468,11 @@ class Recombine(Utility):
                     all(unit.plural_space != shared_space for unit in units)):
             if len(filters) > 1:
                 filter = FormulaCode(OrSig(), coerce(BooleanDomain()),
-                                     shared_space.binding, ops=filters)
+                                     shared_space.flow, ops=filters)
             else:
                 [filter] = filters
             shared_space = FilteredSpace(shared_space, filter,
-                                       shared_space.binding)
+                                       shared_space.flow)
 
         # Now that the content of new units is generated, recombine
         # it against a blank state.
@@ -573,7 +573,7 @@ class RewriteQuery(Rewrite):
 
     def __call__(self):
         # Initialize the rewriting state.
-        self.state.set_root(RootSpace(None, self.expression.binding))
+        self.state.set_root(RootSpace(None, self.expression.flow))
         # Rewrite the segment, if present.
         segment = None
         if self.expression.segment is not None:
@@ -899,7 +899,7 @@ class RewriteAttach(RewriteSpace):
         for lcode, rcode in all_images:
             if not lcode.units:
                 code = FormulaCode(IsEqualSig(+1), BooleanDomain(),
-                                   self.space.binding, lop=rcode, rop=lcode)
+                                   self.space.flow, lop=rcode, rop=lcode)
                 predicates.append(code)
             else:
                 images.append((lcode, rcode))
@@ -932,7 +932,7 @@ class RewriteAttach(RewriteSpace):
             [filter] = predicates
         else:
             filter = FormulaCode(AndSig(), BooleanDomain(),
-                                 self.space.binding, ops=predicates)
+                                 self.space.flow, ops=predicates)
         return self.space.clone(base=base, seed=seed, images=images,
                                filter=filter)
 
@@ -1221,7 +1221,7 @@ class UnmaskFormula(UnmaskCode):
         # Unmask formula arguments.
         arguments = self.code.arguments.map(self.state.unmask)
         return FormulaCode(self.code.signature, self.code.domain,
-                           self.code.binding, **arguments)
+                           self.code.flow, **arguments)
 
 
 class ReplaceFormula(ReplaceCode):
@@ -1232,7 +1232,7 @@ class ReplaceFormula(ReplaceCode):
         # Replace units in the formula arguments.
         arguments = self.code.arguments.map(self.state.replace)
         return FormulaCode(self.code.signature, self.code.domain,
-                           self.code.binding, **arguments)
+                           self.code.flow, **arguments)
 
 
 class RewriteBySignature(Adapter):
@@ -1272,7 +1272,7 @@ class RewriteBySignature(Adapter):
         # Override in subclasses to provide specific optimizations.
         arguments = self.arguments.map(self.state.rewrite)
         return FormulaCode(self.signature, self.domain,
-                           self.code.binding, **arguments)
+                           self.code.flow, **arguments)
 
 
 class RewriteRecord(Rewrite):

@@ -39,14 +39,14 @@ class OracleCompileOrdered(CompileOrdered):
         kid = PermanentTerm(self.state.tag(), kid,
                             kid.space, kid.baseline, kid.routes.copy())
         row_num_code = FormulaCode(RowNumSig(), coerce(IntegerDomain()),
-                                   self.space.binding)
+                                   self.space.flow)
         if right_limit is not None:
             right_limit_code = LiteralCode(right_limit,
                                            coerce(IntegerDomain()),
-                                           self.space.binding)
+                                           self.space.flow)
             right_filter = FormulaCode(CompareSig('<'),
                                        coerce(BooleanDomain()),
-                                       self.space.binding,
+                                       self.space.flow,
                                        lop=row_num_code,
                                        rop=right_limit_code)
             kid = FilterTerm(self.state.tag(), kid, right_filter,
@@ -57,17 +57,17 @@ class OracleCompileOrdered(CompileOrdered):
         routes = kid.routes.copy()
         if left_limit is not None:
             row_num_unit = ScalarUnit(row_num_code, self.space.base,
-                                      self.space.binding)
+                                      self.space.flow)
             routes[row_num_unit] = kid.tag
         kid = PermanentTerm(self.state.tag(), kid,
                             kid.space, kid.baseline, routes)
         if left_limit is not None:
             left_limit_code = LiteralCode(left_limit,
                                           coerce(IntegerDomain()),
-                                          self.space.binding)
+                                          self.space.flow)
             left_filter = FormulaCode(CompareSig('>='),
                                       coerce(BooleanDomain()),
-                                      self.space.binding,
+                                      self.space.flow,
                                       lop=row_num_unit,
                                       rop=left_limit_code)
             kid = FilterTerm(self.state.tag(), kid, left_filter,
@@ -89,23 +89,23 @@ class OracleCompileCovering(CompileCovering):
         term = PermanentTerm(self.state.tag(), term,
                              term.space, term.baseline, term.routes.copy())
         row_num_code = FormulaCode(RowNumSig(), coerce(IntegerDomain()),
-                                   self.space.binding)
+                                   self.space.flow)
         right_bound_code = LiteralCode(right_bound, coerce(IntegerDomain()),
-                                       self.space.binding)
+                                       self.space.flow)
         right_filter = FormulaCode(CompareSig('<'), coerce(BooleanDomain()),
-                                   self.space.binding,
+                                   self.space.flow,
                                    lop=row_num_code, rop=right_bound_code)
         term = FilterTerm(self.state.tag(), term, right_filter,
                           term.space, term.baseline, term.routes.copy())
         routes = term.routes.copy()
-        row_num_unit = ScalarUnit(row_num_code, self.space, self.space.binding)
+        row_num_unit = ScalarUnit(row_num_code, self.space, self.space.flow)
         routes[row_num_unit] = term.tag
         term = PermanentTerm(self.state.tag(), term,
                              term.space, term.baseline, routes)
         left_bound_code = LiteralCode(left_bound, coerce(IntegerDomain()),
-                                      self.space.binding)
+                                      self.space.flow)
         left_filter = FormulaCode(CompareSig('>='), coerce(BooleanDomain()),
-                                  self.space.binding,
+                                  self.space.flow,
                                   lop=row_num_unit, rop=left_bound_code)
         term = FilterTerm(self.state.tag(), term, left_filter,
                           term.space, term.baseline, term.routes.copy())

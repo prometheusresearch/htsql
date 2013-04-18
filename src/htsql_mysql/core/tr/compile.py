@@ -21,12 +21,12 @@ class MySQLCompileCovering(CompileCovering):
     def clip(self, term, order, partition):
         prefix = u"!htsql:%s" % term.tag
         row_number = FormulaCode(UserVariableSig(u"%s:row_number" % prefix),
-                                 coerce(IntegerDomain()), self.space.binding)
+                                 coerce(IntegerDomain()), self.space.flow)
         keys = []
         for idx, code in enumerate(partition):
             key = FormulaCode(UserVariableSig(u"%s:partition:%s"
                                               % (prefix, idx+1)),
-                                              code.domain, self.space.binding)
+                                              code.domain, self.space.flow)
             keys.append(key)
         #term = PermanentTerm(self.state.tag(), term,
         #                     term.space, term.baseline, term.routes.copy())
@@ -34,19 +34,19 @@ class MySQLCompileCovering(CompileCovering):
                                self.state.root, self.state.root, {})
         zero_units = []
         code = FormulaCode(UserVariableAssignmentSig(),
-                           row_number.domain, self.space.binding,
+                           row_number.domain, self.space.flow,
                            lop=row_number,
                            rop=LiteralCode(None, row_number.domain,
-                                           self.space.binding))
-        unit = ScalarUnit(code, self.state.root, code.binding)
+                                           self.space.flow))
+        unit = ScalarUnit(code, self.state.root, code.flow)
         zero_units.append(unit)
         for key in keys:
             code = FormulaCode(UserVariableAssignmentSig(),
-                               key.domain, self.space.binding,
+                               key.domain, self.space.flow,
                                lop=key,
                                rop=LiteralCode(None, key.domain,
-                                               self.space.binding))
-            unit = ScalarUnit(code, self.state.root, code.binding)
+                                               self.space.flow))
+            unit = ScalarUnit(code, self.state.root, code.flow)
             zero_units.append(unit)
         tag = self.state.tag()
         routes = {}
@@ -56,9 +56,9 @@ class MySQLCompileCovering(CompileCovering):
         zero_term = PermanentTerm(tag, zero_term,
                                   zero_term.space, zero_term.baseline, routes)
         filters = [FormulaCode(NoOpConditionSig(), coerce(BooleanDomain()),
-                   self.space.binding, op=unit) for unit in zero_units]
+                   self.space.flow, op=unit) for unit in zero_units]
         filter = FormulaCode(AndSig(), coerce(BooleanDomain()),
-                             self.space.binding, ops=filters)
+                             self.space.flow, ops=filters)
         zero_term = FilterTerm(self.state.tag(), zero_term, filter,
                                zero_term.space, zero_term.baseline, {})
         term = JoinTerm(self.state.tag(), term, zero_term, [],
@@ -73,31 +73,31 @@ class MySQLCompileCovering(CompileCovering):
         conditions = []
         for lop, rop in zip(keys, partition):
             condition = FormulaCode(IsEqualSig(+1), coerce(BooleanDomain()),
-                                    self.space.binding, lop=lop, rop=rop)
+                                    self.space.flow, lop=lop, rop=rop)
             conditions.append(condition)
         if len(conditions) == 1:
             [condition] = conditions
         else:
             condition = FormulaCode(AndSig(), coerce(BooleanDomain()),
-                                    self.space.binding, ops=conditions)
+                                    self.space.flow, ops=conditions)
         one_literal = LiteralCode(1, coerce(IntegerDomain()),
-                                  self.space.binding)
+                                  self.space.flow)
         on_true = FormulaCode(AddSig(), coerce(IntegerDomain()),
-                              self.space.binding,
+                              self.space.flow,
                               lop=row_number, rop=one_literal)
         on_false = one_literal
-        value = FormulaCode(IfSig(), row_number.domain, self.space.binding,
+        value = FormulaCode(IfSig(), row_number.domain, self.space.flow,
                             condition=condition, on_true=on_true,
                             on_false=on_false)
         code = FormulaCode(UserVariableAssignmentSig(),
-                           row_number.domain, self.space.binding,
+                           row_number.domain, self.space.flow,
                            lop=row_number, rop=value)
-        row_number_unit = ScalarUnit(code, term.space, code.binding)
+        row_number_unit = ScalarUnit(code, term.space, code.flow)
         next_units.append(row_number_unit)
         for lop, rop in zip(keys, partition):
             code = FormulaCode(UserVariableAssignmentSig(), lop.domain,
-                                    self.space.binding, lop=lop, rop=rop)
-            unit = ScalarUnit(code, term.space, code.binding)
+                                    self.space.flow, lop=lop, rop=rop)
+            unit = ScalarUnit(code, term.space, code.flow)
             next_units.append(unit)
         tag = self.state.tag()
         routes = term.routes.copy()
@@ -111,20 +111,20 @@ class MySQLCompileCovering(CompileCovering):
         if self.space.limit is not None:
             right_bound = left_bound+self.space.limit
         left_bound_code = LiteralCode(left_bound, coerce(IntegerDomain()),
-                                      term.space.binding)
+                                      term.space.flow)
         right_bound_code = LiteralCode(right_bound, coerce(IntegerDomain()),
-                                       term.space.binding)
+                                       term.space.flow)
         left_filter = FormulaCode(CompareSig('>='), coerce(BooleanDomain()),
-                                  term.space.binding,
+                                  term.space.flow,
                                   lop=row_number_unit, rop=left_bound_code)
         right_filter = FormulaCode(CompareSig('<'), coerce(BooleanDomain()),
-                                   term.space.binding,
+                                   term.space.flow,
                                    lop=row_number_unit, rop=right_bound_code)
         filters = [left_filter, right_filter]
         filters += [FormulaCode(NoOpConditionSig(), coerce(BooleanDomain()),
-                    self.space.binding, op=unit) for unit in next_units]
+                    self.space.flow, op=unit) for unit in next_units]
         filter = FormulaCode(AndSig(), coerce(BooleanDomain()),
-                             self.space.binding, ops=filters)
+                             self.space.flow, ops=filters)
         term = FilterTerm(self.state.tag(), term, filter,
                           term.space, term.baseline, term.routes)
         return term

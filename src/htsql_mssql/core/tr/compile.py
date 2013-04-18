@@ -25,13 +25,13 @@ class MSSQLCompileOrdered(CompileOrdered):
         ops = []
         for code, direction in order:
             op = FormulaCode(SortDirectionSig(direction=direction),
-                             code.domain, code.binding, base=code)
+                             code.domain, code.flow, base=code)
             ops.append(op)
         row_number_code = FormulaCode(RowNumberSig(), coerce(IntegerDomain()),
-                                      self.space.binding,
+                                      self.space.flow,
                                       partition=[], order=ops)
         row_number_unit = ScalarUnit(row_number_code, self.space.base,
-                                     self.space.binding)
+                                     self.space.flow)
         tag = self.state.tag()
         routes = kid.routes.copy()
         routes[row_number_unit] = tag
@@ -41,25 +41,25 @@ class MSSQLCompileOrdered(CompileOrdered):
         if self.space.limit is not None:
             right_limit = self.space.limit+self.space.offset+1
         left_limit_code = LiteralCode(left_limit, coerce(IntegerDomain()),
-                                      self.space.binding)
+                                      self.space.flow)
         right_limit_code = None
         if right_limit is not None:
             right_limit_code = LiteralCode(right_limit, coerce(IntegerDomain()),
-                                           self.space.binding)
+                                           self.space.flow)
         left_filter = FormulaCode(CompareSig('>='), coerce(BooleanDomain()),
-                                  self.space.binding,
+                                  self.space.flow,
                                   lop=row_number_unit, rop=left_limit_code)
         right_filter = None
         if right_limit_code is not None:
             right_filter = FormulaCode(CompareSig('<'),
                                        coerce(BooleanDomain()),
-                                       self.space.binding,
+                                       self.space.flow,
                                        lop=row_number_unit,
                                        rop=right_limit_code)
         filter = left_filter
         if right_filter is not None:
             filter = FormulaCode(AndSig(), coerce(BooleanDomain()),
-                                 self.space.binding,
+                                 self.space.flow,
                                  ops=[left_filter, right_filter])
         routes = kid.routes.copy()
         for unit in spread(self.space):

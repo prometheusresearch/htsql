@@ -182,7 +182,7 @@ class ArrangeTable(Arrange):
             # Augment the parent ordering with ordering by the primary key
             # of the table (but only if the cardinality of the space grows).
 
-            # FIXME: the binding tree should pass the ordering information
+            # FIXME: the flow tree should pass the ordering information
             # to the space tree.
             def chain(space):
                 node = TableNode(space.family.table)
@@ -192,13 +192,13 @@ class ArrangeTable(Arrange):
                 units = []
                 for arc in arcs:
                     if isinstance(arc, ColumnArc):
-                        code = ColumnUnit(arc.column, space, space.binding)
+                        code = ColumnUnit(arc.column, space, space.flow)
                         units.append(code)
                     elif isinstance(arc, ChainArc):
                         subspace = space
                         for join in arc.joins:
                             subspace = FiberTableSpace(subspace, join,
-                                                     space.binding)
+                                                     space.flow)
                         subunits = chain(subspace)
                         assert subunits is not None
                         units.extend(subunits)
@@ -256,13 +256,14 @@ class ArrangeTable(Arrange):
                 # Add weak table ordering.
                 for column in columns:
                     # We need to associate the newly generated column unit
-                    # with some binding node.  We use the binding of the space,
+                    # with some flow node.  We use the flow of the space,
                     # but in order to produce a better string representation,
                     # we replace the associated syntax node with a new
                     # identifier named after the column.
                     identifier = IdentifierSyntax(normalize(column.name))
-                    binding = self.space.binding.clone(syntax=identifier)
-                    code = ColumnUnit(column, space, binding)
+                    binding = self.space.flow.binding.clone(syntax=identifier)
+                    flow = self.space.flow.clone(binding=binding)
+                    code = ColumnUnit(column, space, flow)
                     yield (code, +1)
 
 
@@ -273,7 +274,7 @@ class SpreadTable(Spread):
     def __call__(self):
         # A term representing a table space exports all columns of the table.
         for column in self.space.family.table.columns:
-            yield ColumnUnit(column, self.space, self.space.binding)
+            yield ColumnUnit(column, self.space, self.space.flow)
 
 
 class SewTable(Sew):
@@ -313,7 +314,7 @@ class SewTable(Sew):
         # Generate joints that represent a connection by the primary key.
         space = self.space.inflate()
         for column in connect_columns:
-            unit = ColumnUnit(column, space, self.space.binding)
+            unit = ColumnUnit(column, space, self.space.flow)
             yield Joint(unit, unit)
 
 
@@ -328,8 +329,8 @@ class TieFiberTable(Tie):
         space = self.space.inflate()
         for lcolumn, rcolumn in zip(space.join.origin_columns,
                                     space.join.target_columns):
-            lunit = ColumnUnit(lcolumn, space.base, self.space.binding)
-            runit = ColumnUnit(rcolumn, space, self.space.binding)
+            lunit = ColumnUnit(lcolumn, space.base, self.space.flow)
+            runit = ColumnUnit(rcolumn, space, self.space.flow)
             yield Joint(lunit, runit)
 
 
@@ -350,7 +351,7 @@ class ArrangeQuotient(Arrange):
             # We use inflated spaces for ordering units.
             space = self.space.inflate()
             for code in self.space.family.kernels:
-                code = KernelUnit(code, space, code.binding)
+                code = KernelUnit(code, space, code.flow)
                 yield (code, +1)
 
 
@@ -364,10 +365,10 @@ class SpreadQuotient(Spread):
         # the left side of the tie belongs to the seed ground
         # and must be exported by any term representing the quotient.
         for lunit, runit in tie(self.space.family.ground):
-            yield KernelUnit(runit, self.space, runit.binding)
+            yield KernelUnit(runit, self.space, runit.flow)
         # The kernel expressions of the quotient.
         for code in self.space.family.kernels:
-            yield KernelUnit(code, self.space, code.binding)
+            yield KernelUnit(code, self.space, code.flow)
 
 
 class SewQuotient(Sew):
@@ -381,11 +382,11 @@ class SewQuotient(Sew):
         # the parent space.  FIXME: not needed when the parent
         # space is also sewn.
         for joint in tie(space.family.ground):
-            op = KernelUnit(joint.rop, space, joint.rop.binding)
+            op = KernelUnit(joint.rop, space, joint.rop.flow)
             yield joint.clone(lop=op, rop=op)
         # The kernel expressions.
         for code in space.family.kernels:
-            unit = KernelUnit(code, space, code.binding)
+            unit = KernelUnit(code, space, code.flow)
             yield Joint(unit, unit)
 
 
@@ -399,7 +400,7 @@ class TieQuotient(Tie):
         # Use the joints attaching the seed ground to its parent,
         # but wrap the ground units so they belong to the quotient space.
         for joint in tie(space.family.ground):
-            rop = KernelUnit(joint.rop, space, joint.rop.binding)
+            rop = KernelUnit(joint.rop, space, joint.rop.flow)
             yield joint.clone(rop=rop)
 
 
@@ -436,7 +437,7 @@ class ArrangeCovering(Arrange):
             for code, direction in arrange(self.space.seed):
                 if base is None or any(not base.spans(unit.space)
                                        for unit in code.units):
-                    code = CoveringUnit(code, space, code.binding)
+                    code = CoveringUnit(code, space, code.flow)
                     yield (code, direction)
 
 
@@ -493,7 +494,7 @@ class SewCovering(Sew):
             if not axis.is_contracting or axis == baseline:
                 # Wrap and emit the axis joints.
                 for joint in sew(axis):
-                    op = CoveringUnit(joint.lop, space, joint.lop.binding)
+                    op = CoveringUnit(joint.lop, space, joint.lop.flow)
                     yield joint.clone(lop=op, rop=op)
 
 
@@ -509,16 +510,16 @@ class TieComplement(Tie):
             # The ground base expression.
             op = joint.rop
             # The expression embedded in the quotient.
-            lop = KernelUnit(op, space.base, op.binding)
+            lop = KernelUnit(op, space.base, op.flow)
             # The expression embedded in the complement.
-            rop = CoveringUnit(op, space, op.binding)
+            rop = CoveringUnit(op, space, op.flow)
             yield joint.clone(lop=lop, rop=rop)
         # The kernel expressions.
         for code in space.kernels:
             # The quotient kernel.
-            lop = KernelUnit(code, space.base, code.binding)
+            lop = KernelUnit(code, space.base, code.flow)
             # The same kernel embedded in the complement space.
-            rop = CoveringUnit(code, space, code.binding)
+            rop = CoveringUnit(code, space, code.flow)
             yield Joint(lop=lop, rop=rop)
 
 
@@ -538,7 +539,7 @@ class TieMoniker(Tie):
             joints = tie(space.ground)
         # Wrap the ground joints.
         for joint in joints:
-            rop = CoveringUnit(joint.rop, space, joint.rop.binding)
+            rop = CoveringUnit(joint.rop, space, joint.rop.flow)
             yield joint.clone(rop=rop)
 
 
@@ -550,7 +551,7 @@ class TieClipped(Tie):
         space = self.space.inflate()
         joints = tie(space.ground)
         for joint in joints:
-            rop = CoveringUnit(joint.rop, space, joint.rop.binding)
+            rop = CoveringUnit(joint.rop, space, joint.rop.flow)
             yield joint.clone(rop=rop)
 
 
@@ -564,12 +565,12 @@ class TieForked(Tie):
         # Attach the seed ground to its parent.
         for joint in tie(space.seed):
             lop = joint.rop
-            rop = CoveringUnit(lop, space, lop.binding)
+            rop = CoveringUnit(lop, space, lop.flow)
             yield joint.clone(lop=lop, rop=rop)
         # Attach the seed to itself by the kernel expressions.
         for code in self.space.kernels:
             lop = code
-            rop = CoveringUnit(code, space, code.binding)
+            rop = CoveringUnit(code, space, code.flow)
             yield Joint(lop, rop)
 
 
@@ -581,11 +582,11 @@ class TieAttach(Tie):
         # Use an inflated space for joints.
         space = self.space.inflate()
         for joint in tie(space.ground):
-            rop = CoveringUnit(joint.rop, space, joint.rop.binding)
+            rop = CoveringUnit(joint.rop, space, joint.rop.flow)
             yield joint.clone(rop=rop)
         # Attach the seed to the base space using the fiber conditions.
         for lop, rop in space.images:
-            rop = CoveringUnit(rop, space, rop.binding)
+            rop = CoveringUnit(rop, space, rop.flow)
             yield Joint(lop, rop)
 
 

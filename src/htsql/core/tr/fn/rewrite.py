@@ -19,9 +19,9 @@ class RewriteFunction(RewriteBySignature):
         if self.is_null_regular:
             for cell in arguments.cells():
                 if isinstance(cell, LiteralCode) and cell.value is None:
-                    return LiteralCode(None, self.domain, self.code.binding)
+                    return LiteralCode(None, self.domain, self.code.flow)
         return FormulaCode(self.signature, self.domain,
-                           self.code.binding, **arguments)
+                           self.code.flow, **arguments)
 
 
 class RewriteSubstring(RewriteFunction):

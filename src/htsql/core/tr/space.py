@@ -8,7 +8,7 @@ from ..util import (maybe, listof, tupleof, Clonable, Hashable, Printable,
 from ..entity import TableEntity, ColumnEntity, Join
 from ..domain import Domain, BooleanDomain, ListDomain, IdentityDomain
 from ..error import point
-from .binding import Binding, QueryBinding, SegmentBinding
+from .flow import Flow, QueryFlow, SegmentFlow
 from .signature import Signature, Bag, Formula
 
 
@@ -21,7 +21,7 @@ class Expression(Hashable, Clonable, Printable):
     :class:`Code`).
 
     A space graph is an intermediate phase of the HTSQL translator.  It is
-    translated from the binding graph by the *encoding* process.  The space
+    translated from the flow graph by the *encoding* process.  The space
     graph is used to *compile* the term tree and then *assemble* the frame
     structure.
 
@@ -31,15 +31,15 @@ class Expression(Hashable, Clonable, Printable):
 
     Expression nodes support equality by value: that is, two expression
     nodes are equal if they are of the same type and all their (essential)
-    attributes are equal.  Some attributes (e.g. `binding`) are not
+    attributes are equal.  Some attributes (e.g. `flow`) are not
     considered essential and do not participate in comparison.  By-value
     semantics is respected when expression nodes are used as dictionary
     keys.
 
     The constructor arguments:
 
-    `binding` (:class:`htsql.core.tr.binding.Binding`)
-        The binding node that gave rise to the expression; should be used
+    `flow` (:class:`htsql.core.tr.flow.Flow`)
+        The flow node that gave rise to the expression; should be used
         only for presentation or error reporting.
 
     Other attributes:
@@ -56,11 +56,12 @@ class Expression(Hashable, Clonable, Printable):
         must be equal too.
     """
 
-    def __init__(self, binding):
-        assert isinstance(binding, Binding)
-        self.binding = binding
-        self.syntax = binding.syntax
-        point(self, binding)
+    def __init__(self, flow):
+        assert isinstance(flow, Flow)
+        self.flow = flow
+        self.binding = flow.binding
+        self.syntax = flow.binding.syntax
+        point(self, flow)
 
     def __str__(self):
         # Display the syntex node that gave rise to the expression.
@@ -75,10 +76,10 @@ class QueryExpr(Expression):
         The query segment.
     """
 
-    def __init__(self, segment, binding):
+    def __init__(self, segment, flow):
         assert isinstance(segment, maybe(SegmentCode))
-        assert isinstance(binding, QueryBinding)
-        super(QueryExpr, self).__init__(binding)
+        assert isinstance(flow, QueryFlow)
+        super(QueryExpr, self).__init__(flow)
         self.segment = segment
 
 
@@ -419,12 +420,12 @@ class Space(Expression):
     is_root = False
     is_commutative = True
 
-    def __init__(self, base, family, is_contracting, is_expanding, binding):
+    def __init__(self, base, family, is_contracting, is_expanding, flow):
         assert isinstance(base, maybe(Space))
         assert isinstance(family, Family)
         assert isinstance(is_contracting, bool)
         assert isinstance(is_expanding, bool)
-        super(Space, self).__init__(binding)
+        super(Space, self).__init__(flow)
         self.base = base
         self.family = family
         self.is_contracting = is_contracting
@@ -722,7 +723,7 @@ class RootSpace(Space):
     is_axis = True
     is_root = True
 
-    def __init__(self, base, binding):
+    def __init__(self, base, flow):
         # We keep `base` among constructor arguments despite it always being
         # equal to `None` to make
         #   space = space.clone(base=new_base)
@@ -735,7 +736,7 @@ class RootSpace(Space):
                     family=ScalarFamily(),
                     is_contracting=False,
                     is_expanding=False,
-                    binding=binding)
+                    flow=flow)
 
     def __basis__(self):
         return (self.base,)
@@ -755,13 +756,13 @@ class ScalarSpace(Space):
 
     is_axis = True
 
-    def __init__(self, base, binding):
+    def __init__(self, base, flow):
         super(ScalarSpace, self).__init__(
                     base=base,
                     family=ScalarFamily(),
                     is_contracting=True,
                     is_expanding=True,
-                    binding=binding)
+                    flow=flow)
 
     def __basis__(self):
         return (self.base,)
@@ -803,14 +804,14 @@ class DirectTableSpace(TableSpace):
         The table.
     """
 
-    def __init__(self, base, table, binding):
+    def __init__(self, base, table, flow):
         assert isinstance(base, Space) and base.family.is_scalar
         super(DirectTableSpace, self).__init__(
                     base=base,
                     family=TableFamily(table),
                     is_contracting=False,
                     is_expanding=False,
-                    binding=binding)
+                    flow=flow)
         self.table = table
 
     def __basis__(self):
@@ -840,7 +841,7 @@ class FiberTableSpace(TableSpace):
         The join condition.
     """
 
-    def __init__(self, base, join, binding):
+    def __init__(self, base, join, flow):
         assert isinstance(join, Join)
         # Check that the join origin is the table of the base space.
         assert isinstance(base, Space) and base.family.is_table
@@ -850,7 +851,7 @@ class FiberTableSpace(TableSpace):
                     family=TableFamily(join.target),
                     is_contracting=join.is_contracting,
                     is_expanding=join.is_expanding,
-                    binding=binding)
+                    flow=flow)
         self.join = join
 
     def __basis__(self):
@@ -897,7 +898,7 @@ class QuotientSpace(Space):
 
     is_axis = True
 
-    def __init__(self, base, seed, kernels, binding,
+    def __init__(self, base, seed, kernels, flow,
                  companions=[]):
         assert isinstance(base, Space)
         assert isinstance(seed, Space)
@@ -921,7 +922,7 @@ class QuotientSpace(Space):
                     family=QuotientFamily(seed, ground, kernels),
                     is_contracting=is_contracting,
                     is_expanding=is_expanding,
-                    binding=binding)
+                    flow=flow)
         self.seed = seed
         self.ground = ground
         self.kernels = kernels
@@ -967,7 +968,7 @@ class ComplementSpace(Space):
 
     is_axis = True
 
-    def __init__(self, base, binding, companions=[]):
+    def __init__(self, base, flow, companions=[]):
         assert isinstance(base, Space)
         assert base.family.is_quotient
         assert isinstance(companions, listof(Code))
@@ -976,7 +977,7 @@ class ComplementSpace(Space):
                     family=base.family.seed.family,
                     is_contracting=False,
                     is_expanding=True,
-                    binding=binding)
+                    flow=flow)
         self.seed = base.family.seed
         self.ground = base.family.ground
         self.kernels = base.family.kernels
@@ -1018,7 +1019,7 @@ class MonikerSpace(Space):
 
     is_axis = True
 
-    def __init__(self, base, seed, binding, companions=[]):
+    def __init__(self, base, seed, flow, companions=[]):
         assert isinstance(base, Space)
         assert isinstance(seed, Space)
         assert seed.spans(base)
@@ -1038,7 +1039,7 @@ class MonikerSpace(Space):
                     family=seed.family,
                     is_contracting=base.spans(seed),
                     is_expanding=seed.dominates(base),
-                    binding=binding)
+                    flow=flow)
         self.seed = seed
         self.ground = ground
         self.companions = companions
@@ -1083,7 +1084,7 @@ class ForkedSpace(Space):
 
     is_axis = True
 
-    def __init__(self, base, seed, kernels, binding, companions=[]):
+    def __init__(self, base, seed, kernels, flow, companions=[]):
         assert isinstance(base, Space)
         assert isinstance(seed, Space)
         assert isinstance(kernels, listof(Code))
@@ -1105,7 +1106,7 @@ class ForkedSpace(Space):
                     family=base.family,
                     is_contracting=is_contracting,
                     is_expanding=is_expanding,
-                    binding=binding)
+                    flow=flow)
         self.seed = seed
         self.ground = ground
         self.kernels = kernels
@@ -1151,7 +1152,7 @@ class AttachSpace(Space):
 
     is_axis = True
 
-    def __init__(self, base, seed, images, filter, binding, companions=[]):
+    def __init__(self, base, seed, images, filter, flow, companions=[]):
         assert isinstance(base, Space)
         assert isinstance(seed, Space)
         assert seed.spans(base)
@@ -1169,7 +1170,7 @@ class AttachSpace(Space):
                     family=seed.family,
                     is_contracting=False,
                     is_expanding=False,
-                    binding=binding)
+                    flow=flow)
         self.seed = seed
         self.ground = ground
         self.images = images
@@ -1191,7 +1192,7 @@ class ClippedSpace(Space):
 
     is_axis = True
 
-    def __init__(self, base, seed, limit, offset, binding, companions=[]):
+    def __init__(self, base, seed, limit, offset, flow, companions=[]):
         assert isinstance(base, Space)
         assert isinstance(seed, Space)
         assert seed.spans(base)
@@ -1214,7 +1215,7 @@ class ClippedSpace(Space):
                     family=seed.family,
                     is_contracting=is_contracting,
                     is_expanding=is_expanding,
-                    binding=binding)
+                    flow=flow)
         self.seed = seed
         self.ground = ground
         self.limit = limit
@@ -1238,7 +1239,7 @@ class LocatorSpace(AttachSpace):
 
     is_axis = True
 
-    def __init__(self, base, seed, images, filter, binding, companions=[]):
+    def __init__(self, base, seed, images, filter, flow, companions=[]):
         assert isinstance(base, Space)
         assert isinstance(seed, Space)
         assert isinstance(images, listof(tupleof(Code, Code)))
@@ -1267,7 +1268,7 @@ class LocatorSpace(AttachSpace):
                     family=seed.family,
                     is_contracting=is_contracting,
                     is_expanding=False,
-                    binding=binding)
+                    flow=flow)
         self.seed = seed
         self.images = images
         self.filter = filter
@@ -1293,7 +1294,7 @@ class FilteredSpace(Space):
         The predicate expression.
     """
 
-    def __init__(self, base, filter, binding):
+    def __init__(self, base, filter, flow):
         assert isinstance(filter, Code)
         assert isinstance(filter.domain, BooleanDomain)
         super(FilteredSpace, self).__init__(
@@ -1301,7 +1302,7 @@ class FilteredSpace(Space):
                     family=base.family,
                     is_contracting=True,
                     is_expanding=False,
-                    binding=binding)
+                    flow=flow)
         self.filter = filter
 
     def __basis__(self):
@@ -1344,7 +1345,7 @@ class OrderedSpace(Space):
     # and other functions.  Add class attribute `is_commutative`?
     # Or override `resembles` to return `True` only for equal nodes?
 
-    def __init__(self, base, order, limit, offset, binding):
+    def __init__(self, base, order, limit, offset, flow):
         assert isinstance(order, listof(tupleof(Code, int)))
         assert isinstance(limit, maybe(int))
         assert isinstance(offset, maybe(int))
@@ -1355,7 +1356,7 @@ class OrderedSpace(Space):
                     family=base.family,
                     is_contracting=True,
                     is_expanding=(limit is None and offset is None),
-                    binding=binding)
+                    flow=flow)
         self.order = order
         self.limit = limit
         self.offset = offset
@@ -1421,9 +1422,9 @@ class Code(Expression):
         The unit expressions of which the code is composed.
     """
 
-    def __init__(self, domain, binding):
+    def __init__(self, domain, flow):
         assert isinstance(domain, Domain)
-        super(Code, self).__init__(binding)
+        super(Code, self).__init__(flow)
         self.domain = domain
 
     @cachedproperty
@@ -1449,14 +1450,14 @@ class SegmentCode(Code):
         The output space of the segment.
     """
 
-    def __init__(self, root, space, code, binding):
+    def __init__(self, root, space, code, flow):
         assert isinstance(root, Space)
         assert isinstance(space, Space)
         assert isinstance(code, Code)
-        assert isinstance(binding, SegmentBinding)
+        assert isinstance(flow, SegmentFlow)
         super(SegmentCode, self).__init__(
                 domain=ListDomain(code.domain),
-                binding=binding)
+                flow=flow)
         self.root = root
         self.space = space
         self.code = code
@@ -1481,10 +1482,10 @@ class LiteralCode(Code):
         The value type.
     """
 
-    def __init__(self, value, domain, binding):
+    def __init__(self, value, domain, flow):
         super(LiteralCode, self).__init__(
                     domain=domain,
-                    binding=binding)
+                    flow=flow)
         self.value = value
 
     def __basis__(self):
@@ -1507,10 +1508,10 @@ class CastCode(Code):
         The target domain.
     """
 
-    def __init__(self, base, domain, binding):
+    def __init__(self, base, domain, flow):
         super(CastCode, self).__init__(
                     domain=domain,
-                    binding=binding)
+                    flow=flow)
         self.base = base
 
     def __basis__(self):
@@ -1525,11 +1526,11 @@ class CastCode(Code):
 
 class RecordCode(Code):
 
-    def __init__(self, fields, domain, binding):
+    def __init__(self, fields, domain, flow):
         assert isinstance(fields, listof(Code))
         super(RecordCode, self).__init__(
                 domain=domain,
-                binding=binding)
+                flow=flow)
         self.fields = fields
 
     def __basis__(self):
@@ -1550,12 +1551,12 @@ class RecordCode(Code):
 
 class IdentityCode(Code):
 
-    def __init__(self, fields, binding):
+    def __init__(self, fields, flow):
         assert isinstance(fields, listof(Code))
         domain = IdentityDomain([field.domain for field in fields])
         super(IdentityCode, self).__init__(
                 domain=domain,
-                binding=binding)
+                flow=flow)
         self.fields = fields
 
     def __basis__(self):
@@ -1570,12 +1571,12 @@ class IdentityCode(Code):
 
 class AnnihilatorCode(Code):
 
-    def __init__(self, code, indicator, binding):
+    def __init__(self, code, indicator, flow):
         assert isinstance(code, Code)
         assert isinstance(indicator, Unit)
         super(AnnihilatorCode, self).__init__(
                 domain=code.domain,
-                binding=binding)
+                flow=flow)
         self.code = code
         self.indicator = indicator
 
@@ -1607,17 +1608,17 @@ class FormulaCode(Formula, Code):
         Note that all the arguments become attributes of the node object.
     """
 
-    def __init__(self, signature, domain, binding, **arguments):
+    def __init__(self, signature, domain, flow, **arguments):
         assert isinstance(signature, Signature)
         # Check that the arguments match the formula signature.
         arguments = Bag(**arguments)
         assert arguments.admits(Code, signature)
         # The first two arguments are processed by the `Formula`
-        # constructor, the rest of them go to the `Binding` constructor.
+        # constructor, the rest of them go to the `Flow` constructor.
         super(FormulaCode, self).__init__(
                     signature, arguments,
                     domain=domain,
-                    binding=binding)
+                    flow=flow)
 
     def __basis__(self):
         return (self.signature, self.domain, self.arguments.freeze())
@@ -1689,11 +1690,11 @@ class Unit(Code):
     is_primitive = False
     is_compound = False
 
-    def __init__(self, space, domain, binding):
+    def __init__(self, space, domain, flow):
         assert isinstance(space, Space)
         super(Unit, self).__init__(
                     domain=domain,
-                    binding=binding)
+                    flow=flow)
         self.space = space
 
     @property
@@ -1737,12 +1738,12 @@ class CompoundUnit(Unit):
 
     is_compound = True
 
-    def __init__(self, code, space, domain, binding):
+    def __init__(self, code, space, domain, flow):
         assert isinstance(code, Code)
         super(CompoundUnit, self).__init__(
                     space=space,
                     domain=domain,
-                    binding=binding)
+                    flow=flow)
         self.code = code
 
     def get_segments(self):
@@ -1764,14 +1765,14 @@ class ColumnUnit(PrimitiveUnit):
         table must coincide with the column table.
     """
 
-    def __init__(self, column, space, binding):
+    def __init__(self, column, space, flow):
         assert isinstance(column, ColumnEntity)
         assert (space.family.is_table and
                 space.family.table == column.table)
         super(ColumnUnit, self).__init__(
                     space=space,
                     domain=column.domain,
-                    binding=binding)
+                    flow=flow)
         self.column = column
 
     def __basis__(self):
@@ -1815,13 +1816,13 @@ class ScalarUnit(CompoundUnit):
         the space graph and node comparison.
     """
 
-    def __init__(self, code, space, binding, companions=[]):
+    def __init__(self, code, space, flow, companions=[]):
         assert isinstance(companions, listof(Code))
         super(ScalarUnit, self).__init__(
                     code=code,
                     space=space,
                     domain=code.domain,
-                    binding=binding)
+                    flow=flow)
         self.companions = companions
 
     def __basis__(self):
@@ -1857,7 +1858,7 @@ class AggregateUnitBase(CompoundUnit):
         The space on which the unit is defined.
     """
 
-    def __init__(self, code, plural_space, space, binding):
+    def __init__(self, code, plural_space, space, flow):
         assert isinstance(code, Code)
         assert isinstance(plural_space, Space)
         # FIXME: consider lifting the requirement that the plural
@@ -1868,7 +1869,7 @@ class AggregateUnitBase(CompoundUnit):
                     code=code,
                     space=space,
                     domain=code.domain,
-                    binding=binding)
+                    flow=flow)
         self.plural_space = plural_space
 
     def __basis__(self):
@@ -1889,9 +1890,9 @@ class AggregateUnit(AggregateUnitBase):
         the space graph and node comparison.
     """
 
-    def __init__(self, code, plural_space, space, binding, companions=[]):
+    def __init__(self, code, plural_space, space, flow, companions=[]):
         assert isinstance(companions, listof(Code))
-        super(AggregateUnit, self).__init__(code, plural_space, space, binding)
+        super(AggregateUnit, self).__init__(code, plural_space, space, flow)
         self.companions = companions
 
 
@@ -1918,13 +1919,13 @@ class KernelUnit(CompoundUnit):
         The space of the quotient family on which the unit is defined.
     """
 
-    def __init__(self, code, space, binding):
+    def __init__(self, code, space, flow):
         assert space.family.is_quotient
         super(KernelUnit, self).__init__(
                     code=code,
                     space=space,
                     domain=code.domain,
-                    binding=binding)
+                    flow=flow)
 
     def __basis__(self):
         return (self.code, self.space)
@@ -1945,7 +1946,7 @@ class CoveringUnit(CompoundUnit):
         The space on which the unit is defined.
     """
 
-    def __init__(self, code, space, binding):
+    def __init__(self, code, space, flow):
         assert isinstance(space, (ComplementSpace,
                                  MonikerSpace,
                                  ForkedSpace,
@@ -1956,7 +1957,7 @@ class CoveringUnit(CompoundUnit):
                     code=code,
                     space=space,
                     domain=code.domain,
-                    binding=binding)
+                    flow=flow)
 
     def __basis__(self):
         return (self.code, self.space)
@@ -1965,7 +1966,7 @@ class CoveringUnit(CompoundUnit):
 class CorrelationCode(Code):
 
     def __init__(self, code):
-        super(CorrelationCode, self).__init__(code.domain, code.binding)
+        super(CorrelationCode, self).__init__(code.domain, code.flow)
         self.code = code
 
     def __basis__(self):

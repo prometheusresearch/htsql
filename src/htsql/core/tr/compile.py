@@ -556,7 +556,7 @@ class CompileQuery(Compile):
 
     def __call__(self):
         # Initialize the all state spaces with a root scalar space.
-        self.state.set_root(RootSpace(None, self.expression.binding))
+        self.state.set_root(RootSpace(None, self.expression.flow))
         # Compile the segment term.
         segment = None
         if self.expression.segment is not None:
@@ -914,13 +914,13 @@ class CompileQuotient(CompileSpace):
             filters = []
             for code in self.space.kernels:
                 filter = FormulaCode(IsNullSig(-1), coerce(BooleanDomain()),
-                                     code.binding, op=code)
+                                     code.flow, op=code)
                 filters.append(filter)
             if len(filters) == 1:
                 [filter] = filters
             else:
                 filter = FormulaCode(AndSig(), coerce(BooleanDomain()),
-                                     self.space.binding, ops=filters)
+                                     self.space.flow, ops=filters)
             # The final seed term.
             seed_term = FilterTerm(self.state.tag(), seed_term, filter,
                                    seed_term.space, seed_term.baseline,
@@ -941,17 +941,17 @@ class CompileQuotient(CompileSpace):
         # Clear out companions to avoid infinite recursion.
         quotient = self.backbone.clone(companions=[])
         # The plural space for the aggregates.
-        complement = ComplementSpace(quotient, self.space.binding)
+        complement = ComplementSpace(quotient, self.space.flow)
         # We can only inject aggregates if the seed term has the regular shape.
         if self.space.companions and is_regular:
             # We are going to disguise the seed term as a complement.
             # The routing table for the complement term.
             routes = {}
             for code in seed_term.routes:
-                unit = CoveringUnit(code, complement, code.binding)
+                unit = CoveringUnit(code, complement, code.flow)
                 routes[unit] = seed_term.tag
             for code in self.space.kernels:
-                unit = CoveringUnit(code, complement, code.binding)
+                unit = CoveringUnit(code, complement, code.flow)
                 routes[unit] = seed_term.tag
             for unit in spread(self.space.seed.inflate()):
                 routes[unit.clone(space=complement)] = seed_term.routes[unit]
@@ -1016,7 +1016,7 @@ class CompileQuotient(CompileSpace):
             # and the list of units.
             for joint in seed_joints:
                 basis.append(joint.rop)
-                unit = KernelUnit(joint.rop, self.backbone, joint.rop.binding)
+                unit = KernelUnit(joint.rop, self.backbone, joint.rop.flow)
                 units.append(unit)
                 joints.append(joint.clone(rop=unit))
 
@@ -1026,17 +1026,17 @@ class CompileQuotient(CompileSpace):
         # The units attaching the seed ground to the parent space.
         for lop, rop in tie(self.space.ground):
             basis.append(rop)
-            unit = KernelUnit(rop, self.backbone, rop.binding)
+            unit = KernelUnit(rop, self.backbone, rop.flow)
             units.append(unit)
         # The kernel expressions.
         for code in self.space.kernels:
             basis.append(code)
-            unit = KernelUnit(code, self.backbone, code.binding)
+            unit = KernelUnit(code, self.backbone, code.flow)
             units.append(unit)
         # Injected complement aggregates (regular case only).
         for code in aggregates:
             unit = AggregateUnit(code, complement, self.backbone,
-                                 code.binding)
+                                 code.flow)
             units.append(unit)
 
         # FIXME: incomplete; not reachable because we raise an error
@@ -1049,9 +1049,9 @@ class CompileQuotient(CompileSpace):
         # is added to the projection basis.
         if all(not code.units for code in self.space.kernels):
             basis_code = LiteralCode(True, coerce(BooleanDomain()),
-                                     self.space.binding)
+                                     self.space.flow)
             basis_unit = ScalarUnit(basis_code, self.space.seed,
-                                    basis_code.binding)
+                                    basis_code.flow)
             basis.append(basis_unit)
             routes = seed_term.routes.copy()
             routes[basis_unit] = seed_term.tag
@@ -1148,13 +1148,13 @@ class CompileComplement(CompileSpace):
             filters = []
             for code in self.space.kernels:
                 filter = FormulaCode(IsNullSig(-1), coerce(BooleanDomain()),
-                                     code.binding, op=code)
+                                     code.flow, op=code)
                 filters.append(filter)
             if len(filters) == 1:
                 [filter] = filters
             else:
                 filter = FormulaCode(AndSig(), coerce(BooleanDomain()),
-                                     self.space.binding, ops=filters)
+                                     self.space.flow, ops=filters)
             seed_term = FilterTerm(self.state.tag(), seed_term, filter,
                                    seed_term.space, seed_term.baseline,
                                    seed_term.routes.copy())
@@ -1203,7 +1203,7 @@ class CompileComplement(CompileSpace):
                 seed_joints = self.glue_terms(trunk_term, seed_term)
                 for joint in seed_joints:
                     unit = CoveringUnit(joint.rop, self.backbone,
-                                        joint.rop.binding)
+                                        joint.rop.flow)
                     joints.append(joint.clone(rop=unit))
                     # Make sure the joint is exported by the complement term.
                     covering_units.append(unit)
@@ -1224,15 +1224,15 @@ class CompileComplement(CompileSpace):
 
         # Wrap everything produced by the seed term.
         for code in seed_term.routes:
-            unit = CoveringUnit(code, self.backbone, code.binding)
+            unit = CoveringUnit(code, self.backbone, code.flow)
             covering_units.append(unit)
         # Ensure we export serial ties.
         for lop, rop in tie(self.space.ground):
-            unit = CoveringUnit(rop, self.backbone, rop.binding)
+            unit = CoveringUnit(rop, self.backbone, rop.flow)
             covering_units.append(unit)
         # Export the kernel and any requested companion units.
         for code in self.space.kernels + self.space.companions:
-            unit = CoveringUnit(code, self.backbone, code.binding)
+            unit = CoveringUnit(code, self.backbone, code.flow)
             covering_units.append(unit)
 
         # Generate the routing table and the complement term.
@@ -1394,7 +1394,7 @@ class CompileCovering(CompileSpace):
                 seed_joints = self.glue_terms(trunk_term, shoot_term)
             for joint in seed_joints:
                 unit = CoveringUnit(joint.rop, self.backbone,
-                                    joint.rop.binding)
+                                    joint.rop.flow)
                 joints.append(joint.clone(rop=unit))
             # Append regular joints.
             joints += tie(self.space)
@@ -1415,14 +1415,14 @@ class CompileCovering(CompileSpace):
 
         # Wrap everything produced by the seed term.
         for code in seed_term.routes:
-            unit = CoveringUnit(code, self.backbone, code.binding)
+            unit = CoveringUnit(code, self.backbone, code.flow)
             units.append(unit)
         # Ensure we can satisfy the joints.
         for joint in joints:
             units.append(joint.rop)
         # Export any requested companion units and other generated codes.
         for code in codes:
-            unit = CoveringUnit(code, self.backbone, code.binding)
+            unit = CoveringUnit(code, self.backbone, code.flow)
             units.append(unit)
 
         # Generate the routing table and the covering term.
@@ -1463,13 +1463,13 @@ class CompileCovering(CompileSpace):
         ops = []
         for code, direction in order:
             op = FormulaCode(SortDirectionSig(direction=direction),
-                             code.domain, code.binding, base=code)
+                             code.domain, code.flow, base=code)
             ops.append(op)
         row_number_code = FormulaCode(RowNumberSig(), coerce(IntegerDomain()),
-                                      self.space.binding,
+                                      self.space.flow,
                                       partition=partition, order=ops)
         row_number_unit = ScalarUnit(row_number_code, term.space.base,
-                                     term.space.binding)
+                                     term.space.flow)
         tag = self.state.tag()
         routes = term.routes.copy()
         routes[row_number_unit] = tag
@@ -1481,17 +1481,17 @@ class CompileCovering(CompileSpace):
         if self.space.limit is not None:
             right_bound = left_bound+self.space.limit
         left_bound_code = LiteralCode(left_bound, coerce(IntegerDomain()),
-                                      term.space.binding)
+                                      term.space.flow)
         right_bound_code = LiteralCode(right_bound, coerce(IntegerDomain()),
-                                       term.space.binding)
+                                       term.space.flow)
         left_filter = FormulaCode(CompareSig('>='), coerce(BooleanDomain()),
-                                  term.space.binding,
+                                  term.space.flow,
                                   lop=row_number_unit, rop=left_bound_code)
         right_filter = FormulaCode(CompareSig('<'), coerce(BooleanDomain()),
-                                   term.space.binding,
+                                   term.space.flow,
                                    lop=row_number_unit, rop=right_bound_code)
         filter = FormulaCode(AndSig(), coerce(BooleanDomain()),
-                             term.space.binding,
+                             term.space.flow,
                              ops=[left_filter, right_filter])
         return FilterTerm(self.state.tag(), term, filter,
                           term.space, term.baseline, term.routes.copy())
@@ -1643,7 +1643,7 @@ class InjectScalar(Inject):
         # and the units suggested be injected together with it.
         units = [self.unit]
         for code in self.unit.companions:
-            companion_unit = ScalarUnit(code, self.space, code.binding)
+            companion_unit = ScalarUnit(code, self.space, code.flow)
             # This test rarely fails since injecting any of the companions
             # injects the whole group.
             if companion_unit not in self.term.routes:
@@ -1730,7 +1730,7 @@ class InjectAggregate(Inject):
         units = [self.unit]
         for code in self.unit.companions:
             companion_unit = AggregateUnit(code, self.plural_space,
-                                           self.space, code.binding)
+                                           self.space, code.flow)
             # This test rarely fails since injecting any of the companions
             # injects the whole group.
             if companion_unit not in self.term.routes:
@@ -1794,14 +1794,14 @@ class InjectAggregate(Inject):
         # FIXME: should the kernel of the quotient be `basis`?
         projected_space = QuotientSpace(self.space.inflate(),
                                       self.plural_space, [],
-                                      self.expression.binding)
+                                      self.expression.flow)
         # The routing table of the projected term and join conditions
         # connecting the projected term to the unit term.
         tag = self.state.tag()
         joints = []
         routes = {}
         for joint in unit_joints:
-            rop = KernelUnit(joint.rop, projected_space, joint.rop.binding)
+            rop = KernelUnit(joint.rop, projected_space, joint.rop.flow)
             routes[rop] = tag
             joints.append(joint.clone(rop=rop))
 
@@ -1890,7 +1890,7 @@ class InjectCorrelated(Inject):
             correlations.append(lop)
             lop = CorrelationCode(lop)
             filter = FormulaCode(IsEqualSig(+1), coerce(BooleanDomain()),
-                                 self.space.binding, lop=lop, rop=rop)
+                                 self.space.flow, lop=lop, rop=rop)
             filters.append(filter)
         if len(filters) == 0:
             filter = None
@@ -1898,7 +1898,7 @@ class InjectCorrelated(Inject):
             [filter] = filters
         else:
             filter = FormulaCode(AndSig(), coerce(BooleanDomain()),
-                                 self.space.binding, ops=filters)
+                                 self.space.flow, ops=filters)
         if filter is not None:
             plural_term = FilterTerm(self.state.tag(), plural_term, filter,
                                      plural_term.space, plural_term.baseline,

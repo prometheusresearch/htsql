@@ -11,8 +11,8 @@ from htsql.core.tr.fn.encode import EncodeContains
 class MSSQLEncodeContains(EncodeContains):
 
     def __call__(self):
-        lop = self.state.encode(self.binding.lop)
-        rop = self.state.encode(self.binding.rop)
+        lop = self.state.encode(self.flow.lop)
+        rop = self.state.encode(self.flow.rop)
         if isinstance(rop, LiteralCode):
             if rop.value is not None:
                 value = (u"%" + rop.value.replace(u"\\", u"\\\\")
@@ -22,36 +22,36 @@ class MSSQLEncodeContains(EncodeContains):
                                          .replace(u"_", u"\\_") + u"%")
                 rop = rop.clone(value=value)
         else:
-            backslash_literal = LiteralCode(u"\\", rop.domain, self.binding)
-            xbackslash_literal = LiteralCode(u"\\\\", rop.domain, self.binding)
-            lbracket_literal = LiteralCode(u"[", rop.domain, self.binding)
-            xlbracket_literal = LiteralCode(u"\\[", rop.domain, self.binding)
-            rbracket_literal = LiteralCode(u"]", rop.domain, self.binding)
-            xrbracket_literal = LiteralCode(u"\\]", rop.domain, self.binding)
-            percent_literal = LiteralCode(u"%", rop.domain, self.binding)
-            xpercent_literal = LiteralCode(u"\\%", rop.domain, self.binding)
-            underscore_literal = LiteralCode(u"_", rop.domain, self.binding)
-            xunderscore_literal = LiteralCode(u"\\_", rop.domain, self.binding)
-            rop = FormulaCode(ReplaceSig(), rop.domain, self.binding,
+            backslash_literal = LiteralCode(u"\\", rop.domain, self.flow)
+            xbackslash_literal = LiteralCode(u"\\\\", rop.domain, self.flow)
+            lbracket_literal = LiteralCode(u"[", rop.domain, self.flow)
+            xlbracket_literal = LiteralCode(u"\\[", rop.domain, self.flow)
+            rbracket_literal = LiteralCode(u"]", rop.domain, self.flow)
+            xrbracket_literal = LiteralCode(u"\\]", rop.domain, self.flow)
+            percent_literal = LiteralCode(u"%", rop.domain, self.flow)
+            xpercent_literal = LiteralCode(u"\\%", rop.domain, self.flow)
+            underscore_literal = LiteralCode(u"_", rop.domain, self.flow)
+            xunderscore_literal = LiteralCode(u"\\_", rop.domain, self.flow)
+            rop = FormulaCode(ReplaceSig(), rop.domain, self.flow,
                               op=rop, old=backslash_literal,
                               new=xbackslash_literal)
-            rop = FormulaCode(ReplaceSig(), rop.domain, self.binding,
+            rop = FormulaCode(ReplaceSig(), rop.domain, self.flow,
                               op=rop, old=lbracket_literal,
                               new=xlbracket_literal)
-            rop = FormulaCode(ReplaceSig(), rop.domain, self.binding,
+            rop = FormulaCode(ReplaceSig(), rop.domain, self.flow,
                               op=rop, old=rbracket_literal,
                               new=xrbracket_literal)
-            rop = FormulaCode(ReplaceSig(), rop.domain, self.binding,
+            rop = FormulaCode(ReplaceSig(), rop.domain, self.flow,
                               op=rop, old=percent_literal,
                               new=xpercent_literal)
-            rop = FormulaCode(ReplaceSig(), rop.domain, self.binding,
+            rop = FormulaCode(ReplaceSig(), rop.domain, self.flow,
                               op=rop, old=underscore_literal,
                               new=xunderscore_literal)
-            rop = FormulaCode(ConcatenateSig(), rop.domain, self.binding,
+            rop = FormulaCode(ConcatenateSig(), rop.domain, self.flow,
                               lop=percent_literal, rop=rop)
-            rop = FormulaCode(ConcatenateSig(), rop.domain, self.binding,
+            rop = FormulaCode(ConcatenateSig(), rop.domain, self.flow,
                               lop=rop, rop=percent_literal)
         return FormulaCode(self.signature.clone_to(LikeSig),
-                           self.domain, self.binding, lop=lop, rop=rop)
+                           self.domain, self.flow, lop=lop, rop=rop)
 
 

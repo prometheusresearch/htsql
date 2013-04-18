@@ -19,7 +19,7 @@ class ConvertINet(Convert):
 
     def __call__(self):
         return CastCode(self.state.encode(self.base), self.domain,
-                        self.binding)
+                        self.flow)
 
 
 class ConvertINetToINet(Convert):

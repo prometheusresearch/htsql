@@ -45,7 +45,7 @@ class SQLiteCompileCovering(CompileCovering):
             lop = CorrelationCode(code)
             rop = code
             filter = FormulaCode(IsEqualSig(+1), coerce(BooleanDomain()),
-                                 self.space.binding, lop=lop, rop=rop)
+                                 self.space.flow, lop=lop, rop=rop)
             filters.append(filter)
         if len(filters) == 0:
             filter = None
@@ -53,7 +53,7 @@ class SQLiteCompileCovering(CompileCovering):
             [filter] = filters
         else:
             filter = FormulaCode(AndSig(), coerce(BooleanDomain()),
-                                 self.space.binding, ops=filters)
+                                 self.space.flow, ops=filters)
         if filter is not None:
             kid = FilterTerm(self.state.tag(), kid, filter,
                              kid.space, kid.baseline, kid.routes.copy())
@@ -63,7 +63,7 @@ class SQLiteCompileCovering(CompileCovering):
                               kid.space, kid.baseline, kid.routes.copy())
         if len(key) == 1:
             lop = rop = key[0]
-            rop = ScalarUnit(rop, kid.space, kid.space.binding)
+            rop = ScalarUnit(rop, kid.space, kid.space.flow)
         else:
             filters = []
             for code in key:
@@ -71,20 +71,20 @@ class SQLiteCompileCovering(CompileCovering):
                 lop = CorrelationCode(code)
                 rop = code
                 filter = FormulaCode(IsEqualSig(+1), coerce(BooleanDomain()),
-                                 self.space.binding, lop=lop, rop=rop)
+                                 self.space.flow, lop=lop, rop=rop)
                 filters.append(filter)
             filter = FormulaCode(AndSig(), coerce(BooleanDomain()),
-                                 self.space.binding, ops=filters)
+                                 self.space.flow, ops=filters)
             lop = LiteralCode(True, coerce(BooleanDomain()),
-                              self.space.binding)
-            rop = ScalarUnit(filter, kid.space, kid.space.binding)
+                              self.space.flow)
+            rop = ScalarUnit(filter, kid.space, kid.space.flow)
         routes = term.routes.copy()
         routes[rop] = kid.tag
         kid = EmbeddingTerm(self.state.tag(), term, kid,
                             correlations,
                             term.space, term.baseline, routes)
         filter = FormulaCode(IsAnySig(+1), coerce(BooleanDomain()),
-                             self.space.binding, lop=lop, rop=rop)
+                             self.space.flow, lop=lop, rop=rop)
         return FilterTerm(self.state.tag(), kid, filter,
                           kid.space, kid.baseline, term.routes.copy())
 
