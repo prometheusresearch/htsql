@@ -21,7 +21,8 @@ class ProduceFetch(Act):
         if isinstance(self.action, SafeProduceAction):
             cut = self.action.cut
         pipe = translate(self.command.syntax, self.action.environment, cut)
-        return pipe()
+        output = pipe()(None)
+        return output
 
 
 class AnalyzeFetch(Act):
@@ -30,7 +31,7 @@ class AnalyzeFetch(Act):
 
     def __call__(self):
         pipe = translate(self.command.syntax, self.action.environment)
-        return pipe.plan
+        return pipe
 
 
 class ProduceSkip(Act):
@@ -47,18 +48,12 @@ class RenderSQL(Act):
     adapt(SQLCmd, RenderAction)
 
     def __call__(self):
-        plan = analyze(self.command.feed)
+        pipe = analyze(self.command.feed)
         status = '200 OK'
         headers = [('Content-Type', 'text/plain; charset=UTF-8')]
         body = []
-        if plan.statement:
-            queue = [plan.statement]
-            while queue:
-                statement = queue.pop(0)
-                if body:
-                    body.append("\n")
-                body.append(statement.sql.encode('utf-8'))
-                queue.extend(statement.substatements)
+        if 'sql' in pipe.properties:
+            body.append(pipe.properties['sql'].encode('utf-8'))
         return (status, headers, body)
 
 

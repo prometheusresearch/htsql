@@ -407,14 +407,8 @@ class RenderProduceAnalyze(Act):
         yield JS_END
 
     def render_sql(self, plan):
-        if plan.statement is not None:
-            sql = []
-            queue = [plan.statement]
-            while queue:
-                statement = queue.pop(0)
-                sql.append(statement.sql)
-                queue.extend(statement.substatements)
-            sql = u"\n".join(sql)
+        if 'sql' in plan.properties:
+            sql = plan.properties['sql']
         else:
             sql = u""
         yield JS_MAP

@@ -18,6 +18,7 @@ from ..error import point
 from .coerce import coerce
 from .space import Expression
 from .term import Term, QueryTerm
+from .pipe import Pipe
 from .signature import Signature, Bag, Formula
 
 
@@ -302,11 +303,14 @@ class SegmentFrame(BranchFrame):
 
     def __init__(self, include, embed, select, where,
                  group, having, order, limit, offset,
-                 subtrees, term):
+                 mix_pipe, subtrees, term):
+        assert isinstance(mix_pipe, maybe(Pipe))
         assert isinstance(subtrees, listof(SegmentFrame))
+        assert bool(mix_pipe) == bool(subtrees)
         super(SegmentFrame, self).__init__(include, embed, select, where,
                                            group, having, order, limit, offset,
                                            term)
+        self.mix_pipe = mix_pipe
         self.subtrees = subtrees
 
 
@@ -385,12 +389,13 @@ class QueryFrame(Clause):
         The query segment.
     """
 
-    def __init__(self, segment, compose, term):
+    def __init__(self, segment, value_pipe, term):
         assert isinstance(segment, maybe(SegmentFrame))
+        assert isinstance(value_pipe, maybe(Pipe))
         assert isinstance(term, QueryTerm)
         super(QueryFrame, self).__init__(term.expression)
         self.segment = segment
-        self.compose = compose
+        self.value_pipe = value_pipe
         self.term = term
 
 

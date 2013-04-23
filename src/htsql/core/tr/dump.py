@@ -27,7 +27,8 @@ from .signature import (Signature, isformula, IsEqualSig, IsTotallyEqualSig,
                         IsInSig, IsNullSig, IfNullSig, NullIfSig, CompareSig,
                         AndSig, OrSig, NotSig, SortDirectionSig, RowNumberSig,
                         ToPredicateSig, FromPredicateSig, PlaceholderSig)
-from .plan import Plan, Statement
+from .pipe import SQLPipe, RecordPipe, ComposePipe, ProducePipe
+from ..connect import unscramble
 import StringIO
 import re
 import math
@@ -165,6 +166,7 @@ class SerializingState(object):
         # The active serializing hints and directives.
         self.hook = None
         self.placeholders = {}
+        self.sql = None
 
     def set_tree(self, frame):
         """
@@ -299,13 +301,11 @@ class SerializeQuery(Serialize):
     def __call__(self):
         # When exists, serialize the query segment.
         profile = self.clause.binding.profile
-        compose = self.clause.compose
-        statement = None
-        if self.clause.segment is not None:
-            statement = self.state.serialize(self.clause.segment)
-
-        # Produce an execution plan.
-        return Plan(profile, statement, compose)
+        sql_pipe = self.state.serialize(self.clause.segment)
+        value_pipe = self.clause.value_pipe
+        pipe = ComposePipe(sql_pipe, value_pipe)
+        pipe = ProducePipe(profile, pipe, sql=self.state.sql)
+        return pipe
 
 
 class SerializeSegment(Serialize):
@@ -335,10 +335,29 @@ class SerializeSegment(Serialize):
         # Retrieve and return the generated SQL.
         placeholders = self.state.placeholders
         sql = self.state.flush()
-        domains = [phrase.domain for phrase in self.clause.select]
-        substatements = [self.state.serialize(subframe)
-                         for subframe in self.clause.subtrees]
-        return Statement(sql, domains, substatements, placeholders)
+        accumulated_sql = sql.splitlines()
+        input_domains = None
+        if placeholders:
+            input_domains = []
+            for index in sorted(placeholders):
+                input_domains.append(placeholders[index])
+        output_domains = [phrase.domain for phrase in self.clause.select]
+        pipe = SQLPipe(sql, input_domains, output_domains)
+        if self.clause.subtrees:
+            subpipes = []
+            for subframe in self.clause.subtrees:
+                subpipe = self.state.serialize(subframe)
+                subpipes.append(subpipe)
+                accumulated_sql.append(u"")
+                for line in self.state.sql.splitlines():
+                    if line:
+                        accumulated_sql.append(u"  "+line)
+                    else:
+                        accumulated_sql.append(u"")
+            pipe = RecordPipe([pipe]+subpipes)
+            pipe = ComposePipe(pipe, self.clause.mix_pipe)
+        self.state.sql = u"\n".join(accumulated_sql)+"\n"
+        return pipe
 
     def aliasing(self, frame=None,
                  taken_select_aliases=None,
@@ -1245,8 +1264,8 @@ class DumpSegment(Dump):
     def __call__(self):
         super(DumpSegment, self).__call__()
         # FIXME: add a semicolon?
-        # Make sure the statement ends with a new line.
-        self.newline()
+        ## Make sure the statement ends with a new line.
+        #self.newline()
 
 
 class DumpLeadingAnchor(Dump):

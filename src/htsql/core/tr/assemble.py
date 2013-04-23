@@ -17,6 +17,8 @@ from .term import (PreTerm, Term, UnaryTerm, BinaryTerm, TableTerm, ScalarTerm,
 from .frame import (ScalarFrame, TableFrame, NestedFrame, SegmentFrame,
         QueryFrame, LiteralPhrase, TruePhrase, CastPhrase, ColumnPhrase,
         ReferencePhrase, EmbeddingPhrase, FormulaPhrase, Anchor, LeadingAnchor)
+from .pipe import (ValuePipe, ExtractPipe, RecordPipe, MixPipe, ComposePipe,
+        AnnihilatePipe, IteratePipe, SinglePipe)
 from .signature import (Signature, IsEqualSig, IsTotallyEqualSig, IsInSig,
         IsNullSig, NullIfSig, IfNullSig, CompareSig, AndSig, OrSig, NotSig,
         SortDirectionSig, ToPredicateSig, FromPredicateSig)
@@ -200,6 +202,9 @@ class AssemblingState(object):
     def pop_segment(self):
         self.segment = self.segment_stack.pop()
 
+    def reset_shift(self, term):
+        self.shift_by_term[term] = 0
+
     def save_subterms(self, term, subterms):
         assert isinstance(term, maybe(SegmentTerm))
         assert isinstance(subterms, listof(SegmentTerm))
@@ -220,14 +225,20 @@ class AssemblingState(object):
         assert isinstance(stencils, listof(listof(int))) and len(stencils) == 3
         self.stencils_by_term[term] = stencils
 
-    def get_code_stencil(self):
-        return self.stencils_by_term[self.segment][0]
+    def get_code_stencil(self, term=None):
+        if term is None:
+            term = self.segment
+        return self.stencils_by_term[term][0]
 
-    def get_superkey_stencil(self):
-        return self.stencils_by_term[self.segment][1]
+    def get_superkey_stencil(self, term=None):
+        if term is None:
+            term = self.segment
+        return self.stencils_by_term[term][1]
 
-    def get_key_stencil(self):
-        return self.stencils_by_term[self.segment][2]
+    def get_key_stencil(self, term=None):
+        if term is None:
+            term = self.segment
+        return self.stencils_by_term[term][2]
 
     def get_next_index(self):
         stencil = self.get_code_stencil()
@@ -235,8 +246,8 @@ class AssemblingState(object):
         self.shift_by_term[self.segment] += 1
         return index
 
-    def decompose(self, code):
-        return Decompose.__invoke__(code, self)
+    def compose(self, code):
+        return Compose.__invoke__(code, self)
 
     def set_tree(self, term):
         """
@@ -1176,7 +1187,9 @@ class AssembleSegment(Assemble):
         return select
 
     def assemble_subtrees(self):
+        subterms = []
         subtrees = []
+        locations = []
         duplicates = set()
         for code in self.term.code.code.segments:
             if code in duplicates:
@@ -1184,22 +1197,42 @@ class AssembleSegment(Assemble):
             duplicates.add(code)
             subterm = self.term.subtrees[code]
             location = len(subtrees)
+            subterms.append(subterm)
             self.state.set_tree(subterm)
-            self.state.save_location(subterm, location)
+            locations.append((subterm, location))
             subframe = self.state.assemble(subterm)
             subtrees.append(subframe)
-        self.state.save_subterms(self.term,
-                                 [frame.term for frame in subtrees])
+        for subterm, location in locations:
+            location -= len(locations)
+            self.state.save_location(subterm, location)
+        self.state.save_subterms(self.term, subterms)
         return subtrees
 
     def assemble_frame(self, include, embed, select,
                        where, group, having,
                        order, limit, offset):
         subtrees = self.assemble_subtrees()
+        mix_pipe = None
+        if subtrees:
+            key_pipes = []
+            stencils = []
+            stencils.append(self.state.get_key_stencil(self.term))
+            for subframe in subtrees:
+                stencils.append(self.state.get_superkey_stencil(subframe.term))
+            for stencil in stencils:
+                if len(stencil) == 0:
+                    key_pipe = ValuePipe(True)
+                elif len(stencil) == 1:
+                    key_pipe =  ExtractPipe(stencil[0])
+                else:
+                    key_pipe = RecordPipe([ExtractPipe(index)
+                                           for index in stencil])
+                key_pipes.append(key_pipe)
+            mix_pipe = MixPipe(key_pipes)
         return SegmentFrame(include, embed, select,
                            where, group, having,
                            order, limit, offset,
-                           subtrees, self.term)
+                           mix_pipe, subtrees, self.term)
 
 
 class AssembleQuery(Assemble):
@@ -1212,21 +1245,21 @@ class AssembleQuery(Assemble):
     def __call__(self):
         # Compile the segment frame.
         segment = None
-        compose = None
+        value_pipe = None
         if self.term.segment is not None:
             # Initialize the state.
             self.state.set_tree(self.term.segment)
             self.state.save_location(self.term.segment, None)
             self.state.save_subterms(None, [self.term.segment])
+            self.state.push_name(self.term.binding.profile.tag)
             # Compile the segment.
             segment = self.state.assemble(self.term.segment)
             # Generate the compositor.
-            self.state.push_name(self.term.binding.profile.tag)
-            compose = self.state.decompose(self.term.segment.code)
+            value_pipe = self.state.compose(self.term.segment.code)
             # Clean up the state.
             self.state.flush()
         # Generate a frame node.
-        return QueryFrame(segment, compose, self.term)
+        return QueryFrame(segment, value_pipe, self.term)
 
 
 class Evaluate(Adapter):
@@ -1497,7 +1530,7 @@ class EvaluateUnit(Evaluate):
         return self.state.phrases_by_claim[claim]
 
 
-class Decompose(Adapter):
+class Compose(Adapter):
 
     adapt(Code)
 
@@ -1509,136 +1542,85 @@ class Decompose(Adapter):
 
     def __call__(self):
         index = self.state.get_next_index()
-        def compose_value(row, stream, index=index):
-            return row[index]
-        return compose_value
+        return ExtractPipe(index)
 
 
-class DecomposeSegment(Decompose):
+class ComposeSegment(Compose):
 
     adapt(SegmentCode)
 
     def __call__(self):
-        if self.state.segment is None:
-            self.state.push_segment(self.code)
-            compose_code = self.state.decompose(self.code.code)
-            self.state.pop_segment()
-            is_single = (isinstance(self.code.binding, WeakSegmentBinding))
-            if not is_single:
-                def compose_root_segment(row, stream,
-                                         compose_code=compose_code):
-                    items = []
-                    for row in stream:
-                        items.append(compose_code(row, stream))
-                    return items
-                return compose_root_segment
-            else:
-                def compose_root_value(row, stream,
-                                       compose_code=compose_code):
-                    items = []
-                    for row in stream:
-                        items.append(compose_code(row, stream))
-                    assert len(items) <= 1
-                    if items:
-                        return items[0]
-                    else:
-                        return None
-                return compose_root_value
-        else:
-            key_stencil = self.state.get_key_stencil()
-            self.state.push_segment(self.code)
-            location = self.state.get_location()
-            superkey_stencil = self.state.get_superkey_stencil()
-            compose_code = self.state.decompose(self.code.code)
-            self.state.pop_segment()
-            def compose_nested_segment(row, stream, compose_code=compose_code,
-                                       location=location,
-                                       key_stencil=key_stencil,
-                                       superkey_stencil=superkey_stencil):
-                items = []
-                key = stream.get(key_stencil)
-                substream = stream.substreams[location]
-                for row in substream.slice(superkey_stencil, key):
-                    items.append(compose_code(row, substream))
-                return items
-            return compose_nested_segment
+        self.state.push_segment(self.code)
+        location = self.state.get_location()
+        pipe = self.state.compose(self.code.code)
+        pipe = IteratePipe(pipe)
+        self.state.pop_segment()
+        is_single = (isinstance(self.code.binding, WeakSegmentBinding))
+        if is_single:
+            pipe = ComposePipe(pipe, SinglePipe())
+        if location is not None:
+            pick_pipe = ExtractPipe(location)
+            pipe = ComposePipe(pick_pipe, pipe)
+        return pipe
 
 
-class DecomposeCompound(Decompose):
+class ComposeCompound(Compose):
 
     adapt(CompoundUnit)
 
     def __call__(self):
-        return self.state.decompose(self.code.code)
+        return self.state.compose(self.code.code)
 
 
-class DecomposeLiteral(Decompose):
+class ComposeLiteral(Compose):
 
     adapt(LiteralCode)
 
     def __call__(self):
         if not isinstance(self.code.domain, UntypedDomain):
-            return super(DecomposeLiteral, self).__call__()
-        def compose_untyped(row, stream, value=self.code.value):
-            return value
-        return compose_untyped
+            return super(ComposeLiteral, self).__call__()
+        return ValuePipe(self.code.value)
 
 
-class DecomposeRecord(Decompose):
+class ComposeRecord(Compose):
 
     adapt(RecordCode)
 
     def __call__(self):
-        compose_fields = []
+        field_pipes = []
         field_names = []
         for field, profile in zip(self.code.fields,
                                   self.code.domain.fields):
             field_names.append(profile.tag)
             self.state.push_name(profile.tag)
-            compose_field = self.state.decompose(field)
+            field_pipe = self.state.compose(field)
             self.state.pop_name()
-            compose_fields.append(compose_field)
+            field_pipes.append(field_pipe)
         record_class = Record.make(self.state.name, field_names)
-        def compose_record(row, stream, record_class=record_class,
-                           compose_fields=compose_fields):
-            return record_class(compose_field(row, stream)
-                                for compose_field in compose_fields)
-        return compose_record
+        return RecordPipe(field_pipes, record_class)
 
 
-class DecomposeIdentity(Decompose):
+class ComposeIdentity(Compose):
 
     adapt(IdentityCode)
 
     def __call__(self):
-        compose_fields = []
+        field_pipes = []
         for field in self.code.fields:
-            compose_field = self.state.decompose(field)
-            compose_fields.append(compose_field)
-        # FIXME: a reference leak?
+            field_pipe = self.state.compose(field)
+            field_pipes.append(field_pipe)
         id_class = ID.make(self.code.domain.dump)
-        def compose_identity(row, stream, compose_fields=compose_fields,
-                             id_class=id_class):
-            return id_class(compose_field(row, stream)
-                            for compose_field in compose_fields)
-        return compose_identity
+        return RecordPipe(field_pipes, id_class)
 
 
-class DecomposeAnnihilator(Decompose):
+class ComposeAnnihilator(Compose):
 
     adapt(AnnihilatorCode)
 
     def __call__(self):
-        compose_indicator = self.state.decompose(self.code.indicator)
-        compose = self.state.decompose(self.code.code)
-        def compose_nullable(row, stream,
-                             compose_indicator=compose_indicator,
-                             compose=compose):
-            value = compose(row, stream)
-            if compose_indicator(row, stream) is None:
-                return None
-            return value
-        return compose_nullable
+        test_pipe = self.state.compose(self.code.indicator)
+        pipe = self.state.compose(self.code.code)
+        return AnnihilatePipe(test_pipe, pipe)
 
 
 def assemble(term, state=None):

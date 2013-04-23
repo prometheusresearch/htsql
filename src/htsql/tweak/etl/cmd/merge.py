@@ -94,7 +94,7 @@ class ResolveKeyPipe(object):
             for idx in leaf:
                 raw_value = raw_value[idx]
             raw_values.append(raw_value)
-        product = self.pipe(raw_values)
+        product = self.pipe()(raw_values)
         data = product.data
         assert len(data) <= 1
         if data:

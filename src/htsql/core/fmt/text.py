@@ -20,6 +20,7 @@ from ..domain import (Domain, BooleanDomain, NumberDomain, IntegerDomain,
         DecimalDomain, FloatDomain, TextDomain, EnumDomain, DateDomain,
         TimeDomain, DateTimeDomain, ListDomain, RecordDomain, UntypedDomain,
         VoidDomain, OpaqueDomain, Profile)
+from ..tr.pipe import SQLPipe
 import re
 import decimal
 import datetime
@@ -150,22 +151,18 @@ class EmitText(Emit):
                 line.append(u" :\n")
             yield u"".join(line)
         yield u"\n"
-        if (addon.debug and self.meta.plan is not None and
-                self.meta.plan.statement is not None):
+        if addon.debug and (self.meta.syntax or hasattr(self.product, 'sql')):
             yield u" ----\n"
             if self.meta.syntax:
                 yield u" %s\n" % self.meta.syntax
-            queue = [(0, self.meta.plan.statement)]
-            while queue:
-                depth, statement = queue.pop(0)
+            if hasattr(self.product, 'sql'):
                 sql = re.sub(ur'[\0-\x09\x0b-\x1f\x7f]', u'\ufffd',
-                             statement.sql)
-                if depth:
-                    yield u"\n"
+                             self.product.sql)
                 for line in sql.splitlines():
-                    yield u" "*(depth*2+1) + u"%s\n" % line
-                for substatement in statement.substatements:
-                    queue.append((depth+1, substatement))
+                    if line:
+                        yield u" %s\n" % line
+                    else:
+                        yield u"\n"
 
 
 class ToText(Adapter):

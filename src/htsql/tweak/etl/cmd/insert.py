@@ -395,7 +395,7 @@ class ResolveIdentityPipe(object):
         self.pipe = pipe
 
     def __call__(self, row):
-        product = self.pipe(row)
+        product = self.pipe()(row)
         data = product.data
         if len(data) != 1:
             raise Error("Unable to locate the inserted record")
@@ -459,7 +459,7 @@ class BuildResolveIdentity(Utility):
         profile = decorate(binding)
         binding = QueryBinding(state.scope, binding, profile, syntax)
         pipe = translate(binding)
-        profile = pipe.profile
+        profile = pipe.meta
         if not self.is_list:
             profile = profile.clone(domain=profile.domain.item_domain)
         return ResolveIdentityPipe(profile, pipe)
@@ -483,7 +483,7 @@ class ResolveChainPipe(object):
             for idx in leaf:
                 raw_value = raw_value[idx]
             raw_values.append(raw_value)
-        product = self.pipe(raw_values)
+        product = self.pipe()(raw_values)
         data = product.data
         if len(data) != 1:
             quote = None

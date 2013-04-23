@@ -6,6 +6,7 @@
 from htsql.core.connect import Connect, Scramble, Unscramble, UnscrambleError
 from htsql.core.adapter import adapt
 from htsql.core.context import context
+from htsql.core.error import Error
 from htsql.core.domain import (BooleanDomain, DecimalDomain, TextDomain,
         DateDomain, TimeDomain)
 import datetime
@@ -103,7 +104,7 @@ class UnscrambleOracleText(Unscramble):
                 value = value.read()
             except cx_Oracle.Error, exc:
                 message = str(exc)
-                raise OracleError(message, exc)
+                raise Error(message, exc)
         if isinstance(value, str):
             value = value.decode('utf-8')
         return value
