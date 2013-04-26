@@ -22,9 +22,16 @@ from .lookup import direct
 
 class RoutingState(object):
 
+    def __init__(self):
+        self.cache = {}
+
     def route(self, binding):
+        if binding in self.cache:
+            return self.cache[binding]
         with translate_guard(binding):
-            return Route.__invoke__(binding, self)
+            flow = Route.__invoke__(binding, self)
+            self.cache[binding] = flow
+            return flow
 
 
 class Route(Adapter):
