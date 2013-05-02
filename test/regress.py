@@ -3,7 +3,7 @@
 #
 
 
-from pbbt import Test, Field, TestCaseMixin, RunAndCompareMixin
+from pbbt import Test, Field, BaseCase, MatchCase
 from pbbt.check import choiceof, maybe, oneof, listof, tupleof, dictof
 from pbbt.std import is_filename, to_identifier
 import re
@@ -35,7 +35,7 @@ class TermStringIO(StringIO.StringIO):
 
 
 @Test
-class SQLCase(TestCaseMixin):
+class SQLCase(BaseCase):
 
     class Input:
         connect = Field(maybe(oneof(str, dictof(str, object))))
@@ -137,7 +137,7 @@ class SavedDB(object):
 
 
 @Test
-class DBCase(TestCaseMixin):
+class DBCase(BaseCase):
 
     class Input:
         db = Field(maybe(oneof(str, dictof(str, object))))
@@ -180,7 +180,7 @@ class DBCase(TestCaseMixin):
 
 
 @Test
-class DBLoadCase(TestCaseMixin):
+class DBLoadCase(BaseCase):
 
     class Input:
         load = Field(str)
@@ -212,7 +212,7 @@ class DBLoadCase(TestCaseMixin):
 
 
 @Test
-class QueryCase(RunAndCompareMixin):
+class QueryCase(MatchCase):
 
     class Input:
         uri = Field(str)
@@ -296,7 +296,7 @@ class QueryCase(RunAndCompareMixin):
 
 
 @Test
-class CtlCase(RunAndCompareMixin):
+class CtlCase(MatchCase):
 
     class Input:
         ctl = Field(listof(str))
@@ -429,7 +429,7 @@ class Fork(object):
 
 
 @Test
-class StartCtlCase(TestCaseMixin):
+class StartCtlCase(BaseCase):
 
     class Input:
         start_ctl = Field(listof(str))
@@ -449,7 +449,7 @@ class StartCtlCase(TestCaseMixin):
 
 
 @Test
-class EndCtlCase(RunAndCompareMixin):
+class EndCtlCase(MatchCase):
 
     class Input:
         end_ctl = Field(listof(str))
