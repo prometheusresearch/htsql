@@ -145,23 +145,12 @@ class ClipFlow(CoverFlow):
         self.offset = offset
 
 
-class QueryFlow(Flow):
-
-    def __init__(self, base, segment, profile, binding):
-        assert isinstance(base, RootFlow)
-        assert isinstance(segment, maybe(SegmentFlow))
-        assert isinstance(profile, Profile)
-        super(QueryFlow, self).__init__(base, VoidDomain(), binding)
-        self.segment = segment
-        self.profile = profile
-
-
-class SegmentFlow(Flow):
+class CollectFlow(Flow):
 
     def __init__(self, base, seed, domain, binding):
         assert isinstance(base, Flow)
         assert isinstance(seed, Flow)
-        super(SegmentFlow, self).__init__(base, domain, binding)
+        super(CollectFlow, self).__init__(base, domain, binding)
         self.seed = seed
 
 

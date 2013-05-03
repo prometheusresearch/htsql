@@ -19,15 +19,14 @@ from ..domain import (Domain, BooleanDomain, IntegerDomain, DecimalDomain,
 from ..error import Error, translate_guard
 from ..syn.syntax import IdentifierSyntax, ApplySyntax, LiteralSyntax
 from .frame import (Clause, Frame, TableFrame, BranchFrame, NestedFrame,
-                    SegmentFrame, QueryFrame,
-                    Phrase, NullPhrase, CastPhrase, LiteralPhrase,
-                    ColumnPhrase, ReferencePhrase, EmbeddingPhrase,
-                    FormulaPhrase, Anchor, LeadingAnchor)
+        SegmentFrame, Phrase, NullPhrase, CastPhrase, LiteralPhrase,
+        ColumnPhrase, ReferencePhrase, EmbeddingPhrase, FormulaPhrase, Anchor,
+        LeadingAnchor)
 from .signature import (Signature, isformula, IsEqualSig, IsTotallyEqualSig,
                         IsInSig, IsNullSig, IfNullSig, NullIfSig, CompareSig,
                         AndSig, OrSig, NotSig, SortDirectionSig, RowNumberSig,
                         ToPredicateSig, FromPredicateSig, PlaceholderSig)
-from .pipe import SQLPipe, RecordPipe, ComposePipe, ProducePipe
+from .pipe import SQLPipe, RecordPipe, ComposePipe, ProducePipe, MixPipe
 from ..connect import unscramble
 import StringIO
 import re
@@ -232,7 +231,7 @@ class SerializingState(object):
         """
         # Realize and call the `Serialize` adapter.
         with translate_guard(clause):
-            return serialize(clause, self)
+            return Serialize.__invoke__(clause, self)
 
     def dump(self, clause):
         """
@@ -291,23 +290,6 @@ class Serialize(Adapter):
                                   " for a %r node" % self.clause)
 
 
-class SerializeQuery(Serialize):
-    """
-    Serializes an HTSQL query to an execution plan.
-    """
-
-    adapt(QueryFrame)
-
-    def __call__(self):
-        # When exists, serialize the query segment.
-        profile = self.clause.binding.profile
-        sql_pipe = self.state.serialize(self.clause.segment)
-        value_pipe = self.clause.value_pipe
-        pipe = ComposePipe(sql_pipe, value_pipe)
-        pipe = ProducePipe(profile, pipe, sql=self.state.sql)
-        return pipe
-
-
 class SerializeSegment(Serialize):
     """
     Serializes an HTSQL segment to SQL.
@@ -335,7 +317,6 @@ class SerializeSegment(Serialize):
         # Retrieve and return the generated SQL.
         placeholders = self.state.placeholders
         sql = self.state.flush()
-        accumulated_sql = sql.splitlines()
         input_domains = None
         if placeholders:
             input_domains = []
@@ -343,20 +324,16 @@ class SerializeSegment(Serialize):
                 input_domains.append(placeholders[index])
         output_domains = [phrase.domain for phrase in self.clause.select]
         pipe = SQLPipe(sql, input_domains, output_domains)
-        if self.clause.subtrees:
-            subpipes = []
-            for subframe in self.clause.subtrees:
-                subpipe = self.state.serialize(subframe)
-                subpipes.append(subpipe)
-                accumulated_sql.append(u"")
-                for line in self.state.sql.splitlines():
-                    if line:
-                        accumulated_sql.append(u"  "+line)
-                    else:
-                        accumulated_sql.append(u"")
-            pipe = RecordPipe([pipe]+subpipes)
-            pipe = ComposePipe(pipe, self.clause.mix_pipe)
-        self.state.sql = u"\n".join(accumulated_sql)+"\n"
+        if self.clause.dependents:
+            feeds = [pipe]
+            keys = [self.clause.key_pipe]
+            for subframe in self.clause.dependents:
+                feed = self.state.serialize(subframe)
+                feeds.append(feed)
+                keys.append(subframe.superkey_pipe)
+            pipe = RecordPipe(feeds)
+            mix_pipe = MixPipe(keys)
+            pipe = ComposePipe(pipe, mix_pipe)
         return pipe
 
     def aliasing(self, frame=None,
@@ -2057,21 +2034,8 @@ class DumpPlaceholder(DumpBySignature):
                     index=unicode(self.signature.index+1))
 
 
-def serialize(clause, state=None):
-    """
-    Translates a clause node to SQL.
-
-    `clause` (:class:`htsql.core.tr.frame.Clause`)
-        The clause to serialize.
-
-    `state` (:class:`SerializingState` or ``None``)
-        The serializing state to use.  If not set, a new serializing
-        state is instantiated.
-    """
-    # Create a new serializing state if necessary.
-    if state is None:
-        state = SerializingState()
-    # Realize and apply the `Serialize` adapter.
-    return Serialize.__invoke__(clause, state)
+def serialize(clause):
+    state = SerializingState()
+    return state.serialize(clause)
 
 

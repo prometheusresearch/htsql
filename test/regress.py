@@ -277,7 +277,7 @@ class QueryCase(MatchCase):
         if not response.status.startswith(str(self.input.expect)):
             text = self.render(self.output)
             new_text = self.render(new_output)
-            self.display(text, new_text)
+            self.compare(text, new_text)
             self.ui.warning("unexpected status code: %s" % response.status)
             return
 

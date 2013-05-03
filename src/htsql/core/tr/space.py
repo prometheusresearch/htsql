@@ -8,7 +8,7 @@ from ..util import (maybe, listof, tupleof, Clonable, Hashable, Printable,
 from ..entity import TableEntity, ColumnEntity, Join
 from ..domain import Domain, BooleanDomain, ListDomain, IdentityDomain
 from ..error import point
-from .flow import Flow, QueryFlow, SegmentFlow
+from .flow import Flow
 from .signature import Signature, Bag, Formula
 
 
@@ -68,19 +68,23 @@ class Expression(Hashable, Clonable, Printable):
         return str(self.syntax)
 
 
-class QueryExpr(Expression):
-    """
-    Represents the whole HTSQL query.
+class SegmentExpr(Expression):
 
-    `segment` (:class:`SegmentCode` or ``None``)
-        The query segment.
-    """
+    def __init__(self, root, space, codes, dependents, flow):
+        assert isinstance(root, Space)
+        assert isinstance(space, Space)
+        assert isinstance(codes, listof(Code))
+        assert isinstance(dependents, listof(SegmentExpr))
+        assert isinstance(flow, Flow)
+        super(SegmentExpr, self).__init__(flow)
+        self.root = root
+        self.space = space
+        self.codes = codes
+        self.dependents = dependents
 
-    def __init__(self, segment, flow):
-        assert isinstance(segment, maybe(SegmentCode))
-        assert isinstance(flow, QueryFlow)
-        super(QueryExpr, self).__init__(flow)
-        self.segment = segment
+    def __basis__(self):
+        return (self.root, self.space, tuple(self.codes),
+                tuple(self.dependents))
 
 
 class Family(object):
@@ -433,6 +437,12 @@ class Space(Expression):
         # Indicates that the space itself and all its ancestors are axes.
         self.is_inflated = (self.is_root or
                             (base.is_inflated and self.is_axis))
+
+    def root(self):
+        root = self
+        while root.base is not None:
+            root = root.base
+        return root
 
     def unfold(self):
         """
@@ -1431,44 +1441,8 @@ class Code(Expression):
     def units(self):
         return self.get_units()
 
-    @cachedproperty
-    def segments(self):
-        return self.get_segments()
-
     def get_units(self):
         return []
-
-    def get_segments(self):
-        return []
-
-
-class SegmentCode(Code):
-    """
-    Represents a segment of an HTSQL query.
-
-    `space` (:class:`Space`)
-        The output space of the segment.
-    """
-
-    def __init__(self, root, space, code, flow):
-        assert isinstance(root, Space)
-        assert isinstance(space, Space)
-        assert isinstance(code, Code)
-        assert isinstance(flow, SegmentFlow)
-        super(SegmentCode, self).__init__(
-                domain=ListDomain(code.domain),
-                flow=flow)
-        self.root = root
-        self.space = space
-        self.code = code
-
-    def __basis__(self):
-        return (self.root, self.space, self.code)
-
-    @property
-    def segments(self):
-        # Do not cache to avoid reference cycles.
-        return [self]
 
 
 class LiteralCode(Code):
@@ -1520,75 +1494,6 @@ class CastCode(Code):
     def get_units(self):
         return self.base.units
 
-    def get_segments(self):
-        return self.base.segments
-
-
-class RecordCode(Code):
-
-    def __init__(self, fields, domain, flow):
-        assert isinstance(fields, listof(Code))
-        super(RecordCode, self).__init__(
-                domain=domain,
-                flow=flow)
-        self.fields = fields
-
-    def __basis__(self):
-        return (tuple(self.fields), self.domain)
-
-    def get_units(self):
-        units = []
-        for field in self.fields:
-            units.extend(field.units)
-        return units
-
-    def get_segments(self):
-        segments = []
-        for field in self.fields:
-            segments.extend(field.segments)
-        return segments
-
-
-class IdentityCode(Code):
-
-    def __init__(self, fields, flow):
-        assert isinstance(fields, listof(Code))
-        domain = IdentityDomain([field.domain for field in fields])
-        super(IdentityCode, self).__init__(
-                domain=domain,
-                flow=flow)
-        self.fields = fields
-
-    def __basis__(self):
-        return (tuple(self.fields),)
-
-    def get_units(self):
-        units = []
-        for field in self.fields:
-            units.extend(field.units)
-        return units
-
-
-class AnnihilatorCode(Code):
-
-    def __init__(self, code, indicator, flow):
-        assert isinstance(code, Code)
-        assert isinstance(indicator, Unit)
-        super(AnnihilatorCode, self).__init__(
-                domain=code.domain,
-                flow=flow)
-        self.code = code
-        self.indicator = indicator
-
-    def __basis__(self):
-        return (self.code, self.indicator)
-
-    def get_units(self):
-        return [self.indicator]+self.code.units
-
-    def get_segments(self):
-        return self.indicator.segments+self.code.segments
-
 
 class FormulaCode(Formula, Code):
     """
@@ -1629,11 +1534,15 @@ class FormulaCode(Formula, Code):
             units.extend(cell.units)
         return units
 
-    def get_segments(self):
-        segments = []
-        for cell in self.arguments.cells():
-            segments.extend(cell.segments)
-        return segments
+
+class CorrelationCode(Code):
+
+    def __init__(self, code):
+        super(CorrelationCode, self).__init__(code.domain, code.flow)
+        self.code = code
+
+    def __basis__(self):
+        return (self.code,)
 
 
 class Unit(Code):
@@ -1745,9 +1654,6 @@ class CompoundUnit(Unit):
                     domain=domain,
                     flow=flow)
         self.code = code
-
-    def get_segments(self):
-        return self.code.segments
 
 
 class ColumnUnit(PrimitiveUnit):
@@ -1961,15 +1867,5 @@ class CoveringUnit(CompoundUnit):
 
     def __basis__(self):
         return (self.code, self.space)
-
-
-class CorrelationCode(Code):
-
-    def __init__(self, code):
-        super(CorrelationCode, self).__init__(code.domain, code.flow)
-        self.code = code
-
-    def __basis__(self):
-        return (self.code,)
 
 

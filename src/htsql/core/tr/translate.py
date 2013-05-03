@@ -4,16 +4,19 @@
 
 
 from ..syn.syntax import Syntax
-from ..tr.bind import bind
-from ..tr.binding import Binding
-from ..tr.route import route
-from ..tr.encode import encode
-from ..tr.space import OrderedSpace
-from ..tr.rewrite import rewrite
-from ..tr.compile import compile
-from ..tr.assemble import assemble
-from ..tr.reduce import reduce
-from ..tr.dump import serialize
+from .bind import bind
+from .binding import Binding
+from .decorate import decorate
+from .route import route
+from .encode import encode
+from .space import OrderedSpace
+from .rewrite import rewrite
+from .compile import compile
+from .assemble import assemble
+from .reduce import reduce
+from .dump import serialize
+from .pack import pack
+from .pipe import SQLPipe, RecordPipe, ComposePipe, ProducePipe
 
 
 def translate(syntax, environment=None, limit=None):
@@ -24,6 +27,7 @@ def translate(syntax, environment=None, limit=None):
         binding = bind(syntax, environment=environment)
     else:
         binding = syntax
+    profile = decorate(binding)
     flow = route(binding)
     expression = encode(flow)
     if limit is not None:
@@ -32,28 +36,47 @@ def translate(syntax, environment=None, limit=None):
     term = compile(expression)
     frame = assemble(term)
     frame = reduce(frame)
-    pipe = serialize(frame)
-    return pipe
+    raw_pipe = serialize(frame)
+    sql = get_sql(raw_pipe)
+    value_pipe = pack(flow, frame, profile.tag)
+    pipe = ComposePipe(raw_pipe, value_pipe)
+    #print pipe
+    return ProducePipe(profile, pipe, sql=sql)
 
 
-def safe_patch(expression, limit):
-    segment = expression.segment
-    if segment is None:
-        return expression
+def get_sql(pipe):
+    if isinstance(pipe, SQLPipe):
+        return pipe.sql
+    if isinstance(pipe, ComposePipe):
+        return get_sql(pipe.left_pipe)
+    elif isinstance(pipe, RecordPipe):
+        sqls = []
+        for field_pipe in pipe.field_pipes:
+            sql = get_sql(field_pipe)
+            if sql:
+                sqls.append(sql)
+        if sqls:
+            merged_sqls = [sqls[0]]
+            for sql in sqls[1:]:
+                merged_sqls.append(u"\n".join(u"  "+line if line else u""
+                                              for line in sql.splitlines()))
+            return u"\n\n".join(merged_sqls)
+
+
+def safe_patch(segment, limit):
     space = segment.space
     while not space.is_axis:
         if (isinstance(space, OrderedSpace) and space.limit is not None
                                           and space.limit <= limit):
-            return expression
+            return segment
         space = space.base
     if space.is_root:
-        return expression
+        return segment
     if isinstance(segment.space, OrderedSpace):
         space = segment.space.clone(limit=limit)
     else:
         space = OrderedSpace(segment.space, [], limit, None, segment.flow)
     segment = segment.clone(space=space)
-    expression = expression.clone(segment=segment)
-    return expression
+    return segment
 
 

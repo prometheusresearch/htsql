@@ -20,7 +20,7 @@ from ..classify import classify, relabel, localize, normalize
 from ..syn.syntax import IdentifierSyntax
 from ..error import point
 from .binding import (Binding, ScopeBinding, ChainingBinding, WrappingBinding,
-        DecorateBinding, SegmentBinding, HomeBinding, RootBinding,
+        DecorateBinding, CollectBinding, HomeBinding, RootBinding,
         TableBinding, ChainBinding, ColumnBinding, QuotientBinding,
         ComplementBinding, CoverBinding, ForkBinding, AttachBinding,
         ClipBinding, LocateBinding, RescopingBinding, DefineBinding,
@@ -479,19 +479,19 @@ class UnwrapWrapping(Lookup):
         return lookup(self.binding.base, self.probe)
 
 
-class GuessFromSegment(Lookup):
+class GuessFromCollect(Lookup):
 
-    adapt_many((SegmentBinding, GuessTagProbe),
-               (SegmentBinding, GuessHeaderProbe),
-               (SegmentBinding, GuessPathProbe))
+    adapt_many((CollectBinding, GuessTagProbe),
+               (CollectBinding, GuessHeaderProbe),
+               (CollectBinding, GuessPathProbe))
 
     def __call__(self):
         return lookup(self.binding.seed, self.probe)
 
 
-class UnwrapSegment(Lookup):
+class UnwrapCollect(Lookup):
 
-    adapt(SegmentBinding, UnwrapProbe)
+    adapt(CollectBinding, UnwrapProbe)
 
     def __call__(self):
         if isinstance(self.binding, self.probe.binding_class):

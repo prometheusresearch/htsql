@@ -3,7 +3,7 @@
 #
 
 
-from . import encode
+from . import rewrite
 from ...core.addon import Addon, Parameter
 from ...core.validator import PIntVal
 

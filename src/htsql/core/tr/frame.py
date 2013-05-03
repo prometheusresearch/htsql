@@ -17,7 +17,7 @@ from ..domain import Domain, BooleanDomain
 from ..error import point
 from .coerce import coerce
 from .space import Expression
-from .term import Term, QueryTerm
+from .term import Term
 from .pipe import Pipe
 from .signature import Signature, Bag, Formula
 
@@ -303,15 +303,21 @@ class SegmentFrame(BranchFrame):
 
     def __init__(self, include, embed, select, where,
                  group, having, order, limit, offset,
-                 mix_pipe, subtrees, term):
-        assert isinstance(mix_pipe, maybe(Pipe))
-        assert isinstance(subtrees, listof(SegmentFrame))
-        assert bool(mix_pipe) == bool(subtrees)
+                 code_pipes, dependent_pipes, superkey_pipe, key_pipe,
+                 dependents, term):
+        assert isinstance(code_pipes, listof(Pipe))
+        assert isinstance(dependent_pipes, listof(Pipe))
+        assert isinstance(superkey_pipe, Pipe)
+        assert isinstance(key_pipe, Pipe)
+        assert isinstance(dependents, listof(SegmentFrame))
         super(SegmentFrame, self).__init__(include, embed, select, where,
                                            group, having, order, limit, offset,
                                            term)
-        self.mix_pipe = mix_pipe
-        self.subtrees = subtrees
+        self.code_pipes = code_pipes
+        self.dependent_pipes = dependent_pipes
+        self.superkey_pipe = superkey_pipe
+        self.key_pipe = key_pipe
+        self.dependents = dependents
 
 
 class Anchor(Clause):
@@ -379,24 +385,6 @@ class LeadingAnchor(Anchor):
         assert is_left is False and is_right is False
         super(LeadingAnchor, self).__init__(frame, condition,
                                             is_left, is_right)
-
-
-class QueryFrame(Clause):
-    """
-    Represents the whole HTSQL query.
-
-    `segment` (:class:`SegmentFrame` or ``None``)
-        The query segment.
-    """
-
-    def __init__(self, segment, value_pipe, term):
-        assert isinstance(segment, maybe(SegmentFrame))
-        assert isinstance(value_pipe, maybe(Pipe))
-        assert isinstance(term, QueryTerm)
-        super(QueryFrame, self).__init__(term.expression)
-        self.segment = segment
-        self.value_pipe = value_pipe
-        self.term = term
 
 
 class Phrase(Clause):

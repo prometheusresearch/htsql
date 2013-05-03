@@ -18,7 +18,7 @@ from ....core.tr.bind import BindingState, Select
 from ....core.syn.syntax import VoidSyntax
 from ....core.tr.binding import (VoidBinding, RootBinding, FormulaBinding,
         LocateBinding, SelectionBinding, SieveBinding, AliasBinding,
-        SegmentBinding, QueryBinding, FreeTableRecipe, ColumnRecipe)
+        CollectBinding, FreeTableRecipe, ColumnRecipe)
 from ....core.tr.signature import IsEqualSig, AndSig, PlaceholderSig
 from ....core.tr.decorate import decorate
 from ....core.tr.coerce import coerce
@@ -119,10 +119,9 @@ class BuildResolveKey(Utility):
     def __call__(self):
         labels = relabel(TableArc(self.table))
         name = labels[0].name if labels else None
-        state = BindingState()
         syntax = VoidSyntax()
         scope = RootBinding(syntax)
-        state.set_root(scope)
+        state = BindingState(scope)
         seed = state.use(FreeTableRecipe(self.table), syntax)
         recipe = identify(seed)
         if recipe is None:
@@ -166,9 +165,7 @@ class BuildResolveKey(Utility):
         scope = SelectionBinding(scope, elements, domain, syntax)
         binding = Select.__invoke__(scope, state)
         domain = ListDomain(binding.domain)
-        binding = SegmentBinding(state.root, binding, domain, syntax)
-        profile = decorate(binding)
-        binding = QueryBinding(state.root, binding, profile, syntax)
+        binding = CollectBinding(state.root, binding, domain, syntax)
         pipe =  translate(binding)
         domain = identity.domain
         return ResolveKeyPipe(name, columns, domain, pipe, self.with_error)

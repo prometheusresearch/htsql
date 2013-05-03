@@ -5,15 +5,15 @@
 
 from ..adapter import Adapter, adapt, adapt_many
 from ..error import Error, translate_guard
-from .binding import (Binding, QueryBinding, SegmentBinding,
-        WeakSegmentBinding, WrappingBinding, DecorateBinding, SelectionBinding,
-        HomeBinding, RootBinding, TableBinding, ChainBinding, ColumnBinding,
-        QuotientBinding, KernelBinding, ComplementBinding, IdentityBinding,
-        LocateBinding, CoverBinding, ForkBinding, AttachBinding, ClipBinding,
-        SieveBinding, SortBinding, CastBinding, RescopingBinding,
-        LiteralBinding, FormulaBinding)
-from .flow import (Flow, QueryFlow, SegmentFlow, SelectionFlow, HomeFlow,
-        RootFlow, TableFlow, ChainFlow, ColumnFlow, QuotientFlow, KernelFlow,
+from .binding import (Binding, CollectBinding, WrappingBinding,
+        DecorateBinding, SelectionBinding, HomeBinding, RootBinding,
+        TableBinding, ChainBinding, ColumnBinding, QuotientBinding,
+        KernelBinding, ComplementBinding, IdentityBinding, LocateBinding,
+        CoverBinding, ForkBinding, AttachBinding, ClipBinding, SieveBinding,
+        SortBinding, CastBinding, RescopingBinding, LiteralBinding,
+        FormulaBinding)
+from .flow import (Flow, CollectFlow, SelectionFlow, HomeFlow, RootFlow,
+        TableFlow, ChainFlow, ColumnFlow, QuotientFlow, KernelFlow,
         ComplementFlow, IdentityFlow, LocateFlow, CoverFlow, ForkFlow,
         AttachFlow, ClipFlow, SieveFlow, SortFlow, CastFlow, RescopingFlow,
         LiteralFlow, FormulaFlow)
@@ -46,26 +46,14 @@ class Route(Adapter):
         raise Error("Cannot route an expression")
 
 
-class RouteQuery(Route):
+class RouteCollect(Route):
 
-    adapt(QueryBinding)
-
-    def __call__(self):
-        base = self.state.route(self.binding.base)
-        segment = None
-        if self.binding.segment is not None:
-            segment = self.state.route(self.binding.segment)
-        return QueryFlow(base, segment, self.binding.profile, self.binding)
-
-
-class RouteSegment(Route):
-
-    adapt(SegmentBinding)
+    adapt(CollectBinding)
 
     def __call__(self):
         base = self.state.route(self.binding.base)
         seed = self.state.route(self.binding.seed)
-        return SegmentFlow(base, seed, self.binding.domain, self.binding)
+        return CollectFlow(base, seed, self.binding.domain, self.binding)
 
 
 class RouteRoot(Route):

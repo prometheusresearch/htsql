@@ -21,9 +21,9 @@ from ..binding import (LiteralBinding, SortBinding, SieveBinding,
         FormulaBinding, CastBinding, ImplicitCastBinding, WrappingBinding,
         TitleBinding, DirectionBinding, QuotientBinding, AssignmentBinding,
         DefineBinding, DefineReferenceBinding, SelectionBinding, HomeBinding,
-        RescopingBinding, CoverBinding, ForkBinding, ClipBinding,
-        SegmentBinding, QueryBinding, AliasBinding, Binding, BindingRecipe,
-        ComplementRecipe, KernelRecipe, SubstitutionRecipe, ClosedRecipe)
+        RescopingBinding, CoverBinding, ForkBinding, ClipBinding, AliasBinding,
+        Binding, BindingRecipe, ComplementRecipe, KernelRecipe,
+        SubstitutionRecipe, ClosedRecipe)
 from ..bind import BindByName, BindingState
 from ...error import Error, translate_guard
 from ..coerce import coerce

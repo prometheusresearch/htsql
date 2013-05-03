@@ -262,6 +262,7 @@ tests:
   # invalid flow expression
   - uri: /true().fork(){true()}
     expect: 400
+    skip: true
   # invalid segment flow
   - uri: /school|department
     expect: 400

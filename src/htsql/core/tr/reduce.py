@@ -3,27 +3,18 @@
 #
 
 
-"""
-:mod:`htsql.core.tr.reduce`
-===========================
-
-This module implements the reducing process.
-"""
-
-
 from ..adapter import Adapter, adapt
 from ..domain import BooleanDomain, TextDomain, IntegerDomain
 from .coerce import coerce
 from .stitch import arrange
 from .term import PermanentTerm
 from .frame import (Clause, Frame, ScalarFrame, BranchFrame, NestedFrame,
-                    QueryFrame, SegmentFrame, Phrase, LiteralPhrase, NullPhrase,
-                    TruePhrase, FalsePhrase, CastPhrase, FormulaPhrase,
-                    ExportPhrase, ReferencePhrase, Anchor, LeadingAnchor)
+        SegmentFrame, Phrase, LiteralPhrase, NullPhrase, TruePhrase,
+        FalsePhrase, CastPhrase, FormulaPhrase, ExportPhrase, ReferencePhrase,
+        Anchor, LeadingAnchor)
 from .signature import (Signature, isformula, IsEqualSig, IsTotallyEqualSig,
-                        IsInSig, IsNullSig, IfNullSig, NullIfSig,
-                        AndSig, OrSig, NotSig, SortDirectionSig,
-                        FromPredicateSig, ToPredicateSig)
+        IsInSig, IsNullSig, IfNullSig, NullIfSig, AndSig, OrSig, NotSig,
+        SortDirectionSig, FromPredicateSig, ToPredicateSig)
 
 
 class ReducingState(object):
@@ -40,12 +31,6 @@ class ReducingState(object):
         # `SELECT` clauses of collapsed frames by the frame tag.
         self.substitutes = {}
 
-    def flush(self):
-        """
-        Clears the state.
-        """
-        self.substitutes.clear()
-
     def reduce(self, clause):
         """
         Reduces (simplifies) a SQL clause.
@@ -56,7 +41,7 @@ class ReducingState(object):
             The clause to simplify.
         """
         # Realize and apply the `Reduce` adapter.
-        return reduce(clause, self)
+        return Reduce.__invoke__(clause, self)
 
     def collapse(self, frame):
         """
@@ -279,15 +264,15 @@ class ReduceSegment(ReduceBranch):
 
     def __call__(self):
         frame = super(ReduceSegment, self).__call__()
-        if not frame.subtrees:
+        if not frame.dependents:
             return frame
-        subtrees = []
-        for subframe in frame.subtrees:
+        dependents = []
+        for subframe in frame.dependents:
             subframe = self.state.collapse(subframe)
             subframe = self.state.reduce(subframe)
             subframe = self.state.interlink(subframe)
-            subtrees.append(subframe)
-        return frame.clone(subtrees=subtrees)
+            dependents.append(subframe)
+        return frame.clone(dependents=dependents)
 
 
 class Collapse(Adapter):
@@ -623,28 +608,6 @@ class ReduceAnchor(Reduce):
                      if self.clause.condition is not None else None)
         # Update the anchor.
         return self.clause.clone(frame=frame, condition=condition)
-
-
-class ReduceQuery(Reduce):
-    """
-    Reduces a top-level query frame.
-    """
-
-    adapt(QueryFrame)
-
-    def __call__(self):
-        # If there is no segment frame, there is nothing to reduce.
-        if self.clause.segment is None:
-            return self.clause
-        # Collapse and reduce (in that order!) the segment frame.
-        segment = self.clause.segment
-        segment = self.state.collapse(segment)
-        segment = self.state.reduce(segment)
-        segment = self.state.interlink(segment)
-        # Clear the state variables.
-        self.state.flush()
-        # Update the query frame.
-        return self.clause.clone(segment=segment)
 
 
 class ReducePhrase(Reduce):
@@ -1347,7 +1310,7 @@ class ReduceReference(Reduce):
         return self.state.reduce(phrase)
 
 
-def reduce(clause, state=None):
+def reduce(segment):
     """
     Reduces (simplifies) a SQL clause.
 
@@ -1361,9 +1324,10 @@ def reduce(clause, state=None):
         is instantiated.
     """
     # Instantiate a new reducing state if necessary.
-    if state is None:
-        state = ReducingState()
-    # Realize and apply the `Reduce` adapter.
-    return Reduce.__invoke__(clause, state)
+    state = ReducingState()
+    segment = state.collapse(segment)
+    segment = state.reduce(segment)
+    segment = state.interlink(segment)
+    return segment
 
 

@@ -24,19 +24,18 @@ from ..syn.syntax import (Syntax, CollectSyntax, SelectSyntax, ApplySyntax,
         AssignSyntax, ComposeSyntax, LocateSyntax, IdentitySyntax, GroupSyntax,
         IdentifierSyntax, UnpackSyntax, ReferenceSyntax, LiftSyntax,
         StringSyntax, LabelSyntax, NumberSyntax, RecordSyntax, DirectSyntax)
-from .binding import (Binding, WrappingBinding, QueryBinding, SegmentBinding,
-        WeakSegmentBinding, RootBinding, HomeBinding, TableBinding,
-        ChainBinding, ColumnBinding, QuotientBinding, KernelBinding,
-        ComplementBinding, LocateBinding, SieveBinding, AttachBinding,
-        SortBinding, CastBinding, IdentityBinding, ImplicitCastBinding,
-        RescopingBinding, AssignmentBinding, DefineBinding,
-        DefineReferenceBinding, DefineLiftBinding, SelectionBinding,
-        WildSelectionBinding, DirectionBinding, TitleBinding, RerouteBinding,
-        ReferenceRerouteBinding, AliasBinding, LiteralBinding, FormulaBinding,
-        VoidBinding, Recipe, LiteralRecipe, SelectionRecipe, FreeTableRecipe,
-        AttachedTableRecipe, ColumnRecipe, KernelRecipe, ComplementRecipe,
-        IdentityRecipe, ChainRecipe, SubstitutionRecipe, BindingRecipe,
-        ClosedRecipe, PinnedRecipe, AmbiguousRecipe)
+from .binding import (Binding, WrappingBinding, CollectBinding, RootBinding,
+        HomeBinding, TableBinding, ChainBinding, ColumnBinding,
+        QuotientBinding, KernelBinding, ComplementBinding, LocateBinding,
+        SieveBinding, AttachBinding, SortBinding, CastBinding, IdentityBinding,
+        ImplicitCastBinding, RescopingBinding, AssignmentBinding,
+        DefineBinding, DefineReferenceBinding, DefineLiftBinding,
+        SelectionBinding, WildSelectionBinding, DirectionBinding, TitleBinding,
+        RerouteBinding, ReferenceRerouteBinding, AliasBinding, LiteralBinding,
+        FormulaBinding, VoidBinding, Recipe, LiteralRecipe, SelectionRecipe,
+        FreeTableRecipe, AttachedTableRecipe, ColumnRecipe, KernelRecipe,
+        ComplementRecipe, IdentityRecipe, ChainRecipe, SubstitutionRecipe,
+        BindingRecipe, ClosedRecipe, PinnedRecipe, AmbiguousRecipe)
 from .lookup import (lookup_attribute, lookup_reference, lookup_complement,
         lookup_attribute_set, lookup_reference_set, expand, direct, guess_tag,
         identify, unwrap)
@@ -46,62 +45,22 @@ from .decorate import decorate
 
 
 class BindingState(object):
-    """
-    Encapsulates the (mutable) state of the binding process.
 
-    State attributes:
-
-    `root` (:class:`htsql.core.tr.binding.RootBinding`)
-        The root naming scope.
-
-    `scope` (:class:`htsql.core.tr.binding.Binding`)
-        The current naming scope.
-    """
-
-    def __init__(self, environment=None):
+    def __init__(self, root, environment=None):
+        assert isinstance(root, RootBinding)
         # The root lookup scope.
-        self.root = None
+        self.root = root
         # The current lookup scope.
-        self.scope = None
+        self.scope = root
         # The stack of previous lookup scopes.
         self.scope_stack = []
         # References in the root scope.
         self.environment = environment
-
-    def set_root(self, root):
-        """
-        Sets the root lookup context.
-
-        This function initializes the lookup context stack and must be
-        called before any calls of :meth:`push_scope` and :meth:`pop_scope`.
-
-        `root` (:class:`htsql.core.tr.binding.RootBinding`)
-            The root lookup scope.
-        """
-        # Check that the lookup stack is not initialized.
-        assert self.root is None
-        assert self.scope is None
-        assert isinstance(root, RootBinding)
-        self.root = root
-        self.scope = root
-        # Add global references.
         if self.environment is not None:
             for name, recipe in self.environment:
                 name = normalize(name)
                 self.scope = DefineReferenceBinding(self.scope, name,
                                                     recipe, self.scope.syntax)
-
-    def flush(self):
-        """
-        Clears the lookup scopes.
-        """
-        # We expect the lookup scope stack to be empty and the current
-        # scope to coincide with the root scope.
-        assert self.root is not None
-        assert not self.scope_stack
-        #assert self.root is self.scope
-        self.root = None
-        self.scope = None
 
     def push_scope(self, scope):
         """
@@ -149,7 +108,12 @@ class BindingState(object):
             binding the syntax node.
         """
         with translate_guard(syntax):
-            return bind(syntax, self, scope)
+            if scope is not None:
+                self.push_scope(scope)
+            binding = Bind.__prepare__(syntax, self)()
+            if scope is not None:
+                self.pop_scope()
+            return binding
 
     def use(self, recipe, syntax, scope=None):
         """
@@ -293,7 +257,7 @@ class BindCollect(Bind):
             seed = self.state.scope
         seed = Select.__invoke__(seed, self.state)
         domain = ListDomain(seed.domain)
-        return SegmentBinding(self.state.scope, seed, domain,
+        return CollectBinding(self.state.scope, seed, domain,
                               self.syntax)
 
 
@@ -1333,67 +1297,49 @@ class BindByAmbiguous(BindByRecipe):
             raise Error("Found ambiguous name", syntax)
 
 
-def bind(syntax, state=None, scope=None, environment=None):
-    if state is not None:
-        if scope is not None:
-            state.push_scope(scope)
-        binding = Bind.__invoke__(syntax, state)
-        if scope is not None:
-            state.pop_scope()
-        return binding
+def bind(syntax, environment=None):
+    recipes = []
+    if environment is not None:
+        for name in sorted(environment):
+            value = environment[name]
+            if isinstance(value.domain, ListDomain):
+                item_recipes = [LiteralRecipe(item,
+                                              value.domain.item_domain)
+                                for item in value.data]
+                recipe = SelectionRecipe(item_recipes)
+            elif isinstance(value.domain, RecordDomain):
+                item_recipes = [LiteralRecipe(item, profile.domain)
+                                for item, profile in
+                                    zip(value.data, value.domain.fields)]
+                recipe = SelectionRecipe(item_recipes)
+            elif isinstance(value.domain, IdentityDomain):
+                def convert(domain, data):
+                    items = []
+                    for element, item in zip(domain.labels, data):
+                        if isinstance(element, IdentityDomain):
+                            item = convert(element, item)
+                        else:
+                            item = LiteralRecipe(item, element)
+                        items.append(item)
+                    return IdentityRecipe(items)
+                recipe = convert(value.domain, value.data)
+            else:
+                recipe = LiteralRecipe(value.data, value.domain)
+            recipes.append((name, recipe))
+    root = RootBinding(syntax)
+    state = BindingState(root, recipes)
+    if isinstance(syntax, AssignSyntax):
+        specifier = syntax.larm
+        with translate_guard(specifier):
+            if specifier.identifier is None:
+                raise Error("Expected an identifier")
+        identifier = specifier.larms[0]
+        binding = state.bind(syntax.rarm)
+        binding = Select.__invoke__(binding, state)
+        binding = TitleBinding(binding, identifier, binding.syntax)
     else:
-        recipes = []
-        if environment is not None:
-            for name in sorted(environment):
-                value = environment[name]
-                if isinstance(value.domain, ListDomain):
-                    item_recipes = [LiteralRecipe(item,
-                                                  value.domain.item_domain)
-                                    for item in value.data]
-                    recipe = SelectionRecipe(item_recipes)
-                elif isinstance(value.domain, RecordDomain):
-                    item_recipes = [LiteralRecipe(item, profile.domain)
-                                    for item, profile in
-                                        zip(value.data, value.domain.fields)]
-                    recipe = SelectionRecipe(item_recipes)
-                elif isinstance(value.domain, IdentityDomain):
-                    def convert(domain, data):
-                        items = []
-                        for element, item in zip(domain.labels, data):
-                            if isinstance(element, IdentityDomain):
-                                item = convert(element, item)
-                            else:
-                                item = LiteralRecipe(item, element)
-                            items.append(item)
-                        return IdentityRecipe(items)
-                    recipe = convert(value.domain, value.data)
-                else:
-                    recipe = LiteralRecipe(value.data, value.domain)
-                recipes.append((name, recipe))
-        state = BindingState(recipes)
-        root = RootBinding(syntax)
-        state.set_root(root)
-        if isinstance(syntax, AssignSyntax):
-            specifier = syntax.larm
-            with translate_guard(specifier):
-                if specifier.identifier is None:
-                    raise Error("Expected an identifier")
-            identifier = specifier.larms[0]
-            segment = state.bind(syntax.rarm)
-            if not isinstance(segment, SegmentBinding):
-                segment = Select.__invoke__(segment, state)
-                segment = WeakSegmentBinding(root, segment,
-                                             segment.domain, segment.syntax)
-            segment = segment.clone(seed=TitleBinding(segment.seed, identifier,
-                                                      segment.seed.syntax))
-        else:
-            segment = state.bind(syntax)
-            if not isinstance(segment, SegmentBinding):
-                segment = Select.__invoke__(segment, state)
-                segment = WeakSegmentBinding(root, segment,
-                                             segment.domain, segment.syntax)
-        state.flush()
-        profile = decorate(segment)
-        return QueryBinding(root, segment, profile, syntax)
+        binding = state.bind(syntax)
+        binding = Select.__invoke__(binding, state)
+    return binding
 
 

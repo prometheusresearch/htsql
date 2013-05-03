@@ -22,7 +22,7 @@ from ....core.tr.bind import BindingState, Select
 from ....core.syn.syntax import VoidSyntax, IdentifierSyntax
 from ....core.tr.binding import (VoidBinding, RootBinding, FormulaBinding,
         LocateBinding, SelectionBinding, SieveBinding, AliasBinding,
-        SegmentBinding, QueryBinding, FreeTableRecipe, ColumnRecipe)
+        CollectBinding, FreeTableRecipe, ColumnRecipe)
 from ....core.tr.signature import IsEqualSig, AndSig, PlaceholderSig
 from ....core.tr.decorate import decorate
 from ....core.tr.coerce import coerce
@@ -195,10 +195,9 @@ class BuildExtractNode(Utility):
             if not fields:
                 raise Error("Expected the first field to be an identity")
             id_field = fields[0]
-            state = BindingState()
             syntax = VoidSyntax()
             scope = RootBinding(syntax)
-            state.set_root(scope)
+            state = BindingState(scope)
             seed = state.use(FreeTableRecipe(node.table), syntax)
             recipe = identify(seed)
             if recipe is None:
@@ -250,10 +249,9 @@ class BuildExtractNode(Utility):
                                 all(join.reverse().is_contracting
                                     for join in joins[1:]):
                             raise Error("Cannot assign to link", field.tag)
-                        state = BindingState()
                         syntax = VoidSyntax()
                         scope = RootBinding(syntax)
-                        state.set_root(scope)
+                        state = BindingState(scope)
                         seed = state.use(FreeTableRecipe(arc.target.table),
                                          syntax)
                         recipe = identify(seed)
@@ -412,10 +410,9 @@ class BuildResolveIdentity(Utility):
         self.is_list = is_list
 
     def __call__(self):
-        state = BindingState()
         syntax = VoidSyntax()
         scope = RootBinding(syntax)
-        state.set_root(scope)
+        state = BindingState(scope)
         scope = state.use(FreeTableRecipe(self.table), syntax)
         state.push_scope(scope)
         conditions = []
@@ -455,9 +452,7 @@ class BuildResolveIdentity(Utility):
         state.pop_scope()
         binding = Select.__invoke__(binding, state)
         domain = ListDomain(binding.domain)
-        binding = SegmentBinding(state.scope, binding, domain, syntax)
-        profile = decorate(binding)
-        binding = QueryBinding(state.scope, binding, profile, syntax)
+        binding = CollectBinding(state.scope, binding, domain, syntax)
         pipe = translate(binding)
         profile = pipe.meta
         if not self.is_list:
@@ -505,10 +500,9 @@ class BuildResolveChain(Utility):
         target_labels = relabel(TableArc(self.arc.target.table))
         target_name = target_labels[0].name if target_labels else None
         joins = self.joins
-        state = BindingState()
         syntax = VoidSyntax()
         scope = RootBinding(syntax)
-        state.set_root(scope)
+        state = BindingState(scope)
         seed = state.use(FreeTableRecipe(joins[-1].target), syntax)
         recipe = identify(seed)
         if recipe is None:
@@ -544,9 +538,7 @@ class BuildResolveChain(Utility):
         scope = SelectionBinding(scope, elements, domain, syntax)
         binding = Select.__invoke__(scope, state)
         domain = ListDomain(binding.domain)
-        binding = SegmentBinding(state.root, binding, domain, syntax)
-        profile = decorate(binding)
-        binding = QueryBinding(state.root, binding, profile, syntax)
+        binding = CollectBinding(state.root, binding, domain, syntax)
         pipe =  translate(binding)
         columns = joins[0].origin_columns[:]
         domain = identity.domain

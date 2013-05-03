@@ -381,24 +381,7 @@ class DefineLiftBinding(DecorateBinding):
         self.recipe = recipe
 
 
-class QueryBinding(Binding):
-    """
-    Represents the whole HTSQL query.
-
-    `segment` (:class:`SegmentBinding` or ``None``)
-        The top segment.
-    """
-
-    def __init__(self, base, segment, profile, syntax):
-        assert isinstance(base, RootBinding)
-        assert isinstance(segment, maybe(SegmentBinding))
-        assert isinstance(profile, Profile)
-        super(QueryBinding, self).__init__(base, VoidDomain(), syntax)
-        self.segment = segment
-        self.profile = profile
-
-
-class SegmentBinding(Binding):
+class CollectBinding(Binding):
     """
     Represents a segment of an HTSQL query.
 
@@ -413,12 +396,8 @@ class SegmentBinding(Binding):
     def __init__(self, base, seed, domain, syntax):
         assert isinstance(base, Binding)
         assert isinstance(seed, Binding)
-        super(SegmentBinding, self).__init__(base, domain, syntax)
+        super(CollectBinding, self).__init__(base, domain, syntax)
         self.seed = seed
-
-
-class WeakSegmentBinding(SegmentBinding):
-    pass
 
 
 class ScopingBinding(Binding):

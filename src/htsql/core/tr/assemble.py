@@ -7,16 +7,14 @@ from ..util import Printable, Hashable, listof, maybe
 from ..adapter import Adapter, adapt, adapt_many
 from ..domain import BooleanDomain, UntypedDomain, Record, ID
 from .coerce import coerce
-from .binding import WeakSegmentBinding
-from .space import (Code, SegmentCode, LiteralCode, FormulaCode, CastCode,
-        RecordCode, IdentityCode, AnnihilatorCode, CorrelationCode, Unit,
-        ColumnUnit, CompoundUnit)
-from .term import (PreTerm, Term, UnaryTerm, BinaryTerm, TableTerm, ScalarTerm,
+from .space import (Code, SegmentExpr, LiteralCode, FormulaCode, CastCode,
+        CorrelationCode, Unit, ColumnUnit, CompoundUnit)
+from .term import (Term, UnaryTerm, BinaryTerm, TableTerm, ScalarTerm,
         FilterTerm, JoinTerm, CorrelationTerm, EmbeddingTerm, ProjectionTerm,
-        OrderTerm, SegmentTerm, QueryTerm)
+        OrderTerm, SegmentTerm)
 from .frame import (ScalarFrame, TableFrame, NestedFrame, SegmentFrame,
-        QueryFrame, LiteralPhrase, TruePhrase, CastPhrase, ColumnPhrase,
-        ReferencePhrase, EmbeddingPhrase, FormulaPhrase, Anchor, LeadingAnchor)
+        LiteralPhrase, TruePhrase, CastPhrase, ColumnPhrase, ReferencePhrase,
+        EmbeddingPhrase, FormulaPhrase, Anchor, LeadingAnchor, Phrase)
 from .pipe import (ValuePipe, ExtractPipe, RecordPipe, MixPipe, ComposePipe,
         AnnihilatePipe, IteratePipe, SinglePipe)
 from .signature import (Signature, IsEqualSig, IsTotallyEqualSig, IsInSig,
@@ -147,7 +145,7 @@ class AssemblingState(object):
         A key of the mapping is the broker tag.  A value of the mapping
         is a list of :class:`Claim` objects with the same broker.
 
-    `phrases_by_claim` (a mapping `Claim -> [Phrase]`)
+    `phrase_by_claim` (a mapping `Claim -> Phrase`)
         Satisfied claims.
 
         A key of the mapping is a :class:`Claim` object.  A value of the
@@ -164,16 +162,7 @@ class AssemblingState(object):
         # Unit claims grouped by the broker.
         self.claims_by_broker = None
         # Satisfied unit claims.
-        self.phrases_by_claim = None
-        # Stencils and other composition state.
-        self.subterms_by_segment = {}
-        self.stencils_by_term = {}
-        self.location_by_term = {}
-        self.shift_by_term = {}
-        self.name_stack = []
-        self.name = None
-        self.segment_stack = []
-        self.segment = None
+        self.phrase_by_claim = None
         self.correlations_stack = []
         self.correlations = {}
 
@@ -183,71 +172,6 @@ class AssemblingState(object):
 
     def pop_correlations(self):
         self.correlations = self.correlations_stack.pop()
-
-    def push_name(self, name):
-        assert isinstance(name, maybe(unicode))
-        self.name_stack.append(self.name)
-        self.name = name
-
-    def pop_name(self):
-        self.name = self.name_stack.pop()
-
-    def push_segment(self, code):
-        assert isinstance(code, SegmentCode)
-        term = self.subterms_by_segment[self.segment][code]
-        self.segment_stack.append(self.segment)
-        self.segment = term
-        self.shift_by_term[term] = 0
-
-    def pop_segment(self):
-        self.segment = self.segment_stack.pop()
-
-    def reset_shift(self, term):
-        self.shift_by_term[term] = 0
-
-    def save_subterms(self, term, subterms):
-        assert isinstance(term, maybe(SegmentTerm))
-        assert isinstance(subterms, listof(SegmentTerm))
-        term_by_code = dict((subterm.code, subterm)
-                            for subterm in subterms)
-        self.subterms_by_segment[term] = term_by_code
-
-    def save_location(self, term, location):
-        assert isinstance(term, SegmentTerm)
-        assert isinstance(location, maybe(int))
-        self.location_by_term[term] = location
-
-    def get_location(self):
-        return self.location_by_term[self.segment]
-
-    def save_stencils(self, term, stencils):
-        assert isinstance(term, SegmentTerm)
-        assert isinstance(stencils, listof(listof(int))) and len(stencils) == 3
-        self.stencils_by_term[term] = stencils
-
-    def get_code_stencil(self, term=None):
-        if term is None:
-            term = self.segment
-        return self.stencils_by_term[term][0]
-
-    def get_superkey_stencil(self, term=None):
-        if term is None:
-            term = self.segment
-        return self.stencils_by_term[term][1]
-
-    def get_key_stencil(self, term=None):
-        if term is None:
-            term = self.segment
-        return self.stencils_by_term[term][2]
-
-    def get_next_index(self):
-        stencil = self.get_code_stencil()
-        index = stencil[self.shift_by_term[self.segment]]
-        self.shift_by_term[self.segment] += 1
-        return index
-
-    def compose(self, code):
-        return Compose.__invoke__(code, self)
 
     def set_tree(self, term):
         """
@@ -267,26 +191,12 @@ class AssemblingState(object):
         # Initialize claim containers.
         self.claim_set = set()
         self.claims_by_broker = {}
-        self.phrases_by_claim = {}
+        self.phrase_by_claim = {}
         # Initialize `claims_by_broker` with an empty list for each node
         # in the term tree.
         self.claims_by_broker[term.tag] = []
         for offspring in term.offsprings:
             self.claims_by_broker[offspring] = []
-
-    def flush(self):
-        """
-        Clears the assembling state.
-        """
-        # Revert all attributes to their pristine state.  We assume that
-        # `gate_stack` is already empty.
-        self.gate = None
-        self.claim_set = None
-        self.claims_by_broker = None
-        self.phrases_by_claim = None
-        self.segment_indexes = None
-        self.correlations_stack = []
-        self.correlations = {}
 
     def push_gate(self, is_nullable=None, dispatcher=None, router=None):
         """
@@ -371,7 +281,7 @@ class AssemblingState(object):
             A term node.
         """
         # Realize and call the `Assemble` adapter.
-        return assemble(term, self)
+        return Assemble.__invoke__(term, self)
 
     def appoint(self, unit):
         """
@@ -467,7 +377,7 @@ class AssemblingState(object):
         # Restore the original gate.
         self.pop_gate()
 
-    def evaluate_all(self, code, dispatcher=None, router=None):
+    def evaluate(self, code, dispatcher=None, router=None):
         """
         Evaluates the given code node.
 
@@ -493,16 +403,10 @@ class AssemblingState(object):
         # Update the gate to use the given dispatcher and router.
         self.push_gate(dispatcher=dispatcher, router=router)
         # Realize and call the `Evaluate` adapter.
-        phrases = list(Evaluate.__invoke__(code, self))
+        phrase = Evaluate.__invoke__(code, self)
         # Restore the original gate.
         self.pop_gate()
         # Return the generated phrase.
-        return phrases
-
-    def evaluate(self, code, dispatcher=None, router=None):
-        phrases = self.evaluate_all(code, dispatcher, router)
-        assert len(phrases) == 1
-        [phrase] = phrases
         return phrase
 
     def demand(self, claim):
@@ -520,7 +424,7 @@ class AssemblingState(object):
             # Assign it to the broker.
             self.claims_by_broker[claim.broker].append(claim)
 
-    def supply(self, claim, *phrases):
+    def supply(self, claim, phrase):
         """
         Satisfies the claim.
 
@@ -533,9 +437,9 @@ class AssemblingState(object):
         # A few sanity checks.  Verify that the claim was actually requested.
         assert claim in self.claim_set
         # Verify that the claim was not satisfied already.
-        assert claim not in self.phrases_by_claim
+        assert claim not in self.phrase_by_claim
         # Save the phrase.
-        self.phrases_by_claim[claim] = list(phrases)
+        self.phrase_by_claim[claim] = phrase
 
     def to_predicate(self, phrase):
         return FormulaPhrase(ToPredicateSig(), phrase.domain,
@@ -565,39 +469,19 @@ class Assemble(Adapter):
         The current state of the assembling process.
     """
 
-    adapt(PreTerm)
+    adapt(Term)
 
     def __init__(self, term, state):
-        assert isinstance(term, PreTerm)
+        assert isinstance(term, Term)
         assert isinstance(state, AssemblingState)
         self.term = term
         self.state = state
+        self.claims = state.claims_by_broker[term.tag]
 
     def __call__(self):
         # Implement in subclasses.
         raise NotImplementedError("the compile adapter is not implemented"
                                   " for a %r node" % self.term)
-
-
-class AssembleTerm(Assemble):
-    """
-    Assembles a frame for a proper term node.
-
-    This adapt :class:`Assemble` for proper term nodes (i.e., not a
-    :class:`htsql.core.tr.term.QueryTerm`).
-
-    Attributes:
-
-    `claims` (a list of :class:`Claim`)
-        The claims that are dispatched to the term.
-    """
-
-    adapt(Term)
-
-    def __init__(self, term, state):
-        super(AssembleTerm, self).__init__(term, state)
-        # Extract claims dispatched to the given term.
-        self.claims = state.claims_by_broker[term.tag]
 
 
 class AssembleScalar(Assemble):
@@ -718,40 +602,37 @@ class AssembleBranch(Assemble):
                 # Generate a forward claim (again).
                 next_claim = self.state.forward(claim)
                 # We expect the forward claim to be already satisfied.
-                assert next_claim in self.state.phrases_by_claim
+                assert next_claim in self.state.phrase_by_claim
                 # Get the export phrase that satisfied the claim.
-                phrases = self.state.phrases_by_claim[next_claim]
+                phrase = self.state.phrase_by_claim[next_claim]
             # Otherwise, the claim is targeted to us and we are responsible
             # for evaluating the unit of the claim.
             else:
                 # Since it is a branch term, the unit must be compound.
                 # So we evaluate the code expression of the unit.
-                phrases = self.state.evaluate_all(claim.unit.code)
+                phrase = self.state.evaluate(claim.unit.code)
 
-            export = []
-            for phrase in phrases:
-                # Check if the generated phrase is a duplicate.  Even though
-                # all claims are unique, different claims may still produce
-                # identical phrases.  Therefore an extra check here is necessary.
-                if phrase not in index_by_phrase:
-                    # So it is not a duplicate: add it to the `SELECT` list.
-                    index = len(select)
-                    select.append(phrase)
-                    index_by_phrase[phrase] = index
+            # Check if the generated phrase is a duplicate.  Even though
+            # all claims are unique, different claims may still produce
+            # identical phrases.  Therefore an extra check here is necessary.
+            if phrase not in index_by_phrase:
+                # So it is not a duplicate: add it to the `SELECT` list.
+                index = len(select)
+                select.append(phrase)
+                index_by_phrase[phrase] = index
 
-                # Generate an export reference to the phrase.
-                index = index_by_phrase[phrase]
-                domain = phrase.domain
-                # The reference is nullable if the referenced phrase itself is
-                # nullable or the assembled frame is to be attached using an
-                # `OUTER JOIN`.
-                is_nullable = (phrase.is_nullable or
-                               self.state.gate.is_nullable)
-                reference = ReferencePhrase(self.term.tag, index, domain,
-                                            is_nullable, claim.unit)
-                export.append(reference)
+            # Generate an export reference to the phrase.
+            index = index_by_phrase[phrase]
+            domain = phrase.domain
+            # The reference is nullable if the referenced phrase itself is
+            # nullable or the assembled frame is to be attached using an
+            # `OUTER JOIN`.
+            is_nullable = (phrase.is_nullable or
+                           self.state.gate.is_nullable)
+            reference = ReferencePhrase(self.term.tag, index, domain,
+                                        is_nullable, claim.unit)
             # Satisfy the claim with the generated reference.
-            self.state.supply(claim, *export)
+            self.state.supply(claim, reference)
 
         # It might happen (though with the way the compiler generates the term
         # tree, it is probably impossible) that the frame has no claims
@@ -1151,115 +1032,106 @@ class AssembleSegment(Assemble):
         # This is a top-level frame, so it can't have claims.
         assert not self.claims
         # Assign all the units in the `SELECT` clause.
-        self.state.schedule(self.term.code.code)
+        for code in self.term.codes:
+            self.state.schedule(code)
         for code in self.term.superkeys:
             self.state.schedule(code)
-        if self.term.subtrees:
+        if self.term.dependents:
             for code in self.term.keys:
                 self.state.schedule(code)
 
     def assemble_select(self):
         # Assemble a `SELECT` clause.
         select = []
-        stencils = []
-        phrase_groups = []
-        phrase_groups.append(self.state.evaluate_all(self.term.code.code))
-        phrase_groups.append([self.state.evaluate(code)
-                              for code in self.term.superkeys])
-        if self.term.subtrees:
-            phrase_groups.append([self.state.evaluate(code)
-                                  for code in self.term.keys])
-        else:
-            phrase_groups.append([])
+        index_by_code = {}
+        codes = self.term.codes + self.term.superkeys
+        if self.term.dependents:
+            codes += self.term.keys
         index_by_phrase = {}
-        for phrases in phrase_groups:
-            stencil = []
-            for phrase in phrases:
-                if phrase not in index_by_phrase:
-                    index = len(select)
-                    select.append(phrase)
-                    index_by_phrase[phrase] = index
-                stencil.append(index_by_phrase[phrase])
-            stencils.append(stencil)
-        if not select:
-            select = [TruePhrase(self.term.code)]
-        self.state.save_stencils(self.term, stencils)
-        return select
-
-    def assemble_subtrees(self):
-        subterms = []
-        subtrees = []
-        locations = []
-        duplicates = set()
-        for code in self.term.code.code.segments:
-            if code in duplicates:
+        for code in codes:
+            if isinstance(code, LiteralCode) and \
+                    isinstance(code.domain, (UntypedDomain, BooleanDomain)):
                 continue
-            duplicates.add(code)
-            subterm = self.term.subtrees[code]
-            location = len(subtrees)
-            subterms.append(subterm)
+            phrase = self.state.evaluate(code)
+            if phrase not in index_by_phrase:
+                index = len(select)
+                select.append(phrase)
+                index_by_phrase[phrase] = index
+            index_by_code[code] = index_by_phrase[phrase]
+        if not select:
+            select = [TruePhrase(self.term.space)]
+        return select, index_by_code
+
+    def assemble_dependents(self):
+        dependents = []
+        index_by_term = {}
+        for subterm in self.term.dependents:
+            if subterm in index_by_term:
+                continue
             self.state.set_tree(subterm)
-            locations.append((subterm, location))
-            subframe = self.state.assemble(subterm)
-            subtrees.append(subframe)
-        for subterm, location in locations:
-            location -= len(locations)
-            self.state.save_location(subterm, location)
-        self.state.save_subterms(self.term, subterms)
-        return subtrees
+            dependent = self.state.assemble(subterm)
+            index_by_term[subterm] = len(dependents)
+            dependents.append(dependent)
+        for subterm in index_by_term.keys():
+            index_by_term[subterm] -= len(dependents)
+        return dependents, index_by_term
 
     def assemble_frame(self, include, embed, select,
                        where, group, having,
                        order, limit, offset):
-        subtrees = self.assemble_subtrees()
-        mix_pipe = None
-        if subtrees:
-            key_pipes = []
-            stencils = []
-            stencils.append(self.state.get_key_stencil(self.term))
-            for subframe in subtrees:
-                stencils.append(self.state.get_superkey_stencil(subframe.term))
-            for stencil in stencils:
-                if len(stencil) == 0:
-                    key_pipe = ValuePipe(True)
-                elif len(stencil) == 1:
-                    key_pipe =  ExtractPipe(stencil[0])
+        select, index_by_code = select
+        dependents, index_by_term = self.assemble_dependents()
+        code_pipes = []
+        for code in self.term.codes:
+            if isinstance(code, LiteralCode) and \
+                    isinstance(code.domain, (UntypedDomain, BooleanDomain)):
+                pipe = ValuePipe(code.value)
+            else:
+                index = index_by_code[code]
+                pipe = ExtractPipe(index)
+            code_pipes.append(pipe)
+        dependent_pipes = []
+        for subterm in self.term.dependents:
+            index = index_by_term[subterm]
+            pipe = ExtractPipe(index)
+            dependent_pipes.append(pipe)
+        superkey_pipes = []
+        for code in self.term.superkeys:
+            if isinstance(code, LiteralCode) and \
+                    isinstance(code.domain, (UntypedDomain, BooleanDomain)):
+                pipe = ValuePipe(code.value)
+            else:
+                index = index_by_code[code]
+                pipe = ExtractPipe(index)
+            superkey_pipes.append(pipe)
+        if len(superkey_pipes) == 0:
+            superkey_pipe = ValuePipe(True)
+        elif len(superkey_pipes) == 1:
+            [superkey_pipe] = superkey_pipes
+        else:
+            superkey_pipe = RecordPipe(superkey_pipes)
+        key_pipes = []
+        if self.term.dependents:
+            for code in self.term.keys:
+                if isinstance(code, LiteralCode) and \
+                        isinstance(code.domain, (UntypedDomain, BooleanDomain)):
+                    pipe = ValuePipe(code.value)
                 else:
-                    key_pipe = RecordPipe([ExtractPipe(index)
-                                           for index in stencil])
-                key_pipes.append(key_pipe)
-            mix_pipe = MixPipe(key_pipes)
+                    index = index_by_code[code]
+                    pipe = ExtractPipe(index)
+                key_pipes.append(pipe)
+        if len(key_pipes) == 0:
+            key_pipe = ValuePipe(True)
+        elif len(key_pipes) == 1:
+            [key_pipe] = key_pipes
+        else:
+            key_pipe = RecordPipe(key_pipes)
         return SegmentFrame(include, embed, select,
                            where, group, having,
                            order, limit, offset,
-                           mix_pipe, subtrees, self.term)
-
-
-class AssembleQuery(Assemble):
-    """
-    Assembles a top-level query frame.
-    """
-
-    adapt(QueryTerm)
-
-    def __call__(self):
-        # Compile the segment frame.
-        segment = None
-        value_pipe = None
-        if self.term.segment is not None:
-            # Initialize the state.
-            self.state.set_tree(self.term.segment)
-            self.state.save_location(self.term.segment, None)
-            self.state.save_subterms(None, [self.term.segment])
-            self.state.push_name(self.term.binding.profile.tag)
-            # Compile the segment.
-            segment = self.state.assemble(self.term.segment)
-            # Generate the compositor.
-            value_pipe = self.state.compose(self.term.segment.code)
-            # Clean up the state.
-            self.state.flush()
-        # Generate a frame node.
-        return QueryFrame(segment, value_pipe, self.term)
+                           code_pipes, dependent_pipes,
+                           superkey_pipe, key_pipe,
+                           dependents, self.term)
 
 
 class Evaluate(Adapter):
@@ -1295,15 +1167,6 @@ class Evaluate(Adapter):
                                   " for a %r node" % self.code)
 
 
-class EvaluateSegment(Evaluate):
-
-    adapt(SegmentCode)
-
-    def __call__(self):
-        # Nested segments are serialized into a separate frame tree.
-        return []
-
-
 class EvaluateLiteral(Evaluate):
     """
     Evaluates a literal code.
@@ -1312,9 +1175,7 @@ class EvaluateLiteral(Evaluate):
     adapt(LiteralCode)
 
     def __call__(self):
-        # Keep all attributes, but switch the class.
-        if not isinstance(self.code.domain, UntypedDomain):
-            yield LiteralPhrase(self.code.value, self.code.domain, self.code)
+        return LiteralPhrase(self.code.value, self.code.domain, self.code)
 
 
 class EvaluateCast(Evaluate):
@@ -1329,28 +1190,7 @@ class EvaluateCast(Evaluate):
         # Note that the for some source and target domains, the reducer will
         # retranslate a generic cast phrase to a more specific expression.
         base = self.state.evaluate(self.code.base)
-        yield CastPhrase(base, self.code.domain, base.is_nullable, self.code)
-
-
-class EvaluateRecord(Evaluate):
-
-    adapt_many(RecordCode,
-               IdentityCode)
-
-    def __call__(self):
-        for field in self.code.fields:
-            for phrase in self.state.evaluate_all(field):
-                yield phrase
-
-
-class EvaluateAnnihilator(Evaluate):
-
-    adapt(AnnihilatorCode)
-
-    def __call__(self):
-        yield self.state.evaluate(self.code.indicator)
-        for phrase in self.state.evaluate_all(self.code.code):
-            yield phrase
+        return CastPhrase(base, self.code.domain, base.is_nullable, self.code)
 
 
 class EvaluateCorrelation(Evaluate):
@@ -1361,7 +1201,7 @@ class EvaluateCorrelation(Evaluate):
         assert self.code.code in self.state.correlations
         # FIXME: is this correct in case of nested correlated subqueries?
         # FIXME: implement decompose?
-        yield self.state.correlations[self.code.code]
+        return self.state.correlations[self.code.code]
 
 
 class EvaluateFormula(Evaluate):
@@ -1434,11 +1274,11 @@ class EvaluateBySignature(Adapter):
         # should be overridden for nodes where it is not the case.
         is_nullable = any(cell.is_nullable for cell in arguments.cells())
         # Generate a new formula node.
-        yield FormulaPhrase(self.signature,
-                            self.domain,
-                            is_nullable,
-                            self.code,
-                            **arguments)
+        return FormulaPhrase(self.signature,
+                             self.domain,
+                             is_nullable,
+                             self.code,
+                             **arguments)
 
 
 class EvaluateIsEqualBase(EvaluateBySignature):
@@ -1446,8 +1286,8 @@ class EvaluateIsEqualBase(EvaluateBySignature):
     adapt_many(IsEqualSig, IsInSig, CompareSig)
 
     def __call__(self):
-        for phrase in super(EvaluateIsEqualBase, self).__call__():
-            yield self.state.from_predicate(phrase)
+        phrase = super(EvaluateIsEqualBase, self).__call__()
+        return self.state.from_predicate(phrase)
 
 
 class EvaluateIsTotallyEqualBase(EvaluateBySignature):
@@ -1463,7 +1303,7 @@ class EvaluateIsTotallyEqualBase(EvaluateBySignature):
         arguments = self.arguments.map(self.state.evaluate)
         phrase = FormulaPhrase(self.signature, self.domain,
                                False, self.code, **arguments)
-        yield self.state.from_predicate(phrase)
+        return self.state.from_predicate(phrase)
 
 
 class EvaluateNullIf(EvaluateBySignature):
@@ -1477,8 +1317,8 @@ class EvaluateNullIf(EvaluateBySignature):
         # Override the default implementation since the `null_if()`
         # operator is not null-regular, and, in fact, is always nullable.
         arguments = self.arguments.map(self.state.evaluate)
-        yield FormulaPhrase(self.signature, self.domain,
-                            True, self.code, **arguments)
+        return FormulaPhrase(self.signature, self.domain,
+                             True, self.code, **arguments)
 
 
 class EvaluateIfNull(EvaluateBySignature):
@@ -1494,8 +1334,8 @@ class EvaluateIfNull(EvaluateBySignature):
         # its arguments are nullable.
         arguments = self.arguments.map(self.state.evaluate)
         is_nullable = all(cell.is_nullable for cell in arguments.cells())
-        yield FormulaPhrase(self.signature, self.domain,
-                            is_nullable, self.code, **arguments)
+        return FormulaPhrase(self.signature, self.domain,
+                             is_nullable, self.code, **arguments)
 
 
 class EvaluateAndOrNot(EvaluateBySignature):
@@ -1511,7 +1351,7 @@ class EvaluateAndOrNot(EvaluateBySignature):
                                is_nullable,
                                self.code,
                                **arguments)
-        yield self.state.from_predicate(phrase)
+        return self.state.from_predicate(phrase)
 
 
 class EvaluateUnit(Evaluate):
@@ -1525,9 +1365,9 @@ class EvaluateUnit(Evaluate):
         # Generate a claim for a unit (for the second time).
         claim = self.state.appoint(self.code)
         # We expect the claim to be already satisfied.
-        assert claim in self.state.phrases_by_claim
+        assert claim in self.state.phrase_by_claim
         # Return the export phrase corresponding to the claim.
-        return self.state.phrases_by_claim[claim]
+        return self.state.phrase_by_claim[claim]
 
 
 class Compose(Adapter):
@@ -1547,7 +1387,7 @@ class Compose(Adapter):
 
 class ComposeSegment(Compose):
 
-    adapt(SegmentCode)
+    adapt(SegmentExpr)
 
     def __call__(self):
         self.state.push_segment(self.code)
@@ -1582,64 +1422,50 @@ class ComposeLiteral(Compose):
         return ValuePipe(self.code.value)
 
 
-class ComposeRecord(Compose):
-
-    adapt(RecordCode)
-
-    def __call__(self):
-        field_pipes = []
-        field_names = []
-        for field, profile in zip(self.code.fields,
-                                  self.code.domain.fields):
-            field_names.append(profile.tag)
-            self.state.push_name(profile.tag)
-            field_pipe = self.state.compose(field)
-            self.state.pop_name()
-            field_pipes.append(field_pipe)
-        record_class = Record.make(self.state.name, field_names)
-        return RecordPipe(field_pipes, record_class)
-
-
-class ComposeIdentity(Compose):
-
-    adapt(IdentityCode)
-
-    def __call__(self):
-        field_pipes = []
-        for field in self.code.fields:
-            field_pipe = self.state.compose(field)
-            field_pipes.append(field_pipe)
-        id_class = ID.make(self.code.domain.dump)
-        return RecordPipe(field_pipes, id_class)
+#class ComposeRecord(Compose):
+#
+#    adapt(RecordCode)
+#
+#    def __call__(self):
+#        field_pipes = []
+#        field_names = []
+#        for field, profile in zip(self.code.fields,
+#                                  self.code.domain.fields):
+#            field_names.append(profile.tag)
+#            self.state.push_name(profile.tag)
+#            field_pipe = self.state.compose(field)
+#            self.state.pop_name()
+#            field_pipes.append(field_pipe)
+#        record_class = Record.make(self.state.name, field_names)
+#        return RecordPipe(field_pipes, record_class)
 
 
-class ComposeAnnihilator(Compose):
+#class ComposeIdentity(Compose):
+#
+#    adapt(IdentityCode)
+#
+#    def __call__(self):
+#        field_pipes = []
+#        for field in self.code.fields:
+#            field_pipe = self.state.compose(field)
+#            field_pipes.append(field_pipe)
+#        id_class = ID.make(self.code.domain.dump)
+#        return RecordPipe(field_pipes, id_class)
 
-    adapt(AnnihilatorCode)
 
-    def __call__(self):
-        test_pipe = self.state.compose(self.code.indicator)
-        pipe = self.state.compose(self.code.code)
-        return AnnihilatePipe(test_pipe, pipe)
+#class ComposeAnnihilator(Compose):
+#
+#    adapt(AnnihilatorCode)
+#
+#    def __call__(self):
+#        test_pipe = self.state.compose(self.code.indicator)
+#        pipe = self.state.compose(self.code.code)
+#        return AnnihilatePipe(test_pipe, pipe)
 
 
-def assemble(term, state=None):
-    """
-    Compiles a new frame node for the given term.
-
-    Returns a :class:`htsql.core.tr.frame.Frame` instance.
-
-    `term` (:class:`htsql.core.tr.term.Term`)
-        A term node.
-
-    `state` (:class:`AssemblingState` or ``None``)
-        The assembling state to use.  If not set, a new assembling
-        state is instantiated.
-    """
-    # Instantiate a new assembling state if not given one.
-    if state is None:
-        state = AssemblingState()
-    # Realize and apply the `Assemble` adapter; return the generated frame.
-    return Assemble.__invoke__(term, state)
+def assemble(segment):
+    state = AssemblingState()
+    state.set_tree(segment)
+    return state.assemble(segment)
 
 

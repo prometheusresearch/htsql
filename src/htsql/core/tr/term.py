@@ -15,7 +15,7 @@ from ..util import (listof, dictof, tupleof, maybe,
                     Clonable, Printable, Hashable)
 from ..domain import BooleanDomain
 from ..error import point
-from .space import Expression, Space, Code, Unit, QueryExpr, SegmentCode
+from .space import Expression, Space, Code, Unit, SegmentExpr
 
 
 class Joint(Hashable, Clonable, Printable):
@@ -45,63 +45,7 @@ class Joint(Hashable, Clonable, Printable):
         return iter([self.lop, self.rop])
 
 
-class PreTerm(Clonable, Printable):
-    """
-    Represents a term node.
-
-    A term represents a relational algebraic expression.  :class:`PreTerm`
-    is an abstract class, each its subclass represents a specific relational
-    operation.
-
-    The term tree is an intermediate stage of the HTSQL translator. A term
-    tree is translated from the expression graph by the *compiling* process.
-    It is then translated to the frame tree by the *assembling* process.
-
-    The following adapters are associated with the compiling process and
-    generate new term nodes::
-
-        Compile: (Space, CompilingState) -> Term
-        Inject: (Unit, Term, CompilingState) -> Term
-
-    See :class:`htsql.core.tr.compile.Compile` and
-    :class:`htsql.core.tr.compile.Inject` for more detail.
-
-    The following adapter implements the assembling process::
-
-        Assemble: (Term, AssemblingState) -> Frame
-
-    See :class:`htsql.core.tr.assemble.Assemble` for more detail.
-
-    Arguments:
-
-    `expression` (:class:`htsql.core.tr.space.Expression`)
-        The expression node which gave rise to the term node; used only for
-        presentation or error reporting.
-
-    Other attributes:
-
-    `binding` (:class:`htsql.core.tr.binding.Binding`)
-        The binding node which gave rise to the term node; for debugging.
-
-    `syntax` (:class:`htsql.core.tr.syntax.Syntax`)
-        The syntax node which gave rise to the term node; for debugging.
-
-    `mark` (:class:`htsql.core.mark.Mark`)
-        The location of the node in the original query; for error reporting.
-    """
-
-    def __init__(self, expression):
-        assert isinstance(expression, Expression)
-        self.expression = expression
-        self.binding = expression.binding
-        self.syntax = expression.syntax
-        point(self, expression)
-
-    def __str__(self):
-        return str(self.expression)
-
-
-class Term(PreTerm):
+class Term(Clonable, Printable):
     """
     Represents a relational algebraic expression.
 
@@ -201,7 +145,6 @@ class Term(PreTerm):
             offsprings[kid.tag] = kid.tag
             for offspring in kid.offsprings:
                 offsprings[offspring] = kid.tag
-        super(Term, self).__init__(space)
         self.tag = tag
         self.kids = kids
         self.space = space
@@ -209,6 +152,7 @@ class Term(PreTerm):
         self.baseline = baseline
         self.routes = routes
         self.offsprings = offsprings
+        self.expression = space
 
 
 class NullaryTerm(Term):
@@ -594,18 +538,18 @@ class SegmentTerm(UnaryTerm):
         The operand.
     """
 
-    def __init__(self, tag, kid, code, superkeys, keys, subtrees,
+    def __init__(self, tag, kid, codes, superkeys, keys, dependents,
                  space, baseline, routes):
-        assert isinstance(code, SegmentCode)
+        assert isinstance(codes, listof(Code))
         assert isinstance(superkeys, listof(Code))
         assert isinstance(keys, listof(Code))
-        assert isinstance(subtrees, dictof(SegmentCode, SegmentTerm))
+        assert isinstance(dependents, listof(SegmentTerm))
         super(SegmentTerm, self).__init__(tag, kid,
                                           space, baseline, routes)
-        self.code = code
+        self.codes = codes
         self.superkeys = superkeys
         self.keys = keys
-        self.subtrees = subtrees
+        self.dependents = dependents
 
     def __str__(self):
         ## Display:
@@ -613,20 +557,5 @@ class SegmentTerm(UnaryTerm):
         #return "%s {%s}" % (self.kid, ",".join(str(element)
         #                                       for element in self.elements))
         return "%s {}" % self.kid
-
-
-class QueryTerm(PreTerm):
-    """
-    Represents a whole HTSQL query.
-
-    `segment` (:class:`SegmentTerm` or ``None``)
-        The query segment.
-    """
-
-    def __init__(self, segment, expression):
-        assert isinstance(segment, maybe(SegmentTerm))
-        assert isinstance(expression, QueryExpr)
-        super(QueryTerm, self).__init__(expression)
-        self.segment = segment
 
 

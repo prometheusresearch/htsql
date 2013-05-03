@@ -10,7 +10,7 @@ from ..error import Error, translate_guard
 from .coerce import coerce
 from .signature import (IsNullSig, IsEqualSig, AndSig, CompareSig,
         SortDirectionSig, RowNumberSig)
-from .space import (Expression, QueryExpr, SegmentCode, Code, LiteralCode,
+from .space import (Expression, SegmentExpr, Code, LiteralCode,
         FormulaCode, Space, RootSpace, ScalarSpace, TableSpace, QuotientSpace,
         ComplementSpace, MonikerSpace, LocatorSpace, ForkedSpace, AttachSpace,
         ClippedSpace, FilteredSpace, OrderedSpace, Unit, ScalarUnit,
@@ -18,7 +18,7 @@ from .space import (Expression, QueryExpr, SegmentCode, Code, LiteralCode,
         CorrelationCode)
 from .term import (Term, ScalarTerm, TableTerm, FilterTerm, JoinTerm,
         EmbeddingTerm, CorrelationTerm, ProjectionTerm, OrderTerm, WrapperTerm,
-        PermanentTerm, SegmentTerm, QueryTerm, Joint)
+        PermanentTerm, SegmentTerm, Joint)
 from .stitch import arrange, spread, sew, tie
 
 
@@ -37,18 +37,18 @@ class CompilingState(object):
         inflated.
     """
 
-    def __init__(self):
+    def __init__(self, root):
         # The next term tag to be produced by `tag`.
         self.next_tag = 1
         # The root scalar space.
-        self.root = None
+        self.root = root
         # The stack of previous baseline spaces.
         self.baseline_stack = []
         # The current baseline space.
-        self.baseline = None
+        self.baseline = root
         # Support for nested segments.
         self.superspace_stack = []
-        self.superspace = None
+        self.superspace = root
 
     def tag(self):
         """
@@ -57,38 +57,6 @@ class CompilingState(object):
         tag = self.next_tag
         self.next_tag += 1
         return tag
-
-    def set_root(self, space):
-        """
-        Initializes the root, baseline and mask spaces.
-
-        This function must be called before state attributes `root`,
-        `baseline` and `mask` could be used.
-
-        `space` (:class:`htsql.core.tr.space.RootSpace`)
-            A root scalar space.
-        """
-        assert isinstance(space, RootSpace)
-        # Check that the state spaces are not yet initialized.
-        assert self.root is None
-        assert self.baseline is None
-        assert self.superspace is None
-        self.root = space
-        self.baseline = space
-        self.superspace = space
-
-    def flush(self):
-        """
-        Clears the state spaces.
-        """
-        # Check that the state spaces are initialized and the space stacks
-        # are exhausted.
-        assert self.root is not None
-        assert not self.baseline_stack
-        assert self.baseline is self.root
-        self.root = None
-        self.baseline = None
-        self.superspace = None
 
     def push_baseline(self, baseline):
         """
@@ -143,7 +111,16 @@ class CompilingState(object):
         # tag, therefore we'd have to replace the tags and route tables
         # of the cached term node.
         with translate_guard(expression):
-            return compile(expression, self, baseline=baseline)
+            # If passed, assign new baseline and mask spaces.
+            if baseline is not None:
+                self.push_baseline(baseline)
+            # Realize and apply the `Compile` adapter.
+            term = Compile.__invoke__(expression, self)
+            # Restore old baseline and mask spaces.
+            if baseline is not None:
+                self.pop_baseline()
+            # Return the compiled term.
+            return term
 
     def inject(self, term, expressions):
         """
@@ -552,7 +529,7 @@ class Inject(CompileBase):
 
 class CompileQuery(Compile):
 
-    adapt(QueryExpr)
+    #adapt(QueryExpr)
 
     def __call__(self):
         # Initialize the all state spaces with a root scalar space.
@@ -569,7 +546,7 @@ class CompileQuery(Compile):
 
 class CompileSegment(Compile):
 
-    adapt(SegmentCode)
+    adapt(SegmentExpr)
 
     def __call__(self):
         if not self.state.superspace.spans(self.expression.root):
@@ -590,7 +567,7 @@ class CompileSegment(Compile):
                 duplicates.add(code)
 
         # List of expressions we need the term to export.
-        codes = ([self.expression.code] +
+        codes = (self.expression.codes +
                  [code for code, direction in order])
         idx = 0
         while idx+1 < len(chain):
@@ -631,23 +608,25 @@ class CompileSegment(Compile):
                             kid.space, kid.baseline, kid.routes.copy())
         # Compile nested segments.
         subtrees = {}
-        for segment in self.expression.code.segments:
+        dependents = []
+        for segment in self.expression.dependents:
             if segment in subtrees:
-                continue
+                dependents.append(subtrees[segment])
             self.state.push_superspace(self.expression.root)
             self.state.push_superspace(self.expression.space)
             term = self.state.compile(segment)
             self.state.pop_superspace()
             self.state.pop_superspace()
             subtrees[segment] = term
+            dependents.append(term)
         # Construct keys for segment merging.
         superkeys = [code for code, direction in arrange(self.state.superspace,
                                                          with_strong=False)]
         keys = [code for code, direction in arrange(self.expression.space,
                                                     with_strong=False)]
         # Construct a segment term.
-        return SegmentTerm(self.state.tag(), kid, self.expression,
-                           superkeys, keys, subtrees,
+        return SegmentTerm(self.state.tag(), kid, self.expression.codes,
+                           superkeys, keys, dependents,
                            kid.space, kid.baseline, kid.routes.copy())
 
 
@@ -1981,36 +1960,8 @@ class InjectCovering(Inject):
         return term
 
 
-def compile(expression, state=None, baseline=None):
-    """
-    Compiles a new term node for the given expression.
-
-    Returns a :class:`htsql.core.tr.term.Term` instance.
-
-    `expression` (:class:`htsql.core.tr.space.Expression`)
-        An expression node.
-
-    `state` (:class:`CompilingState` or ``None``)
-        The compiling state to use.  If not set, a new compiling state
-        is instantiated.
-
-    `baseline` (:class:`htsql.core.tr.space.Space` or ``None``)
-        The baseline space.  Specifies an axis that the compiled
-        term must export.  If not set, the current baseline space of
-        the state is used.
-    """
-    # Instantiate a new compiling state if not given one.
-    if state is None:
-        state = CompilingState()
-    # If passed, assign new baseline and mask spaces.
-    if baseline is not None:
-        state.push_baseline(baseline)
-    # Realize and apply the `Compile` adapter.
-    term = Compile.__invoke__(expression, state)
-    # Restore old baseline and mask spaces.
-    if baseline is not None:
-        state.pop_baseline()
-    # Return the compiled term.
-    return term
+def compile(segment):
+    state = CompilingState(RootSpace(None, segment.flow))
+    return state.compile(segment)
 
 

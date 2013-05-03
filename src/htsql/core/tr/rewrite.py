@@ -7,11 +7,10 @@ from ..adapter import Utility, Adapter, adapt, adapt_many
 from ..domain import BooleanDomain
 from ..error import Error, translate_guard
 from .coerce import coerce
-from .space import (Expression, QueryExpr, SegmentCode, Space, RootSpace,
-        FiberTableSpace, QuotientSpace, ComplementSpace, MonikerSpace,
-        ForkedSpace, AttachSpace, ClippedSpace, LocatorSpace, FilteredSpace,
-        OrderedSpace, Code, LiteralCode, CastCode, RecordCode, IdentityCode,
-        AnnihilatorCode, FormulaCode, Unit, ColumnUnit, CompoundUnit,
+from .space import (Expression, SegmentExpr, Space, RootSpace, FiberTableSpace,
+        QuotientSpace, ComplementSpace, MonikerSpace, ForkedSpace, AttachSpace,
+        ClippedSpace, LocatorSpace, FilteredSpace, OrderedSpace, Code,
+        LiteralCode, CastCode, FormulaCode, Unit, ColumnUnit, CompoundUnit,
         ScalarUnit, AggregateUnitBase, AggregateUnit, KernelUnit, CoveringUnit)
 from .signature import Signature, OrSig, AndSig, IsEqualSig, isformula
 # FIXME: move `IfSig` and `SwitchSig` to `htsql.core.tr.signature`.
@@ -35,49 +34,17 @@ class RewritingState(object):
         A list of units accumulated on the *collecting* phase.
     """
 
-    def __init__(self):
+    def __init__(self, root):
         # The root space.
-        self.root = None
+        self.root = root
         # The current mask space.
-        self.mask = None
+        self.mask = root
         # Stack of saved previous mask spaces.
         self.mask_stack = []
         # List of collected units.
-        self.collection = None
+        self.collection = []
         # Dictionaries caching the results of `rewrite`, `unmask` and `replace`
         # phases.
-        self.rewrite_cache = {}
-        self.unmask_cache = {}
-        self.replace_cache = {}
-
-    def set_root(self, space):
-        """
-        Set the root data space.
-
-        This function initializes the rewriting state.
-
-        `root` (:class:`htsql.core.tr.space.RootSpace`)
-            The root space.
-        """
-        assert isinstance(space, RootSpace)
-        # Check that it is not initialized already.
-        assert self.root is None
-        assert self.mask is None
-        assert self.collection is None
-        self.root = space
-        self.mask = space
-        self.collection = []
-
-    def flush(self):
-        """
-        Clears the state.
-        """
-        assert self.root is not None
-        assert self.mask is self.root
-        assert not self.mask_stack
-        self.root = None
-        self.mask = None
-        self.collection = None
         self.rewrite_cache = {}
         self.unmask_cache = {}
         self.replace_cache = {}
@@ -86,9 +53,7 @@ class RewritingState(object):
         """
         Creates an empty copy of the state.
         """
-        copy = RewritingState()
-        copy.set_root(self.root)
-        return copy
+        return RewritingState(self.root)
 
     def push_mask(self, mask):
         """
@@ -136,7 +101,8 @@ class RewritingState(object):
         if expression in self.rewrite_cache:
             return self.rewrite_cache[expression]
         # Apply `Rewrite` adapter.
-        replacement = rewrite(expression, self)
+        with translate_guard(expression):
+            replacement = Rewrite.__prepare__(expression, self)()
         # Cache the output.
         self.rewrite_cache[expression] = replacement
         return replacement
@@ -569,7 +535,7 @@ class Replace(RewriteBase):
 
 class RewriteQuery(Rewrite):
 
-    adapt(QueryExpr)
+    #adapt(QueryExpr)
 
     def __call__(self):
         # Initialize the rewriting state.
@@ -596,35 +562,42 @@ class RewriteQuery(Rewrite):
 
 class RewriteSegment(Rewrite):
 
-    adapt(SegmentCode)
+    adapt(SegmentExpr)
 
     def __call__(self):
         # Rewrite the output space and output record.
         root = self.state.rewrite(self.expression.root)
         space = self.state.rewrite(self.expression.space)
-        code = self.state.rewrite(self.expression.code)
-        return self.expression.clone(root=root, space=space, code=code)
+        codes = [self.state.rewrite(code)
+                 for code in self.expression.codes]
+        dependents = [self.state.rewrite(dependent)
+                      for dependent in self.expression.dependents]
+        return self.expression.clone(root=root, space=space, codes=codes,
+                                     dependents=dependents)
 
 
 class UnmaskSegment(Unmask):
 
-    adapt(SegmentCode)
+    adapt(SegmentExpr)
 
     def __call__(self):
         # Unmask the output record against the output space.
-        code = self.state.unmask(self.expression.code,
-                                 mask=self.expression.space)
+        codes = [self.state.unmask(code, self.expression.space)
+                 for code in self.expression.codes]
+        dependents = [self.state.unmask(dependent, self.expression.space)
+                      for dependent in self.expression.dependents]
         # Unmask the space itself.
         space = self.state.unmask(self.expression.space,
                                  mask=self.expression.root)
         root = self.state.unmask(self.expression.root)
         # Produce a clone of the segment with new space and output columns.
-        return self.expression.clone(root=root, space=space, code=code)
+        return self.expression.clone(root=root, space=space, codes=codes,
+                                     dependents=dependents)
 
 
 class CollectSegment(Collect):
 
-    adapt(SegmentCode)
+    adapt(SegmentExpr)
 
     def __call__(self):
         pass
@@ -632,19 +605,26 @@ class CollectSegment(Collect):
 
 class ReplaceSegment(Replace):
 
-    adapt(SegmentCode)
+    adapt(SegmentExpr)
 
     def __call__(self):
         # Recombine the content of the segment against a blank state.
         substate = self.state.spawn()
         substate.collect(self.expression.root)
         substate.collect(self.expression.space)
-        substate.collect(self.expression.code)
+        for code in self.expression.codes:
+            substate.collect(code)
+        for dependent in self.expression.dependents:
+            substate.collect(dependent)
         substate.recombine()
         root = substate.replace(self.expression.root)
         space = substate.replace(self.expression.space)
-        code = substate.replace(self.expression.code)
-        return self.expression.clone(root=root, space=space, code=code)
+        codes = [substate.replace(code)
+                 for code in self.expression.codes]
+        dependents = [substate.replace(dependent)
+                      for dependent in self.expression.dependents]
+        return self.expression.clone(root=root, space=space, codes=codes,
+                                     dependents=dependents)
 
 
 class RewriteSpace(Rewrite):
@@ -1275,90 +1255,6 @@ class RewriteBySignature(Adapter):
                            self.code.flow, **arguments)
 
 
-class RewriteRecord(Rewrite):
-
-    adapt_many(RecordCode,
-               IdentityCode)
-
-    def __call__(self):
-        fields = [self.state.rewrite(field)
-                  for field in self.code.fields]
-        return self.code.clone(fields=fields)
-
-
-class UnmaskRecord(Unmask):
-
-    adapt_many(RecordCode,
-               IdentityCode)
-
-    def __call__(self):
-        fields = [self.state.unmask(field)
-                  for field in self.code.fields]
-        return self.code.clone(fields=fields)
-
-
-class CollectRecord(Collect):
-
-    adapt_many(RecordCode,
-               IdentityCode)
-
-    def __call__(self):
-        for field in self.code.fields:
-            self.state.collect(field)
-
-
-class ReplaceRecord(Replace):
-
-    adapt_many(RecordCode,
-               IdentityCode)
-
-    def __call__(self):
-        fields = [self.state.replace(field)
-                  for field in self.code.fields]
-        return self.code.clone(fields=fields)
-
-
-class RewriteAnnihilator(Rewrite):
-
-    adapt(AnnihilatorCode)
-
-    def __call__(self):
-        code = self.state.rewrite(self.code.code)
-        indicator = self.state.rewrite(self.code.indicator)
-        return self.code.clone(code=code, indicator=indicator)
-
-
-class UnmaskAnnihilator(Unmask):
-
-    adapt(AnnihilatorCode)
-
-    def __call__(self):
-        code = self.state.unmask(self.code.code)
-        indicator = self.state.unmask(self.code.indicator)
-        if not isinstance(indicator, Unit):
-            return code
-        return self.code.clone(code=code, indicator=indicator)
-
-
-class CollectAnnihilator(Collect):
-
-    adapt(AnnihilatorCode)
-
-    def __call__(self):
-        self.state.collect(self.code.code)
-        self.state.collect(self.code.indicator)
-
-
-class ReplaceAnnihilator(Replace):
-
-    adapt(AnnihilatorCode)
-
-    def __call__(self):
-        code = self.state.replace(self.code.code)
-        indicator = self.state.replace(self.code.indicator)
-        return self.code.clone(code=code, indicator=indicator)
-
-
 class RewriteUnit(RewriteCode):
 
     adapt(Unit)
@@ -1602,24 +1498,14 @@ class UnmaskCovering(UnmaskUnit):
         return self.unit.clone(code=code, space=space)
 
 
-def rewrite(expression, state=None):
-    """
-    Rewrites the given expression node.
-
-    Returns a clone of the given node optimized for compilation.
-
-    `expression` (:class:`htsql.core.tr.space.Expression`)
-        The expression node to rewrite.
-
-    `state` (:class:`RewritingState` or ``None``)
-        The rewriting state to use.  If not set, a new rewriting state
-        is created.
-    """
-    # If a state is not provided, create a new one.
-    if state is None:
-        state = RewritingState()
-    # Apply the `Rewrite` adapter.
-    with translate_guard(expression):
-        return Rewrite.__invoke__(expression, state)
-
+def rewrite(segment):
+    root = RootSpace(None, segment.flow)
+    state = RewritingState(root)
+    with translate_guard(segment):
+        segment = state.rewrite(segment)
+        segment = state.unmask(segment)
+        state.collect(segment)
+        state.recombine()
+        segment = state.replace(segment)
+    return segment
 
