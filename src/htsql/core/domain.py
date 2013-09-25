@@ -495,7 +495,7 @@ class TextDomain(Domain):
     `length`: ``int`` or ``None``
         The maximum length of the value; ``None`` if infinite or not known.
 
-    `is_varying`: ``int``
+    `is_varying`: ``bool``
         Indicates whether values are fixed-length or variable-length.
     """
 

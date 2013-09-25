@@ -132,7 +132,7 @@ def safe_produce(command, cut, environment=None, **parameters):
 
 def analyze(command, environment=None, **parameters):
     environment = embed(environment, **parameters)
-    action = AnalyzeAction(parameters)
+    action = AnalyzeAction(environment)
     return act(command, action)
 
 
