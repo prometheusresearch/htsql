@@ -25,6 +25,9 @@ class TweakFileDBAddon(Addon):
 
     `file`: the path to the CSV file.
 
+    Use parameter `encoding` to specify the encoding of CSV files.
+    By default, UTF-8 encoding is assumed.
+
     Optional parameter `cache-file` allows you to specify a persistent
     storage for the database.
     """
@@ -36,6 +39,9 @@ class TweakFileDBAddon(Addon):
                 ("file", StrVal())])),
                 default=[],
                 hint="""source CSV files"""),
+            Parameter('encoding', StrVal(),
+                default='utf-8',
+                hint="""encoding of CSV files"""),
             Parameter('cache_file', StrVal(),
                 hint="""persistent storage"""),
     ]

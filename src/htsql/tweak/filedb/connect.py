@@ -28,6 +28,7 @@ class BuildFileDB(Utility):
         self.connection = connection
 
     def __call__(self):
+        encoding = context.app.tweak.filedb.encoding
         cursor = self.connection.cursor()
         source_meta = {}
         cursor.execute("""
@@ -89,7 +90,11 @@ class BuildFileDB(Utility):
                 continue
             column_names = []
             for idx, name in enumerate(columns_row):
-                name = name.decode('utf-8', 'replace')
+                try:
+                    name = name.decode(encoding)
+                except UnicodeDecodeError:
+                    raise Error("Failed to decode file using %s encoding"
+                                % encoding, source_file)
                 if name:
                     name = to_name(name)
                 if not name or name in column_names or re.match(r"^_\d+$", name):
@@ -106,7 +111,11 @@ class BuildFileDB(Utility):
                     else:
                         value = None
                     if value is not None:
-                        value = value.decode('utf-8', 'replace')
+                        try:
+                            value = value.decode(encoding)
+                        except UnicodeDecodeError:
+                            raise Error("Failed to decode file using %s encoding"
+                                    % encoding, source_file)
                     record.append(value)
                 records.append(record)
             chunks = []

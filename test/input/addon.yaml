@@ -356,6 +356,38 @@ tests:
     ignore: true
   - uri: /{_source[permanent].timestamp<=_source[volatile].timestamp}
 
+  # CSV files for testing encoding
+  - write: build/regress/utf8-encoded.csv
+    data: |
+        full_name
+        José Fernández
+  - write: build/regress/cp1252-encoded.csv
+    data: !!binary |
+        ZnVsbF9uYW1lCkpvc+kgRmVybuFuZGV6Cg==
+
+  # Read UTF-8 encoded CSV
+  - db: null
+    extensions:
+      htsql:
+        debug: true
+      tweak.filedb:
+        sources:
+        - file: build/regress/utf8-encoded.csv
+
+  - uri: /utf8_encoded
+
+  # Read CSV encoded with a non-default encoding.
+  - db: null
+    extensions:
+      htsql:
+        debug: true
+      tweak.filedb:
+        sources:
+        - file: build/regress/cp1252-encoded.csv
+        encoding: cp1252
+
+  - uri: /cp1252_encoded
+
   # Cleanup
   - rm:
     - build/regress/table.csv
@@ -369,6 +401,8 @@ tests:
     - build/regress/volatile.csv
     - build/regress/hidden.csv
     - build/regress/new.csv
+    - build/regress/utf8-encoded.csv
+    - build/regress/cp1252-encoded.csv
     - build/regress/filedb.sqlite
 
 # TWEAK.GATEWAY - define gateways to other databases

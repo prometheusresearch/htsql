@@ -528,6 +528,9 @@ Parameters:
     `file`
         The path to the CSV file.
 
+`encoding`
+    Encoding of CSV files (``UTF-8`` by default).
+
 `cache-file`
     Persistent storage for the database.
 
