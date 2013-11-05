@@ -150,6 +150,10 @@ class OverrideIntrospect(Introspect):
                                    for target_table in target_schema
                                    if pattern.matches_target(target_table)
                                    and pattern.extract_target(target_table)]
+                        if len(targets) > 1:
+                            targets = [target_table
+                                       for target_table in targets
+                                       if target_table.schema is table.schema]
                         if len(targets) != 1:
                             continue
                         [target_table] = targets
