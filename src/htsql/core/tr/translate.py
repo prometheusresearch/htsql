@@ -4,6 +4,7 @@
 
 
 from ..syn.syntax import Syntax
+from ..syn.parse import parse
 from .bind import bind
 from .binding import Binding
 from .decorate import decorate
