@@ -208,6 +208,8 @@ class RenderShell(Act):
         implicit_shell = unicode(self.command.is_implicit).lower()
         status = '200 OK'
         headers = [('Content-Type', 'text/html; charset=UTF-8')]
+        if self.command.is_implicit:
+            headers.append(('Vary', 'Accept'))
         template = Template(resource.data)
         body = template(resource_root=cgi.escape(resource_root, True),
                         database_name=cgi.escape(database_name, True),
