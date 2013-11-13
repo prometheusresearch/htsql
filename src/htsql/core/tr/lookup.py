@@ -24,9 +24,9 @@ from .binding import (Binding, ScopeBinding, ChainingBinding, WrappingBinding,
         TableBinding, ChainBinding, ColumnBinding, QuotientBinding,
         ComplementBinding, CoverBinding, ForkBinding, AttachBinding,
         ClipBinding, LocateBinding, RescopingBinding, DefineBinding,
-        DefineReferenceBinding, DefineLiftBinding, SelectionBinding,
-        WildSelectionBinding, DirectionBinding, RerouteBinding,
-        ReferenceRerouteBinding, TitleBinding, AliasBinding,
+        DefineReferenceBinding, DefineCollectionBinding, DefineLiftBinding,
+        SelectionBinding, WildSelectionBinding, DirectionBinding,
+        RerouteBinding, ReferenceRerouteBinding, TitleBinding, AliasBinding,
         ImplicitCastBinding, FreeTableRecipe, AttachedTableRecipe,
         ColumnRecipe, ComplementRecipe, KernelRecipe, BindingRecipe,
         IdentityRecipe, ChainRecipe, SubstitutionRecipe, ClosedRecipe,
@@ -960,6 +960,18 @@ class LookupAttributeInDefine(Lookup):
         return super(LookupAttributeInDefine, self).__call__()
 
 
+class LookupAttributeInDefineCollection(Lookup):
+
+    adapt(DefineCollectionBinding, AttributeProbe)
+
+    def __call__(self):
+        if (not self.binding.is_reference and
+                self.probe.arity is None and
+                self.probe.key in self.binding.collection):
+            return self.binding.collection[self.probe.key]
+        return super(LookupAttributeInDefineCollection, self).__call__()
+
+
 class LookupAttributeSetInDefine(Lookup):
     # Find all attributes in a definition binding.
 
@@ -968,6 +980,18 @@ class LookupAttributeSetInDefine(Lookup):
     def __call__(self):
         attributes = super(LookupAttributeSetInDefine, self).__call__()
         attributes.add((normalize(self.binding.name), self.binding.arity))
+        return attributes
+
+
+class LookupAttributeSetInDefineCollection(Lookup):
+
+    adapt(DefineCollectionBinding, AttributeSetProbe)
+
+    def __call__(self):
+        attributes = super(LookupAttributeSetInDefineCollection, self).__call__()
+        if not self.binding.is_reference:
+            for name in self.binding.collection:
+                attributes.add((name, None))
         return attributes
 
 
@@ -986,6 +1010,17 @@ class LookupReferenceInDefineReference(Lookup):
         return super(LookupReferenceInDefineReference, self).__call__()
 
 
+class LookupReferenceInDefineCollection(Lookup):
+
+    adapt(DefineCollectionBinding, ReferenceProbe)
+
+    def __call__(self):
+        if (self.binding.is_reference and
+                self.probe.key in self.binding.collection):
+            return self.binding.collection[self.probe.key]
+        return super(LookupReferenceInDefineCollection, self).__call__()
+
+
 class LookupReferenceSetInDefineReference(Lookup):
     # Find all references in a definition binding.
 
@@ -994,6 +1029,18 @@ class LookupReferenceSetInDefineReference(Lookup):
     def __call__(self):
         references = super(LookupReferenceSetInDefineReference, self).__call__()
         references.add(normalize(self.binding.name))
+        return references
+
+
+class LookupReferenceSetInDefineCollection(Lookup):
+
+    adapt(DefineCollectionBinding, ReferenceSetProbe)
+
+    def __call__(self):
+        references = super(LookupReferenceSetInDefineCollection, self).__call__()
+        if self.binding.is_reference:
+            for name in self.binding.collection:
+                references.add(name)
         return references
 
 

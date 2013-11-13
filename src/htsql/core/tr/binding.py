@@ -3,7 +3,7 @@
 #
 
 
-from ..util import maybe, listof, tupleof, Clonable, Printable, Hashable
+from ..util import maybe, listof, tupleof, dictof, Clonable, Printable, Hashable
 from ..entity import TableEntity, ColumnEntity, Join
 from ..domain import (Domain, VoidDomain, BooleanDomain, ListDomain,
         RecordDomain, EntityDomain, IdentityDomain, Profile)
@@ -365,6 +365,19 @@ class DefineReferenceBinding(DecorateBinding):
         super(DefineReferenceBinding, self).__init__(base, syntax)
         self.name = name
         self.recipe = recipe
+
+
+class DefineCollectionBinding(DecorateBinding):
+    """
+    Defines a collection of attributes or references.
+    """
+
+    def __init__(self, base, collection, is_reference, syntax):
+        assert isinstance(collection, dictof(unicode, Recipe))
+        assert isinstance(is_reference, bool)
+        super(DefineCollectionBinding, self).__init__(base, syntax)
+        self.collection = collection
+        self.is_reference = is_reference
 
 
 class DefineLiftBinding(DecorateBinding):

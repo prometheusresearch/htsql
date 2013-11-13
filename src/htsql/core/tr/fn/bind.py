@@ -14,17 +14,18 @@ from ...adapter import Adapter, Component, adapt, adapt_many, call
 from ...domain import (Domain, UntypedDomain, BooleanDomain, TextDomain,
         IntegerDomain, DecimalDomain, FloatDomain, DateDomain, TimeDomain,
         DateTimeDomain, EnumDomain, ListDomain, RecordDomain)
-from ...syn.syntax import (NumberSyntax, IntegerSyntax, StringSyntax,
-        IdentifierSyntax, ComposeSyntax, ApplySyntax, OperatorSyntax,
-        PrefixSyntax, GroupSyntax, ReferenceSyntax)
+from ...syn.syntax import (LiteralSyntax, NumberSyntax, IntegerSyntax,
+        StringSyntax, IdentifierSyntax, ComposeSyntax, ApplySyntax,
+        OperatorSyntax, PrefixSyntax, GroupSyntax, ReferenceSyntax)
 from ..binding import (LiteralBinding, SortBinding, SieveBinding,
         FormulaBinding, CastBinding, ImplicitCastBinding, WrappingBinding,
         TitleBinding, DirectionBinding, QuotientBinding, AssignmentBinding,
-        DefineBinding, DefineReferenceBinding, SelectionBinding, HomeBinding,
-        RescopingBinding, CoverBinding, ForkBinding, ClipBinding, AliasBinding,
-        Binding, BindingRecipe, ComplementRecipe, KernelRecipe,
-        SubstitutionRecipe, ClosedRecipe)
+        DefineBinding, DefineReferenceBinding, DefineCollectionBinding,
+        SelectionBinding, HomeBinding, RescopingBinding, CoverBinding,
+        ForkBinding, ClipBinding, AliasBinding, Binding, BindingRecipe,
+        ComplementRecipe, KernelRecipe, SubstitutionRecipe, ClosedRecipe)
 from ..bind import BindByName, BindingState
+from ...classify import normalize
 from ...error import Error, translate_guard
 from ..coerce import coerce
 from ..decorate import decorate
@@ -739,6 +740,8 @@ class BindDefine(BindMacro):
 
     def expand(self, ops):
         binding = self.state.scope
+        collection = {}
+        collection_is_reference = None
         for op in ops:
             assignment = self.state.bind(op, scope=binding)
             if not isinstance(assignment, AssignmentBinding):
@@ -747,23 +750,41 @@ class BindDefine(BindMacro):
                                 " expression" % self.name)
             name, is_reference = assignment.terms[0]
             arity = None
-            if is_reference:
+            if (isinstance(assignment.body, LiteralSyntax) and
+                    name == normalize(name) and
+                    len(assignment.terms) == 1 and
+                    assignment.parameters is None and
+                    collection_is_reference in [is_reference, None]):
                 body = self.state.bind(assignment.body, scope=binding)
-                recipe = BindingRecipe(body)
+                recipe = ClosedRecipe(BindingRecipe(body))
+                collection[name] = recipe
+                collection_is_reference = is_reference
             else:
-                if (len(assignment.terms) == 1 and
-                        assignment.parameters is not None):
-                    arity = len(assignment.parameters)
-                recipe = SubstitutionRecipe(binding, assignment.terms[1:],
-                                            assignment.parameters,
-                                            assignment.body)
-            recipe = ClosedRecipe(recipe)
-            if is_reference:
-                binding = DefineReferenceBinding(binding, name,
-                                                 recipe, self.syntax)
-            else:
-                binding = DefineBinding(binding, name, arity,
-                                        recipe, self.syntax)
+                if collection:
+                    binding = DefineCollectionBinding(binding, collection,
+                            collection_is_reference, self.syntax)
+                    collection = {}
+                    collection_is_reference = None
+                if is_reference:
+                    body = self.state.bind(assignment.body, scope=binding)
+                    recipe = BindingRecipe(body)
+                else:
+                    if (len(assignment.terms) == 1 and
+                            assignment.parameters is not None):
+                        arity = len(assignment.parameters)
+                    recipe = SubstitutionRecipe(binding, assignment.terms[1:],
+                                                assignment.parameters,
+                                                assignment.body)
+                recipe = ClosedRecipe(recipe)
+                if is_reference:
+                    binding = DefineReferenceBinding(binding, name,
+                                                     recipe, self.syntax)
+                else:
+                    binding = DefineBinding(binding, name, arity,
+                                            recipe, self.syntax)
+        if collection:
+            binding = DefineCollectionBinding(binding, collection,
+                    collection_is_reference, self.syntax)
         return binding
 
 

@@ -437,13 +437,15 @@ def COVERAGE():
     if os.path.exists("./build/coverage"):
         rmtree("./build/coverage")
     mktree("./build/coverage")
-    environ=make_environ()
+    environ = {}
     environ['COVERAGE_FILE'] = "./build/coverage/coverage.dat"
+    variables = make_variables()
     coverage_py("run --branch"
                 " --source=htsql,htsql_sqlite,htsql_pgsql,htsql_oracle,"
-                "htsql_mssql,htsql_django"
-                " `which \"%s\"` regress -i test/regress.yaml -q"
-                % env.pbbt_path,
+                "htsql_mssql,htsql_django" +
+                " `which \"%s\"` test/regress.yaml -E test/regress.py -q "
+                % env.pbbt_path
+                + variables,
                 environ=environ)
     coverage_py("html --directory=build/coverage",
                 "./build/coverage/coverage.dat")
