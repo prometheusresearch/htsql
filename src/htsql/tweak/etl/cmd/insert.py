@@ -9,9 +9,9 @@ from ....core.error import Error, PermissionError
 from ....core.context import context
 from ....core.connect import transaction, scramble, unscramble
 from ....core.domain import (Domain, ListDomain, RecordDomain, BooleanDomain,
-        IntegerDomain, FloatDomain, DecimalDomain, TextDomain, DateDomain,
-        TimeDomain, DateTimeDomain, IdentityDomain, UntypedDomain, Product,
-        Value, ID)
+        IntegerDomain, FloatDomain, DecimalDomain, TextDomain, EnumDomain,
+        DateDomain, TimeDomain, DateTimeDomain, IdentityDomain, UntypedDomain,
+        Product, Value, ID)
 from ....core.classify import normalize, classify, relabel
 from ....core.model import (HomeNode, TableNode, Arc, TableArc, ColumnArc,
         ChainArc)
@@ -69,6 +69,15 @@ class ClarifyFromSelf(Clarify):
 
     def __call__(self):
         return (lambda v: v)
+
+
+class ClarifyEnum(Clarify):
+
+    adapt_many((EnumDomain, EnumDomain),
+               (TextDomain, EnumDomain))
+
+    def __call__(self):
+        return (lambda v, p=self.domain.parse: p(v))
 
 
 class ClarifyDecimal(Clarify):
