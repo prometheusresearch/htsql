@@ -1302,7 +1302,9 @@ def bind(syntax, environment=None):
     if environment is not None:
         for name in sorted(environment):
             value = environment[name]
-            if isinstance(value.domain, ListDomain):
+            if value.data is None:
+                recipe = LiteralRecipe(value.data, value.domain)
+            elif isinstance(value.domain, ListDomain):
                 item_recipes = [LiteralRecipe(item,
                                               value.domain.item_domain)
                                 for item in value.data]
