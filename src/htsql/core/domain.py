@@ -1384,11 +1384,11 @@ class LabelBuffer(TextBuffer):
         # Composite labels.
         if block == u"[":
             label = self.pull_label_group()
-            if self.pull(r"]") is None:
+            if self.pull(r"\]") is None:
                 raise self.fail()
         elif block == u"(":
             label = self.pull_label_group()
-            if self.pull(r")") is None:
+            if self.pull(r"\)") is None:
                 raise self.fail()
         # Quoted labels.
         elif block[0] == block[-1] == u"'":
