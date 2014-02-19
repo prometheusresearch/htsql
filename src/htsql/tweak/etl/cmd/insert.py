@@ -116,17 +116,46 @@ class ClarifyIdentity(Clarify):
             return (lambda v: v)
         if self.origin_domain.width != self.domain.width:
             return None
+        group = list(enumerate(self.origin_domain.labels))
+        return self.align(group, self.domain)
+
+    def align(self, group, domain):
         converts = []
-        for origin_field, field in zip(self.origin_domain.labels,
-                                       self.domain.labels):
-            convert = Clarify.__invoke__(origin_field, field)
-            if convert is None:
-                return None
-            converts.append(convert)
-        id_class = ID.make(self.domain.dump)
+        for label in domain.labels:
+            if isinstance(label, IdentityDomain):
+                subgroup = []
+                subwidth = 0
+                while subwidth < label.width:
+                    idx, entry = group.pop(0)
+                    subgroup.append((idx, entry))
+                    if isinstance(entry, IdentityDomain):
+                        subwidth += entry.width
+                    else:
+                        subwidth += 1
+                if subwidth > label.width:
+                    return None
+                if (len(subgroup) == 1 and
+                        isinstance(subgroup[0][1], IdentityDomain)):
+                    idx, entry = subgroup[0]
+                    subgroup = list(enumerate(entry.labels))
+                    convert = self.align(subgroup, label)
+                    if convert is None:
+                        return None
+                    converts.append(lambda v, i=idx, c=convert: c(v[i]))
+                else:
+                    convert = self.align(subgroup, label)
+                    if convert is None:
+                        return None
+                    converts.append(convert)
+            else:
+                idx, entry = group.pop(0)
+                convert = Clarify.__invoke__(entry, label)
+                if convert is None:
+                    return None
+                converts.append(lambda v, i=idx, c=convert: c(v[i]))
+        id_class = ID.make(domain.dump)
         return (lambda v, id_class=id_class, cs=converts:
-                        id_class(c(i) for i, c in zip(v, cs))
-                                      if v is not None else None)
+                        id_class(c(v) for c in cs) if v is not None else None)
 
 
 class ExtractValuePipe(object):

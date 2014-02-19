@@ -77,7 +77,7 @@ class ProduceDelete(Act):
             extract_node = BuildExtractNode.__invoke__(product.meta,
                     with_id=True, with_fields=False)
             resolve_key = BuildResolveKey.__invoke__(
-                    extract_node.node)
+                    extract_node.node, extract_node.arcs)
             execute_delete = BuildExecuteDelete.__invoke__(
                     extract_node.node.table)
             meta = decorate(VoidBinding())
