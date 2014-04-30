@@ -1457,6 +1457,8 @@ class IdentityDomain(ContainerDomain):
         # Parse a raw identity value.
         buffer = LabelBuffer(text)
         group = buffer.pull_label_group()
+        if buffer:
+            raise buffer.fail()
         # Make sure we got the right number of labels.
         if group.width < self.width:
             raise ValueError("not enough labels: expected %s, got %s"
