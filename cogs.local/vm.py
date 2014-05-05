@@ -272,15 +272,15 @@ class VM(object):
             rm(port_path)
 
     def kvm_img(self):
-        # Run `kvm-img create -f qcow2 <img_path> <DISK_SIZE>`.
-        sh("kvm-img create -f qcow2 %s %s" % (self.img_path, DISK_SIZE))
+        # Run `qemu-img create -f qcow2 <img_path> <DISK_SIZE>`.
+        sh("qemu-img create -f qcow2 %s %s" % (self.img_path, DISK_SIZE))
 
     def compress(self, backing_name=None):
-        # Run `kvm-img convert -c ...`.
+        # Run `qemu-img convert -c ...`.
         opts = "convert -c -f qcow2 -O qcow2"
         if backing_name:
             opts += " -o backing_file=%s.qcow2" % backing_name
-        sh("kvm-img %s %s.qcow2 %s-compressed.qcow2"
+        sh("qemu-img %s %s.qcow2 %s-compressed.qcow2"
            % (opts, self.name, self.name), cd=IMG_DIR)
         mv(IMG_DIR+"/%s-compressed.qcow2" % self.name,
            IMG_DIR+"/%s.qcow2" % self.name)
@@ -533,7 +533,7 @@ class LinuxBenchVM(VM):
         log("building VM: `{}`...", self.name)
         start_time = datetime.datetime.now()
         try:
-            sh("kvm-img create -b %s.qcow2 -f qcow2 %s.qcow2"
+            sh("qemu-img create -b %s.qcow2 -f qcow2 %s.qcow2"
                % (parent_vm.name, self.name), cd=IMG_DIR)
             self.kvm("-daemonize")
             time.sleep(60.0)

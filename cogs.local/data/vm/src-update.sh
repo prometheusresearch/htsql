@@ -6,6 +6,9 @@ set -ex
 # Update the hostname.
 echo "src-vm" >/etc/hostname
 
+# Update the list of packages.
+apt-get -q update
+
 # Install Mercurial.
 apt-get -qy install mercurial
 
