@@ -906,14 +906,38 @@ class UnpackIdentity(Unpack):
     def __call__(self):
         codes = []
         segments = []
+        indicators =  []
         space = self.state.relate(self.flow)
         indicator = LiteralCode(True, coerce(BooleanDomain()), self.flow)
         indicator = ScalarUnit(indicator, space, self.flow)
-        codes.append(indicator)
+        indicators.append(indicator)
         for element in self.flow.elements:
             bundle = self.state.unpack(element)
             codes.extend(bundle.codes)
             segments.extend(bundle.segments)
+            if bundle.codes:
+                indicator = bundle.codes[0]
+                if (isinstance(indicator, ScalarUnit) and
+                    indicator.space.conforms(space) and
+                    isinstance(indicator.code, LiteralCode) and
+                    indicator.code.value is True):
+                    continue
+                if (isinstance(indicator, ColumnUnit) and
+                    indicator.space.conforms(space) and
+                    not indicator.column.is_nullable):
+                    continue
+                if not (isinstance(indicator, FormulaCode) and
+                        indicator.signature == IsNullSig(-1)):
+                    indicator = FormulaCode(IsNullSig(-1),
+                                            coerce(BooleanDomain()),
+                                            indicator.flow, op=indicator)
+                indicators.append(indicator)
+        if len(indicators) == 1:
+            [indicator] = indicators
+        else:
+            indicator = FormulaCode(AndSig(), coerce(BooleanDomain()),
+                                    self.flow, ops=indicators)
+        codes.insert(0, indicator)
         return Bundle(codes, segments)
 
 
