@@ -10,7 +10,7 @@ from ....core.model import HomeNode, TableArc
 from ....core.entity import TableEntity
 from ....core.cmd.summon import Summon, recognize
 from ....core.syn.syntax import IdentifierSyntax, AssignSyntax, ReferenceSyntax
-from ..cmd.command import (InsertCmd, MergeCmd, UpdateCmd, DeleteCmd,
+from ..cmd.command import (CopyCmd, InsertCmd, MergeCmd, UpdateCmd, DeleteCmd,
         TruncateCmd, DoCmd)
 
 
@@ -25,6 +25,12 @@ class SummonETL(Summon):
         feed = recognize(syntax)
         command = self.cmd(feed)
         return command
+
+
+class SummonCopy(SummonETL):
+
+    call('copy')
+    cmd = CopyCmd
 
 
 class SummonInsert(SummonETL):

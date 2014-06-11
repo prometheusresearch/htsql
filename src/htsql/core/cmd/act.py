@@ -31,9 +31,10 @@ class ProduceAction(Action):
 
 class SafeProduceAction(ProduceAction):
 
-    def __init__(self, environment=None, cut=None):
+    def __init__(self, environment=None, cut=None, offset=None):
         self.environment = environment
         self.cut = cut
+        self.offset = offset
 
 
 class AnalyzeAction(Action):
@@ -124,9 +125,9 @@ def produce(command, environment=None, **parameters):
     return act(command, action)
 
 
-def safe_produce(command, cut, environment=None, **parameters):
+def safe_produce(command, cut, offset=None, environment=None, **parameters):
     environment = embed(environment, **parameters)
-    action = SafeProduceAction(environment, cut)
+    action = SafeProduceAction(environment, cut, offset)
     return act(command, action)
 
 

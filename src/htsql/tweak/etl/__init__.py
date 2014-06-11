@@ -3,7 +3,8 @@
 #
 
 
-from ...core.addon import Addon, addon_registry
+from ...core.addon import Addon, Parameter, addon_registry
+from ...core.validator import PIntVal
 from . import cmd, tr
 
 
@@ -15,6 +16,8 @@ class TweakETLAddon(Addon):
     The extension provides the following commands:
 
     `insert(feed)` adds records to a table.
+
+    `copy(feed)` adds records to a table chunking the input.
 
     `update(feed)` updates table records.
 
@@ -28,6 +31,11 @@ class TweakETLAddon(Addon):
     transaction.
     """
     packages = ['.', '.cmd', '.tr']
+
+    parameters = [
+            Parameter('copy_limit', PIntVal(is_nullable=True), default=10000,
+                      hint="""chunk size for copy (default: 10000)"""),
+    ]
 
     @classmethod
     def get_extension(cls, app, attributes):

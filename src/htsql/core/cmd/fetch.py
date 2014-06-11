@@ -17,10 +17,13 @@ class ProduceFetch(Act):
     adapt(FetchCmd, ProduceAction)
 
     def __call__(self):
-        cut = None
+        limit = None
+        offset = None
         if isinstance(self.action, SafeProduceAction):
-            cut = self.action.cut
-        pipe = translate(self.command.syntax, self.action.environment, cut)
+            limit = self.action.cut
+            offset = self.action.offset
+        pipe = translate(self.command.syntax, self.action.environment,
+                         limit=limit, offset=offset)
         output = pipe()(None)
         return output
 

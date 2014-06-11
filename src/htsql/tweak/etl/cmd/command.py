@@ -16,6 +16,10 @@ class ETLCmd(Command):
         self.feed = feed
 
 
+class CopyCmd(ETLCmd):
+    pass
+
+
 class InsertCmd(ETLCmd):
     pass
 

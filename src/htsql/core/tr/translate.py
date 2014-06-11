@@ -20,7 +20,7 @@ from .pack import pack
 from .pipe import SQLPipe, RecordPipe, ComposePipe, ProducePipe
 
 
-def translate(syntax, environment=None, limit=None):
+def translate(syntax, environment=None, limit=None, offset=None):
     assert isinstance(syntax, (Syntax, Binding, unicode, str))
     if isinstance(syntax, (str, unicode)):
         syntax = parse(syntax)
@@ -31,8 +31,8 @@ def translate(syntax, environment=None, limit=None):
     profile = decorate(binding)
     flow = route(binding)
     expression = encode(flow)
-    if limit is not None:
-        expression = safe_patch(expression, limit)
+    if limit is not None or offset is not None:
+        expression = safe_patch(expression, limit, offset)
     expression = rewrite(expression)
     term = compile(expression)
     frame = assemble(term)
@@ -64,19 +64,21 @@ def get_sql(pipe):
             return u"\n\n".join(merged_sqls)
 
 
-def safe_patch(segment, limit):
+def safe_patch(segment, limit, offset):
     space = segment.space
-    while not space.is_axis:
-        if (isinstance(space, OrderedSpace) and space.limit is not None
-                                          and space.limit <= limit):
+    if limit is not None:
+        while not space.is_axis:
+            if (isinstance(space, OrderedSpace) and space.limit is not None
+                                              and space.limit <= limit
+                                              and offset is None):
+                return segment
+            space = space.base
+        if space.is_root:
             return segment
-        space = space.base
-    if space.is_root:
-        return segment
     if isinstance(segment.space, OrderedSpace):
-        space = segment.space.clone(limit=limit)
+        space = segment.space.clone(limit=limit, offset=offset)
     else:
-        space = OrderedSpace(segment.space, [], limit, None, segment.flow)
+        space = OrderedSpace(segment.space, [], limit, offset, segment.flow)
     segment = segment.clone(space=space)
     return segment
 
