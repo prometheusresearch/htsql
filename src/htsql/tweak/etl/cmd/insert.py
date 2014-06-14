@@ -349,8 +349,10 @@ class BuildExtractTable(Utility):
                 resolves.append(resolve)
                 extract_by_column[column] = extract
             elif isinstance(arc, ChainArc):
-                resolve_pipe = BuildResolveChain.__invoke__(arc,
-                                                            self.with_cache)
+                if self.with_cache:
+                    resolve_pipe = BuildCacheChain.__invoke__(arc)
+                else:
+                    resolve_pipe = BuildResolveChain.__invoke__(arc)
                 resolve = (lambda v, p=resolve_pipe: p(v))
                 resolves.append(resolve)
                 for column_idx, column in enumerate(resolve_pipe.columns):
@@ -502,19 +504,16 @@ class BuildResolveIdentity(Utility):
 
 class ResolveChainPipe(object):
 
-    def __init__(self, name, columns, domain, pipe, cache=None):
+    def __init__(self, name, columns, domain, pipe):
         assert isinstance(columns, listof(ColumnEntity))
         self.name = name
         self.columns = columns
         self.pipe = pipe
         self.domain = domain
-        self.cache = cache
 
     def __call__(self, value):
         if value is None:
             return (None,)*len(self.columns)
-        if self.cache is not None and value in self.cache:
-            return self.cache[value]
         raw_values = []
         for leaf in self.domain.leaves:
             raw_value = value
@@ -530,17 +529,14 @@ class ResolveChainPipe(object):
             else:
                 quote = u"[%s]" % self.domain.dump(value)
             raise Error("Unable to resolve a link", quote)
-        if self.cache is not None:
-            self.cache[value] = data[0]
         return data[0]
 
 
 class BuildResolveChain(Utility):
 
-    def __init__(self, arc, with_cache=False):
+    def __init__(self, arc):
         self.arc = arc
         self.joins = arc.joins
-        self.with_cache = with_cache
 
     def __call__(self):
         target_labels = relabel(TableArc(self.arc.target.table))
@@ -588,8 +584,70 @@ class BuildResolveChain(Utility):
         pipe =  translate(binding)
         columns = joins[0].origin_columns[:]
         domain = identity.domain
-        return ResolveChainPipe(target_name, columns, domain, pipe,
-                                {} if self.with_cache else None)
+        return ResolveChainPipe(target_name, columns, domain, pipe)
+
+
+class CacheChainPipe(object):
+
+    def __init__(self, name, columns, domain, pipe):
+        assert isinstance(columns, listof(ColumnEntity))
+        self.name = name
+        self.columns = columns
+        self.pipe = pipe
+        self.domain = domain
+        self.cache = None
+
+    def __call__(self, value):
+        if value is None:
+            return (None,)*len(self.columns)
+        if self.cache is None:
+            self.cache = {}
+            product = self.pipe()(None)
+            for row in product:
+                self.cache[row[0]] = row[1:]
+        if value in self.cache:
+            return self.cache[value]
+        quote = None
+        if self.name:
+            quote = u"%s[%s]" % (self.name, self.domain.dump(value))
+        else:
+            quote = u"[%s]" % self.domain.dump(value)
+        raise Error("Unable to resolve a link", quote)
+
+
+class BuildCacheChain(Utility):
+
+    def __init__(self, arc):
+        self.arc = arc
+        self.joins = arc.joins
+
+    def __call__(self):
+        target_labels = relabel(TableArc(self.arc.target.table))
+        target_name = target_labels[0].name if target_labels else None
+        joins = self.joins
+        syntax = VoidSyntax()
+        scope = RootBinding(syntax)
+        state = BindingState(scope)
+        seed = state.use(FreeTableRecipe(joins[-1].target), syntax)
+        state.push_scope(seed)
+        recipe = identify(seed)
+        if recipe is None:
+            raise Error("Cannot determine identity of a link", target_name)
+        identity = state.use(recipe, syntax, scope=seed)
+        elements = [identity]
+        for column in joins[0].target_columns:
+            binding = state.use(ColumnRecipe(column), syntax)
+            elements.append(binding)
+        fields = [decorate(element) for element in elements]
+        domain = RecordDomain(fields)
+        scope = SelectionBinding(seed, elements, domain, syntax)
+        binding = Select.__invoke__(scope, state)
+        domain = ListDomain(binding.domain)
+        binding = CollectBinding(state.root, binding, domain, syntax)
+        pipe =  translate(binding)
+        columns = joins[0].origin_columns[:]
+        domain = identity.domain
+        return CacheChainPipe(target_name, columns, domain, pipe)
 
 
 class ProduceInsert(Act):

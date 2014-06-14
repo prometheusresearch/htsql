@@ -60,6 +60,7 @@ class CollectCopyPipe(object):
                                  table=self.table.name.encode('utf-8'),
                                  columns=[column.name.encode('utf-8')
                                           for column in self.columns])
+        self.stream = cStringIO.StringIO()
 
 
 class BuildCollectCopy(Utility):
@@ -82,16 +83,23 @@ class ProduceCopy(Act):
         copy_limit = context.app.tweak.etl.copy_limit
         limit = copy_limit
         offset = 0
+        extract_node = None
+        extract_table = None
+        collect_copy = None
         with transaction() as connection:
             while True:
                 action = self.action.clone_to(SafeProduceAction)
                 action = action.clone(cut=limit, offset=offset)
                 product = act(self.command.feed, action)
-                extract_node = BuildExtractNode.__invoke__(product.meta)
-                extract_table = BuildExtractTable.__invoke__(
-                        extract_node.node, extract_node.arcs, with_cache=True)
-                collect_copy = BuildCollectCopy.__invoke__(
-                        extract_table.table, extract_table.columns)
+                if extract_node is None:
+                    extract_node = BuildExtractNode.__invoke__(product.meta)
+                if extract_table is None:
+                    extract_table = BuildExtractTable.__invoke__(
+                            extract_node.node, extract_node.arcs,
+                            with_cache=True)
+                if collect_copy is None:
+                    collect_copy = BuildCollectCopy.__invoke__(
+                            extract_table.table, extract_table.columns)
                 if extract_node.is_list:
                     records = product.data
                     record_domain = product.meta.domain.item_domain
