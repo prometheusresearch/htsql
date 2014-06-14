@@ -3,16 +3,75 @@
 #
 
 
-from ....core.adapter import adapt
-from ....core.error import Error
+from ....core.util import listof
+from ....core.adapter import adapt, Utility
+from ....core.error import Error, PermissionError
 from ....core.context import context
 from ....core.connect import transaction
+from ....core.entity import TableEntity, ColumnEntity
 from ....core.domain import Product
 from ....core.cmd.act import Act, ProduceAction, SafeProduceAction, act
 from ....core.tr.binding import VoidBinding
 from ....core.tr.decorate import decorate
 from .command import CopyCmd
-from .insert import BuildExtractNode, BuildExtractTable, BuildExecuteInsert
+from .insert import BuildExtractNode, BuildExtractTable
+import cStringIO
+
+
+class CollectCopyPipe(object):
+
+    def __init__(self, table, columns):
+        assert isinstance(table, TableEntity)
+        assert isinstance(columns, listof(ColumnEntity))
+        self.table = table
+        self.columns = columns
+        self.dumps = [column.domain.dump for column in columns]
+        self.stream = cStringIO.StringIO()
+
+    def __call__(self, row):
+        stream = self.stream
+        is_first = True
+        for item, dump in zip(row, self.dumps):
+            if not is_first:
+                stream.write("\t")
+            is_first = False
+            if item is None:
+                stream.write("\\N")
+            else:
+                item = dump(item).encode('utf-8') \
+                        .replace('\\', '\\\\') \
+                        .replace('\n', '\\n') \
+                        .replace('\r', '\\r') \
+                        .replace('\t', '\\t')
+                stream.write(item)
+        stream.write('\n')
+
+    def copy(self):
+        if not self.stream.tell():
+            return
+        self.stream.seek(0)
+        if not context.env.can_write:
+            raise PermissionError("No write permissions")
+        with transaction() as connection:
+            cursor = connection.cursor()
+            with cursor.guard:
+                cursor = cursor.cursor
+                cursor.copy_from(self.stream,
+                                 table=self.table.name.encode('utf-8'),
+                                 columns=[column.name.encode('utf-8')
+                                          for column in self.columns])
+
+
+class BuildCollectCopy(Utility):
+
+    def __init__(self, table, columns):
+        assert isinstance(table, TableEntity)
+        assert isinstance(columns, listof(ColumnEntity))
+        self.table = table
+        self.columns = columns
+
+    def __call__(self):
+        return CollectCopyPipe(self.table, self.columns)
 
 
 class ProduceCopy(Act):
@@ -31,7 +90,7 @@ class ProduceCopy(Act):
                 extract_node = BuildExtractNode.__invoke__(product.meta)
                 extract_table = BuildExtractTable.__invoke__(
                         extract_node.node, extract_node.arcs, with_cache=True)
-                execute_insert = BuildExecuteInsert.__invoke__(
+                collect_copy = BuildCollectCopy.__invoke__(
                         extract_table.table, extract_table.columns)
                 if extract_node.is_list:
                     records = product.data
@@ -43,7 +102,7 @@ class ProduceCopy(Act):
                     if record is None:
                         continue
                     try:
-                        execute_insert(
+                        collect_copy(
                             extract_table(
                                 extract_node(record)))
                     except Error, exc:
@@ -55,6 +114,12 @@ class ProduceCopy(Act):
                         quote = record_domain.dump(record)
                         exc.wrap(message, quote)
                         raise
+                try:
+                    collect_copy.copy()
+                except Error, exc:
+                    exc.wrap("While copying a batch"
+                             " starting from record #%s" % (offset+1), None)
+                    raise
                 if not product or not extract_node.is_list:
                     break
                 offset += copy_limit
