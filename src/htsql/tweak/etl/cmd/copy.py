@@ -30,7 +30,7 @@ class ProduceCopy(Act):
                 product = act(self.command.feed, action)
                 extract_node = BuildExtractNode.__invoke__(product.meta)
                 extract_table = BuildExtractTable.__invoke__(
-                        extract_node.node, extract_node.arcs)
+                        extract_node.node, extract_node.arcs, with_cache=True)
                 execute_insert = BuildExecuteInsert.__invoke__(
                         extract_table.table, extract_table.columns)
                 if extract_node.is_list:

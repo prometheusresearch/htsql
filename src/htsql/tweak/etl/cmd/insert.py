@@ -327,11 +327,12 @@ class ExtractTablePipe(object):
 
 class BuildExtractTable(Utility):
 
-    def __init__(self, node, arcs):
+    def __init__(self, node, arcs, with_cache=False):
         assert isinstance(node, TableNode)
         assert isinstance(arcs, listof(Arc))
         self.node = node
         self.arcs = arcs
+        self.with_cache = with_cache
 
     def __call__(self):
         table = self.node.table
@@ -348,7 +349,8 @@ class BuildExtractTable(Utility):
                 resolves.append(resolve)
                 extract_by_column[column] = extract
             elif isinstance(arc, ChainArc):
-                resolve_pipe = BuildResolveChain.__invoke__(arc)
+                resolve_pipe = BuildResolveChain.__invoke__(arc,
+                                                            self.with_cache)
                 resolve = (lambda v, p=resolve_pipe: p(v))
                 resolves.append(resolve)
                 for column_idx, column in enumerate(resolve_pipe.columns):
@@ -500,16 +502,19 @@ class BuildResolveIdentity(Utility):
 
 class ResolveChainPipe(object):
 
-    def __init__(self, name, columns, domain, pipe):
+    def __init__(self, name, columns, domain, pipe, cache=None):
         assert isinstance(columns, listof(ColumnEntity))
         self.name = name
         self.columns = columns
         self.pipe = pipe
         self.domain = domain
+        self.cache = cache
 
     def __call__(self, value):
         if value is None:
             return (None,)*len(self.columns)
+        if self.cache is not None and value in self.cache:
+            return self.cache[value]
         raw_values = []
         for leaf in self.domain.leaves:
             raw_value = value
@@ -525,14 +530,17 @@ class ResolveChainPipe(object):
             else:
                 quote = u"[%s]" % self.domain.dump(value)
             raise Error("Unable to resolve a link", quote)
+        if self.cache is not None:
+            self.cache[value] = data[0]
         return data[0]
 
 
 class BuildResolveChain(Utility):
 
-    def __init__(self, arc):
+    def __init__(self, arc, with_cache=False):
         self.arc = arc
         self.joins = arc.joins
+        self.with_cache = with_cache
 
     def __call__(self):
         target_labels = relabel(TableArc(self.arc.target.table))
@@ -580,7 +588,8 @@ class BuildResolveChain(Utility):
         pipe =  translate(binding)
         columns = joins[0].origin_columns[:]
         domain = identity.domain
-        return ResolveChainPipe(target_name, columns, domain, pipe)
+        return ResolveChainPipe(target_name, columns, domain, pipe,
+                                {} if self.with_cache else None)
 
 
 class ProduceInsert(Act):
