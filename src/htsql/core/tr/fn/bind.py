@@ -18,18 +18,19 @@ from ...syn.syntax import (LiteralSyntax, NumberSyntax, IntegerSyntax,
         StringSyntax, IdentifierSyntax, ComposeSyntax, ApplySyntax,
         OperatorSyntax, PrefixSyntax, GroupSyntax, ReferenceSyntax)
 from ..binding import (LiteralBinding, SortBinding, SieveBinding,
-        FormulaBinding, CastBinding, ImplicitCastBinding, WrappingBinding,
-        TitleBinding, DirectionBinding, QuotientBinding, AssignmentBinding,
-        DefineBinding, DefineReferenceBinding, DefineCollectionBinding,
-        SelectionBinding, HomeBinding, RescopingBinding, CoverBinding,
-        ForkBinding, ClipBinding, AliasBinding, Binding, BindingRecipe,
-        ComplementRecipe, KernelRecipe, SubstitutionRecipe, ClosedRecipe)
+        IdentityBinding, FormulaBinding, CastBinding, ImplicitCastBinding,
+        WrappingBinding, TitleBinding, DirectionBinding, QuotientBinding,
+        AssignmentBinding, DefineBinding, DefineReferenceBinding,
+        DefineCollectionBinding, SelectionBinding, HomeBinding,
+        RescopingBinding, CoverBinding, ForkBinding, ClipBinding, AliasBinding,
+        Binding, BindingRecipe, ComplementRecipe, KernelRecipe,
+        SubstitutionRecipe, ClosedRecipe)
 from ..bind import BindByName, BindingState
 from ...classify import normalize
 from ...error import Error, translate_guard
 from ..coerce import coerce
 from ..decorate import decorate
-from ..lookup import direct, expand, identify, guess_tag
+from ..lookup import direct, expand, identify, guess_tag, unwrap
 from ..signature import (Signature, NullarySig, UnarySig, BinarySig,
         CompareSig, IsEqualSig, IsTotallyEqualSig, IsInSig, IsNullSig,
         IfNullSig, NullIfSig, AndSig, OrSig, NotSig, SortDirectionSig)
@@ -831,13 +832,23 @@ class BindWhere(BindGiven):
 class BindId(BindMacro):
 
     call('id')
-    signature = NullarySig
+    signature = SelectSig
 
-    def expand(self):
-        recipe = identify(self.state.scope)
-        if recipe is None:
-            raise Error("Cannot determine identity")
-        return self.state.use(recipe, self.syntax)
+    def expand(self, ops):
+        if not ops:
+            recipe = identify(self.state.scope)
+            if recipe is None:
+                raise Error("Cannot determine identity")
+            return self.state.use(recipe, self.syntax)
+        else:
+            elements = []
+            for op in ops:
+                element = self.state.bind(op)
+                identity = unwrap(element, IdentityBinding, is_deep=False)
+                if identity is not None:
+                    element = identity
+                elements.append(element)
+            return IdentityBinding(self.state.scope, elements, self.syntax)
 
 
 class BindCast(BindFunction):

@@ -152,7 +152,7 @@ class SerializingState(object):
         Encapsulates serializing hints and directives.
     """
 
-    def __init__(self, batch):
+    def __init__(self, batch=None):
         self.batch = batch
         # The stream that accumulates the generated SQL.
         self.stream = Stream()
