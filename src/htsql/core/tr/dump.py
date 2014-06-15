@@ -26,7 +26,8 @@ from .signature import (Signature, isformula, IsEqualSig, IsTotallyEqualSig,
                         IsInSig, IsNullSig, IfNullSig, NullIfSig, CompareSig,
                         AndSig, OrSig, NotSig, SortDirectionSig, RowNumberSig,
                         ToPredicateSig, FromPredicateSig, PlaceholderSig)
-from .pipe import SQLPipe, RecordPipe, ComposePipe, ProducePipe, MixPipe
+from .pipe import (SQLPipe, BatchSQLPipe, RecordPipe, ComposePipe, ProducePipe,
+        MixPipe)
 from ..connect import unscramble
 import StringIO
 import re
@@ -151,7 +152,8 @@ class SerializingState(object):
         Encapsulates serializing hints and directives.
     """
 
-    def __init__(self):
+    def __init__(self, batch):
+        self.batch = batch
         # The stream that accumulates the generated SQL.
         self.stream = Stream()
         # A mapping: tag -> frame.
@@ -323,7 +325,11 @@ class SerializeSegment(Serialize):
             for index in sorted(placeholders):
                 input_domains.append(placeholders[index])
         output_domains = [phrase.domain for phrase in self.clause.select]
-        pipe = SQLPipe(sql, input_domains, output_domains)
+        if self.state.batch is None:
+            pipe = SQLPipe(sql, input_domains, output_domains)
+        else:
+            pipe = BatchSQLPipe(sql, input_domains, output_domains,
+                                self.state.batch)
         if self.clause.dependents:
             feeds = [pipe]
             keys = [self.clause.key_pipe]
@@ -2034,8 +2040,8 @@ class DumpPlaceholder(DumpBySignature):
                     index=unicode(self.signature.index+1))
 
 
-def serialize(clause):
-    state = SerializingState()
+def serialize(clause, batch=None):
+    state = SerializingState(batch=batch)
     return state.serialize(clause)
 
 

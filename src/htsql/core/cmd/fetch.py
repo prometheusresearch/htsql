@@ -22,8 +22,9 @@ class ProduceFetch(Act):
         if isinstance(self.action, SafeProduceAction):
             limit = self.action.cut
             offset = self.action.offset
+        batch = self.action.batch
         pipe = translate(self.command.syntax, self.action.environment,
-                         limit=limit, offset=offset)
+                         limit=limit, offset=offset, batch=batch)
         output = pipe()(None)
         return output
 

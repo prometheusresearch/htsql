@@ -20,7 +20,7 @@ from .pack import pack
 from .pipe import SQLPipe, RecordPipe, ComposePipe, ProducePipe
 
 
-def translate(syntax, environment=None, limit=None, offset=None):
+def translate(syntax, environment=None, limit=None, offset=None, batch=None):
     assert isinstance(syntax, (Syntax, Binding, unicode, str))
     if isinstance(syntax, (str, unicode)):
         syntax = parse(syntax)
@@ -37,7 +37,7 @@ def translate(syntax, environment=None, limit=None, offset=None):
     term = compile(expression)
     frame = assemble(term)
     frame = reduce(frame)
-    raw_pipe = serialize(frame)
+    raw_pipe = serialize(frame, batch=batch)
     sql = get_sql(raw_pipe)
     value_pipe = pack(flow, frame, profile.tag)
     pipe = ComposePipe(raw_pipe, value_pipe)

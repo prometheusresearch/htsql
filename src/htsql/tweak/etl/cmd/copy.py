@@ -15,7 +15,7 @@ from ....core.tr.binding import VoidBinding
 from ....core.tr.decorate import decorate
 from .command import CopyCmd
 from .insert import BuildExtractNode, BuildExtractTable
-import cStringIO
+import tempfile
 
 
 class CollectCopyPipe(object):
@@ -26,7 +26,7 @@ class CollectCopyPipe(object):
         self.table = table
         self.columns = columns
         self.dumps = [column.domain.dump for column in columns]
-        self.stream = cStringIO.StringIO()
+        self.stream = tempfile.TemporaryFile()
 
     def __call__(self, row):
         stream = self.stream
@@ -60,7 +60,6 @@ class CollectCopyPipe(object):
                                  table=self.table.name.encode('utf-8'),
                                  columns=[column.name.encode('utf-8')
                                           for column in self.columns])
-        self.stream = cStringIO.StringIO()
 
 
 class BuildCollectCopy(Utility):
@@ -80,59 +79,44 @@ class ProduceCopy(Act):
     adapt(CopyCmd, ProduceAction)
 
     def __call__(self):
-        copy_limit = context.app.tweak.etl.copy_limit
-        limit = copy_limit
-        offset = 0
-        extract_node = None
-        extract_table = None
-        collect_copy = None
+        batch = context.app.tweak.etl.copy_limit
         with transaction() as connection:
-            while True:
-                action = self.action.clone_to(SafeProduceAction)
-                action = action.clone(cut=limit, offset=offset)
-                product = act(self.command.feed, action)
-                if extract_node is None:
-                    extract_node = BuildExtractNode.__invoke__(product.meta)
-                if extract_table is None:
-                    extract_table = BuildExtractTable.__invoke__(
-                            extract_node.node, extract_node.arcs,
-                            with_cache=True)
-                if collect_copy is None:
-                    collect_copy = BuildCollectCopy.__invoke__(
-                            extract_table.table, extract_table.columns)
-                if extract_node.is_list:
-                    records = product.data
-                    record_domain = product.meta.domain.item_domain
-                else:
-                    records = [product.data]
-                    record_domain = product.meta.domain
-                for idx, record in enumerate(records):
-                    if record is None:
-                        continue
-                    try:
-                        collect_copy(
-                            extract_table(
-                                extract_node(record)))
-                    except Error, exc:
-                        if extract_node.is_list:
-                            message = "While copying record #%s" \
-                                    % (offset+idx+1)
-                        else:
-                            message = "While copying a record"
-                        quote = record_domain.dump(record)
-                        exc.wrap(message, quote)
-                        raise
+            action = self.action.clone(batch=batch)
+            product = act(self.command.feed, action)
+            extract_node = BuildExtractNode.__invoke__(product.meta)
+            extract_table = BuildExtractTable.__invoke__(
+                    extract_node.node, extract_node.arcs,
+                    with_cache=True)
+            collect_copy = BuildCollectCopy.__invoke__(
+                    extract_table.table, extract_table.columns)
+            if extract_node.is_list:
+                records = product.data
+                record_domain = product.meta.domain.item_domain
+            else:
+                records = [product.data]
+                record_domain = product.meta.domain
+            for idx, record in enumerate(records):
+                if record is None:
+                    continue
                 try:
-                    collect_copy.copy()
+                    collect_copy(
+                        extract_table(
+                            extract_node(record)))
                 except Error, exc:
-                    exc.wrap("While copying a batch"
-                             " starting from record #%s" % (offset+1), None)
+                    if extract_node.is_list:
+                        message = "While copying record #%s" % (idx+1)
+                    else:
+                        message = "While copying a record"
+                    quote = record_domain.dump(record)
+                    exc.wrap(message, quote)
                     raise
-                if not product or not extract_node.is_list:
-                    break
-                offset += copy_limit
-            meta = decorate(VoidBinding())
-            data = None
-            return Product(meta, data)
+            try:
+                collect_copy.copy()
+            except Error, exc:
+                exc.wrap("While copying a batch of records", None)
+                raise
+        meta = decorate(VoidBinding())
+        data = None
+        return Product(meta, data)
 
 

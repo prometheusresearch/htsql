@@ -25,16 +25,18 @@ class Action(Clonable):
 
 class ProduceAction(Action):
 
-    def __init__(self, environment=None):
+    def __init__(self, environment=None, batch=None):
         self.environment = environment
+        self.batch = batch
 
 
 class SafeProduceAction(ProduceAction):
 
-    def __init__(self, environment=None, cut=None, offset=None):
+    def __init__(self, environment=None, cut=None, offset=None, batch=None):
         self.environment = environment
         self.cut = cut
         self.offset = offset
+        self.batch = batch
 
 
 class AnalyzeAction(Action):

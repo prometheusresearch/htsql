@@ -9,6 +9,8 @@ from ..domain import Product
 from ..connect import transaction, scramble, unscramble
 from ..error import PermissionError
 import operator
+import tempfile
+import cPickle
 
 
 class Pipe(Clonable, YAMLable):
@@ -77,6 +79,72 @@ class SQLPipe(Pipe):
         if self.output_domains:
             yield ('output', [unicode(domain)
                               for domain in self.output_domains])
+
+
+class BatchSQLPipe(Pipe):
+
+    def __init__(self, sql, input_domains, output_domains, batch):
+        self.sql = sql
+        self.input_domains = input_domains
+        self.output_domains = output_domains
+        self.batch = batch
+
+    def __call__(self):
+        def run_sql(input, sql=self.sql.encode('utf-8'),
+                           input_domains=self.input_domains,
+                           output_domains=self.output_domains,
+                           batch=self.batch):
+            if not context.env.can_read:
+                raise PermissionError("No read permissions")
+            scrambles = None
+            if input_domains is not None:
+                scrambles = [scramble(domain) for domain in input_domains]
+            unscrambles = [unscramble(domain) for domain in output_domains]
+            with transaction() as connection:
+                cursor = connection.cursor()
+                if scrambles is None:
+                    assert input is None
+                    cursor.execute(sql)
+                else:
+                    assert isinstance(input, (tuple, list))
+                    assert len(input) == len(scrambles)
+                    parameters = dict((str(index+1), scramble(item))
+                            for index, (item, scramble)
+                                    in enumerate(zip(input, scrambles)))
+                    cursor.execute(sql, parameters)
+                chunk = cursor.fetchmany(batch)
+                chunk = [tuple(unscramble(item)
+                               for item, unscramble in zip(row, unscrambles))
+                         for row in chunk]
+                if len(chunk) < batch:
+                    return chunk
+                stream = tempfile.TemporaryFile()
+                size = 0
+                while chunk:
+                    size += 1
+                    cPickle.dump(chunk, stream, 2)
+                    chunk = cursor.fetchmany(batch)
+                    chunk = [tuple(unscramble(item)
+                                   for item, unscramble in zip(row, unscrambles))
+                             for row in chunk]
+                stream.seek(0)
+                def iterate(stream=stream, size=size):
+                    for k in xrange(size):
+                        chunk = cPickle.load(stream)
+                        for row in chunk:
+                            yield row
+                return iterate(stream, size)
+        return run_sql
+
+    def __yaml__(self):
+        yield ('sql', self.sql+'\n')
+        if self.input_domains:
+            yield ('input', [unicode(domain)
+                             for domain in self.input_domains])
+        if self.output_domains:
+            yield ('output', [unicode(domain)
+                              for domain in self.output_domains])
+        yield ('batch', self.batch)
 
 
 class ProducePipe(Pipe):
@@ -163,7 +231,10 @@ class IteratePipe(Pipe):
 
     def __call__(self):
         def iterate(input, make_value=self.value_pipe()):
-            return map(make_value, input)
+            if isinstance(input, list):
+                return map(make_value, input)
+            else:
+                return (make_value(item) for item in input)
         return iterate
 
     def __yaml__(self):
