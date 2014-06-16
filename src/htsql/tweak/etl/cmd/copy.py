@@ -56,10 +56,11 @@ class CollectCopyPipe(object):
             cursor = connection.cursor()
             with cursor.guard:
                 cursor = cursor.cursor
-                cursor.copy_from(self.stream,
-                                 table=self.table.name.encode('utf-8'),
-                                 columns=[column.name.encode('utf-8')
-                                          for column in self.columns])
+                cursor.copy_from(
+                        self.stream,
+                        table='"%s"' % self.table.name.encode('utf-8'),
+                        columns=['"%s"' % column.name.encode('utf-8')
+                                 for column in self.columns])
 
 
 class BuildCollectCopy(Utility):
