@@ -111,6 +111,8 @@ class ProduceCopy(Act):
                     quote = record_domain.dump(record)
                     exc.wrap(message, quote)
                     raise
+            extract_node = None
+            extract_table = None
             try:
                 collect_copy.copy()
             except Error, exc:
