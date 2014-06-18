@@ -113,8 +113,8 @@ class BatchSQLPipe(Pipe):
                                     in enumerate(zip(input, scrambles)))
                     cursor.execute(sql, parameters)
                 chunk = cursor.fetchmany(batch)
-                chunk = [tuple(unscramble(item)
-                               for item, unscramble in zip(row, unscrambles))
+                chunk = [tuple([convert(item)
+                                for item, convert in zip(row, unscrambles)])
                          for row in chunk]
                 if len(chunk) < batch:
                     return chunk
@@ -124,14 +124,13 @@ class BatchSQLPipe(Pipe):
                     size += 1
                     cPickle.dump(chunk, stream, 2)
                     chunk = cursor.fetchmany(batch)
-                    chunk = [tuple(unscramble(item)
-                                   for item, unscramble in zip(row, unscrambles))
+                    chunk = [tuple([convert(item)
+                                    for item, convert in zip(row, unscrambles)])
                              for row in chunk]
                 stream.seek(0)
-                def iterate(stream=stream, size=size):
+                def iterate(stream=stream, size=size, load=cPickle.load):
                     for k in xrange(size):
-                        chunk = cPickle.load(stream)
-                        for row in chunk:
+                        for row in load(stream):
                             yield row
                 return iterate(stream, size)
         return run_sql
@@ -191,8 +190,8 @@ class RecordPipe(Pipe):
         make_fields = [field_pipe() for field_pipe in self.field_pipes]
         def make_record(input, make_fields=make_fields,
                                record_class=self.record_class):
-            return record_class(make_field(input)
-                                for make_field in make_fields)
+            return record_class([make_field(input)
+                                 for make_field in make_fields])
         return make_record
 
     def __yaml__(self):

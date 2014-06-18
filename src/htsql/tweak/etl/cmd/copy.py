@@ -28,23 +28,16 @@ class CollectCopyPipe(object):
         self.dumps = [column.domain.dump for column in columns]
         self.stream = tempfile.TemporaryFile()
 
-    def __call__(self, row):
-        stream = self.stream
-        is_first = True
-        for item, dump in zip(row, self.dumps):
-            if not is_first:
-                stream.write("\t")
-            is_first = False
-            if item is None:
-                stream.write("\\N")
-            else:
-                item = dump(item).encode('utf-8') \
-                        .replace('\\', '\\\\') \
-                        .replace('\n', '\\n') \
-                        .replace('\r', '\\r') \
+    def __call__(self, row, unicode=unicode):
+        self.stream.write(
+            "\t".join([
+                unicode(item).encode('utf-8')
+                        .replace('\\', '\\\\')
+                        .replace('\n', '\\n')
+                        .replace('\r', '\\r')
                         .replace('\t', '\\t')
-                stream.write(item)
-        stream.write('\n')
+                if item is not None else '\\N'
+                for item in row]) + '\n')
 
     def copy(self):
         if not self.stream.tell():

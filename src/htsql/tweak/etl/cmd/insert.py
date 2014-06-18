@@ -32,11 +32,14 @@ from ..tr.dump import serialize_insert
 import itertools
 import datetime
 import decimal
+import operator
 
 
 class Clarify(Adapter):
 
     adapt(Domain, Domain)
+
+    identity = staticmethod(lambda v: v)
 
     def __init__(self, origin_domain, domain):
         self.origin_domain = origin_domain
@@ -44,7 +47,7 @@ class Clarify(Adapter):
 
     def __call__(self):
         if self.origin_domain == self.domain:
-            return (lambda v: v)
+            return self.identity
         return None
 
 
@@ -53,7 +56,7 @@ class ClarifyFromUntyped(Clarify):
     adapt(UntypedDomain, Domain)
 
     def __call__(self):
-        return (lambda v, p=self.domain.parse: p(v))
+        return self.domain.parse
 
 
 class ClarifyFromSelf(Clarify):
@@ -68,7 +71,7 @@ class ClarifyFromSelf(Clarify):
                (DateTimeDomain, DateTimeDomain))
 
     def __call__(self):
-        return (lambda v: v)
+        return self.identity
 
 
 class ClarifyEnum(Clarify):
@@ -77,7 +80,7 @@ class ClarifyEnum(Clarify):
                (TextDomain, EnumDomain))
 
     def __call__(self):
-        return (lambda v, p=self.domain.parse: p(v))
+        return self.domain.parse
 
 
 class ClarifyDecimal(Clarify):
@@ -113,7 +116,7 @@ class ClarifyIdentity(Clarify):
 
     def __call__(self):
         if self.origin_domain == self.domain:
-            return (lambda v: v)
+            return self.identity
         if self.origin_domain.width != self.domain.width:
             return None
         group = list(enumerate(self.origin_domain.labels))
@@ -152,10 +155,13 @@ class ClarifyIdentity(Clarify):
                 convert = Clarify.__invoke__(entry, label)
                 if convert is None:
                     return None
-                converts.append(lambda v, i=idx, c=convert: c(v[i]))
+                if convert is Clarify.identity:
+                    converts.append(operator.itemgetter(idx))
+                else:
+                    converts.append(lambda v, i=idx, c=convert: c(v[i]))
         id_class = ID.make(domain.dump)
         return (lambda v, id_class=id_class, cs=converts:
-                        id_class(c(v) for c in cs) if v is not None else None)
+                        id_class([c(v) for c in cs]) if v is not None else None)
 
 
 class ExtractValuePipe(object):
@@ -193,9 +199,9 @@ class ExtractNodePipe(object):
     def __call__(self, row):
         if self.id_convert is not None:
             return (self.id_convert(row),
-                    tuple(convert(row) for convert in self.converts))
+                    tuple([convert(row) for convert in self.converts]))
         else:
-            return tuple(convert(row) for convert in self.converts)
+            return tuple([convert(row) for convert in self.converts])
 
 
 class BuildExtractNode(Utility):
@@ -248,6 +254,8 @@ class BuildExtractNode(Utility):
                             " the table identity; got %s" % id_field.domain)
             id_convert = ExtractValuePipe(signature[0], id_field.domain,
                                           id_domain, clarify, 0)
+            if clarify is Clarify.identity:
+                id_convert = operator.itemgetter(0)
         if self.with_fields:
             labels = classify(node)
             arc_by_signature = dict(((label.name, label.arity), label.arc)
@@ -306,6 +314,8 @@ class BuildExtractNode(Utility):
                                        arc_domain, field.domain))
                     convert = ExtractValuePipe(label.name, field.domain,
                                                arc_domain, clarify, idx)
+                    if clarify is Clarify.identity:
+                        convert = operator.itemgetter(idx)
                     converts.append(convert)
         return ExtractNodePipe(node, arcs, id_convert, converts, is_list)
 
@@ -321,8 +331,9 @@ class ExtractTablePipe(object):
         self.extracts = extracts
 
     def __call__(self, row):
-        row = [resolve(item) for item, resolve in zip(row, self.resolves)]
-        return tuple(extract(row) for extract in self.extracts)
+        row = [resolve(item) if resolve is not None else item
+               for item, resolve in zip(row, self.resolves)]
+        return tuple([extract(row) for extract in self.extracts])
 
 
 class BuildExtractTable(Utility):
@@ -344,18 +355,17 @@ class BuildExtractTable(Utility):
                 if column in extract_by_column:
                     raise Error("Duplicate column assignment for %s"
                                 % column.name.encode('utf-8'))
-                resolve = (lambda v: v)
-                extract = (lambda r, i=idx: r[i])
+                resolve = None
+                extract = operator.itemgetter(idx)
                 resolves.append(resolve)
                 extract_by_column[column] = extract
             elif isinstance(arc, ChainArc):
                 if self.with_cache:
-                    resolve_pipe = BuildCacheChain.__invoke__(arc)
+                    resolve = BuildCacheChain.__invoke__(arc)
                 else:
-                    resolve_pipe = BuildResolveChain.__invoke__(arc)
-                resolve = (lambda v, p=resolve_pipe: p(v))
+                    resolve = BuildResolveChain.__invoke__(arc)
                 resolves.append(resolve)
-                for column_idx, column in enumerate(resolve_pipe.columns):
+                for column_idx, column in enumerate(resolve.columns):
                     if column in extract_by_column:
                         raise Error("Duplicate column assignment for %s"
                                     % column.name.encode('utf-8'))
@@ -605,14 +615,15 @@ class CacheChainPipe(object):
             product = self.pipe()(None)
             for row in product:
                 self.cache[row[0]] = row[1:]
-        if value in self.cache:
+        try:
             return self.cache[value]
-        quote = None
-        if self.name:
-            quote = u"%s[%s]" % (self.name, self.domain.dump(value))
-        else:
-            quote = u"[%s]" % self.domain.dump(value)
-        raise Error("Unable to resolve a link", quote)
+        except KeyError:
+            quote = None
+            if self.name:
+                quote = u"%s[%s]" % (self.name, self.domain.dump(value))
+            else:
+                quote = u"[%s]" % self.domain.dump(value)
+            raise Error("Unable to resolve a link", quote)
 
 
 class BuildCacheChain(Utility):
