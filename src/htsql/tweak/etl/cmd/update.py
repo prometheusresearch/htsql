@@ -23,7 +23,7 @@ class ProduceUpdate(Act):
             extract_node = BuildExtractNode.__invoke__(product.meta,
                     with_id=True, with_fields=True)
             resolve_key = BuildResolveKey.__invoke__(
-                    extract_node.node, extract_node.arcs)
+                    extract_node.node, None)
             extract_table = BuildExtractTable.__invoke__(
                     extract_node.node, extract_node.arcs)
             execute_update = BuildExecuteUpdate.__invoke__(

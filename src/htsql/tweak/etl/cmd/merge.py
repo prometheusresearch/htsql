@@ -129,9 +129,10 @@ class BuildResolveKey(Utility):
         state = BindingState(scope)
         seed = state.use(FreeTableRecipe(self.table), syntax)
         column_by_link = {}
-        for arc in self.arcs:
-            if isinstance(arc, ColumnArc) and arc.link is not None:
-                column_by_link[arc.link] = arc
+        if self.arcs is not None:
+            for arc in self.arcs:
+                if isinstance(arc, ColumnArc) and arc.link is not None:
+                    column_by_link[arc.link] = arc
         identity_arcs = localize(self.node)
         if identity_arcs is None:
             raise Error("Expected a table with identity")

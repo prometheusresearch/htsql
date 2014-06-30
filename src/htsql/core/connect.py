@@ -179,7 +179,7 @@ class CursorProxy(object):
                 exc.wrap("While executing SQL", statement)
                 if parameters:
                     parameters = parameters[0]
-                    exc.wrap("With parameters", repr(list(parameters)))
+                    exc.wrap("With parameters", repr(parameters))
                 raise
         else:
             with self.guard:
