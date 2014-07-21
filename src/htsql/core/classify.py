@@ -175,7 +175,7 @@ class TraceTable(Trace):
         if len(alternatives) == 1:
             return alternatives[0]
         else:
-            return AmbiguousArc(None, alternatives)
+            return None
 
 
 class Call(Adapter):
