@@ -39005,12 +39005,13 @@ tests:
         body: |
           Got an error from the database driver:
               null value in column "code" violates not-null constraint
+              DETAIL:  Failing row contains (null, null).
           While executing SQL:
               INSERT INTO "public"."manufacturer"
               DEFAULT VALUES
               RETURNING "code"
           With parameters:
-              []
+              ()
           While inserting record #1:
               {'SMSN', 'Samsung'}
           While processing:
@@ -39023,12 +39024,13 @@ tests:
         body: |
           Got an error from the database driver:
               null value in column "name" violates not-null constraint
+              DETAIL:  Failing row contains (SMSN, null).
           While executing SQL:
               INSERT INTO "public"."manufacturer" ("code")
               VALUES (%s)
               RETURNING "code"
           With parameters:
-              [u'SMSN']
+              (u'SMSN',)
           While inserting record #1:
               {'SMSN'}
           While processing:
@@ -39041,12 +39043,13 @@ tests:
         body: |
           Got an error from the database driver:
               null value in column "code" violates not-null constraint
+              DETAIL:  Failing row contains (null, Samsung).
           While executing SQL:
               INSERT INTO "public"."manufacturer" ("name")
               VALUES (%s)
               RETURNING "code"
           With parameters:
-              [u'Samsung']
+              (u'Samsung',)
           While inserting record #1:
               {'Samsung'}
           While processing:
