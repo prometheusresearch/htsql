@@ -156,8 +156,12 @@ class PGSQLDumpExtractMinute(DumpExtractMinute):
 class PGSQLDumpLike(DumpLike):
 
     def __call__(self):
-        self.format("({lop} {polarity:not}ILIKE {rop})",
-                    self.phrase, self.signature)
+        if self.signature.is_case_sensitive:
+            self.format("({lop} {polarity:not}LIKE {rop})",
+                        self.phrase, self.signature)
+        else:
+            self.format("({lop} {polarity:not}ILIKE {rop})",
+                        self.phrase, self.signature)
 
 
 class PGSQLDumpSum(DumpSum):

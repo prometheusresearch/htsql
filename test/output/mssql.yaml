@@ -14515,6 +14515,20 @@ tests:
              /this(){true()}?'LOL'~null()
              SELECT 1
              WHERE ('LOL' LIKE NULL ESCAPE '\')
+        - uri: /{has_prefix('OMGWTFBBQ', 'OMG'), has_prefix('OMGWTFBBQ', 'BBQ')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | has_prefix('OMGWTFBBQ','OMG') | has_prefix('OMGWTFBBQ','BBQ') |
+            -+-------------------------------+-------------------------------+-
+             | true                          | false                         |
+
+             ----
+             /{has_prefix('OMGWTFBBQ','OMG'),has_prefix('OMGWTFBBQ','BBQ')}
+             SELECT (CASE WHEN ('OMGWTFBBQ' LIKE 'OMG%' ESCAPE '\') THEN 1 ELSE 0 END),
+                    (CASE WHEN ('OMGWTFBBQ' LIKE 'BBQ%' ESCAPE '\') THEN 1 ELSE 0 END)
         - uri: /{head('OMGWTFBBQ'), head('OMGWTFBBQ',3), head('OMGWTFBBQ',-3)}
           status: 200 OK
           headers:

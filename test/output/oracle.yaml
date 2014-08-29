@@ -14814,6 +14814,21 @@ tests:
                     (CASE WHEN ('LOL' LIKE NULL ESCAPE '\') THEN 1 WHEN NOT ('LOL' LIKE NULL ESCAPE '\') THEN 0 END),
                     (CASE WHEN (NULL LIKE NULL ESCAPE '\') THEN 1 WHEN NOT (NULL LIKE NULL ESCAPE '\') THEN 0 END)
              FROM DUAL "!"
+        - uri: /{has_prefix('OMGWTFBBQ', 'OMG'), has_prefix('OMGWTFBBQ', 'BBQ')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | has_prefix('OMGWTFBBQ','OMG') | has_prefix('OMGWTFBBQ','BBQ') |
+            -+-------------------------------+-------------------------------+-
+             | true                          | false                         |
+
+             ----
+             /{has_prefix('OMGWTFBBQ','OMG'),has_prefix('OMGWTFBBQ','BBQ')}
+             SELECT (CASE WHEN ('OMGWTFBBQ' LIKE 'OMG%' ESCAPE '\') THEN 1 ELSE 0 END),
+                    (CASE WHEN ('OMGWTFBBQ' LIKE 'BBQ%' ESCAPE '\') THEN 1 ELSE 0 END)
+             FROM DUAL "!"
         - uri: /{head('OMGWTFBBQ'), head('OMGWTFBBQ',3), head('OMGWTFBBQ',-3)}
           status: 200 OK
           headers:

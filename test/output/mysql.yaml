@@ -14496,6 +14496,20 @@ tests:
              SELECT (NULL LIKE '%LOL%'),
                     ('LOL' LIKE NULL),
                     (NULL LIKE NULL)
+        - uri: /{has_prefix('OMGWTFBBQ', 'OMG'), has_prefix('OMGWTFBBQ', 'BBQ')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | has_prefix('OMGWTFBBQ','OMG') | has_prefix('OMGWTFBBQ','BBQ') |
+            -+-------------------------------+-------------------------------+-
+             | true                          | false                         |
+
+             ----
+             /{has_prefix('OMGWTFBBQ','OMG'),has_prefix('OMGWTFBBQ','BBQ')}
+             SELECT ('OMGWTFBBQ' LIKE 'OMG%'),
+                    ('OMGWTFBBQ' LIKE 'BBQ%')
         - uri: /{head('OMGWTFBBQ'), head('OMGWTFBBQ',3), head('OMGWTFBBQ',-3)}
           status: 200 OK
           headers:

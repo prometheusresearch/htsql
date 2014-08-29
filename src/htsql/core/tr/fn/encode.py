@@ -15,14 +15,13 @@ from ..encode import EncodeBySignature, EncodingState
 from ...error import Error, translate_guard
 from ..coerce import coerce
 from ..flow import RootFlow, LiteralFlow, CastFlow
-from ..space import (LiteralCode, ScalarUnit, CorrelatedUnit,
-                    AggregateUnit, FilteredSpace, FormulaCode)
+from ..space import (LiteralCode, ScalarUnit, CorrelatedUnit, AggregateUnit,
+        FilteredSpace, FormulaCode)
 from ..signature import Signature, NotSig, NullIfSig, IfNullSig, CompareSig
-from .signature import (ExistsSig, AggregateSig, QuantifySig,
-                        CountSig, SumSig, ReplaceSig, ConcatenateSig,
-                        LikeSig, ContainsSig, HeadSig, TailSig, SliceSig, AtSig,
-                        SubstringSig, LengthSig, AddSig, SubtractSig,
-                        IfSig, ReversePolaritySig)
+from .signature import (ExistsSig, AggregateSig, QuantifySig, CountSig, SumSig,
+        ReplaceSig, ConcatenateSig, LikeSig, ContainsSig, HasPrefixSig,
+        HeadSig, TailSig, SliceSig, AtSig, SubstringSig, LengthSig, AddSig,
+        SubtractSig, IfSig, ReversePolaritySig)
 
 
 class EncodeFunction(EncodeBySignature):
@@ -75,6 +74,41 @@ class EncodeContains(EncodeFunction):
             rop = FormulaCode(ConcatenateSig(), rop.domain, self.flow,
                               lop=rop, rop=percent_literal)
         return FormulaCode(self.signature.clone_to(LikeSig),
+                           self.domain, self.flow, lop=lop, rop=rop)
+
+
+class EncodeHasPrefix(EncodeFunction):
+
+    adapt(HasPrefixSig)
+
+    def __call__(self):
+        lop = self.state.encode(self.flow.lop)
+        rop = self.state.encode(self.flow.rop)
+        if isinstance(rop, LiteralCode):
+            if rop.value is not None:
+                value = (rop.value.replace(u"\\", u"\\\\")
+                                  .replace(u"%", u"\\%")
+                                  .replace(u"_", u"\\_") + u"%")
+                rop = rop.clone(value=value)
+        else:
+            backslash_literal = LiteralCode(u"\\", rop.domain, self.flow)
+            xbackslash_literal = LiteralCode(u"\\\\", rop.domain, self.flow)
+            percent_literal = LiteralCode(u"%", rop.domain, self.flow)
+            xpercent_literal = LiteralCode(u"\\%", rop.domain, self.flow)
+            underscore_literal = LiteralCode(u"_", rop.domain, self.flow)
+            xunderscore_literal = LiteralCode(u"\\_", rop.domain, self.flow)
+            rop = FormulaCode(ReplaceSig(), rop.domain, self.flow,
+                              op=rop, old=backslash_literal,
+                              new=xbackslash_literal)
+            rop = FormulaCode(ReplaceSig(), rop.domain, self.flow,
+                              op=rop, old=percent_literal,
+                              new=xpercent_literal)
+            rop = FormulaCode(ReplaceSig(), rop.domain, self.flow,
+                              op=rop, old=underscore_literal,
+                              new=xunderscore_literal)
+            rop = FormulaCode(ConcatenateSig(), rop.domain, self.flow,
+                              lop=rop, rop=percent_literal)
+        return FormulaCode(LikeSig(polarity=+1, is_case_sensitive=True),
                            self.domain, self.flow, lop=lop, rop=rop)
 
 

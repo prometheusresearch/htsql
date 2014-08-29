@@ -415,6 +415,9 @@ tests:
   - uri: /this(){true()}?'LOL'~null()
     if: mssql
 
+  # Prefix
+  - uri: /{has_prefix('OMGWTFBBQ', 'OMG'), has_prefix('OMGWTFBBQ', 'BBQ')}
+
   # Slicing
   - uri: /{head('OMGWTFBBQ'), head('OMGWTFBBQ',3), head('OMGWTFBBQ',-3)}
   - uri: /{tail('OMGWTFBBQ'), tail('OMGWTFBBQ',3), tail('OMGWTFBBQ',-3)}

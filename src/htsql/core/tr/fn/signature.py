@@ -244,8 +244,28 @@ class ContainsSig(BinarySig, PolarSig):
     pass
 
 
-class LikeSig(BinarySig, PolarSig):
+class HasPrefixSig(BinarySig):
     pass
+
+
+class LikeSig(BinarySig):
+
+    def __init__(self, polarity, is_case_sensitive=False):
+        assert polarity in [+1, -1]
+        assert isinstance(is_case_sensitive, bool)
+        self.polarity = polarity
+        self.is_case_sensitive = is_case_sensitive
+
+    def __basis__(self):
+        return (self.polarity, self.is_case_sensitive)
+
+    def reverse(self):
+        return self.clone(polarity=-self.polarity,
+                          is_case_sensitive=is_case_sensitive)
+
+    def __str__(self):
+        return "%s(%s)" % (self.__class__.__name__,
+                           '+' if self.polarity > 0 else '-')
 
 
 class ReplaceSig(Signature):
