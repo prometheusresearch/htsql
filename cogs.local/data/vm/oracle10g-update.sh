@@ -16,7 +16,7 @@ wget -q https://oss.oracle.com/el4/RPM-GPG-KEY-oracle -O- | apt-key add -
 apt-get -q update
 
 # Install the Oracle 10g Express Edition.
-apt-get -qy install oracle-xe-universal
+apt-get -qy --force-yes install oracle-xe-universal
 
 # Clean APT cache.
 apt-get clean
