@@ -748,7 +748,10 @@ class GuessPathForColumn(Lookup):
         if not path:
             return None
         arc = None
-        for label in classify(path[-1].target):
+        parent_arc = path[-1]
+        if isinstance(parent_arc, ColumnArc) and parent_arc.link is not None:
+            parent_arc = parent_arc.link
+        for label in classify(parent_arc.target):
             if (isinstance(label.arc, ColumnArc) and
                     (label.arc.column == self.binding.column)):
                 arc = label.arc
