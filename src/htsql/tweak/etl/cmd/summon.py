@@ -11,7 +11,7 @@ from ....core.entity import TableEntity
 from ....core.cmd.summon import Summon, recognize
 from ....core.syn.syntax import IdentifierSyntax, AssignSyntax, ReferenceSyntax
 from ..cmd.command import (CopyCmd, InsertCmd, MergeCmd, UpdateCmd, DeleteCmd,
-        TruncateCmd, DoCmd)
+        TruncateCmd, DoCmd, IfCmd, ForCmd)
 
 
 class SummonETL(Summon):
@@ -103,5 +103,47 @@ class SummonDo(Summon):
             blocks.append((name, command))
         command = DoCmd(blocks)
         return command
+
+
+class SummonIf(Summon):
+
+    call('if')
+
+    def __call__(self):
+        if len(self.arguments) < 2:
+            raise Error("expected 2 or more arguments")
+        tests = []
+        values = []
+        else_value = None
+        arguments = self.arguments[:]
+        while len(arguments) > 1:
+            test = recognize(arguments.pop(0))
+            value = recognize(arguments.pop(0))
+            tests.append(test)
+            values.append(value)
+        if arguments:
+            else_value = recognize(arguments.pop(0))
+        return IfCmd(tests, values, else_value)
+
+
+class SummonFor(Summon):
+
+    call('for')
+
+    def __call__(self):
+        if len(self.arguments) != 2:
+            raise Error("expected 2 arguments")
+        head, body = self.arguments
+        if not isinstance(head, AssignSyntax):
+            with recognize_guard(head):
+                raise Error("Expected an assignment expression")
+        specifier = head.larm
+        if specifier.reference is None:
+            with recognize_guard(specifier):
+                raise Error("Expected a reference")
+        name = specifier.reference.name
+        iterator = recognize(head.rarm)
+        body = recognize(body)
+        return ForCmd(name, iterator, body)
 
 

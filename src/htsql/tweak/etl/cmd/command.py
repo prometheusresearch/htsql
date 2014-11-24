@@ -50,3 +50,26 @@ class DoCmd(Command):
         self.blocks = blocks
 
 
+class IfCmd(Command):
+
+    def __init__(self, tests, values, else_value=None):
+        assert isinstance(tests, listof(Command))
+        assert isinstance(values, listof(Command))
+        assert len(tests) == len(values)
+        assert isinstance(else_value, maybe(Command))
+        self.tests = tests
+        self.values = values
+        self.else_value = else_value
+
+
+class ForCmd(Command):
+
+    def __init__(self, name, iterator, body):
+        assert isinstance(name, unicode)
+        assert isinstance(iterator, Command)
+        assert isinstance(body, Command)
+        self.name = name
+        self.iterator = iterator
+        self.body = body
+
+

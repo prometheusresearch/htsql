@@ -102,4 +102,20 @@ tests:
            update(product[A0000004]{id(), list_price:=$new_list_price}),
            product[A0000004])
 - uri: /product
+- uri: &if
+    /if(!exists(category?label='Notebooks'),
+        insert(category := { label := 'Notebooks' }),
+        top(category?label='Notebooks').id())
+- uri: *if
+- uri: if(true)
+  expect: 400
+- uri: if(1, true, false)
+  expect: 400
+- uri: if(true, 1)
+- uri: if(false, 1)
+- uri: if(false, 0, true, 1)
+- uri:
+    /do($category_id := top(category?label='Notebooks').id(),
+        for($product_id := /product.id(),
+            insert(product_category := { category := $category_id, product := $product_id })))
 

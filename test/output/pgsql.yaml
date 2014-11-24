@@ -39674,3 +39674,101 @@ tests:
           \       \"product\".\"product_line_code\",\n        \"product\".\"title\",\n
           \       \"product\".\"is_available\",\n        \"product\".\"description\",\n
           \       \"product\".\"list_price\"\n FROM \"product\"\n ORDER BY 1 ASC\n"
+      - uri: /if(!exists(category?label='Notebooks'), insert(category := { label :=
+          'Notebooks' }), top(category?label='Notebooks').id())
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: |2+
+           | category |
+          -+----------+-
+           | 1        |
+
+      - uri: /if(!exists(category?label='Notebooks'), insert(category := { label :=
+          'Notebooks' }), top(category?label='Notebooks').id())
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: |2
+           | id() |
+          -+------+-
+           | 1    |
+
+           ----
+           id()
+           SELECT "category"."id"
+           FROM (SELECT "category"."id"
+                 FROM "category"
+                 WHERE ("category"."label" = 'Notebooks')
+                 ORDER BY 1 ASC
+                 LIMIT 1) AS "category"
+           ORDER BY 1 ASC
+      - uri: if(true)
+        status: 400 Bad Request
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        body: |
+          expected 2 or more arguments
+          While parsing:
+              if(true)
+              ^^^^^^^^
+      - uri: if(1, true, false)
+        status: 400 Bad Request
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        body: |
+          Expected boolean value; got integer
+          While processing:
+              if(1, true, false)
+                 ^
+      - uri: if(true, 1)
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: |2
+           | 1 |
+          -+---+-
+           | 1 |
+
+           ----
+           1
+           SELECT 1
+      - uri: if(false, 1)
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: |2+
+           |  |
+
+      - uri: if(false, 0, true, 1)
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: |2
+           | 1 |
+          -+---+-
+           | 1 |
+
+           ----
+           1
+           SELECT 1
+      - uri: /do($category_id := top(category?label='Notebooks').id(), for($product_id
+          := /product.id(), insert(product_category := { category := $category_id,
+          product := $product_id })))
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: |2+
+           | product_category |
+          -+------------------+-
+           | A0000001.1       |
+           | A0000002.1       |
+           | A0000003.1       |
+           | A0000004.1       |
+

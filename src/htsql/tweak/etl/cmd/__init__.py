@@ -3,6 +3,7 @@
 #
 
 
-from . import command, copy, delete, do, insert, merge, summon, truncate, update
+from . import (command, copy, delete, do, for_, if_, insert, merge, summon,
+        truncate, update)
 
 

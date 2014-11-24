@@ -2108,7 +2108,7 @@ class BindMinMaxBase(BindPolyAggregate):
                               plural_base=plural_base, op=binding)
 
 
-class BindMinMaxBase(BindMinMaxBase):
+class BindMin(BindMinMaxBase):
 
     call('min')
     signature = MinMaxSig
@@ -2116,7 +2116,7 @@ class BindMinMaxBase(BindMinMaxBase):
     hint = """base.min(x) -> the minimal value in the set of x"""
 
 
-class BindMinMaxBase(BindMinMaxBase):
+class BindMax(BindMinMaxBase):
 
     call('max')
     signature = MinMaxSig
