@@ -6,6 +6,7 @@
 from ..adapter import Adapter, adapt
 from .format import Format, DefaultFormat, TextFormat, ProxyFormat
 from .accept import Accept
+import itertools
 
 
 class EmitHeaders(Adapter):
@@ -83,7 +84,12 @@ def emit(format, product):
     if isinstance(format, (str, unicode)):
         format = Accept.__invoke__(format)
         assert not isinstance(format, DefaultFormat), "unknown format"
-    return (line.encode('utf-8') if isinstance(line, unicode) else line
+    tail = (line.encode('utf-8') if isinstance(line, unicode) else line
             for line in Emit.__invoke__(format, product))
+    head = []
+    for chunk in tail:
+        head.append(chunk)
+        break
+    return itertools.chain(head, tail)
 
 

@@ -203,9 +203,7 @@ class Application(object):
         Implements the WSGI entry point.
         """
         with self:
-            body = wsgi(environ, start_response)
-            for chunk in body:
-                yield chunk
+            return wsgi(environ, start_response)
 
     def produce(self, command, environment=None, **parameters):
         with self:

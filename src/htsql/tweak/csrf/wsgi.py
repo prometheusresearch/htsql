@@ -55,7 +55,6 @@ class CSRFWSGI(WSGI):
                 return original_start_response(status, headers, exc)
             self.start_response = start_response
         with env(can_read=can_read, can_write=can_write):
-            for chunk in super(CSRFWSGI, self).__call__():
-                yield chunk
+            return super(CSRFWSGI, self).__call__()
 
 

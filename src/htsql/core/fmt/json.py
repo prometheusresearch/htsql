@@ -183,13 +183,14 @@ class EmitRaw(Emit):
         return dump_json(tokens)
 
     def emit(self):
-        data_to_raw = to_raw(self.meta.domain)
+        meta = list(profile_to_raw(self.meta))
+        data = to_raw(self.meta.domain)(self.data)
         yield JS_MAP
         yield u"meta"
-        for token in profile_to_raw(self.meta):
+        for token in meta:
             yield token
         yield u"data"
-        for token in data_to_raw(self.data):
+        for token in data:
             yield token
         yield JS_END
 

@@ -22,11 +22,13 @@ class TweakMetaSlaveAddon(Addon):
 
     @classmethod
     def get_extension(cls, app, attributes):
+        debug = attributes['master']().htsql.debug
         return { 'htsql': { 'db': DB(engine='sqlite',
                                      database=':meta:',
                                      username=None,
                                      password=None,
-                                     host=None, port=None) },
+                                     host=None, port=None),
+                            'debug': debug },
                  'engine.sqlite': {} }
 
 

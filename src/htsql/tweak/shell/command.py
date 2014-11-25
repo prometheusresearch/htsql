@@ -26,6 +26,7 @@ from ..resource.locate import locate
 import re
 import cgi
 import wsgiref.util
+import itertools
 
 
 class ShellCmd(Command):
@@ -325,7 +326,12 @@ class RenderProduceAnalyze(Act):
                     body = self.render_product(product, limit)
                 else:
                     body = self.render_empty()
-        body = (line.encode('utf-8') for line in dump_json(body))
+        tail = (line.encode('utf-8') for line in dump_json(body))
+        head = []
+        for chunk in tail:
+            head.append(chunk)
+            break
+        body = itertools.chain(head, tail)
         return (status, headers, body)
 
     def render_unsupported(self, exc):
@@ -383,18 +389,20 @@ class RenderProduceAnalyze(Act):
         yield JS_END
 
     def render_product(self, product, limit):
-        yield JS_MAP
-        yield u"type"
-        yield u"product"
-        yield u"meta"
-        for token in profile_to_raw(product.meta):
-            yield token
-        yield u"data"
+        meta = list(profile_to_raw(product.meta))
         product_to_raw = to_raw(product.meta.domain)
         data = product.data
         if limit is not None and isinstance(data, list) and len(data) > limit:
             data = data[:limit]
-        for token in product_to_raw(data):
+        data = product_to_raw(data)
+        yield JS_MAP
+        yield u"type"
+        yield u"product"
+        yield u"meta"
+        for token in meta:
+            yield token
+        yield u"data"
+        for token in data:
             yield token
         yield u"more"
         yield (limit is not None and
