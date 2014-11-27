@@ -126,6 +126,18 @@ class SummonIf(Summon):
         return IfCmd(tests, values, else_value)
 
 
+class SummonWhen(Summon):
+
+    call('when')
+
+    def __call__(self):
+        if len(self.arguments) != 2:
+            raise Error("expected 2 arguments")
+        value = recognize(self.arguments[0])
+        test = recognize(self.arguments[1])
+        return IfCmd([test], [value], None)
+
+
 class SummonFor(Summon):
 
     call('for')

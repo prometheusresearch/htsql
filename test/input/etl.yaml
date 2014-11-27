@@ -114,6 +114,9 @@ tests:
 - uri: if(true, 1)
 - uri: if(false, 1)
 - uri: if(false, 0, true, 1)
+- uri: /category/:when(exists(category))
+- uri: /when(true)
+  expect: 400
 - uri:
     /do($category_id := top(category?label='Notebooks').id(),
         for($product_id := /product.id(),

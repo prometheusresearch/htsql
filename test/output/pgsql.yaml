@@ -39757,6 +39757,34 @@ tests:
            ----
            1
            SELECT 1
+      - uri: /category/:when(exists(category))
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: |2
+           | category                   |
+           +----+-----------+-----------+
+           | id | label     | parent_id |
+          -+----+-----------+-----------+-
+           |  1 | Notebooks |           |
+
+           ----
+           /category
+           SELECT "category"."id",
+                  "category"."label",
+                  "category"."parent_id"
+           FROM "category"
+           ORDER BY 1 ASC
+      - uri: /when(true)
+        status: 400 Bad Request
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        body: |
+          expected 2 arguments
+          While parsing:
+              /when(true)
+               ^^^^^^^^^^
       - uri: /do($category_id := top(category?label='Notebooks').id(), for($product_id
           := /product.id(), insert(product_category := { category := $category_id,
           product := $product_id })))
