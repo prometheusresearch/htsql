@@ -12,6 +12,7 @@ import sqlite3
 import os.path
 import csv
 import re
+import glob
 
 
 class FileDBConnect(Connect):
@@ -139,16 +140,20 @@ def build_names():
     sources = context.app.tweak.filedb.sources
     names = []
     table_names = set()
-    for source_idx, source in enumerate(sources):
-        table_name = os.path.splitext(os.path.basename(source.file))[0]
-        table_name = table_name.decode('utf-8', 'replace')
-        table_name = to_name(table_name)
-        if (table_name in table_names or
-                re.match(r"^sqlite_", table_name) or
-                re.match(r"^_\d+$", table_name)):
-            table_name = "_%s" % (source_idx+1)
-        table_names.add(table_name)
-        names.append((table_name, source.file))
+    source_idx = 0
+    for source in sources:
+        filenames = sorted(glob.glob(source.file)) or [source.file]
+        for filename in filenames:
+            table_name = os.path.splitext(os.path.basename(filename))[0]
+            table_name = table_name.decode('utf-8', 'replace')
+            table_name = to_name(table_name)
+            if (table_name in table_names or
+                    re.match(r"^sqlite_", table_name) or
+                    re.match(r"^_\d+$", table_name)):
+                table_name = "_%s" % (source_idx+1)
+            table_names.add(table_name)
+            names.append((table_name, filename))
+            source_idx += 1
     return names
 
 
