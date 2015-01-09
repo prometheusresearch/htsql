@@ -234,6 +234,26 @@ tests:
   - uri: /{switch(1, 1, 'George', 2, false())}
     expect: 400
 
+  # Comparison with id()
+  - uri: /school{id()}?id()='art'
+  - uri: /school{id()}?id()=[art]
+  - uri: /school{id()}?id()=@school[art].id()
+  - uri: /school{id()}?id()!={[art], [bus], [edu], [ph], [sc]}
+  - uri: /program{id()}?school=$school :given $school := 'art'
+  - uri: /program{id()}?[art.gart]=this()
+  - uri: /school?id()=null
+  # Bad ids
+  - uri: /school?id()=id(123)
+    expect: 400
+  - uri: /school?id()='art.gart'
+    expect: 400
+  - uri: /school?id()=[art.gart]
+    expect: 400
+  - uri: /this()=[art]
+    expect: 400
+  - uri: /school?id()=code
+    expect: 400
+
 ########################################################################
 
 - title: Numeric Functions and Operators

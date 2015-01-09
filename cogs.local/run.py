@@ -447,8 +447,7 @@ def COVERAGE():
                 % env.pbbt_path
                 + variables,
                 environ=environ)
-    coverage_py("html --directory=build/coverage",
-                "./build/coverage/coverage.dat")
+    coverage_py("html --directory=build/coverage", environ)
     log()
     log("To see the coverage report, open:")
     log("  `./build/coverage/index.html`")

@@ -12666,7 +12666,7 @@ tests:
           body: |2
              | datetime('2010-04-15') | datetime('2010-04-15 20:13') | datetime('2010-04-15T20:13:04.5') | datetime('2010-04-15 20:13:04.5 -0400') |
             -+------------------------+------------------------------+-----------------------------------+-----------------------------------------+-
-             | 2010-04-15             | 2010-04-15 20:13:00          | 2010-04-15 20:13:04.500000        | 2010-04-15 19:13:04.500000-05:00        |
+             | 2010-04-15             | 2010-04-15 20:13:00          | 2010-04-15 20:13:04.500000        | 2010-04-15 20:13:04.500000-04:00        |
 
              ----
              /{datetime('2010-04-15'),datetime('2010-04-15 20:13'),datetime('2010-04-15T20:13:04.5'),datetime('2010-04-15 20:13:04.5 -0400')}
@@ -13486,6 +13486,191 @@ tests:
             While translating:
                 /{switch(1, 1, 'George', 2, false())}
                                ^^^^^^^^
+        - uri: /school{id()}?id()='art'
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | school |
+             +--------+
+             | id()   |
+            -+--------+-
+             | art    |
+
+             ----
+             /school{id()}?id()='art'
+             SELECT "school"."code"
+             FROM "ad"."school"
+             WHERE ("school"."code" = 'art')
+             ORDER BY 1 ASC
+        - uri: /school{id()}?id()=[art]
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | school |
+             +--------+
+             | id()   |
+            -+--------+-
+             | art    |
+
+             ----
+             /school{id()}?id()=[art]
+             SELECT "school"."code"
+             FROM "ad"."school"
+             WHERE ("school"."code" = 'art')
+             ORDER BY 1 ASC
+        - uri: /school{id()}?id()=@school[art].id()
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | school |
+             +--------+
+             | id()   |
+            -+--------+-
+             | art    |
+
+             ----
+             /school{id()}?id()=@school[art].id()
+             SELECT "school_1"."code"
+             FROM "ad"."school" AS "school_1"
+                  LEFT OUTER JOIN (SELECT "school"."code"
+                                   FROM "ad"."school"
+                                   WHERE ("school"."code" = 'art')) AS "school_2"
+                                  ON TRUE
+             WHERE ("school_1"."code" = "school_2"."code")
+             ORDER BY 1 ASC
+        - uri: /school{id()}?id()!={[art], [bus], [edu], [ph], [sc]}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | school |
+             +--------+
+             | id()   |
+            -+--------+-
+             | eng    |
+             | la     |
+             | mus    |
+             | ns     |
+
+             ----
+             /school{id()}?id()!={[art],[bus],[edu],[ph],[sc]}
+             SELECT "school"."code"
+             FROM "ad"."school"
+             WHERE ("school"."code" NOT IN ('art', 'bus', 'edu', 'ph', 'sc'))
+             ORDER BY 1 ASC
+        - uri: /program{id()}?school=$school :given $school := 'art'
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | program     |
+             +-------------+
+             | id()        |
+            -+-------------+-
+             | art.gart    |
+             | art.uhist   |
+             | art.ustudio |
+
+             ----
+             /program{id()}?school=$school :given $school:='art'
+             SELECT "program"."school_code",
+                    "program"."code"
+             FROM "ad"."program"
+             WHERE ("program"."school_code" = 'art')
+             ORDER BY 1 ASC, 2 ASC
+        - uri: /program{id()}?[art.gart]=this()
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | program  |
+             +----------+
+             | id()     |
+            -+----------+-
+             | art.gart |
+
+             ----
+             /program{id()}?[art.gart]=this()
+             SELECT "program"."school_code",
+                    "program"."code"
+             FROM "ad"."program"
+             WHERE ("program"."school_code" = 'art')
+                   AND ('gart' = "program"."code")
+             ORDER BY 1 ASC, 2 ASC
+        - uri: /school?id()=null
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | school               |
+             +------+------+--------+
+             | code | name | campus |
+            -+------+------+--------+-
+
+             ----
+             /school?id()=null
+             SELECT "school"."code",
+                    "school"."name",
+                    "school"."campus"
+             FROM "ad"."school"
+             WHERE NULL
+             ORDER BY 1 ASC
+        - uri: /school?id()=id(123)
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            Cannot coerce values of types (text, integer) to a common type
+            While translating:
+                /school?id()=id(123)
+                        ^^^^^^^^^^^^
+        - uri: /school?id()='art.gart'
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            Cannot coerce [art.gart] to identity(text):
+                too many labels: expected 1, got 2
+            While translating:
+                /school?id()='art.gart'
+                        ^^^^^^^^^^^^^^^
+        - uri: /school?id()=[art.gart]
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            Cannot coerce values of types (identity(text), identity(untyped, untyped)) to a common type
+            While translating:
+                /school?id()=[art.gart]
+                        ^^^^^^^^^^^^^^^
+        - uri: /this()=[art]
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            Cannot coerce values of types (entity, identity(untyped)) to a common type
+            While translating:
+                /this()=[art]
+                 ^^^^^^^^^^^^
+        - uri: /school?id()=code
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            Cannot coerce values of types (identity(text), text) to a common type
+            While translating:
+                /school?id()=code
+                        ^^^^^^^^^
       - suite: numeric-functions-and-operators
         tests:
         - uri: /{integer(null()), integer('60'), integer(60)}
