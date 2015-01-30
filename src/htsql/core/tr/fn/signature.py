@@ -204,6 +204,10 @@ class TruncToSig(Signature):
     ]
 
 
+class SquareRootSig(UnarySig):
+    pass
+
+
 class GuardSig(Signature):
 
     slots = [

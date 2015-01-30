@@ -13,6 +13,14 @@ import sqlite3
 import datetime
 import os.path
 import decimal
+import math
+
+
+def sqlite3_sqrt(x):
+    try:
+        return math.sqrt(float(x))
+    except:
+        return None
 
 
 def sqlite3_power(x, y):
@@ -45,6 +53,7 @@ class ConnectSQLite(Connect):
 
     def create_functions(self, connection):
         connection.create_function('POWER', 2, sqlite3_power)
+        connection.create_function('SQRT', 1, sqlite3_sqrt)
 
 
 class UnscrambleSQLiteError(UnscrambleError):

@@ -14265,6 +14265,19 @@ tests:
             While translating:
                 /{trunc(271828e-5,2)}
                   ^^^^^^^^^^^^^^^^^^
+        - uri: /{sqrt(2), sqrt(2.0), sqrt(2e0)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | sqrt(2)       | sqrt(2.0)     | sqrt(2e0)     |
+            -+---------------+---------------+---------------+-
+             | 1.41421356237 | 1.41421356237 | 1.41421356237 |
+
+             ----
+             /{sqrt(2),sqrt(2.0),sqrt(2e0)}
+             SELECT SQRT(2.0)
       - suite: text-functions-and-operators
         tests:
         - uri: /{text(null()), text('OMGWTFBBQ')}

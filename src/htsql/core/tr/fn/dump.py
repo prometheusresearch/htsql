@@ -12,17 +12,14 @@
 from ...adapter import adapt, adapt_none
 from ..dump import DumpBySignature
 from .signature import (AddSig, ConcatenateSig, DateIncrementSig,
-                        DateTimeIncrementSig, SubtractSig, DateDecrementSig,
-                        DateTimeDecrementSig, DateDifferenceSig,
-                        MultiplySig, DivideSig, IfSig, SwitchSig,
-                        ReversePolaritySig, RoundSig, RoundToSig, TruncSig,
-                        TruncToSig, LengthSig, LikeSig, ReplaceSig,
-                        SubstringSig, UpperSig, LowerSig, TrimSig, TodaySig,
-                        NowSig, MakeDateSig, MakeDateTimeSig,
-                        CombineDateTimeSig, ExtractYearSig, ExtractMonthSig,
-                        ExtractDaySig, ExtractHourSig, ExtractMinuteSig,
-                        ExtractSecondSig, ExistsSig, CountSig, MinMaxSig,
-                        SumSig, AvgSig)
+        DateTimeIncrementSig, SubtractSig, DateDecrementSig,
+        DateTimeDecrementSig, DateDifferenceSig, MultiplySig, DivideSig, IfSig,
+        SwitchSig, ReversePolaritySig, RoundSig, RoundToSig, TruncSig,
+        TruncToSig, SquareRootSig, LengthSig, LikeSig, ReplaceSig,
+        SubstringSig, UpperSig, LowerSig, TrimSig, TodaySig, NowSig,
+        MakeDateSig, MakeDateTimeSig, CombineDateTimeSig, ExtractYearSig,
+        ExtractMonthSig, ExtractDaySig, ExtractHourSig, ExtractMinuteSig,
+        ExtractSecondSig, ExistsSig, CountSig, MinMaxSig, SumSig, AvgSig)
 
 
 class DumpFunction(DumpBySignature):
@@ -158,6 +155,12 @@ class DumpTruncTo(DumpFunction):
 
     adapt(TruncToSig)
     template = "TRUNC({op}, {precision})"
+
+
+class DumpSquareRoot(DumpFunction):
+
+    adapt(SquareRootSig)
+    template = "SQRT({op})"
 
 
 class DumpLength(DumpFunction):

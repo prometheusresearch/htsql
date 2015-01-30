@@ -43,9 +43,9 @@ from .signature import (AsSig, LimitSig, SortSig, CastSig, MakeDateSig,
         SubtractSig, DateDecrementSig, DateTimeDecrementSig, DateDifferenceSig,
         TodaySig, NowSig, MultiplySig, DivideSig, IfSig, SwitchSig,
         KeepPolaritySig, ReversePolaritySig, RoundSig, RoundToSig, TruncSig,
-        TruncToSig, LengthSig, ContainsSig, ExistsSig, CountSig, MinMaxSig,
-        SumSig, AvgSig, AggregateSig, QuantifySig, DefineSig, GivenSig,
-        SelectSig, LinkSig, TopSig, GuardSig)
+        TruncToSig, SquareRootSig, LengthSig, ContainsSig, ExistsSig, CountSig,
+        MinMaxSig, SumSig, AvgSig, AggregateSig, QuantifySig, DefineSig,
+        GivenSig, SelectSig, LinkSig, TopSig, GuardSig)
 import sys
 
 
@@ -1562,6 +1562,22 @@ class CorrelateDecimalTruncTo(CorrelateFunction):
     signature = TruncToSig
     domains = [DecimalDomain(), IntegerDomain()]
     codomain = DecimalDomain()
+
+
+class BindSquareRoot(BindPolyFunction):
+
+    call('sqrt')
+    signature = SquareRootSig
+
+
+class CorrelateSquareRoot(CorrelateFunction):
+
+    match(SquareRootSig, IntegerDomain,
+                         DecimalDomain,
+                         FloatDomain)
+    signature = SquareRootSig
+    domains = [FloatDomain()]
+    codomain = FloatDomain()
 
 
 class BindLength(BindPolyFunction):
