@@ -384,7 +384,7 @@ $(document).ready(function() {
             state.$panel.hide();
         state.$panel = null;
         if (!state.lastAction) {
-            var url = config.serverRoot+encodeURI(state.lastQuery).replace(/#/, '%23');
+            var url = config.serverRoot+encodeURI(state.lastQuery).replace(/#/g, '%23');
             window.open(url, "_blank");
         }
         updateTitle();
