@@ -143,6 +143,7 @@ def PKG_SRC():
     all_addons = get_addons()
     moves = load_moves(DATA_ROOT+"/pkg/source/moves.yaml")
     src_vm.start()
+    src_vm.run("pip install wheel")
     try:
         for move in moves:
             with_doc = move.variables['with-doc']
@@ -179,6 +180,7 @@ def PKG_SRC():
                     src_vm.run("rst2man htsql/doc/man/%s htsql/doc/man/%s"
                                % (basename, target))
             src_vm.run("cd htsql && python setup.py sdist --formats=zip,gztar")
+            src_vm.run("cd htsql && python setup.py bdist_wheel")
             if not os.path.exists("./build/pkg/src"):
                 mktree("./build/pkg/src")
             src_vm.get("./htsql/dist/*", "./build/pkg/src")
