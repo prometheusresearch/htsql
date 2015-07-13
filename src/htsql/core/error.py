@@ -271,14 +271,16 @@ class MarkRef(weakref.ref):
 
     @classmethod
     def point(cls, node, mark):
+        oid_to_ref = cls.oid_to_ref
         if node is None or mark is None or node is mark:
             return node
-        if id(node) in cls.oid_to_ref:
+        if id(node) in oid_to_ref:
             return node
         if not isinstance(mark, Mark):
-            mark = cls.get_mark(mark)
-        if mark is None:
-            return node
+            ref = oid_to_ref.get(id(mark))
+            if ref is None:
+                return node
+            mark = ref.mark
         cls(node, mark)
         return node
 
@@ -294,6 +296,8 @@ point = MarkRef.point
 
 class ErrorGuard(object):
 
+    __slots__ = ('message', 'quote')
+
     def __init__(self, message, quote=None):
         self.message = message
         self.quote = quote
@@ -302,33 +306,37 @@ class ErrorGuard(object):
         pass
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
-        if isinstance(exc_value, Error) and self.message is not None:
+        if (exc_value is not None and
+                isinstance(exc_value, Error) and
+                self.message is not None):
             exc_value.wrap(self.message, self.quote)
 
 
 class MarkErrorGuard(object):
 
+    __slots__ = ('message', 'node')
+
     def __init__(self, message, node):
         self.message = message
-        if node is None or isinstance(node, Mark):
-            mark = node
-        else:
-            mark = get_mark(node)
-        self.mark = mark
+        self.node = node
 
     def __enter__(self):
         pass
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
-        if not isinstance(exc_value, Error):
+        if exc_value is None or not isinstance(exc_value, Error):
             return
-        if not self.mark:
+        if self.node is None or isinstance(self.node, Mark):
+            mark = self.node
+        else:
+            mark = get_mark(self.node)
+        if not mark:
             return
         if any(isinstance(paragraph.quote, Mark) and
-                    paragraph.quote.text == self.mark.text
+                    paragraph.quote.text == mark.text
                for paragraph in exc_value.paragraphs):
             return
-        exc_value.wrap(self.message, self.mark)
+        exc_value.wrap(self.message, mark)
 
 
 def parse_guard(node):

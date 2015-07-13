@@ -56,9 +56,9 @@ class Claim(Hashable, Printable):
     """
 
     def __init__(self, unit, broker, target):
-        assert isinstance(unit, Unit)
-        assert isinstance(broker, int)
-        assert isinstance(target, int)
+        #assert isinstance(unit, Unit)
+        #assert isinstance(broker, int)
+        #assert isinstance(target, int)
         self.unit = unit
         self.broker = broker
         self.target = target
@@ -119,9 +119,9 @@ class Gate(object):
         # Sanity check on the arguments.  We do not perform a costly check
         # on the keys and the values of the mappings since they come directly
         # from term attributes and it is hard to mess them up.
-        assert isinstance(is_nullable, bool)
-        assert isinstance(dispatches, dict)
-        assert isinstance(routes, dict)
+        #assert isinstance(is_nullable, bool)
+        #assert isinstance(dispatches, dict)
+        #assert isinstance(routes, dict)
         self.is_nullable = is_nullable
         self.dispatches = dispatches
         self.routes = routes
@@ -1156,8 +1156,8 @@ class Evaluate(Adapter):
     adapt(Code)
 
     def __init__(self, code, state):
-        assert isinstance(code, Code)
-        assert isinstance(state, AssemblingState)
+        #assert isinstance(code, Code)
+        #assert isinstance(state, AssemblingState)
         self.code = code
         self.state = state
 

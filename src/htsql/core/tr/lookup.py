@@ -289,8 +289,8 @@ class Lookup(Adapter):
     adapt(Binding, Probe)
 
     def __init__(self, binding, probe):
-        assert isinstance(binding, Binding)
-        assert isinstance(probe, Probe)
+        #assert isinstance(binding, Binding)
+        #assert isinstance(probe, Probe)
         self.binding = binding
         self.probe = probe
 

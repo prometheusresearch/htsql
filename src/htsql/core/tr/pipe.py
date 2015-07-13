@@ -50,7 +50,8 @@ class SQLPipe(Pipe):
             scrambles = None
             if input_domains is not None:
                 scrambles = [scramble(domain) for domain in input_domains]
-            unscrambles = [unscramble(domain) for domain in output_domains]
+            unscrambles = list(enumerate(
+                    [unscramble(domain) for domain in output_domains]))
             with transaction() as connection:
                 cursor = connection.cursor()
                 if scrambles is None:
@@ -65,9 +66,10 @@ class SQLPipe(Pipe):
                     cursor.execute(sql, parameters)
                 output = []
                 for row in cursor:
-                    assert len(row) == len(unscrambles)
-                    output.append(tuple(unscramble(item)
-                                  for item, unscramble in zip(row, unscrambles)))
+                    #assert len(row) == len(unscrambles)
+                    output.append(tuple([
+                        convert(row[idx])
+                        for idx, convert in unscrambles]))
             return output
         return run_sql
 

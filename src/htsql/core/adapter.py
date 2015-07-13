@@ -287,7 +287,6 @@ class Component(object):
         # Only realizations are permitted to instantiate.
         assert False
 
-    @classmethod
     def __call__(self):
         """
         Executes the implementation.
@@ -295,6 +294,12 @@ class Component(object):
         raise NotImplementedError("interface %s is not implemented for: %r"
                                   % (self.__interface__.__name__,
                                      self.__dispatch_key__))
+
+
+try:
+    from htsql_speedups import Component
+except ImportError:
+    pass
 
 
 class Realization(Component):
@@ -305,9 +310,14 @@ class Realization(Component):
     __interface__ = None
     __dispatch_key__ = None
 
-    def __new__(cls, *args, **kwds):
-        # Allow realizations to instantiate.
-        return object.__new__(cls)
+    # Allow realizations to instantiate.
+    __new__ = object.__new__
+
+
+try:
+    from htsql_speedups import Realization
+except ImportError:
+    pass
 
 
 class Utility(Component):
@@ -364,6 +374,12 @@ class Utility(Component):
     def __dispatch__(interface, *args, **kwds):
         # The dispatch key is always a 0-tuple.
         return ()
+
+
+try:
+    from htsql_speedups import Utility
+except ImportError:
+    pass
 
 
 def rank(value):
@@ -479,9 +495,15 @@ class Adapter(Component):
     def __dispatch__(interface, *args, **kwds):
         # The types of the leading arguments of the constructor
         # form a dispatch key.
-        assert interface.__arity__ <= len(args)
-        type_vector = tuple(type(arg) for arg in args[:interface.__arity__])
-        return type_vector
+        arity = interface.__arity__
+        assert arity <= len(args)
+        return tuple([type(arg) for arg in args[:arity]])
+
+
+try:
+    from htsql_speedups import Adapter
+except ImportError:
+    pass
 
 
 def adapt(*type_vector):
@@ -619,6 +641,12 @@ class Protocol(Component):
                     seen.add(name)
         names.sort()
         return names
+
+
+try:
+    from htsql_speedups import Protocol
+except ImportError:
+    pass
 
 
 def call(*names):

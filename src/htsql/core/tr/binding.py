@@ -37,10 +37,10 @@ class Binding(Clonable, Printable):
     """
 
     def __init__(self, base, domain, syntax):
-        assert isinstance(base, maybe(Binding))
-        assert base is not None or isinstance(self, (RootBinding, VoidBinding))
-        assert isinstance(domain, Domain)
-        assert isinstance(syntax, Syntax)
+        #assert isinstance(base, maybe(Binding))
+        #assert base is not None or isinstance(self, (RootBinding, VoidBinding))
+        #assert isinstance(domain, Domain)
+        #assert isinstance(syntax, Syntax)
 
         self.base = base
         self.domain = domain

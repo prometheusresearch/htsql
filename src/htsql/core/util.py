@@ -49,8 +49,10 @@ class oneof(object):
         self.value_types = value_types
 
     def __instancecheck__(self, value):
-        return any(isinstance(value, value_type)
-                   for value_type in self.value_types)
+        for value_type in self.value_types:
+            if isinstance(value, value_type):
+                return True
+        return False
 
 
 class listof(object):
@@ -66,8 +68,13 @@ class listof(object):
         self.item_type = item_type
 
     def __instancecheck__(self, value):
-        return (isinstance(value, list) and
-                all(isinstance(item, self.item_type) for item in value))
+        if not isinstance(value, list):
+            return False
+        item_type = self.item_type
+        for item in value:
+            if not isinstance(item, item_type):
+                return False
+        return True
 
 
 class setof(object):
@@ -83,8 +90,13 @@ class setof(object):
         self.item_type = item_type
 
     def __instancecheck__(self, value):
-        return (isinstance(value, set) and
-                all(isinstance(item, self.item_type) for item in value))
+        if not isinstance(value, set):
+            return False
+        item_type = self.item_type
+        for item in value:
+            if not isinstance(item, item_type):
+                return False
+        return True
 
 
 class tupleof(object):
@@ -101,10 +113,13 @@ class tupleof(object):
         self.item_types = item_types
 
     def __instancecheck__(self, value):
-        return (isinstance(value, tuple) and
-                len(value) == len(self.item_types) and
-                all(isinstance(item, item_type)
-                    for item, item_type in zip(value, self.item_types)))
+        if not (isinstance(value, tuple) and
+                len(value) == len(self.item_types)):
+            return False
+        for item, item_type in zip(value, self.item_types):
+            if not isinstance(item, item_type):
+                return False
+        return True
 
 
 class dictof(object):
@@ -122,10 +137,14 @@ class dictof(object):
         self.item_type = item_type
 
     def __instancecheck__(self, value):
-        return (isinstance(value, dict) and
-                all(isinstance(key, self.key_type) and
-                    isinstance(value[key], self.item_type)
-                    for key in value))
+        if not isinstance(value, dict):
+            return False
+        for key in value:
+            if not isinstance(key, self.key_type):
+                return False
+            if not isinstance(value[key], self.item_type):
+                return False
+        return True
 
 
 class omapof(object):
@@ -142,9 +161,13 @@ class omapof(object):
         self.item_type = item_type
 
     def __instancecheck__(self, value):
-        return (isinstance(value, frozenomap) and
-                all(isinstance(item, self.item_type)
-                    for item in value))
+        if not isinstance(value, frozenomap):
+            return False
+        item_type = self.item_type
+        for item in value:
+            if not isinstance(item, item_type):
+                return False
+        return True
 
 
 class subclassof(object):
@@ -190,9 +213,12 @@ def aresubclasses(subclasses, superclasses):
     *Returns*: ``bool``
         ``True`` if the check succeeds; ``False`` otherwise.
     """
-    return (len(subclasses) == len(superclasses) and
-            all(issubclass(subclass, superclass)
-                for subclass, superclass in zip(subclasses, superclasses)))
+    if len(subclasses) != len(superclasses):
+        return False
+    for subclass, superclass in zip(subclasses, superclasses):
+        if not issubclass(subclass, superclass):
+            return False
+    return True
 
 
 def isfinite(value):
@@ -848,6 +874,12 @@ class Clonable(object):
         return clone
 
 
+try:
+    from htsql_speedups import Clonable
+except ImportError:
+    pass
+
+
 class Hashable(object):
     """
     An immutable object with by-value comparison semantics.
@@ -929,6 +961,12 @@ class Hashable(object):
         if self is other:
             return False
         return not (self == other)
+
+
+try:
+    from htsql_speedups import Hashable
+except ImportError:
+    pass
 
 
 class Printable(object):

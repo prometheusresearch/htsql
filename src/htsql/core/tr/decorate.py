@@ -13,8 +13,8 @@ from ..syn.syntax import VoidSyntax
 class Decorate(Protocol):
 
     def __init__(self, name, binding):
-        assert isinstance(name, str)
-        assert isinstance(binding, Binding)
+        #assert isinstance(name, str)
+        #assert isinstance(binding, Binding)
         self.name = name
         self.binding = binding
 

@@ -106,12 +106,12 @@ class Bag(dict):
             The expected signature of the arguments.
         """
         # Sanity check on the arguments.
-        assert isinstance(kind, type)
-        assert (isinstance(signature, Signature) or
-                issubclass(signature, Signature))
+        #assert isinstance(kind, type)
+        #assert (isinstance(signature, Signature) or
+        #        issubclass(signature, Signature))
 
         # Verify that the arguments match the slot names.
-        if set(self.keys()) != set(slot.name for slot in signature.slots):
+        if set(self.keys()) != set([slot.name for slot in signature.slots]):
             return False
 
         # Check every slot.
@@ -123,7 +123,7 @@ class Bag(dict):
             # type or ``None``; a value equal to ``None`` is allowed
             # only for optional slots.
             if slot.is_singular:
-                if not isinstance(value, maybe(kind)):
+                if value is not None and not isinstance(value, kind):
                     return False
                 if slot.is_mandatory:
                     if value is None:
@@ -132,8 +132,11 @@ class Bag(dict):
             # given type and, unless the slot is optional, must contain
             # at least one node.
             else:
-                if not isinstance(value, listof(kind)):
+                if not isinstance(value, list):
                     return False
+                for item in value:
+                    if not isinstance(item, kind):
+                        return False
                 if slot.is_mandatory:
                     if not value:
                         return False
@@ -241,10 +244,10 @@ class Formula(Printable):
     """
 
     def __init__(self, signature, arguments, *args, **kwds):
-        assert isinstance(signature, Signature)
+        #assert isinstance(signature, Signature)
         # The caller is responsible for checking that the arguments
         # are compatible with the signature.
-        assert isinstance(arguments, Bag)
+        #assert isinstance(arguments, Bag)
         super(Formula, self).__init__(*args, **kwds)
         self.signature = signature
         self.arguments = arguments
@@ -277,8 +280,8 @@ def isformula(formula, signatures):
     # Check that the given node is, indeed, a formula, and that
     # its signature is among the given signature classes.
     return (isinstance(formula, Formula) and
-            any(isinstance(formula.signature, signature)
-                for signature in signatures))
+            any([isinstance(formula.signature, signature)
+                 for signature in signatures]))
 
 
 class NullarySig(Signature):

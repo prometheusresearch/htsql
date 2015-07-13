@@ -66,7 +66,7 @@ class Stream(StringIO.StringIO, object):
         Writes a string to the stream.
         """
         # Expect a Unicode string.
-        assert isinstance(data, unicode)
+        #assert isinstance(data, unicode)
         # Call `StringIO.write`, which performs the action.
         super(Stream, self).write(data)
         # Update the cursor position.  Note that we count
@@ -489,8 +489,8 @@ class DumpBase(Adapter):
     template_regexp = re.compile(template_pattern, re.X)
 
     def __init__(self, clause, state):
-        assert isinstance(clause, Clause)
-        assert isinstance(state, SerializingState)
+        #assert isinstance(clause, Clause)
+        #assert isinstance(state, SerializingState)
         self.clause = clause
         self.state = state
         self.stream = state.stream
@@ -527,9 +527,9 @@ class DumpBase(Adapter):
         `namespaces`, `keywords` (dictionaries)
             Dictionaries containing substitution variables.
         """
-        assert isinstance(template, (str, unicode))
         if isinstance(template, str):
             template = template.decode()
+        assert isinstance(template, unicode)
         # Aggregate variables from the given namespaces.  A namespace is
         # either a dictionary or an object with variables as attributes.
         variables = {}
@@ -540,12 +540,14 @@ class DumpBase(Adapter):
                 assert hasattr(namespace, '__dict__')
                 variables.update(namespace.__dict__)
         variables.update(keywords)
+        regexp = self.template_regexp
+        stream = self.stream
         # Parse the template string till the end.
         start = 0
         while start < len(template):
             # Extract the next part from the template string.  It is
             # either a chunk of regular text or a variable field.
-            match = self.template_regexp.match(template, start)
+            match = regexp.match(template, start)
             assert match is not None, (template, start)
             start = match.end()
             # Is it a regular text?  Write it to the stream then.
@@ -555,7 +557,7 @@ class DumpBase(Adapter):
             chunk = match.group('chunk')
             if chunk is not None:
                 chunk = chunk.replace(u"{{", u"{").replace(u"}}", u"}")
-                self.stream.write(chunk)
+                stream.write(chunk)
             # It must be variable substitution then.  Extract the value
             # of the variable and realize a `Format` instance to perform
             # the substitution.
@@ -569,7 +571,7 @@ class DumpBase(Adapter):
                 modifier = match.group('modifier')
                 assert name in variables, name
                 value = variables[name]
-                Format.__invoke__(kind, value, modifier, self.state)
+                Format.__prepare__(kind, value, modifier, self.state)()
 
     def write(self, data):
         """
@@ -620,8 +622,8 @@ class Format(Protocol):
     """
 
     def __init__(self, kind, value, modifier, state):
-        assert isinstance(kind, str)
-        assert isinstance(state, SerializingState)
+        #assert isinstance(kind, str)
+        #assert isinstance(state, SerializingState)
         self.kind = kind
         self.value = value
         self.modifier = modifier

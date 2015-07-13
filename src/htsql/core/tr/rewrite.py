@@ -200,7 +200,7 @@ class Recombine(Utility):
     """
 
     def __init__(self, state):
-        assert isinstance(state, RewritingState)
+        #assert isinstance(state, RewritingState)
         self.state = state
 
     def __call__(self):
@@ -492,8 +492,8 @@ class RewriteBase(Adapter):
     adapt(Expression)
 
     def __init__(self, expression, state):
-        assert isinstance(expression, Expression)
-        assert isinstance(state, RewritingState)
+        #assert isinstance(expression, Expression)
+        #assert isinstance(state, RewritingState)
         self.expression = expression
         self.state = state
 
@@ -1238,8 +1238,8 @@ class RewriteBySignature(Adapter):
         return (type(code.signature),)
 
     def __init__(self, code, state):
-        assert isinstance(code, FormulaCode)
-        assert isinstance(state, RewritingState)
+        #assert isinstance(code, FormulaCode)
+        #assert isinstance(state, RewritingState)
         self.code = code
         self.state = state
         # Extract commonly used attributes of the formula node.

@@ -97,8 +97,8 @@ class Reduce(Adapter):
     adapt(Clause)
 
     def __init__(self, clause, state):
-        assert isinstance(clause, Clause)
-        assert isinstance(state, ReducingState)
+        #assert isinstance(clause, Clause)
+        #assert isinstance(state, ReducingState)
         self.clause = clause
         self.state = state
 
@@ -296,8 +296,8 @@ class Collapse(Adapter):
     adapt(Frame)
 
     def __init__(self, frame, state):
-        assert isinstance(frame, Frame)
-        assert isinstance(state, ReducingState)
+        #assert isinstance(frame, Frame)
+        #assert isinstance(state, ReducingState)
         self.frame = frame
         self.state = state
 
@@ -550,8 +550,8 @@ class Interlink(Adapter):
     adapt(Frame)
 
     def __init__(self, frame, state):
-        assert isinstance(frame, Frame)
-        assert isinstance(state, ReducingState)
+        #assert isinstance(frame, Frame)
+        #assert isinstance(state, ReducingState)
         self.frame = frame
         self.state = state
 

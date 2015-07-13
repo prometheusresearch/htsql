@@ -129,13 +129,13 @@ class Term(Clonable, Printable):
     is_binary = False
 
     def __init__(self, tag, kids, space, baseline, routes):
-        assert isinstance(tag, int)
-        assert isinstance(kids, listof(Term))
-        assert isinstance(space, Space)
-        assert isinstance(baseline, Space)
-        assert space.concludes(baseline)
-        assert baseline.is_inflated
-        assert isinstance(routes, dictof(Unit, int))
+        #assert isinstance(tag, int)
+        #assert isinstance(kids, listof(Term))
+        #assert isinstance(space, Space)
+        #assert isinstance(baseline, Space)
+        #assert space.concludes(baseline)
+        #assert baseline.is_inflated
+        #assert isinstance(routes, dictof(Unit, int))
         # The inflation of the term space.
         backbone = space.inflate()
         # For each descendant term, determine the immediate child whose
