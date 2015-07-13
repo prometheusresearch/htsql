@@ -875,7 +875,7 @@ class Clonable(object):
 
 
 try:
-    from htsql_speedups import Clonable
+    from htsql.htsql_speedups import Clonable
 except ImportError:
     pass
 
@@ -964,7 +964,7 @@ class Hashable(object):
 
 
 try:
-    from htsql_speedups import Hashable
+    from htsql.htsql_speedups import Hashable
 except ImportError:
     pass
 

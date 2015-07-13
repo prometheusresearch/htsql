@@ -297,7 +297,7 @@ class Component(object):
 
 
 try:
-    from htsql_speedups import Component
+    from htsql.htsql_speedups import Component
 except ImportError:
     pass
 
@@ -315,7 +315,7 @@ class Realization(Component):
 
 
 try:
-    from htsql_speedups import Realization
+    from htsql.htsql_speedups import Realization
 except ImportError:
     pass
 
@@ -377,7 +377,7 @@ class Utility(Component):
 
 
 try:
-    from htsql_speedups import Utility
+    from htsql.htsql_speedups import Utility
 except ImportError:
     pass
 
@@ -501,7 +501,7 @@ class Adapter(Component):
 
 
 try:
-    from htsql_speedups import Adapter
+    from htsql.htsql_speedups import Adapter
 except ImportError:
     pass
 
@@ -644,7 +644,7 @@ class Protocol(Component):
 
 
 try:
-    from htsql_speedups import Protocol
+    from htsql.htsql_speedups import Protocol
 except ImportError:
     pass
 

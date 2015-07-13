@@ -262,7 +262,7 @@ class Component(object):
     @classmethod
     def __enabled__(component):
         module = component.__module__
-        if module == '_htsql_speedups':
+        if module == 'htsql._htsql_speedups':
             return True
         registry = context.app.component_registry
         return (module in registry.modules)
