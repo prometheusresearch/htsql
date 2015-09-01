@@ -2120,6 +2120,36 @@ class BindSwitch(BindFunction):
                               alternative=alternative)
 
 
+class BindRecode(BindSwitch):
+
+    call('recode')
+
+    def match(self):
+        operands = list(reversed(self.syntax.arguments))
+        if len(operands) < 3:
+            raise Error("Function '%s' expects 3 or more arguments;"
+                        " got %s" % (self.name.encode('utf-8'),
+                                     len(operands)))
+        if len(operands) % 2 == 0:
+            raise Error("Function '%s' expects an odd number of arguments;"
+                        " got %s" % (self.name.encode('utf-8'),
+                                     len(operands)))
+        variable = None
+        variants = []
+        consequents = []
+        variable = operands.pop()
+        while operands:
+            assert len(operands) >= 2
+            variants.append(operands.pop())
+            consequents.append(operands.pop())
+        return {
+                'variable': variable,
+                'variants': variants,
+                'consequents': consequents,
+                'alternative': variable,
+        }
+
+
 class BindExistsBase(BindFunction):
 
     signature = ExistsSig

@@ -13434,6 +13434,22 @@ tests:
              SELECT (CASE 1 WHEN 1 THEN 'George' WHEN 2 THEN 'Harry' ELSE 'Edward' END),
                     (CASE 2 WHEN 1 THEN 'George' WHEN 2 THEN 'Harry' ELSE 'Edward' END),
                     (CASE 3 WHEN 1 THEN 'George' WHEN 2 THEN 'Harry' ELSE 'Edward' END)
+        - uri: /{recode(1, 1, -1, 2, -2), recode(2, 1, -1, 2, -2), recode(3, 1, -1,
+            2, -2)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | recode(1,1,-1,2,-2) | recode(2,1,-1,2,-2) | recode(3,1,-1,2,-2) |
+            -+---------------------+---------------------+---------------------+-
+             |                  -1 |                  -2 |                   3 |
+
+             ----
+             /{recode(1,1,-1,2,-2),recode(2,1,-1,2,-2),recode(3,1,-1,2,-2)}
+             SELECT (CASE 1 WHEN 1 THEN (-1) WHEN 2 THEN (-2) ELSE 1 END),
+                    (CASE 2 WHEN 1 THEN (-1) WHEN 2 THEN (-2) ELSE 2 END),
+                    (CASE 3 WHEN 1 THEN (-1) WHEN 2 THEN (-2) ELSE 3 END)
         - uri: /{if(true(), 1, 0e0)}
           status: 200 OK
           headers:
@@ -13486,6 +13502,33 @@ tests:
             invalid Boolean literal: expected 'true' or 'false'; got 'George'
             While translating:
                 /{switch(1, 1, 'George', 2, false())}
+                               ^^^^^^^^
+        - uri: /{recode(1)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            Function 'recode' expects 3 or more arguments; got 1
+            While translating:
+                /{recode(1)}
+                  ^^^^^^^^^
+        - uri: /{recode(1, 1, -1, 2, -2, -3)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            Function 'recode' expects an odd number of arguments; got 6
+            While translating:
+                /{recode(1, 1, -1, 2, -2, -3)}
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /{recode(1, 1, 'George', 2, 'Harry')}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            invalid integer literal: expected an integer in a decimal format; got 'George'
+            While translating:
+                /{recode(1, 1, 'George', 2, 'Harry')}
                                ^^^^^^^^
         - uri: /school{id()}?id()='art'
           status: 200 OK

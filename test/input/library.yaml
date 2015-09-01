@@ -221,6 +221,9 @@ tests:
   - uri: /{switch(1, 1, 'George', 2, 'Harry', 'Edward'),
            switch(2, 1, 'George', 2, 'Harry', 'Edward'),
            switch(3, 1, 'George', 2, 'Harry', 'Edward')}
+  - uri: /{recode(1, 1, -1, 2, -2),
+           recode(2, 1, -1, 2, -2),
+           recode(3, 1, -1, 2, -2)}
   # Coercion
   - uri: /{if(true(), 1, 0e0)}
   - uri: /{switch(date('2010-04-15'),
@@ -232,6 +235,12 @@ tests:
   - uri: /{switch(1, date('2010-04-15'), 1, date('1991-08-20'), 2)}
     expect: 400
   - uri: /{switch(1, 1, 'George', 2, false())}
+    expect: 400
+  - uri: /{recode(1)}
+    expect: 400
+  - uri: /{recode(1, 1, -1, 2, -2, -3)}
+    expect: 400
+  - uri: /{recode(1, 1, 'George', 2, 'Harry')}
     expect: 400
 
   # Comparison with id()
