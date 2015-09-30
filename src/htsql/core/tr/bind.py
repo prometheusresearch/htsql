@@ -29,13 +29,14 @@ from .binding import (Binding, WrappingBinding, CollectBinding, RootBinding,
         QuotientBinding, KernelBinding, ComplementBinding, LocateBinding,
         SieveBinding, AttachBinding, SortBinding, CastBinding, IdentityBinding,
         ImplicitCastBinding, RescopingBinding, AssignmentBinding,
-        DefineBinding, DefineReferenceBinding, DefineLiftBinding,
-        SelectionBinding, WildSelectionBinding, DirectionBinding, TitleBinding,
-        RerouteBinding, ReferenceRerouteBinding, AliasBinding, LiteralBinding,
-        FormulaBinding, VoidBinding, Recipe, LiteralRecipe, SelectionRecipe,
-        FreeTableRecipe, AttachedTableRecipe, ColumnRecipe, KernelRecipe,
-        ComplementRecipe, IdentityRecipe, ChainRecipe, SubstitutionRecipe,
-        BindingRecipe, ClosedRecipe, PinnedRecipe, AmbiguousRecipe)
+        DefineBinding, DefineReferenceBinding, DefineCollectionBinding,
+        DefineLiftBinding, SelectionBinding, WildSelectionBinding,
+        DirectionBinding, TitleBinding, RerouteBinding,
+        ReferenceRerouteBinding, AliasBinding, LiteralBinding, FormulaBinding,
+        VoidBinding, Recipe, LiteralRecipe, SelectionRecipe, FreeTableRecipe,
+        AttachedTableRecipe, ColumnRecipe, KernelRecipe, ComplementRecipe,
+        IdentityRecipe, ChainRecipe, SubstitutionRecipe, BindingRecipe,
+        ClosedRecipe, PinnedRecipe, AmbiguousRecipe)
 from .lookup import (lookup_attribute, lookup_reference, lookup_complement,
         lookup_attribute_set, lookup_reference_set, expand, direct, guess_tag,
         identify, unwrap)
@@ -57,10 +58,13 @@ class BindingState(object):
         # References in the root scope.
         self.environment = environment
         if self.environment is not None:
+            collection = {}
             for name, recipe in self.environment:
                 name = normalize(name)
-                self.scope = DefineReferenceBinding(self.scope, name,
-                                                    recipe, self.scope.syntax)
+                collection[name] = recipe
+            if collection:
+                self.scope = DefineCollectionBinding(
+                        self.scope, collection, True, self.scope.syntax)
 
     def push_scope(self, scope):
         """
