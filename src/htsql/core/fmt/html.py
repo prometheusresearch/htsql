@@ -23,6 +23,7 @@ from ..domain import (Domain, BooleanDomain, NumberDomain, DecimalDomain,
 import pkg_resources
 import cgi
 import re
+import decimal
 
 
 class Block(Printable):
