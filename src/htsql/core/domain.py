@@ -1228,7 +1228,7 @@ class RecordDomain(ContainerDomain):
         assert isinstance(fields, listof(Profile))
         self.fields = fields
     def __basis__(self):
-        return (tuple(self.fields),)
+        return tuple([field.domain for field in self.fields])
 
     def __unicode__(self):
         # record(field, ...)

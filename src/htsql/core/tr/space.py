@@ -57,7 +57,7 @@ class Expression(Hashable, Clonable, Printable):
     """
 
     def __init__(self, flow):
-        assert isinstance(flow, Flow)
+        #assert isinstance(flow, Flow)
         self.flow = flow
         self.binding = flow.binding
         self.syntax = flow.binding.syntax
@@ -425,10 +425,10 @@ class Space(Expression):
     is_commutative = True
 
     def __init__(self, base, family, is_contracting, is_expanding, flow):
-        assert isinstance(base, maybe(Space))
-        assert isinstance(family, Family)
-        assert isinstance(is_contracting, bool)
-        assert isinstance(is_expanding, bool)
+        #assert isinstance(base, maybe(Space))
+        #assert isinstance(family, Family)
+        #assert isinstance(is_contracting, bool)
+        #assert isinstance(is_expanding, bool)
         super(Space, self).__init__(flow)
         self.base = base
         self.family = family
@@ -1433,7 +1433,7 @@ class Code(Expression):
     """
 
     def __init__(self, domain, flow):
-        assert isinstance(domain, Domain)
+        #assert isinstance(domain, Domain)
         super(Code, self).__init__(flow)
         self.domain = domain
 
@@ -1463,7 +1463,10 @@ class LiteralCode(Code):
         self.value = value
 
     def __basis__(self):
-        return (self.value, self.domain)
+        if not isinstance(self.value, (list, dict)):
+            return (self.value, self.domain)
+        else:
+            return (repr(self.value), self.domain)
 
     def __str__(self):
         # The actual value is often more helpful than the expression
@@ -1600,7 +1603,7 @@ class Unit(Code):
     is_compound = False
 
     def __init__(self, space, domain, flow):
-        assert isinstance(space, Space)
+        #assert isinstance(space, Space)
         super(Unit, self).__init__(
                     domain=domain,
                     flow=flow)
@@ -1672,9 +1675,9 @@ class ColumnUnit(PrimitiveUnit):
     """
 
     def __init__(self, column, space, flow):
-        assert isinstance(column, ColumnEntity)
-        assert (space.family.is_table and
-                space.family.table == column.table)
+        #assert isinstance(column, ColumnEntity)
+        #assert (space.family.is_table and
+        #        space.family.table == column.table)
         super(ColumnUnit, self).__init__(
                     space=space,
                     domain=column.domain,

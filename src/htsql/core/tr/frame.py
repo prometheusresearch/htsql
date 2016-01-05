@@ -76,7 +76,7 @@ class Clause(Hashable, Clonable, Printable):
     """
 
     def __init__(self, expression):
-        assert isinstance(expression, Expression)
+        #assert isinstance(expression, Expression)
         self.expression = expression
         self.binding = expression.binding
         self.syntax = expression.syntax
@@ -153,8 +153,8 @@ class Frame(Clause):
 
     def __init__(self, kids, term):
         # Sanity check on the arguments.
-        assert isinstance(kids, listof(Frame))
-        assert isinstance(term, Term)
+        #assert isinstance(kids, listof(Frame))
+        #assert isinstance(term, Term)
         super(Frame, self).__init__(term.expression)
         self.kids = kids
         self.term = term
@@ -204,7 +204,7 @@ class TableFrame(LeafFrame):
     is_table = True
 
     def __init__(self, table, term):
-        assert isinstance(table, TableEntity)
+        #assert isinstance(table, TableEntity)
         super(TableFrame, self).__init__(term)
         self.table = table
 
@@ -256,23 +256,23 @@ class BranchFrame(Frame):
 
     def __init__(self, include, embed, select,
                  where, group, having, order, limit, offset, term):
-        # Note that we do not require `include` list to be non-empty,
-        # thus an instance of `BranchFrame` could actually be a leaf
-        # in the frame tree!
-        assert isinstance(include, listof(Anchor))
-        # Check that the join condition on the first subframe is no-op.
-        if include:
-            assert isinstance(include[0], LeadingAnchor)
-        assert isinstance(embed, listof(NestedFrame))
-        assert isinstance(select, listof(Phrase)) and len(select) > 0
-        assert isinstance(where, maybe(Phrase))
-        assert isinstance(group, listof(Phrase))
-        assert isinstance(having, maybe(Phrase))
-        assert isinstance(order, listof(Phrase))
-        assert isinstance(limit, maybe(int))
-        assert isinstance(offset, maybe(int))
-        assert limit is None or limit >= 0
-        assert offset is None or offset >= 0
+        ## Note that we do not require `include` list to be non-empty,
+        ## thus an instance of `BranchFrame` could actually be a leaf
+        ## in the frame tree!
+        #assert isinstance(include, listof(Anchor))
+        ## Check that the join condition on the first subframe is no-op.
+        #if include:
+        #    assert isinstance(include[0], LeadingAnchor)
+        #assert isinstance(embed, listof(NestedFrame))
+        #assert isinstance(select, listof(Phrase)) and len(select) > 0
+        #assert isinstance(where, maybe(Phrase))
+        #assert isinstance(group, listof(Phrase))
+        #assert isinstance(having, maybe(Phrase))
+        #assert isinstance(order, listof(Phrase))
+        #assert isinstance(limit, maybe(int))
+        #assert isinstance(offset, maybe(int))
+        #assert limit is None or limit >= 0
+        #assert offset is None or offset >= 0
         kids = [anchor.frame for anchor in include] + embed
         super(BranchFrame, self).__init__(kids, term)
         self.include = include
@@ -305,11 +305,11 @@ class SegmentFrame(BranchFrame):
                  group, having, order, limit, offset,
                  code_pipes, dependent_pipes, superkey_pipe, key_pipe,
                  dependents, term):
-        assert isinstance(code_pipes, listof(Pipe))
-        assert isinstance(dependent_pipes, listof(Pipe))
-        assert isinstance(superkey_pipe, Pipe)
-        assert isinstance(key_pipe, Pipe)
-        assert isinstance(dependents, listof(SegmentFrame))
+        #assert isinstance(code_pipes, listof(Pipe))
+        #assert isinstance(dependent_pipes, listof(Pipe))
+        #assert isinstance(superkey_pipe, Pipe)
+        #assert isinstance(key_pipe, Pipe)
+        #assert isinstance(dependents, listof(SegmentFrame))
         super(SegmentFrame, self).__init__(include, embed, select, where,
                                            group, having, order, limit, offset,
                                            term)
@@ -347,10 +347,10 @@ class Anchor(Clause):
     """
 
     def __init__(self, frame, condition, is_left, is_right):
-        assert isinstance(frame, Frame) and not frame.is_segment
-        assert isinstance(condition, maybe(Phrase))
-        assert condition is None or isinstance(condition.domain, BooleanDomain)
-        assert isinstance(is_left, bool) and isinstance(is_right, bool)
+        #assert isinstance(frame, Frame) and not frame.is_segment
+        #assert isinstance(condition, maybe(Phrase))
+        #assert condition is None or isinstance(condition.domain, BooleanDomain)
+        #assert isinstance(is_left, bool) and isinstance(is_right, bool)
         super(Anchor, self).__init__(frame.expression)
         self.frame = frame
         self.condition = condition
@@ -381,8 +381,8 @@ class LeadingAnchor(Anchor):
     def __init__(self, frame, condition=None, is_left=False, is_right=False):
         # We retain the constructor arguments to faciliate `clone()`, but
         # we ensure that their values are always fixed.
-        assert condition is None
-        assert is_left is False and is_right is False
+        #assert condition is None
+        #assert is_left is False and is_right is False
         super(LeadingAnchor, self).__init__(frame, condition,
                                             is_left, is_right)
 
@@ -399,8 +399,8 @@ class Phrase(Clause):
     """
 
     def __init__(self, domain, is_nullable, expression):
-        assert isinstance(domain, Domain)
-        assert isinstance(is_nullable, bool)
+        #assert isinstance(domain, Domain)
+        #assert isinstance(is_nullable, bool)
         super(Phrase, self).__init__(expression)
         self.domain = domain
         self.is_nullable = is_nullable
@@ -424,7 +424,10 @@ class LiteralPhrase(Phrase):
         self.value = value
 
     def __basis__(self):
-        return (self.value, self.domain)
+        if not isinstance(self.value, (list, dict)):
+            return (self.value, self.domain)
+        else:
+            return (repr(self.value), self.domain)
 
 
 class NullPhrase(LiteralPhrase):
@@ -483,7 +486,7 @@ class CastPhrase(Phrase):
     """
 
     def __init__(self, base, domain, is_nullable, expression):
-        assert isinstance(base, Phrase)
+        #assert isinstance(base, Phrase)
         super(CastPhrase, self).__init__(domain, is_nullable, expression)
         self.base = base
 
@@ -511,10 +514,10 @@ class FormulaPhrase(Formula, Phrase):
     """
 
     def __init__(self, signature, domain, is_nullable, expression, **arguments):
-        assert isinstance(signature, Signature)
+        #assert isinstance(signature, Signature)
         # Check that the arguments match the formula signature.
         arguments = Bag(**arguments)
-        assert arguments.admits(Phrase, signature)
+        #assert arguments.admits(Phrase, signature)
         # The first two arguments are processed by the `Formula`
         # constructor; the rest of them go to the `Phrase` constructor.
         super(FormulaPhrase, self).__init__(signature, arguments,
@@ -537,7 +540,7 @@ class ExportPhrase(Phrase):
     """
 
     def __init__(self, tag, domain, is_nullable, expression):
-        assert isinstance(tag, int)
+        #assert isinstance(tag, int)
         super(ExportPhrase, self).__init__(domain, is_nullable, expression)
         self.tag = tag
 
@@ -556,7 +559,7 @@ class ColumnPhrase(ExportPhrase):
     """
 
     def __init__(self, tag, column, is_nullable, expression):
-        assert isinstance(column, ColumnEntity)
+        #assert isinstance(column, ColumnEntity)
         domain = column.domain
         super(ColumnPhrase, self).__init__(tag, domain, is_nullable, expression)
         self.column = column
@@ -579,7 +582,7 @@ class ReferencePhrase(ExportPhrase):
     """
 
     def __init__(self, tag, index, domain, is_nullable, expression):
-        assert isinstance(index, int) and index >= 0
+        #assert isinstance(index, int) and index >= 0
         super(ReferencePhrase, self).__init__(tag, domain, is_nullable,
                                               expression)
         self.index = index

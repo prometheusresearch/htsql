@@ -6,7 +6,7 @@
 from ....core.adapter import adapt
 from ....core.error import Error, act_guard
 from ....core.connect import transaction
-from ....core.domain import UntypedDomain, ListDomain, Value, Product
+from ....core.domain import UntypedDomain, ListDomain, RecordDomain, Value, Product
 from ....core.cmd.act import Act, ProduceAction, act
 from ....core.tr.binding import VoidBinding
 from ....core.tr.decorate import decorate
@@ -23,12 +23,20 @@ class ProduceFor(Act):
         with transaction():
             input = act(self.command.iterator, self.action)
             if not (isinstance(input.domain, ListDomain) or
-                    isinstance(input.data, list)):
+                    isinstance(input.domain, RecordDomain)):
                 with act_guard(self.command.iterator):
                     raise Error("Expected a list value")
             if input:
-                for item in input.data:
-                    value = Value(input.domain.item_domain, item)
+                if isinstance(input.domain, ListDomain):
+                    values = [
+                            Value(input.domain.item_domain, item)
+                            for item in input.data]
+                else:
+                    values = [
+                            Value(field.domain, item)
+                            for field, item
+                                in zip(input.domain.fields, input.data)]
+                for value in values:
                     environment = self.action.environment.copy()
                     environment[self.command.name] = value
                     action = self.action.clone(environment=environment)
