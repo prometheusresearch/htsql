@@ -11,7 +11,7 @@ from ....core.entity import TableEntity
 from ....core.cmd.summon import Summon, recognize
 from ....core.syn.syntax import IdentifierSyntax, AssignSyntax, ReferenceSyntax
 from ..cmd.command import (CopyCmd, InsertCmd, MergeCmd, UpdateCmd, DeleteCmd,
-        TruncateCmd, DoCmd, IfCmd, ForCmd)
+        TruncateCmd, DoCmd, IfCmd, ForCmd, WithCmd)
 
 
 class SummonETL(Summon):
@@ -157,5 +157,18 @@ class SummonFor(Summon):
         iterator = recognize(head.rarm)
         body = recognize(body)
         return ForCmd(name, iterator, body)
+
+
+class SummonWith(Summon):
+
+    call('with')
+
+    def __call__(self):
+        if len(self.arguments) != 2:
+            raise Error("expected 2 arguments")
+        record, body = self.arguments
+        record = recognize(record)
+        body = recognize(body)
+        return WithCmd(record, body)
 
 

@@ -121,4 +121,7 @@ tests:
     /do($category_id := top(category?label='Notebooks').id(),
         for($product_id := /product.id(),
             insert(product_category := { category := $category_id, product := $product_id })))
+- uri: /with(/category, /product)
+  expect: 400
+- uri: /with(product[A0000004]{id:=id(), list_price}, update(product:={$id, list_price:=$list_price*2}))
 

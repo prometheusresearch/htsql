@@ -73,3 +73,12 @@ class ForCmd(Command):
         self.body = body
 
 
+class WithCmd(Command):
+
+    def __init__(self, record, body):
+        assert isinstance(record, Command)
+        assert isinstance(body, Command)
+        self.record = record
+        self.body = body
+
+

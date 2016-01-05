@@ -39998,3 +39998,23 @@ tests:
            | A0000003.1       |
            | A0000004.1       |
 
+      - uri: /with(/category, /product)
+        status: 400 Bad Request
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        body: |
+          Expected a record value
+          While processing:
+              /with(/category, /product)
+                    ^
+      - uri: /with(product[A0000004]{id:=id(), list_price}, update(product:={$id,
+          list_price:=$list_price*2}))
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: |2+
+           | product  |
+          -+----------+-
+           | A0000004 |
+
