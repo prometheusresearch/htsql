@@ -12,7 +12,7 @@ from .binding import Binding, VoidBinding
 from .signature import Signature, Bag, Formula
 
 
-class Flow(Clonable):
+class Flow(Hashable, Clonable):
 
     def __init__(self, base, domain, binding):
         assert base is not None or isinstance(self, (RootFlow, VoidFlow))
@@ -24,11 +24,17 @@ class Flow(Clonable):
         self.binding = binding
         point(self, binding)
 
+    def __basis__(self):
+        return (self.base, self.domain)
+
 
 class VoidFlow(Flow):
 
     def __init__(self):
         super(VoidFlow, self).__init__(None, VoidDomain(), VoidBinding())
+
+    def __basis__(self):
+        return ()
 
 
 class ScopeFlow(Flow):
@@ -40,11 +46,17 @@ class HomeFlow(ScopeFlow):
     def __init__(self, base, binding):
         super(HomeFlow, self).__init__(base, EntityDomain(), binding)
 
+    def __basis__(self):
+        return (self.base,)
+
 
 class RootFlow(HomeFlow):
 
     def __init__(self, binding):
         super(RootFlow, self).__init__(None, binding)
+
+    def __basis__(self):
+        return ()
 
 
 class TableFlow(ScopeFlow):
@@ -54,6 +66,9 @@ class TableFlow(ScopeFlow):
         super(TableFlow, self).__init__(base, EntityDomain(), binding)
         self.table = table
 
+    def __basis__(self):
+        return (self.base, self.table)
+
 
 class ChainFlow(TableFlow):
 
@@ -61,6 +76,9 @@ class ChainFlow(TableFlow):
         assert isinstance(joins, listof(Join)) and len(joins) > 0
         super(ChainFlow, self).__init__(base, joins[-1].target, binding)
         self.joins = joins
+
+    def __basis__(self):
+        return (self.base, tuple(self.joins))
 
 
 class ColumnFlow(ScopeFlow):
@@ -72,6 +90,9 @@ class ColumnFlow(ScopeFlow):
         self.column = column
         self.link = link
 
+    def __basis__(self):
+        return (self.base, self.column, self.link)
+
 
 class QuotientFlow(ScopeFlow):
 
@@ -80,12 +101,18 @@ class QuotientFlow(ScopeFlow):
         self.seed = seed
         self.kernels = kernels
 
+    def __basis__(self):
+        return (self.base, self.seed, tuple(self.kernels))
+
 
 class CoverFlow(ScopeFlow):
 
     def __init__(self, base, seed, binding):
         super(CoverFlow, self).__init__(base, seed.domain, binding)
         self.seed = seed
+
+    def __basis__(self):
+        return (self.base, self.seed)
 
 
 class KernelFlow(CoverFlow):
@@ -99,6 +126,9 @@ class KernelFlow(CoverFlow):
         self.quotient = quotient
         self.index = index
 
+    def __basis__(self):
+        return (self.base, self.quotient, self.index)
+
 
 class ComplementFlow(CoverFlow):
 
@@ -107,6 +137,9 @@ class ComplementFlow(CoverFlow):
         super(ComplementFlow, self).__init__(base, quotient.seed, binding)
         self.quotient = quotient
 
+    def __basis__(self):
+        return (self.base, self.quotient)
+
 
 class ForkFlow(CoverFlow):
 
@@ -114,6 +147,9 @@ class ForkFlow(CoverFlow):
         assert isinstance(kernels, listof(Flow))
         super(ForkFlow, self).__init__(base, base, binding)
         self.kernels = kernels
+
+    def __basis__(self):
+        return (self.base, tuple(self.kernels))
 
 
 class AttachFlow(CoverFlow):
@@ -126,6 +162,9 @@ class AttachFlow(CoverFlow):
         super(AttachFlow, self).__init__(base, seed, binding)
         self.images = images
         self.condition = condition
+
+    def __basis__(self):
+        return (self.base, self.seed, tuple(self.images), self.condition)
 
 
 class LocateFlow(AttachFlow):
@@ -144,6 +183,9 @@ class ClipFlow(CoverFlow):
         self.limit = limit
         self.offset = offset
 
+    def __basis__(self):
+        return (self.base, self.seed, tuple(self.order), self.limit, self.offset)
+
 
 class CollectFlow(Flow):
 
@@ -153,6 +195,9 @@ class CollectFlow(Flow):
         super(CollectFlow, self).__init__(base, domain, binding)
         self.seed = seed
 
+    def __basis__(self):
+        return (self.base, self.seed, self.domain)
+
 
 class SieveFlow(ScopeFlow):
 
@@ -161,6 +206,9 @@ class SieveFlow(ScopeFlow):
         assert isinstance(filter.domain, BooleanDomain)
         super(SieveFlow, self).__init__(base, base.domain, binding)
         self.filter = filter
+
+    def __basis__(self):
+        return (self.base, self.filter)
 
 
 class SortFlow(ScopeFlow):
@@ -174,6 +222,9 @@ class SortFlow(ScopeFlow):
         self.limit = limit
         self.offset = offset
 
+    def __basis__(self):
+        return (self.base, tuple(self.order), self.limit, self.offset)
+
 
 class RescopingFlow(ScopeFlow):
 
@@ -182,6 +233,9 @@ class RescopingFlow(ScopeFlow):
         super(RescopingFlow, self).__init__(base, base.domain, binding)
         self.scope = scope
 
+    def __basis__(self):
+        return (self.base, self.scope)
+
 
 class SelectionFlow(ScopeFlow):
 
@@ -189,6 +243,9 @@ class SelectionFlow(ScopeFlow):
         assert isinstance(elements, listof(Flow))
         super(SelectionFlow, self).__init__(base, domain, binding)
         self.elements = elements
+
+    def __basis__(self):
+        return (self.base, tuple(self.elements), self.domain)
 
 
 class IdentityFlow(Flow):
@@ -200,6 +257,9 @@ class IdentityFlow(Flow):
         self.elements = elements
         self.width = domain.width
 
+    def __basis__(self):
+        return (self.base, tuple(self.elements))
+
 
 class LiteralFlow(Flow):
 
@@ -207,11 +267,20 @@ class LiteralFlow(Flow):
         super(LiteralFlow, self).__init__(base, domain, binding)
         self.value = value
 
+    def __basis__(self):
+        if not isinstance(self.value, (list, dict)):
+            return (self.base, self.value, self.domain)
+        else:
+            return (self.base, repr(self.value), self.domain)
+
 
 class CastFlow(Flow):
 
     def __init__(self, base, domain, binding):
         super(CastFlow, self).__init__(base, domain, binding)
+
+    def __basis__(self):
+        return (self.base, self.domain)
 
 
 class ImplicitCastFlow(CastFlow):
@@ -226,5 +295,8 @@ class FormulaFlow(Formula, Flow):
         assert arguments.admits(Flow, signature)
         super(FormulaFlow, self).__init__(signature, arguments,
                                           base, domain, binding)
+
+    def __basis__(self):
+        return (self.base, self.signature, self.domain, self.arguments.freeze())
 
 

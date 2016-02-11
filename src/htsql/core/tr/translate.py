@@ -3,6 +3,7 @@
 #
 
 
+from ..context import context
 from ..syn.syntax import Syntax
 from ..syn.parse import parse
 from .bind import bind
@@ -20,6 +21,80 @@ from .pack import pack
 from .pipe import SQLPipe, RecordPipe, ComposePipe, ProducePipe
 
 
+class CacheItem(object):
+
+    __slots__ = ('prev', 'next', 'key', 'value')
+
+    def __init__(self, prev, next, key, value):
+        self.prev = prev
+        self.next = next
+        self.key = key
+        self.value = value
+
+
+class LRUCache(object):
+
+    __slots__ = ('head', 'tail', 'items', 'size')
+
+    def __init__(self, size=4096):
+        self.head = None
+        self.tail = None
+        self.items = {}
+        self.size = size
+
+    def __getitem__(self, key):
+        item = self.items[key]
+        if item.prev is not None:
+            item.prev.next = item.next
+            if item.next is not None:
+                item.next.prev = item.prev
+            else:
+                self.tail = item.prev
+            item.prev = None
+            item.next = self.head
+            self.head.prev = item
+            self.head = item
+        return item.value
+
+    def __setitem__(self, key, value):
+        try:
+            self.items[key].value = value
+        except KeyError:
+            item = CacheItem(None, self.head, key, value)
+            if self.head is not None:
+                self.head.prev = item
+            else:
+                self.tail = item
+            self.head = item
+            self.items[key] = item
+            if len(self.items) > self.size:
+                del self.items[self.tail.key]
+                self.tail.prev.next = None
+                self.tail = self.tail.prev
+
+    def __len__(self):
+        return len(self.items)
+
+
+def cache_plan(key, plan):
+    cache = context.app.htsql.cache
+    with cache.lock(cache_plan):
+        try:
+            mapping = cache.values[cache_plan]
+        except KeyError:
+            mapping = cache.values[cache_plan] = LRUCache()
+        mapping[key] = plan
+
+
+def get_cached_plan(key, cache_plan=cache_plan):
+    cache = context.app.htsql.cache
+    with cache.lock(cache_plan):
+        try:
+            return cache.values[cache_plan][key]
+        except KeyError:
+            return None
+
+
 def translate(syntax, environment=None, limit=None, offset=None, batch=None):
     assert isinstance(syntax, (Syntax, Binding, unicode, str))
     if isinstance(syntax, (str, unicode)):
@@ -30,6 +105,12 @@ def translate(syntax, environment=None, limit=None, offset=None, batch=None):
         binding = syntax
     profile = decorate(binding)
     flow = route(binding)
+    key = (profile.tag, flow, limit, offset, batch)
+    pipe_sql = get_cached_plan(key)
+    if pipe_sql is not None:
+        pipe, sql = pipe_sql
+        pipe = ProducePipe(profile, pipe, sql=sql)
+        return pipe
     expression = encode(flow)
     if limit is not None or offset is not None:
         expression = safe_patch(expression, limit, offset)
@@ -42,7 +123,9 @@ def translate(syntax, environment=None, limit=None, offset=None, batch=None):
     value_pipe = pack(flow, frame, profile.tag)
     pipe = ComposePipe(raw_pipe, value_pipe)
     #print pipe
-    return ProducePipe(profile, pipe, sql=sql)
+    cache_plan(key, (pipe, sql))
+    pipe = ProducePipe(profile, pipe, sql=sql)
+    return pipe
 
 
 def get_sql(pipe):

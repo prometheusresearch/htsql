@@ -859,7 +859,7 @@ class FiberTableSpace(TableSpace):
         assert isinstance(join, Join)
         # Check that the join origin is the table of the base space.
         assert isinstance(base, Space) and base.family.is_table
-        assert base.family.table is join.origin
+        assert base.family.table is join.origin, (base.family.table, join.origin)
         super(FiberTableSpace, self).__init__(
                     base=base,
                     family=TableFamily(join.target),
