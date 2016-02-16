@@ -11,6 +11,7 @@ import urllib
 import pkgutil
 import datetime, time
 import collections
+import weakref
 import unicodedata
 import yaml
 
@@ -892,7 +893,7 @@ class Hashable(object):
     the same type and their basis vectors are equal.
     """
 
-    __slots__ = ('_basis', '_hash')
+    __slots__ = ('_basis', '_hash', '_matches', '__weakref__')
 
     def __hash__(self):
         try:
@@ -941,6 +942,11 @@ class Hashable(object):
                 self.__class__ is other.__class__):
             return False
         try:
+            if self._matches[id(other)] is other:
+                return True
+        except (AttributeError, KeyError):
+            pass
+        try:
             _hash = self._hash
             _basis = self._basis
         except AttributeError:
@@ -954,7 +960,14 @@ class Hashable(object):
             other._rehash()
             _other_hash = other._hash
             _other_basis = other._basis
-        return (_hash == _other_hash and _basis == _other_basis)
+        if _hash == _other_hash and _basis == _other_basis:
+            try:
+                self._matches[id(other)] = other
+            except AttributeError:
+                self._matches = weakref.WeakValueDictionary()
+                self._matches[id(other)] = other
+            return True
+        return False
 
     def __ne__(self, other):
         # Since we override `==`, we also need to override `!=`.

@@ -1,6 +1,7 @@
 
 
 from types import FunctionType, CodeType
+from weakref import WeakValueDictionary
 from htsql.core.context import context
 
 
@@ -63,8 +64,10 @@ cdef class Clonable:
 
 cdef class Hashable(object):
 
+    cdef object __weakref__
     cdef readonly long _hash
     cdef readonly object _basis
+    cdef readonly object _matches
 
     def __hash__(self):
         if self._hash == 0:
@@ -97,6 +100,20 @@ cdef class Hashable(object):
         if self._hash == 0:
             self._hash = 1
 
+    cpdef _matching(self, other):
+        if self._matches is not None:
+            try:
+                if self._matches[id(other)] is other:
+                    return True
+            except KeyError:
+                pass
+        return False
+
+    cpdef _match(self, other):
+        if self._matches is None:
+            self._matches = WeakValueDictionary()
+        self._matches[id(other)] = other
+
     def __richcmp__(self, other, int op):
         if self._hash == 0:
             self._rehash()
@@ -109,9 +126,23 @@ cdef class Hashable(object):
             elif op == 1:
                 return self._basis < other_hashable._basis
             elif op == 2:
-                return type(self) == type(other_hashable) and self._basis == other_hashable._basis
+                if type(self) != type(other_hashable):
+                    return False
+                if self._matching(other_hashable):
+                    return True
+                if self._basis == other_hashable._basis:
+                    self._match(other_hashable)
+                    return True
+                return False
             elif op == 3:
-                return type(self) != type(other_hashable) or self._basis != other_hashable._basis
+                if type(self) != type(other_hashable):
+                    return True
+                if self._matching(other_hashable):
+                    return False
+                if self._basis == other_hashable._basis:
+                    self._match(other_hashable)
+                    return False
+                return True
             elif op == 4:
                 return self._basis > other_hashable._basis
             elif op == 5:
