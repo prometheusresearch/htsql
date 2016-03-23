@@ -772,6 +772,22 @@ tests:
   - uri: /student{name, dob}?dob>max_dob()-30
   - uri: /student^trunc_year(dob){*, count(^)}
 
+  # Test `commands`
+  - load: demo
+    extensions:
+      tweak.override:
+        commands:
+          active_students(): /student?is_active
+          students_by_year($year): /student?year(start_date)=$year
+          course_by_id($dept, $no): course[$dept.$no]
+  - uri: /active_students()
+  - uri: /students_by_year(max(student.year(start_date)))
+  - uri: course_by_id('comp', '304')
+  - uri: /students_by_year()
+    expect: 400
+  - uri: course_by_id('comp.304')
+    expect: 400
+
 # TWEAK.POOL - cache database connections
 - title: tweak.pool
   tests:

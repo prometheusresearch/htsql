@@ -4,6 +4,8 @@
 
 
 from ...core.context import context
+from ...core.adapter import adapt
+from ...core.error import Error
 from ...core.util import Printable, listof, maybe
 from ...core.validator import Validator
 from ...core.entity import (NamedEntity, SchemaEntity,
@@ -13,8 +15,12 @@ from ...core.model import (Node, HomeNode, TableNode, TableArc, ColumnArc,
                            ChainArc, SyntaxArc)
 from ...core.introspect import introspect
 from ...core.classify import normalize
+from ...core.connect import transaction
 from ...core.syn.parse import parse
 from ...core.syn.syntax import Syntax
+from ...core.cmd.command import Command
+from ...core.cmd.summon import Summon, recognize
+from ...core.cmd.act import act, Act, ProduceAction
 from ...core.tr.bind import BindByName
 from ...core.tr.binding import SubstitutionRecipe, ClosedRecipe
 import fnmatch
@@ -488,13 +494,83 @@ class GlobalPattern(ArcPattern):
         return unicode(self.syntax)
 
 
+class CustomCmd(Command):
+
+    def __init__(self, prelude, command):
+        self.prelude = prelude
+        self.command = command
+
+
+class ProduceCustom(Act):
+
+    adapt(CustomCmd, ProduceAction)
+
+    def __call__(self):
+        environment = self.action.environment.copy()
+        with transaction():
+            for parameter, command in self.command.prelude:
+                action = self.action.clone(environment=environment)
+                environment[parameter] = act(command, action)
+            action = self.action.clone(environment=environment)
+            return act(self.command.command, action)
+
+
+class SummonCommand(Summon):
+
+    __app__ = None
+    parameters = None
+    body = None
+
+    @classmethod
+    def __enabled__(component):
+        if component.__app__ is None:
+            return super(SummonCommand, component).__enabled__()
+        return (component.__app__() is context.app)
+
+    def __call__(self):
+        if len(self.arguments) != len(self.parameters):
+            expected = len(self.parameters)
+            raise Error(
+                    "Expected %s argument%s; got %s"
+                    % (expected, "s" if expected != 1 else "",
+                        len(self.arguments)))
+        prelude = []
+        for parameter, syntax in zip(self.parameters, self.arguments):
+            prelude.append((parameter, recognize(syntax)))
+        command = recognize(self.body)
+        return CustomCmd(prelude, command)
+
+
+class CommandPattern(Pattern):
+
+    def __init__(self, syntax):
+        assert isinstance(syntax, unicode)
+        self.syntax = syntax
+
+    def register(self, app, name, parameters):
+        assert isinstance(name, unicode)
+        class_name = "Summon%s" % name.title().replace('_', '').encode('utf-8')
+        parameters = list(parameters)
+        namespace = {
+            '__app__': weakref.ref(app),
+            '__names__': [name.encode('utf-8')],
+            'parameters': parameters,
+            'body': self.syntax,
+        }
+        summon_class = type(class_name, (SummonCommand,), namespace)
+        return summon_class
+
+    def __unicode__(self):
+        return unicode(self.syntax)
+
+
 class TablePatternVal(Validator):
 
     pattern = r"""
-        ^
+        ^ \s*
         (?: (?P<schema> [\w*?]+ ) \s*\.\s* )?
         (?P<table> [\w*?]+ )
-        $
+        \s* $
     """
     regexp = re.compile(pattern, re.X|re.U)
 
@@ -521,11 +597,11 @@ class TablePatternVal(Validator):
 class ColumnPatternVal(Validator):
 
     pattern = r"""
-        ^
+        ^ \s*
         (?: (?: (?P<schema> [\w*?]+ ) \s*\.\s* )?
             (?P<table> [\w*?]+ ) \s*\.\s* )?
         (?P<column> [\w*?]+ )
-        $
+        \s* $
     """
     regexp = re.compile(pattern, re.X|re.U)
 
@@ -555,7 +631,7 @@ class ColumnPatternVal(Validator):
 class UniqueKeyPatternVal(Validator):
 
     pattern = r"""
-        ^
+        ^ \s*
         (?: (?P<schema> [\w*?]+ ) \s*\.\s* )?
         (?P<table> [\w*?]+ )
         \s*
@@ -564,7 +640,7 @@ class UniqueKeyPatternVal(Validator):
         \)
         \s*
         (?: (?P<primary> ! ) | (?P<partial> \? ) )?
-        $
+        \s* $
     """
     regexp = re.compile(pattern, re.X|re.U)
 
@@ -598,7 +674,7 @@ class UniqueKeyPatternVal(Validator):
 class ForeignKeyPatternVal(Validator):
 
     pattern = r"""
-        ^
+        ^ \s*
         (?: (?P<schema> [\w*?]+ ) \s*\.\s* )?
         (?P<table> [\w*?]+ )
         \s*
@@ -613,7 +689,7 @@ class ForeignKeyPatternVal(Validator):
         (?: \(
            \s* (?P<target_columns> [\w*?]+ (?: \s*,\s* [\w*?]+ )* ) \s*,?\s*
         \) )?
-        $
+        \s* $
     """
     regexp = re.compile(pattern, re.X|re.U)
 
@@ -662,14 +738,14 @@ class ForeignKeyPatternVal(Validator):
 class ClassPatternVal(Validator):
 
     pattern = r"""
-        ^ (?:
+        ^ \s* (?:
         (?P<is_table>
             (?: (?P<schema> [\w*?]+ ) \s*\.\s* )?
             (?P<table> [\w*?]+ ) )
         |
         (?P<is_syntax>
             (?P<syntax> \( .+ \) ) )
-        ) $
+        ) \s* $
     """
     regexp = re.compile(pattern, re.X|re.U)
 
@@ -702,7 +778,7 @@ class ClassPatternVal(Validator):
 class FieldPatternVal(Validator):
 
     pattern = r"""
-        ^ (?:
+        ^ \s* (?:
         (?P<is_column>
             (?P<column> [\w*?]+ ) )
         |
@@ -722,7 +798,7 @@ class FieldPatternVal(Validator):
         |
         (?P<is_syntax>
             (?P<syntax> \( .+ \) ) )
-        ) $
+        ) \s* $
     """
     regexp = re.compile(pattern, re.X|re.U)
     join_pattern = r"""
@@ -820,6 +896,20 @@ class GlobalPatternVal(Validator):
         return value
 
 
+class CommandPatternVal(Validator):
+
+    def __call__(self, value):
+        if value is None:
+            return ValueError("the null value is not permitted")
+        if isinstance(value, str):
+            value = value.decode('utf-8', 'replace')
+        if isinstance(value, unicode):
+            value = CommandPattern(value)
+        if not isinstance(value, CommandPattern):
+            raise ValueError("expected command pattern, got %r" % value)
+        return value
+
+
 class LabelVal(Validator):
 
     pattern = """
@@ -907,6 +997,45 @@ class QLabelVal(Validator):
             value = (qualifier, label, parameters)
         else:
             raise ValueError("expected label, got %r" % value)
+        return value
+
+
+class CommandVal(Validator):
+
+    pattern = """
+        ^
+        (?P<label> \w+ )
+        \s*
+        \( \s*
+            (?P<parameters> (?: \$\w+ (?: \s*,\s* \$\w+ )* \s*,? )? )
+        \s* \)
+        $
+    """
+    regexp = re.compile(pattern, re.X|re.U)
+
+    def __call__(self, value):
+        if value is None:
+            return ValueError("the null value is not permitted")
+        if isinstance(value, str):
+            value = value.decode('utf-8', 'replace')
+        if isinstance(value, unicode):
+            match = self.regexp.match(value)
+            if match is None:
+                raise ValueError("expected command label, got %r"
+                                 % value.encode('utf-8'))
+            label = normalize(match.group('label'))
+            parameters = []
+            for parameter in match.group('parameters').split(','):
+                name = parameter.strip()
+                if not name:
+                    continue
+                name = name[1:]
+                name = normalize(name)
+                parameters.append(name)
+            parameters = tuple(parameters)
+            value = (label, parameters)
+        else:
+            raise ValueError("expected command label, got %r" % value)
         return value
 
 

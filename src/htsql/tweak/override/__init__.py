@@ -6,10 +6,9 @@
 from . import classify, introspect, pattern
 from ...core.addon import Addon, Parameter
 from ...core.validator import SeqVal, MapVal
-from .pattern import (TablePatternVal, ColumnPatternVal,
-                      UniqueKeyPatternVal, ForeignKeyPatternVal,
-                      ClassPatternVal, FieldPatternVal, GlobalPatternVal,
-                      LabelVal, QLabelVal)
+from .pattern import (TablePatternVal, ColumnPatternVal, UniqueKeyPatternVal,
+        ForeignKeyPatternVal, ClassPatternVal, FieldPatternVal,
+        GlobalPatternVal, CommandPatternVal, LabelVal, QLabelVal, CommandVal)
 from .introspect import UnusedPatternCache
 from .classify import validate
 
@@ -80,6 +79,9 @@ class TweakOverrideAddon(Addon):
 
     Parameter `globals` is a mapping of global definitions to
     an HTSQL expression.
+
+    Parameter `commands` maps command name with parameters to command
+    body.
     """
 
     parameters = [
@@ -135,16 +137,25 @@ class TweakOverrideAddon(Addon):
                       default={},
                       value_name="LABELS",
                       hint="""global definitions"""),
+            Parameter('commands', MapVal(CommandVal(), CommandPatternVal()),
+                      default={},
+                      value_name="COMMANDS",
+                      hint="""command definitions"""),
     ]
 
     def __init__(self, app, attributes):
         super(TweakOverrideAddon, self).__init__(app, attributes)
         self.unused_pattern_cache = UnusedPatternCache()
         self.globals_cache = []
+        self.commands_cache = []
         for name, parameters in sorted(self.globals):
             adapter = self.globals[name, parameters].register(app, name,
                                                               parameters)
             self.globals_cache.append(adapter)
+        for name, parameters in sorted(self.commands):
+            adapter = self.commands[name, parameters].register(
+                    app, name, parameters)
+            self.commands_cache.append(adapter)
 
     def validate(self):
         validate()

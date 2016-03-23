@@ -36288,6 +36288,9 @@ tests:
             Parameter `globals` is a mapping of global definitions to
             an HTSQL expression.
 
+            Parameter `commands` maps command name with parameters to command
+            body.
+
             Parameters:
               included-tables=TABLES   : permitted tables
               excluded-tables=TABLES   : forbidden tables
@@ -36302,6 +36305,7 @@ tests:
               unlabeled-tables=TABLES  : ignored tables
               unlabeled-columns=COLUMNS : ignored columns
               globals=LABELS           : global definitions
+              commands=COMMANDS        : command definitions
 
         - uri: /avg(school.count(program))
           status: 200 OK
@@ -37285,6 +37289,634 @@ tests:
              WHERE ((DATE '2001-01-01' + (EXTRACT(YEAR FROM "STUDENT"."DOB") - 2001) * INTERVAL '1' YEAR + (1 - 1) * INTERVAL '1' MONTH + (1 - 1) * INTERVAL '1' DAY) IS NOT NULL)
              GROUP BY (DATE '2001-01-01' + (EXTRACT(YEAR FROM "STUDENT"."DOB") - 2001) * INTERVAL '1' YEAR + (1 - 1) * INTERVAL '1' MONTH + (1 - 1) * INTERVAL '1' DAY)
              ORDER BY 1 ASC
+        - uri: /active_students()
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | student                                                                                                |
+             +------+---------------------+--------+------------+-------------+--------------+------------+-----------+
+             | id   | name                | gender | dob        | school_code | program_code | start_date | is_active |
+            -+------+---------------------+--------+------------+-------------+--------------+------------+-----------+-
+             | 1001 | Linda Wright        | f      | 1988-10-03 | ns          | umth         | 2007-08-15 | true      |
+             | 1002 | Beth Thompson       | f      | 1988-01-24 | ns          | gmth         | 2007-08-15 | true      |
+             | 1003 | Sheri Sanchez       | f      | 1985-05-14 | edu         | gedu         | 2007-08-15 | true      |
+             | 1004 | John Stone          | m      | 1984-01-28 | bus         | pbusad       | 2007-08-15 | true      |
+             | 1005 | Helen Johnson       | f      | 1986-02-03 | eng         | ucompsci     | 2007-08-15 | true      |
+             | 1006 | Anna Carroll        | f      | 1985-03-29 | edu         | gedu         | 2007-08-15 | true      |
+             | 1007 | Carol Walden        | f      | 1988-04-09 | ns          | uphys        | 2007-08-15 | true      |
+             | 1008 | Mark Melton         | m      | 1984-06-05 | edu         | psci         | 2007-08-15 | true      |
+             | 1009 | Frances Moore       | f      | 1985-10-25 | eng         | ucompsci     | 2007-08-15 | true      |
+             | 1010 | Judy Flynn          | f      | 1986-09-02 | la          | uspan        | 2007-08-15 | true      |
+             | 1011 | Jacqueline Padilla  | f      | 1989-04-07 | ph          | phd          | 2007-08-15 | true      |
+             | 1012 | Margaret Martin     | f      | 1986-01-15 | eng         | uelec        | 2007-08-15 | true      |
+             | 1013 | Michael Castillo    | m      | 1984-04-04 | bus         | pacc         | 2007-08-15 | true      |
+             | 1014 | Kara Ellis          | f      | 1988-01-18 | ns          | uchem        | 2007-08-15 | true      |
+             | 1015 | Isabel Anderson     | f      | 1986-12-13 | la          | uhist        | 2007-08-15 | true      |
+             | 1016 | Charles Luna        | m      | 1984-01-03 | bus         | uacct        | 2007-08-15 | true      |
+             | 1017 | Cassandra Franco    | f      | 1989-04-12 | ph          | phd          | 2007-08-15 | true      |
+             | 1018 | Nancy Terry         | f      | 1989-11-11 | ph          | phd          | 2007-08-15 | true      |
+             | 1019 | Deborah Herring     | f      | 1988-06-25 | ns          | pmth         | 2007-08-15 | true      |
+             | 1020 | Sheila Randall      | f      | 1989-03-21 | ph          | phd          | 2007-08-15 | true      |
+             | 1021 | Gordon Allred       | m      | 1984-06-25 | edu         | usci         | 2007-08-15 | true      |
+             | 1022 | Lori Lim            | f      | 1987-11-03 | ns          | uphys        | 2007-08-15 | true      |
+             | 1023 | Virginia Haines     | f      | 1989-03-11 | ph          | phd          | 2007-08-15 | true      |
+             | 1024 | Susan Harrell       | f      | 1987-06-22 | la          | psciwri      | 2007-08-15 | true      |
+             | 1025 | Patti Sutton        | f      | 1985-10-12 | eng         | gbe          | 2007-08-15 | true      |
+             | 1026 | Ronald Finch        | m      | 1982-10-23 | art         | ustudio      | 2007-08-15 | true      |
+             | 1027 | Belinda Calhoun     | f      | 1985-06-23 | eng         | umech        | 2007-08-15 | true      |
+             | 1028 | Catherine Kim       | f      | 1986-11-21 | la          | gscitch      | 2007-08-15 | true      |
+             | 1029 | Patricia Medina     | f      | 1989-04-21 | ph          | phd          | 2007-08-15 | true      |
+             | 1030 | Martha Wilkerson    | f      | 1989-09-25 | ph          | phd          | 2007-08-15 | true      |
+             | 1031 | Patricia Stephens   | f      | 1985-10-26 | eng         | uelec        | 2007-08-15 | true      |
+             | 1032 | Margaret Washington | f      | 1988-12-03 | ph          | phd          | 2007-08-15 | true      |
+             | 1033 | Isidro Chen         | m      | 1984-02-01 | bus         | uecon        | 2007-08-15 | true      |
+             | 1034 | Darlene Myers       | f      | 1988-06-10 | ns          | gmth         | 2007-08-15 | true      |
+             | 1035 | Maria Johnson       | f      | 1986-05-23 | eng         | ucompsci     | 2007-08-15 | true      |
+             | 1037 | Bessie Hill         | f      | 1987-10-05 | ns          | uchem        | 2007-08-15 | true      |
+             | 1038 | Wiley Baker         | m      | 1985-03-11 | edu         | glited       | 2007-08-15 | true      |
+             | 1039 | Linda Little        | f      | 1988-08-07 | ns          | uphys        | 2007-08-15 | true      |
+             | 1040 | Beverly Brown       | f      | 1987-05-07 | la          | gengl        | 2007-08-15 | true      |
+             | 1042 | Evelyn Williams     | f      | 1985-12-13 | eng         | gbe          | 2007-08-15 | true      |
+             | 1043 | Patricia Grayson    | f      | 1988-12-10 | ph          | phd          | 2007-08-15 | true      |
+             | 1044 | Brain Erickson      | m      | 1983-12-15 | bus         | ubusad       | 2007-08-15 | true      |
+             | 1045 | John Thompson       | m      | 1984-08-08 | edu         | psci         | 2007-08-15 | true      |
+             | 1046 | Lisa Johnson        | f      | 1988-12-18 | ph          | phd          | 2007-08-15 | true      |
+             | 1047 | Maurice Wagner      | m      | 1983-07-14 | bus         | uacct        | 2007-08-15 | true      |
+             | 1048 | Patricia Stewart    | f      | 1986-07-17 | eng         | uelec        | 2007-08-15 | true      |
+             | 1049 | Andrew Gilbert      | m      | 1983-11-29 | bus         | pacc         | 2007-08-15 | true      |
+             | 1050 | Annie Harris        | f      | 1989-09-28 | ph          | phd          | 2007-08-15 | true      |
+             | 1051 | Velma Moore         | f      | 1988-06-05 | ns          | pmth         | 2007-08-15 | true      |
+             | 1052 | Kathy Wilkinson     | f      | 1985-08-02 | eng         | umech        | 2007-08-15 | true      |
+             | 1053 | Robert Johnson      | m      | 1982-08-24 | art         | gart         | 2007-08-15 | true      |
+             | 1054 | Alphonse Gilmore    | m      | 1984-07-24 | edu         | gedu         | 2007-08-15 | true      |
+             | 1055 | Carol Sparks        | f      | 1986-01-24 | eng         | gbuseng      | 2007-08-15 | true      |
+             | 1056 | Maria Hendrix       | f      | 1989-06-18 | ph          | phd          | 2007-08-15 | true      |
+             | 1057 | John Anderson       | m      | 1982-11-16 | art         | uhist        | 2007-08-15 | true      |
+             | 1058 | Sarah Norman        | f      | 1986-05-31 | eng         | umech        | 2007-08-15 | true      |
+             | 1059 | Sadie Roberts       | f      | 1987-08-27 | la          | psciwri      | 2007-08-15 | true      |
+             | 1060 | Marsha Mason        | f      | 1986-05-20 | eng         | gbe          | 2007-08-15 | true      |
+             | 1061 | Irene Atkins        | f      | 1988-07-08 | ns          | umth         | 2007-08-15 | true      |
+             | 1062 | Jessica Meyers      | f      | 1986-04-29 | eng         | ucompsci     | 2007-08-15 | true      |
+             | 1063 | Catherine Robinson  | f      | 1989-09-17 | ph          | phd          | 2007-08-15 | true      |
+             | 1064 | Gail George         | f      | 1986-10-29 | la          | uspan        | 2007-08-15 | true      |
+             | 1065 | Patricia Ferreira   | f      | 1986-09-14 | la          | gscitch      | 2007-08-15 | true      |
+             | 1066 | Vickie Gardner      | f      | 1985-07-24 | eng         | umech        | 2007-08-15 | true      |
+             | 1067 | Dianne Nolan        | f      | 1986-10-09 | la          | gengl        | 2007-08-15 | true      |
+             | 1068 | John Jones          | m      | 1985-01-30 | edu         | psci         | 2007-08-15 | true      |
+             | 1069 | Wanda Gordon        | f      | 1986-08-10 | la          | uengl        | 2007-08-15 | true      |
+             | 1070 | Mike Clark          | m      | 1984-04-29 | edu         | glited       | 2007-08-15 | true      |
+             | 1071 | William Reynolds    | m      | 1983-07-09 | bus         | uecon        | 2007-08-15 | true      |
+             | 1072 | Reid Johnson        | m      | 1983-07-01 | bus         | uacct        | 2007-08-15 | true      |
+             | 1073 | Rene Valdez         | f      | 1986-11-26 | la          | glang        | 2007-08-15 | true      |
+             | 1074 | Ann Moore           | f      | 1987-04-04 | la          | gengl        | 2007-08-15 | true      |
+             | 1075 | Christina Nichols   | f      | 1985-10-24 | eng         | gbe          | 2007-08-15 | true      |
+             | 1076 | John Stevens        | m      | 1982-09-21 | art         | uhist        | 2007-08-15 | true      |
+             | 1077 | Elva Woody          | f      | 1988-01-23 | ns          | pmth         | 2007-08-15 | true      |
+             | 1078 | Alma Cruz           | f      | 1989-01-06 | ph          | phd          | 2007-08-15 | true      |
+             | 1079 | Pat Williams        | f      | 1989-05-22 | ph          | phd          | 2007-08-15 | true      |
+             | 1080 | Terri Mosley        | f      | 1988-09-27 | ns          | uchem        | 2007-08-15 | true      |
+             | 1081 | Karen Hamilton      | f      | 1989-03-09 | ph          | phd          | 2007-08-15 | true      |
+             | 1082 | Ashley Stein        | f      | 1989-05-21 | ph          | phd          | 2007-08-15 | true      |
+             | 1083 | Carrie Perez        | f      | 1986-04-30 | eng         | gbuseng      | 2007-08-15 | true      |
+             | 1084 | Nathaniel Gutierrez | m      | 1985-02-17 | edu         | gedlead      | 2007-08-15 | true      |
+             | 1085 | Gwendolyn Russell   | f      | 1987-08-24 | la          | gscitch      | 2007-08-15 | true      |
+             | 1086 | Steven Perry        | m      | 1984-03-17 | bus         | ubusad       | 2007-08-15 | true      |
+             | 1087 | Betty Brennan       | f      | 1988-06-29 | ns          | gmth         | 2007-08-15 | true      |
+             | 1088 | Joann Gomez         | f      | 1988-10-18 | ns          | pmth         | 2007-08-15 | true      |
+             | 1089 | Juanita Morrow      | f      | 1989-02-28 | ph          | phd          | 2007-08-15 | true      |
+             | 1090 | Simone Harris       | f      | 1986-09-20 | la          | uhist        | 2007-08-15 | true      |
+             | 1091 | Maria Crockett      | f      | 1989-08-07 | ph          | phd          | 2007-08-15 | true      |
+             | 1092 | Keisha Salinas      | f      | 1986-08-22 | la          | uengl        | 2007-08-15 | true      |
+             | 1093 | Dawn Lacey          | f      | 1985-08-10 | eng         | gbuseng      | 2007-08-15 | true      |
+             | 1094 | Meredith Wilson     | f      | 1987-04-14 | la          | gscitch      | 2007-08-15 | true      |
+             | 1095 | Melanie Frye        | f      | 1989-12-21 | ph          | phd          | 2007-08-15 | true      |
+             | 1096 | Amy Barrera         | f      | 1989-05-03 | ph          | phd          | 2007-08-15 | true      |
+             | 1097 | Latasha Richards    | f      | 1988-05-07 | ns          | uchem        | 2007-08-15 | true      |
+             | 1098 | Larry Leonard       | m      | 1982-08-30 | art         | ustudio      | 2007-08-15 | true      |
+             | 1099 | Ramona French       | f      | 1986-11-26 | la          | glang        | 2007-08-15 | true      |
+             | 1100 | Aurelia Carr        | f      | 1985-11-22 | eng         | ucompsci     | 2007-08-15 | true      |
+             | 1101 | Carolyn Garcia      | f      | 1987-01-16 | la          | glang        | 2007-08-15 | true      |
+             | 1102 | Terri Castro        | f      | 1988-10-05 | ns          | umth         | 2007-08-15 | true      |
+             | 1103 | Steve Lim           | m      | 1983-12-12 | bus         | pbusad       | 2007-08-15 | true      |
+             | 1104 | Shelia Mckee        | f      | 1987-11-08 | ns          | umth         | 2007-08-15 | true      |
+             | 1105 | Carlos Sanchez      | m      | 1982-12-10 | art         | gart         | 2007-08-15 | true      |
+             | 1106 | Douglas Wood        | m      | 1983-10-07 | bus         | ubusad       | 2007-08-15 | true      |
+             | 1107 | Louise Esposito     | f      | 1988-05-10 | ns          | gmth         | 2007-08-15 | true      |
+             | 1108 | Willie Duffy        | m      | 1984-08-30 | edu         | gtch         | 2007-08-15 | true      |
+             | 1109 | Juanita Knight      | f      | 1988-07-12 | ns          | umth         | 2007-08-15 | true      |
+             | 1110 | Virgil Ballard      | m      | 1982-10-22 | art         | uhist        | 2007-08-15 | true      |
+             | 1111 | Brian Hunt          | m      | 1983-03-05 | bus         | uecon        | 2007-08-15 | true      |
+             | 1112 | Audrey Corbin       | f      | 1987-08-01 | la          | uspan        | 2007-08-15 | true      |
+             | 1114 | Michele Bailey      | f      | 1986-08-05 | la          | glang        | 2007-08-15 | true      |
+             | 1115 | Karen Rainey        | f      | 1989-04-13 | ph          | phd          | 2007-08-15 | true      |
+             | 1116 | Pauline Rodriguez   | f      | 1986-04-11 | eng         | gbuseng      | 2007-08-15 | true      |
+             | 1117 | Ingrid Rose         | f      | 1987-06-13 | la          | gscitch      | 2007-08-15 | true      |
+             | 1119 | Betty Nance         | f      | 1987-01-30 | la          | uhist        | 2007-08-15 | true      |
+             | 1120 | Joann Camacho       | f      | 1986-11-08 | la          | glang        | 2007-08-15 | true      |
+             | 1121 | Sally Tanner        | f      | 1986-08-11 | la          | uhist        | 2007-08-15 | true      |
+             | 1122 | Kenneth Hunter      | m      | 1986-02-17 | edu         | glited       | 2008-08-15 | true      |
+             | 1123 | Scott Golden        | m      | 1985-12-18 | edu         | usci         | 2008-08-15 | true      |
+             | 1124 | Diane Leblanc       | f      | 1990-11-05 | ph          | phd          | 2008-08-15 | true      |
+             | 1127 | Jennifer Stokes     | f      | 1990-09-09 | ph          | phd          | 2008-08-15 | true      |
+             | 1128 | David Watkins       | m      | 1984-06-25 | bus         | pacc         | 2008-08-15 | true      |
+             | 1129 | Willis Erickson     | m      | 1983-12-29 | art         | ustudio      | 2008-08-15 | true      |
+             | 1130 | Philip Robbins      | m      | 1984-09-08 | bus         | ubusad       | 2008-08-15 | true      |
+             | 1131 | Angela Lewis        | f      | 1989-05-28 | ns          | uchem        | 2008-08-15 | true      |
+             | 1132 | Angela Lewis        | f      | 1990-06-30 | ph          | phd          | 2008-08-15 | true      |
+             | 1134 | Grace Rojas         | f      | 1986-05-29 | edu         | gedu         | 2008-08-15 | true      |
+             | 1135 | Justin Thomas       | m      | 1983-10-25 | art         | gart         | 2008-08-15 | true      |
+             | 1136 | Matthew Ford        | m      | 1985-01-30 | bus         | uecon        | 2008-08-15 | true      |
+             | 1137 | William Belanger    | m      | 1984-10-08 | bus         | pbusad       | 2008-08-15 | true      |
+             | 1138 | Michelle Bullock    | f      | 1988-03-05 | la          | gengl        | 2008-08-15 | true      |
+             | 1139 | David Lawson        | m      | 1985-10-21 | edu         | gedlead      | 2008-08-15 | true      |
+             | 1140 | Charles Cornett     | m      | 1984-06-11 | bus         | pbusad       | 2008-08-15 | true      |
+             | 1141 | Laurie Rasmussen    | f      | 1987-01-12 | eng         | gbe          | 2008-08-15 | true      |
+             | 1143 | Frank Fleming       | m      | 1983-10-23 | art         | ustudio      | 2008-08-15 | true      |
+             | 1144 | Carla Beatty        | f      | 1990-11-27 | ph          | phd          | 2008-08-15 | true      |
+             | 1145 | Joe Tucker          | m      | 1984-08-06 | bus         | pacc         | 2008-08-15 | true      |
+             | 1146 | Alfredo Scott       | m      | 1985-11-14 | edu         | usci         | 2008-08-15 | true      |
+             | 1147 | Annie Thompson      | f      | 1988-11-07 | ns          | gmth         | 2008-08-15 | true      |
+             | 1148 | Emma Hunt           | f      | 1989-09-15 | ns          | umth         | 2008-08-15 | true      |
+             | 1149 | Patricia Richmond   | f      | 1990-05-07 | ph          | phd          | 2008-08-15 | true      |
+             | 1150 | Micah Armstrong     | m      | 1984-05-10 | bus         | pbusad       | 2008-08-15 | true      |
+             | 1151 | Patricia Cortes     | f      | 1988-05-19 | la          | upsych       | 2008-08-15 | true      |
+             | 1152 | Marie Fitzgerald    | f      | 1990-09-25 | ph          | phd          | 2008-08-15 | true      |
+             | 1153 | John Burgess        | m      | 1983-06-20 | art         | ustudio      | 2008-08-15 | true      |
+             | 1154 | Kristina Cooper     | f      | 1988-05-30 | la          | psciwri      | 2008-08-15 | true      |
+             | 1155 | Teresa Reeder       | f      | 1989-10-06 | ns          | gmth         | 2008-08-15 | true      |
+             | 1156 | Robert Bishop       | m      | 1985-09-27 | edu         | gtch         | 2008-08-15 | true      |
+             | 1157 | John Fisher         | m      | 1985-01-03 | bus         | uecon        | 2008-08-15 | true      |
+             | 1158 | Violet Wilson       | f      | 1987-10-11 | la          | uengl        | 2008-08-15 | true      |
+             | 1159 | Carrie Farmer       | f      | 1986-07-16 | eng         | ubio         | 2008-08-15 | true      |
+             | 1160 | Duane Cantrell      | m      | 1984-05-26 | bus         | pacc         | 2008-08-15 | true      |
+             | 1161 | Ella Conley         | f      | 1986-10-10 | eng         | gbuseng      | 2008-08-15 | true      |
+             | 1162 | Tami Mcdowell       | f      | 1986-04-13 | edu         | gtch         | 2008-08-15 | true      |
+             | 1163 | Angela Johnson      | f      | 1987-07-22 | eng         | ubio         | 2008-08-15 | true      |
+             | 1164 | Marion Howell       | f      | 1987-01-26 | eng         | uelec        | 2008-08-15 | true      |
+             | 1165 | Grady Thompson      | m      | 1985-06-29 | edu         | gedu         | 2008-08-15 | true      |
+             | 1166 | Donald Wilkerson    | m      | 1985-11-10 | edu         | gtch         | 2008-08-15 | true      |
+             | 1167 | Doris Gibson        | f      | 1989-09-13 | ns          | uphys        | 2008-08-15 | true      |
+             | 1168 | Eric Alexander      | m      | 1985-01-03 | bus         | pbusad       | 2008-08-15 | true      |
+             | 1169 | Blanca Kearney      | f      | 1987-06-27 | eng         | gee          | 2008-08-15 | true      |
+             | 1171 | Linda Duncan        | f      | 1988-12-07 | ns          | uastro       | 2008-08-15 | true      |
+             | 1172 | Connie Hicks        | m      | 1985-09-09 | edu         | psci         | 2008-08-15 | true      |
+             | 1174 | Edward Lake         | m      | 1985-04-01 | bus         | pacc         | 2008-08-15 | true      |
+             | 1175 | Glenn Byers         | m      | 1984-12-03 | bus         | uacct        | 2008-08-15 | true      |
+             | 1176 | Adrienne Morgan     | f      | 1990-08-17 | ph          | phd          | 2008-08-15 | true      |
+             | 1177 | Jeffery Sumner      | m      | 1985-10-26 | edu         | gedu         | 2008-08-15 | true      |
+             | 1178 | Chester Gillespie   | m      | 1985-04-21 | edu         | gtch         | 2008-08-15 | true      |
+             | 1179 | Richard Gray        | m      | 1985-11-16 | edu         | gedlead      | 2008-08-15 | true      |
+             | 1180 | Norma Martinez      | f      | 1990-07-29 | ph          | phd          | 2008-08-15 | true      |
+             | 1181 | Laurie Talley       | f      | 1988-01-27 | la          | glang        | 2008-08-15 | true      |
+             | 1182 | Lori Johnson        | f      | 1987-12-21 | la          | glang        | 2008-08-15 | true      |
+             | 1183 | Norma Crouch        | f      | 1988-09-22 | ns          | uphys        | 2008-08-15 | true      |
+             | 1184 | Robert Hodge        | m      | 1986-02-08 | edu         | glited       | 2008-08-15 | true      |
+             | 1185 | Evelyn Anderson     | f      | 1986-04-26 | edu         | umath        | 2008-08-15 | true      |
+             | 1186 | Ora Ray             | f      | 1988-03-17 | la          | gengl        | 2008-08-15 | true      |
+             | 1188 | Richard Flores      | m      | 1984-07-16 | bus         | gecon        | 2008-08-15 | true      |
+             | 1189 | Vincent Johnson     | m      | 1985-09-04 | edu         | glited       | 2008-08-15 | true      |
+             | 1190 | Lee Moore           | m      | 1984-12-01 | bus         | uacct        | 2008-08-15 | true      |
+             | 1191 | Patricia Brown      | f      | 1988-02-06 | la          | uspan        | 2008-08-15 | true      |
+             | 1192 | Jack Hastings       | m      | 1986-01-12 | edu         | gedlead      | 2008-08-15 | true      |
+             | 1193 | Deann Harris        | f      | 1990-01-02 | ph          | phd          | 2008-08-15 | true      |
+             | 1194 | Doris Page          | f      | 1987-07-19 | eng         | uelec        | 2008-08-15 | true      |
+             | 1195 | Beatrice Bradley    | f      | 1986-04-26 | edu         | gtch         | 2008-08-15 | true      |
+             | 1196 | Sharon Thomas       | f      | 1986-03-22 | edu         | gtch         | 2008-08-15 | true      |
+             | 1197 | Donna Brunson       | f      | 1988-08-13 | la          | gscitch      | 2008-08-15 | true      |
+             | 1198 | Becky Meeks         | f      | 1986-05-07 | edu         | glited       | 2008-08-15 | true      |
+             | 1199 | Elizabeth Wells     | f      | 1988-04-19 | la          | uspan        | 2008-08-15 | true      |
+             | 1201 | Christina Rodgers   | f      | 1986-07-25 | eng         | umech        | 2008-08-15 | true      |
+             | 1202 | Wayne Snow          | m      | 1985-01-28 | bus         | ubusad       | 2008-08-15 | true      |
+             | 1203 | Mitch Burnett       | m      | 1984-04-06 | bus         | pbusad       | 2008-08-15 | true      |
+             | 1204 | Ernestine Chavez    | f      | 1987-03-23 | eng         | gbuseng      | 2008-08-15 | true      |
+             | 1205 | Darlene Bartlett    | f      | 1986-11-25 | eng         | gbuseng      | 2008-08-15 | true      |
+             | 1206 | Margaret Thompson   | f      | 1987-06-29 | eng         | uelec        | 2008-08-15 | true      |
+             | 1207 | Beatrice Graham     | f      | 1989-01-16 | ns          | pmth         | 2008-08-15 | true      |
+             | 1208 | Jennifer Alexander  | f      | 1990-01-26 | ph          | phd          | 2008-08-15 | true      |
+             | 1209 | Joan Bryant         | f      | 1986-12-16 | eng         | ucompsci     | 2008-08-15 | true      |
+             | 1210 | Mark Gordon         | m      | 1985-07-01 | edu         | gtch         | 2008-08-15 | true      |
+             | 1211 | Heather Adams       | f      | 1986-09-26 | eng         | gbe          | 2008-08-15 | true      |
+             | 1212 | Joan Willis         | f      | 1989-06-22 | ns          | umth         | 2008-08-15 | true      |
+             | 1213 | Mae Hansen          | f      | 1989-12-31 | ph          | phd          | 2008-08-15 | true      |
+             | 1214 | Jean Lane           | f      | 1989-07-02 | ns          | umth         | 2008-08-15 | true      |
+             | 1215 | Christopher Daniels | m      | 1984-07-04 | bus         | pbusad       | 2008-08-15 | true      |
+             | 1216 | Brenda Castro       | f      | 1990-12-30 | ph          | phd          | 2008-08-15 | true      |
+             | 1217 | Christina Simms     | f      | 1988-01-25 | la          | gengl        | 2008-08-15 | true      |
+             | 1218 | Robert Bledsoe      | m      | 1983-09-02 | art         | ustudio      | 2008-08-15 | true      |
+             | 1219 | Lorene Weiss        | f      | 1988-10-21 | ns          | uphys        | 2008-08-15 | true      |
+             | 1220 | Patricia Savage     | f      | 1990-11-23 | ph          | phd          | 2008-08-15 | true      |
+             | 1221 | Virginia Hester     | f      | 1986-03-20 | edu         | usci         | 2008-08-15 | true      |
+             | 1222 | Amy Gregory         | f      | 1988-06-05 | la          | upsych       | 2008-08-15 | true      |
+             | 1223 | Lewis Harrison      | m      | 1985-07-13 | edu         | gedu         | 2008-08-15 | true      |
+             | 1224 | Christopher Jones   | m      | 1984-09-16 | bus         | uacct        | 2008-08-15 | true      |
+             | 1225 | Rhonda Evans        | f      | 1988-09-27 | ns          | umth         | 2008-08-15 | true      |
+             | 1227 | Kristine Brooks     | f      | 1989-08-01 | ns          | uchem        | 2008-08-15 | true      |
+             | 1228 | Julia Bradley       | f      | 1987-03-25 | eng         | ucompsci     | 2008-08-15 | true      |
+             | 1229 | Merle Johnson       | m      | 1983-10-14 | art         | gart         | 2008-08-15 | true      |
+             | 1230 | Timothy Ryan        | m      | 1983-12-15 | art         | uhist        | 2008-08-15 | true      |
+             | 1231 | Laura Ashley        | f      | 1988-03-12 | la          | uhist        | 2008-08-15 | true      |
+             | 1232 | Irma Fuller         | f      | 1989-12-27 | ph          | phd          | 2008-08-15 | true      |
+             | 1233 | Ronald Simpson      | m      | 1985-03-29 | bus         | pbusad       | 2008-08-15 | true      |
+             | 1234 | Sandra Sampson      | f      | 1990-10-30 | ph          | phd          | 2008-08-15 | true      |
+             | 1235 | Thomas Eastman      | m      | 1983-10-21 | art         | uhist        | 2008-08-15 | true      |
+             | 1236 | Karen Bruce         | f      | 1989-10-31 | ns          | gmth         | 2008-08-15 | true      |
+             | 1237 | Joseph Montgomery   | m      | 1986-03-05 | edu         | glited       | 2008-08-15 | true      |
+             | 1238 | Herbert Woodall     | m      | 1983-08-27 | art         | ustudio      | 2008-08-15 | true      |
+             | 1239 | Robert Howard       | m      | 1985-03-14 | bus         | uecon        | 2008-08-15 | true      |
+             | 1240 | Margaret Wallace    | f      | 1986-08-17 | eng         | umech        | 2008-08-15 | true      |
+             | 1241 | Shannon Mays        | f      | 1990-05-04 | ns          | pmth         | 2009-08-15 | true      |
+             | 1242 | Rosemarie Haney     | f      | 1990-11-22 | ph          | phd          | 2009-08-15 | true      |
+             | 1243 | Eric Dougherty      | m      | 1985-01-25 | art         | ustudio      | 2009-08-15 | true      |
+             | 1244 | Concepcion Crain    | f      | 1988-03-02 | eng         | gee          | 2009-08-15 | true      |
+             | 1245 | Denise Thomas       | f      | 1989-03-16 | la          | psciwri      | 2009-08-15 | true      |
+             | 1246 | Travis Lee          | m      | 1986-10-11 | edu         | umath        | 2009-08-15 | true      |
+             | 1247 | Dorothy Roberts     | f      | 1990-12-22 | ph          | phd          | 2009-08-15 | true      |
+             | 1248 | Dennis Hendrix      | m      | 1986-03-25 | bus         | pacc         | 2009-08-15 | true      |
+             | 1251 | Julie Freeman       | f      | 1989-06-13 | la          | uspan        | 2009-08-15 | true      |
+             | 1252 | Dorothy Martinez    | f      | 1988-06-19 | eng         | ubio         | 2009-08-15 | true      |
+             | 1253 | Andrea Fisher       | f      | 1991-07-28 | ph          | phd          | 2009-08-15 | true      |
+             | 1254 | Cara Joyce          | f      | 1991-07-05 | ph          | phd          | 2009-08-15 | true      |
+             | 1255 | Joan Sullivan       | f      | 1991-04-12 | ph          | phd          | 2009-08-15 | true      |
+             | 1257 | Yvonne Hall         | f      | 1989-12-29 | ns          | uastro       | 2009-08-15 | true      |
+             | 1258 | Catherine Ross      | f      | 1989-08-11 | la          | uhist        | 2009-08-15 | true      |
+             | 1259 | Jane Mcintyre       | f      | 1989-03-30 | la          | upsych       | 2009-08-15 | true      |
+             | 1260 | Bonnie Flores       | f      | 1989-09-12 | la          | gengl        | 2009-08-15 | true      |
+             | 1261 | Amanda Flores       | f      | 1991-03-22 | ph          | phd          | 2009-08-15 | true      |
+             | 1262 | Juanita Vega        | f      | 1989-02-13 | la          | uspan        | 2009-08-15 | true      |
+             | 1263 | Earl Lewis          | m      | 1986-12-24 | edu         | gedu         | 2009-08-15 | true      |
+             | 1264 | Marlene Krause      | f      | 1988-04-21 | eng         | uelec        | 2009-08-15 | true      |
+             | 1265 | Gary Jones          | m      | 1985-08-31 | bus         | ubusad       | 2009-08-15 | true      |
+             | 1266 | Miranda Drake       | f      | 1988-09-11 | la          | gscitch      | 2009-08-15 | true      |
+             | 1268 | Ronald Brown        | m      | 1985-03-18 | bus         | gecon        | 2009-08-15 | true      |
+             | 1269 | Jeffery Bates       | m      | 1986-09-01 | edu         | psci         | 2009-08-15 | true      |
+             | 1270 | Barbara Johnson     | f      | 1990-04-26 | ns          | gmth         | 2009-08-15 | true      |
+             | 1271 | Teresa Murphy       | f      | 1989-09-30 | ns          | uphys        | 2009-08-15 | true      |
+             | 1272 | Andrew Ohara        | m      | 1986-09-16 | edu         | gedu         | 2009-08-15 | true      |
+             | 1273 | Linda Turner        | f      | 1988-12-18 | la          | gscitch      | 2009-08-15 | true      |
+             | 1275 | Billy Goins         | m      | 1985-04-24 | bus         | pacc         | 2009-08-15 | true      |
+             | 1276 | Lillian Delgado     | f      | 1991-11-09 | ph          | phd          | 2009-08-15 | true      |
+             | 1277 | Howard Wilson       | m      | 1986-04-26 | edu         | gedlead      | 2009-08-15 | true      |
+             | 1278 | Kenneth Tucker      | m      | 1987-02-28 | edu         | umath        | 2009-08-15 | true      |
+             | 1279 | Beatrice Miller     | f      | 1988-05-22 | eng         | ucompsci     | 2009-08-15 | true      |
+             | 1280 | Paul Valenzuela     | m      | 1986-05-08 | edu         | glited       | 2009-08-15 | true      |
+             | 1281 | Hilda Bennett       | f      | 1987-10-29 | eng         | ubio         | 2009-08-15 | true      |
+             | 1282 | Brian Mckenzie      | m      | 1985-12-02 | bus         | uacct        | 2009-08-15 | true      |
+             | 1284 | Charles Farrell     | m      | 1985-06-09 | bus         | pacc         | 2009-08-15 | true      |
+             | 1285 | Stacey Wells        | f      | 1988-03-08 | eng         | gee          | 2009-08-15 | true      |
+             | 1286 | Calvin Stephenson   | m      | 1984-07-26 | art         | ustudio      | 2009-08-15 | true      |
+             | 1287 | Maria Keys          | f      | 1987-03-24 | edu         | gtch         | 2009-08-15 | true      |
+             | 1288 | Gregory Gonzalez    | m      | 1986-08-18 | edu         | usci         | 2009-08-15 | true      |
+             | 1289 | Thelma Wilson       | f      | 1987-04-27 | edu         | psci         | 2009-08-15 | true      |
+             | 1290 | Gregory Scott       | m      | 1984-10-18 | art         | uhist        | 2009-08-15 | true      |
+             | 1291 | Meghan Johnson      | f      | 1991-04-09 | ph          | phd          | 2009-08-15 | true      |
+             | 1292 | Angie Horner        | f      | 1987-10-17 | eng         | uelec        | 2009-08-15 | true      |
+             | 1293 | Florence Crosby     | f      | 1990-09-23 | ns          | gmth         | 2009-08-15 | true      |
+             | 1294 | Michele Cameron     | f      | 1991-10-23 | ph          | phd          | 2009-08-15 | true      |
+             | 1295 | Charles Barker      | m      | 1986-10-01 | edu         | gtch         | 2009-08-15 | true      |
+             | 1296 | Gladys Christensen  | f      | 1987-11-01 | eng         | ucompsci     | 2009-08-15 | true      |
+             | 1297 | Frances Jenkins     | f      | 1989-08-06 | la          | uspan        | 2009-08-15 | true      |
+             | 1298 | Lou Mendoza         | f      | 1987-05-31 | edu         | usci         | 2009-08-15 | true      |
+             | 1299 | Leslie Steiner      | m      | 1986-06-01 | edu         | glited       | 2009-08-15 | true      |
+             | 1300 | Lourdes Burch       | f      | 1989-11-17 | ns          | gmth         | 2009-08-15 | true      |
+             | 1301 | Denise Wright       | f      | 1991-02-26 | ph          | phd          | 2009-08-15 | true      |
+             | 1302 | Sarah Collins       | f      | 1991-05-11 | ph          | phd          | 2009-08-15 | true      |
+             | 1303 | Martha Chapman      | f      | 1989-01-05 | la          | upolisci     | 2009-08-15 | true      |
+             | 1304 | Richard Contreras   | m      | 1987-01-03 | edu         | usci         | 2009-08-15 | true      |
+             | 1305 | Brenda Rodriguez    | f      | 1991-10-18 | ph          | phd          | 2009-08-15 | true      |
+             | 1306 | Donna Johnson       | f      | 1989-02-10 | la          | uengl        | 2009-08-15 | true      |
+             | 1307 | Sergio Lynch        | m      | 1984-07-12 | art         | ustudio      | 2009-08-15 | true      |
+             | 1308 | Marcos Pham         | m      | 1984-09-05 | art         | ustudio      | 2009-08-15 | true      |
+             | 1309 | Anna Wolf           | f      | 1989-12-31 | ns          | uastro       | 2009-08-15 | true      |
+             | 1310 | Eddie Lucas         | m      | 1984-06-28 | art         | gart         | 2009-08-15 | true      |
+             | 1312 | John Weiss          | m      | 1987-02-25 | edu         | gtch         | 2009-08-15 | true      |
+             | 1313 | Cheryl West         | f      | 1988-02-26 | eng         | gme          | 2009-08-15 | true      |
+             | 1314 | Linda Spears        | f      | 1987-08-04 | eng         | gbe          | 2009-08-15 | true      |
+             | 1315 | Deborah Roark       | f      | 1987-11-29 | eng         | ucompsci     | 2009-08-15 | true      |
+             | 1316 | Elvira Hess         | f      | 1988-09-05 | la          | gscitch      | 2009-08-15 | true      |
+             | 1317 | Theresa Tyson       | f      | 1989-06-08 | la          | glang        | 2009-08-15 | true      |
+             | 1318 | Annette Vincent     | f      | 1987-05-21 | edu         | gedu         | 2009-08-15 | true      |
+             | 1319 | Austin Wolf         | m      | 1986-12-12 | edu         | glited       | 2009-08-15 | true      |
+             | 1320 | Bertha Cox          | f      | 1991-11-28 | ph          | phd          | 2009-08-15 | true      |
+             | 1321 | Charles Poole       | m      | 1986-02-02 | bus         | pacc         | 2009-08-15 | true      |
+             | 1322 | Shelly Grimes       | f      | 1990-03-20 | ns          | uphys        | 2009-08-15 | true      |
+             | 1323 | Silvia Wilkins      | f      | 1987-06-14 | eng         | gme          | 2009-08-15 | true      |
+             | 1324 | Dustin Johnson      | m      | 1986-11-14 | edu         | umath        | 2009-08-15 | true      |
+             | 1325 | William Roberts     | m      | 1984-07-06 | art         | ustudio      | 2009-08-15 | true      |
+             | 1326 | Sharon Davis        | f      | 1990-11-28 | ph          | phd          | 2009-08-15 | true      |
+             | 1327 | Sharon Hernandez    | f      | 1989-08-13 | la          | uspan        | 2009-08-15 | true      |
+             | 1328 | Elizabeth Rivera    | f      | 1991-03-23 | ph          | phd          | 2009-08-15 | true      |
+             | 1329 | Gail House          | f      | 1987-08-13 | eng         | umech        | 2009-08-15 | true      |
+             | 1330 | Nancy Holt          | f      | 1989-06-01 | la          | gengl        | 2009-08-15 | true      |
+             | 1331 | Ronald Barber       | m      | 1984-12-14 | art         | gart         | 2009-08-15 | true      |
+             | 1332 | Richard Norwood     | m      | 1987-03-09 | edu         | psci         | 2009-08-15 | true      |
+             | 1333 | Frank Brooks        | m      | 1985-08-29 | bus         | gecon        | 2009-08-15 | true      |
+             | 1335 | Krista Crawford     | f      | 1991-08-01 | ph          | phd          | 2009-08-15 | true      |
+             | 1336 | David Montgomery    | m      | 1985-09-23 | bus         | uacct        | 2009-08-15 | true      |
+             | 1337 | William Vick        | m      | 1985-03-04 | bus         | pbusad       | 2009-08-15 | true      |
+             | 1338 | John Benton         | m      | 1985-08-02 | bus         | uecon        | 2009-08-15 | true      |
+             | 1339 | Thomas Dixon        | m      | 1987-01-10 | edu         | glited       | 2009-08-15 | true      |
+             | 1340 | Yolanda Robinson    | f      | 1988-05-16 | eng         | gme          | 2009-08-15 | true      |
+             | 1341 | Wayne Duncan        | m      | 1985-03-19 | bus         | uecon        | 2009-08-15 | true      |
+             | 1342 | Jenna Mccarthy      | f      | 1991-11-28 | ph          | phd          | 2009-08-15 | true      |
+             | 1343 | Linda Cruz          | f      | 1991-11-12 | ph          | phd          | 2009-08-15 | true      |
+             | 1344 | Robert Gaines       | m      | 1985-03-10 | bus         | pbusad       | 2009-08-15 | true      |
+             | 1345 | Rhonda Elmore       | f      | 1987-04-01 | edu         | gtch         | 2009-08-15 | true      |
+             | 1346 | Anita Ward          | f      | 1989-06-10 | la          | upsych       | 2009-08-15 | true      |
+             | 1347 | Dorothy James       | f      | 1991-01-08 | ph          | phd          | 2009-08-15 | true      |
+             | 1348 | Janet Warren        | f      | 1987-12-19 | eng         | gbuseng      | 2009-08-15 | true      |
+             | 1349 | Melissa Edwards     | f      | 1991-05-03 | ph          | phd          | 2009-08-15 | true      |
+             | 1350 | John Ramos          | m      | 1986-07-31 | edu         | umath        | 2009-08-15 | true      |
+             | 1351 | Juanita Gustafson   | f      | 1988-12-27 | eng         | ucompsci     | 2010-08-15 | true      |
+             | 1352 | Rochelle Adams      | f      | 1988-12-28 | eng         | uelec        | 2010-08-15 | true      |
+             | 1353 | Pamela Lee          | f      | 1990-05-13 | la          | gscitch      | 2010-08-15 | true      |
+             | 1354 | Adan Rodgers        | m      | 1986-08-15 | bus         | uecon        | 2010-08-15 | true      |
+             | 1355 | Deborah Williams    | f      | 1989-11-18 | la          | gengl        | 2010-08-15 | true      |
+             | 1356 | Ross Roy            | m      | 1986-10-03 | bus         | ubusad       | 2010-08-15 | true      |
+             | 1357 | Michael Moore       | m      | 1987-09-22 | edu         | glited       | 2010-08-15 | true      |
+             | 1358 | Peggy Jones         | f      | 1992-09-13 | ph          | phd          | 2010-08-15 | true      |
+             | 1359 | Marcia Carpenter    | f      | 1992-03-12 | ph          | phd          | 2010-08-15 | true      |
+             | 1360 | Monica Bailey       | f      | 1991-07-19 | ns          | umth         | 2010-08-15 | true      |
+             | 1362 | Steve Boyd          | m      | 1986-03-11 | bus         | uecon        | 2010-08-15 | true      |
+             | 1363 | Greg Bowman         | m      | 1987-01-22 | bus         | pbusad       | 2010-08-15 | true      |
+             | 1364 | Roseann Powers      | f      | 1991-04-11 | ns          | uchem        | 2010-08-15 | true      |
+             | 1365 | Olga Meadows        | f      | 1991-09-28 | ns          | uchem        | 2010-08-15 | true      |
+             | 1366 | Eugenia Jones       | f      | 1989-08-31 | la          | glang        | 2010-08-15 | true      |
+             | 1367 | Evelyn Thomson      | f      | 1990-09-30 | ns          | umth         | 2010-08-15 | true      |
+             | 1368 | Jessica Thomas      | f      | 1991-06-17 | ns          | uchem        | 2010-08-15 | true      |
+             | 1369 | Peter Molina        | m      | 1985-07-14 | art         | gart         | 2010-08-15 | true      |
+             | 1370 | Michael Wilson      | m      | 1985-09-06 | art         | uhist        | 2010-08-15 | true      |
+             | 1371 | Michelle Vance      | f      | 1991-12-15 | ph          | phd          | 2010-08-15 | true      |
+             | 1373 | Joseph Clark        | m      | 1986-10-21 | bus         | pacc         | 2010-08-15 | true      |
+             | 1376 | Gale Reid           | f      | 1991-10-03 | ns          | pmth         | 2010-08-15 | true      |
+             | 1377 | John Rosado         | m      | 1987-08-25 | edu         | gedlead      | 2010-08-15 | true      |
+             | 1378 | John Fischer        | m      | 1986-04-16 | bus         | uacct        | 2010-08-15 | true      |
+             | 1379 | Thomas Hartman      | m      | 1986-03-12 | bus         | gecon        | 2010-08-15 | true      |
+             | 1380 | Sherry Stewart      | f      | 1990-04-02 | la          | upsych       | 2010-08-15 | true      |
+             | 1381 | Patricia Shafer     | f      | 1992-10-01 | ph          | phd          | 2010-08-15 | true      |
+             | 1382 | Shelley Lilly       | f      | 1989-01-16 | eng         | gee          | 2010-08-15 | true      |
+             | 1383 | Candice Pagan       | f      | 1992-03-18 | ph          | phd          | 2010-08-15 | true      |
+             | 1384 | Tara Fernandez      | f      | 1989-01-08 | eng         | gbe          | 2010-08-15 | true      |
+             | 1385 | Mildred Olson       | f      | 1989-08-05 | la          | gengl        | 2010-08-15 | true      |
+             | 1386 | Jennifer Johnson    | f      | 1990-06-07 | la          | uhist        | 2010-08-15 | true      |
+             | 1387 | Kathleen Johnson    | f      | 1991-06-11 | ns          | uchem        | 2010-08-15 | true      |
+             | 1388 | Teresa Black        | f      | 1991-01-24 | ns          | umth         | 2010-08-15 | true      |
+             | 1389 | Helen Mcdowell      | f      | 1992-12-04 | ph          | phd          | 2010-08-15 | true      |
+             | 1390 | Amy Dubois          | f      | 1990-12-23 | ns          | gmth         | 2010-08-15 | true      |
+             | 1391 | Sara Conner         | f      | 1992-03-31 | ph          | phd          | 2010-08-15 | true      |
+             | 1392 | David Hill          | m      | 1986-08-27 | bus         | uecon        | 2010-08-15 | true      |
+             | 1393 | Peggy Cantu         | f      | 1989-04-14 | eng         | umech        | 2010-08-15 | true      |
+             | 1394 | Raquel Martinez     | f      | 1989-10-16 | la          | gengl        | 2010-08-15 | true      |
+             | 1395 | Reva Wells          | f      | 1991-08-10 | ns          | uphys        | 2010-08-15 | true      |
+             | 1396 | Victoria Robertson  | f      | 1988-11-10 | eng         | gbuseng      | 2010-08-15 | true      |
+             | 1397 | Josephine Campos    | f      | 1991-05-01 | ns          | uastro       | 2010-08-15 | true      |
+             | 1398 | John Griffin        | m      | 1988-02-11 | edu         | glited       | 2010-08-15 | true      |
+             | 1399 | Monica Moore        | f      | 1989-09-10 | la          | uspan        | 2010-08-15 | true      |
+             | 1400 | Ruby Holland        | f      | 1991-10-24 | ns          | uchem        | 2010-08-15 | true      |
+             | 1401 | Judith Mcdaniel     | f      | 1991-05-22 | ns          | pmth         | 2010-08-15 | true      |
+             | 1402 | Judy Stapleton      | f      | 1990-04-05 | la          | gengl        | 2010-08-15 | true      |
+             | 1404 | Joseph Moody        | m      | 1986-06-17 | bus         | ubusad       | 2010-08-15 | true      |
+             | 1405 | Regina Rogers       | f      | 1989-01-21 | eng         | gee          | 2010-08-15 | true      |
+             | 1406 | Lenard Johnson      | m      | 1987-01-15 | bus         | pbusad       | 2010-08-15 | true      |
+             | 1407 | Lester Lewis        | m      | 1985-07-12 | art         | gart         | 2010-08-15 | true      |
+             | 1408 | Susan Knowles       | f      | 1991-11-18 | ph          | phd          | 2010-08-15 | true      |
+             | 1409 | Brenda Jenkins      | f      | 1992-07-18 | ph          | phd          | 2010-08-15 | true      |
+             | 1410 | Paul Shaver         | m      | 1987-06-05 | edu         | gedu         | 2010-08-15 | true      |
+             | 1411 | Sondra Mullins      | f      | 1988-04-07 | edu         | glited       | 2010-08-15 | true      |
+             | 1412 | Naomi Lucero        | f      | 1991-06-26 | ns          | umth         | 2010-08-15 | true      |
+             | 1413 | Sidney Delgado      | m      | 1985-07-02 | art         | gart         | 2010-08-15 | true      |
+             | 1414 | Juanita Davis       | f      | 1990-02-17 | la          | glang        | 2010-08-15 | true      |
+             | 1415 | Jose Aguilar        | m      | 1986-01-08 | art         | uhist        | 2010-08-15 | true      |
+             | 1416 | Thomas Tucker       | m      | 1987-04-20 | edu         | gtch         | 2010-08-15 | true      |
+             | 1417 | Stacy Richards      | f      | 1991-08-23 | ns          | uastro       | 2010-08-15 | true      |
+             | 1418 | Jesse West          | m      | 1985-06-13 | art         | ustudio      | 2010-08-15 | true      |
+             | 1420 | Patricia Watson     | f      | 1988-05-06 | edu         | gedlead      | 2010-08-15 | true      |
+             | 1421 | Laurie Brandon      | f      | 1988-12-08 | eng         | umech        | 2010-08-15 | true      |
+             | 1422 | Sandra Hale         | f      | 1991-11-28 | ph          | phd          | 2010-08-15 | true      |
+             | 1423 | Catherine Potts     | f      | 1990-09-27 | ns          | pmth         | 2010-08-15 | true      |
+             | 1424 | Dorthy Neff         | f      | 1990-05-23 | la          | uengl        | 2010-08-15 | true      |
+             | 1425 | Marvin Hall         | m      | 1986-03-20 | bus         | gecon        | 2010-08-15 | true      |
+             | 1426 | Virginia Acevedo    | f      | 1992-11-23 | ph          | phd          | 2010-08-15 | true      |
+             | 1427 | Katy Williamson     | f      | 1988-04-16 | edu         | gedlead      | 2010-08-15 | true      |
+             | 1428 | Odessa Walter       | f      | 1989-11-23 | la          | uengl        | 2010-08-15 | true      |
+             | 1429 | Matthew Farris      | m      | 1988-02-05 | edu         | glited       | 2010-08-15 | true      |
+             | 1431 | Diana Lee           | f      | 1988-10-08 | eng         | ubio         | 2010-08-15 | true      |
+             | 1432 | Douglas Robles      | m      | 1986-03-20 | bus         | ubusad       | 2010-08-15 | true      |
+             | 1434 | Megan Palacios      | f      | 1989-12-10 | la          | gengl        | 2010-08-15 | true      |
+             | 1435 | Barbara West        | f      | 1990-01-16 | la          | uengl        | 2010-08-15 | true      |
+             | 1436 | Billy Howell        | m      | 1985-11-05 | art         | uhist        | 2010-08-15 | true      |
+             | 1437 | Melanie Woods       | f      | 1989-05-25 | eng         | umech        | 2010-08-15 | true      |
+             | 1438 | Keith Marks         | m      | 1987-10-11 | edu         | gedlead      | 2010-08-15 | true      |
+             | 1439 | William White       | m      | 1988-01-26 | edu         | psci         | 2010-08-15 | true      |
+             | 1440 | Alyssa Root         | f      | 1991-03-19 | ns          | gmth         | 2010-08-15 | true      |
+             | 1441 | Leola Gutierrez     | f      | 1988-12-04 | eng         | ucompsci     | 2010-08-15 | true      |
+             | 1442 | Maria Ochoa         | f      | 1992-01-20 | ph          | phd          | 2010-08-15 | true      |
+             | 1443 | Patricia Marks      | f      | 1989-11-19 | la          | psciwri      | 2010-08-15 | true      |
+             | 1444 | Shirley Johnson     | f      | 1988-09-27 | eng         | umech        | 2010-08-15 | true      |
+             | 1445 | Linda Woods         | f      | 1990-01-22 | la          | uengl        | 2010-08-15 | true      |
+             | 1446 | George Cooper       | m      | 1987-09-15 | edu         | gedlead      | 2010-08-15 | true      |
+             | 1447 | Ronald Elliot       | m      | 1985-12-31 | art         | ustudio      | 2010-08-15 | true      |
+             | 1448 | Amber Moore         | f      | 1990-06-18 | la          | gscitch      | 2010-08-15 | true      |
+             | 1449 | Lynn Pratt          | f      | 1989-12-23 | la          | upolisci     | 2010-08-15 | true      |
+             | 1450 | Linda Wolff         | f      | 1991-04-24 | ns          | pmth         | 2010-08-15 | true      |
+             | 1451 | Michael Vaughan     | m      | 1986-01-08 | art         | uhist        | 2010-08-15 | true      |
+             | 1452 | Mia Gonzalez        | f      | 1992-04-18 | ph          | phd          | 2010-08-15 | true      |
+             | 1453 | Sophia Hendrickson  | f      | 1991-05-25 | ns          | gmth         | 2010-08-15 | true      |
+             | 1454 | Nancy Rhoades       | f      | 1992-05-03 | ph          | phd          | 2010-08-15 | true      |
+             | 1455 | Rebecca Inman       | f      | 1991-12-25 | ph          | phd          | 2010-08-15 | true      |
+             | 1456 | Charlotte Dickson   | f      | 1990-06-14 | la          | upolisci     | 2010-08-15 | true      |
+
+             ----
+             /student?is_active
+             SELECT "STUDENT"."ID",
+                    "STUDENT"."NAME",
+                    "STUDENT"."GENDER",
+                    "STUDENT"."DOB",
+                    "STUDENT"."SCHOOL_CODE",
+                    "STUDENT"."PROGRAM_CODE",
+                    "STUDENT"."START_DATE",
+                    "STUDENT"."IS_ACTIVE"
+             FROM "STUDENT"
+             WHERE ("STUDENT"."IS_ACTIVE" <> 0)
+             ORDER BY 1 ASC
+        - uri: /students_by_year(max(student.year(start_date)))
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | student                                                                                               |
+             +------+--------------------+--------+------------+-------------+--------------+------------+-----------+
+             | id   | name               | gender | dob        | school_code | program_code | start_date | is_active |
+            -+------+--------------------+--------+------------+-------------+--------------+------------+-----------+-
+             | 1351 | Juanita Gustafson  | f      | 1988-12-27 | eng         | ucompsci     | 2010-08-15 | true      |
+             | 1352 | Rochelle Adams     | f      | 1988-12-28 | eng         | uelec        | 2010-08-15 | true      |
+             | 1353 | Pamela Lee         | f      | 1990-05-13 | la          | gscitch      | 2010-08-15 | true      |
+             | 1354 | Adan Rodgers       | m      | 1986-08-15 | bus         | uecon        | 2010-08-15 | true      |
+             | 1355 | Deborah Williams   | f      | 1989-11-18 | la          | gengl        | 2010-08-15 | true      |
+             | 1356 | Ross Roy           | m      | 1986-10-03 | bus         | ubusad       | 2010-08-15 | true      |
+             | 1357 | Michael Moore      | m      | 1987-09-22 | edu         | glited       | 2010-08-15 | true      |
+             | 1358 | Peggy Jones        | f      | 1992-09-13 | ph          | phd          | 2010-08-15 | true      |
+             | 1359 | Marcia Carpenter   | f      | 1992-03-12 | ph          | phd          | 2010-08-15 | true      |
+             | 1360 | Monica Bailey      | f      | 1991-07-19 | ns          | umth         | 2010-08-15 | true      |
+             | 1361 | Samuel Johnson     | m      | 1985-04-15 | art         | ustudio      | 2010-08-15 | false     |
+             | 1362 | Steve Boyd         | m      | 1986-03-11 | bus         | uecon        | 2010-08-15 | true      |
+             | 1363 | Greg Bowman        | m      | 1987-01-22 | bus         | pbusad       | 2010-08-15 | true      |
+             | 1364 | Roseann Powers     | f      | 1991-04-11 | ns          | uchem        | 2010-08-15 | true      |
+             | 1365 | Olga Meadows       | f      | 1991-09-28 | ns          | uchem        | 2010-08-15 | true      |
+             | 1366 | Eugenia Jones      | f      | 1989-08-31 | la          | glang        | 2010-08-15 | true      |
+             | 1367 | Evelyn Thomson     | f      | 1990-09-30 | ns          | umth         | 2010-08-15 | true      |
+             | 1368 | Jessica Thomas     | f      | 1991-06-17 | ns          | uchem        | 2010-08-15 | true      |
+             | 1369 | Peter Molina       | m      | 1985-07-14 | art         | gart         | 2010-08-15 | true      |
+             | 1370 | Michael Wilson     | m      | 1985-09-06 | art         | uhist        | 2010-08-15 | true      |
+             | 1371 | Michelle Vance     | f      | 1991-12-15 | ph          | phd          | 2010-08-15 | true      |
+             | 1372 | William Bell       | m      | 1985-04-27 | art         | gart         | 2010-08-15 | false     |
+             | 1373 | Joseph Clark       | m      | 1986-10-21 | bus         | pacc         | 2010-08-15 | true      |
+             | 1374 | Warren Bond        | m      | 1985-04-30 | art         | ustudio      | 2010-08-15 | false     |
+             | 1375 | Roland Valencia    | m      | 1985-02-15 | art         | ustudio      | 2010-08-15 | false     |
+             | 1376 | Gale Reid          | f      | 1991-10-03 | ns          | pmth         | 2010-08-15 | true      |
+             | 1377 | John Rosado        | m      | 1987-08-25 | edu         | gedlead      | 2010-08-15 | true      |
+             | 1378 | John Fischer       | m      | 1986-04-16 | bus         | uacct        | 2010-08-15 | true      |
+             | 1379 | Thomas Hartman     | m      | 1986-03-12 | bus         | gecon        | 2010-08-15 | true      |
+             | 1380 | Sherry Stewart     | f      | 1990-04-02 | la          | upsych       | 2010-08-15 | true      |
+             | 1381 | Patricia Shafer    | f      | 1992-10-01 | ph          | phd          | 2010-08-15 | true      |
+             | 1382 | Shelley Lilly      | f      | 1989-01-16 | eng         | gee          | 2010-08-15 | true      |
+             | 1383 | Candice Pagan      | f      | 1992-03-18 | ph          | phd          | 2010-08-15 | true      |
+             | 1384 | Tara Fernandez     | f      | 1989-01-08 | eng         | gbe          | 2010-08-15 | true      |
+             | 1385 | Mildred Olson      | f      | 1989-08-05 | la          | gengl        | 2010-08-15 | true      |
+             | 1386 | Jennifer Johnson   | f      | 1990-06-07 | la          | uhist        | 2010-08-15 | true      |
+             | 1387 | Kathleen Johnson   | f      | 1991-06-11 | ns          | uchem        | 2010-08-15 | true      |
+             | 1388 | Teresa Black       | f      | 1991-01-24 | ns          | umth         | 2010-08-15 | true      |
+             | 1389 | Helen Mcdowell     | f      | 1992-12-04 | ph          | phd          | 2010-08-15 | true      |
+             | 1390 | Amy Dubois         | f      | 1990-12-23 | ns          | gmth         | 2010-08-15 | true      |
+             | 1391 | Sara Conner        | f      | 1992-03-31 | ph          | phd          | 2010-08-15 | true      |
+             | 1392 | David Hill         | m      | 1986-08-27 | bus         | uecon        | 2010-08-15 | true      |
+             | 1393 | Peggy Cantu        | f      | 1989-04-14 | eng         | umech        | 2010-08-15 | true      |
+             | 1394 | Raquel Martinez    | f      | 1989-10-16 | la          | gengl        | 2010-08-15 | true      |
+             | 1395 | Reva Wells         | f      | 1991-08-10 | ns          | uphys        | 2010-08-15 | true      |
+             | 1396 | Victoria Robertson | f      | 1988-11-10 | eng         | gbuseng      | 2010-08-15 | true      |
+             | 1397 | Josephine Campos   | f      | 1991-05-01 | ns          | uastro       | 2010-08-15 | true      |
+             | 1398 | John Griffin       | m      | 1988-02-11 | edu         | glited       | 2010-08-15 | true      |
+             | 1399 | Monica Moore       | f      | 1989-09-10 | la          | uspan        | 2010-08-15 | true      |
+             | 1400 | Ruby Holland       | f      | 1991-10-24 | ns          | uchem        | 2010-08-15 | true      |
+             | 1401 | Judith Mcdaniel    | f      | 1991-05-22 | ns          | pmth         | 2010-08-15 | true      |
+             | 1402 | Judy Stapleton     | f      | 1990-04-05 | la          | gengl        | 2010-08-15 | true      |
+             | 1403 | Leonel Garcia      | m      | 1985-01-02 | art         | uhist        | 2010-08-15 | false     |
+             | 1404 | Joseph Moody       | m      | 1986-06-17 | bus         | ubusad       | 2010-08-15 | true      |
+             | 1405 | Regina Rogers      | f      | 1989-01-21 | eng         | gee          | 2010-08-15 | true      |
+             | 1406 | Lenard Johnson     | m      | 1987-01-15 | bus         | pbusad       | 2010-08-15 | true      |
+             | 1407 | Lester Lewis       | m      | 1985-07-12 | art         | gart         | 2010-08-15 | true      |
+             | 1408 | Susan Knowles      | f      | 1991-11-18 | ph          | phd          | 2010-08-15 | true      |
+             | 1409 | Brenda Jenkins     | f      | 1992-07-18 | ph          | phd          | 2010-08-15 | true      |
+             | 1410 | Paul Shaver        | m      | 1987-06-05 | edu         | gedu         | 2010-08-15 | true      |
+             | 1411 | Sondra Mullins     | f      | 1988-04-07 | edu         | glited       | 2010-08-15 | true      |
+             | 1412 | Naomi Lucero       | f      | 1991-06-26 | ns          | umth         | 2010-08-15 | true      |
+             | 1413 | Sidney Delgado     | m      | 1985-07-02 | art         | gart         | 2010-08-15 | true      |
+             | 1414 | Juanita Davis      | f      | 1990-02-17 | la          | glang        | 2010-08-15 | true      |
+             | 1415 | Jose Aguilar       | m      | 1986-01-08 | art         | uhist        | 2010-08-15 | true      |
+             | 1416 | Thomas Tucker      | m      | 1987-04-20 | edu         | gtch         | 2010-08-15 | true      |
+             | 1417 | Stacy Richards     | f      | 1991-08-23 | ns          | uastro       | 2010-08-15 | true      |
+             | 1418 | Jesse West         | m      | 1985-06-13 | art         | ustudio      | 2010-08-15 | true      |
+             | 1419 | Micheal Joyner     | m      | 1985-04-16 | art         | gart         | 2010-08-15 | false     |
+             | 1420 | Patricia Watson    | f      | 1988-05-06 | edu         | gedlead      | 2010-08-15 | true      |
+             | 1421 | Laurie Brandon     | f      | 1988-12-08 | eng         | umech        | 2010-08-15 | true      |
+             | 1422 | Sandra Hale        | f      | 1991-11-28 | ph          | phd          | 2010-08-15 | true      |
+             | 1423 | Catherine Potts    | f      | 1990-09-27 | ns          | pmth         | 2010-08-15 | true      |
+             | 1424 | Dorthy Neff        | f      | 1990-05-23 | la          | uengl        | 2010-08-15 | true      |
+             | 1425 | Marvin Hall        | m      | 1986-03-20 | bus         | gecon        | 2010-08-15 | true      |
+             | 1426 | Virginia Acevedo   | f      | 1992-11-23 | ph          | phd          | 2010-08-15 | true      |
+             | 1427 | Katy Williamson    | f      | 1988-04-16 | edu         | gedlead      | 2010-08-15 | true      |
+             | 1428 | Odessa Walter      | f      | 1989-11-23 | la          | uengl        | 2010-08-15 | true      |
+             | 1429 | Matthew Farris     | m      | 1988-02-05 | edu         | glited       | 2010-08-15 | true      |
+             | 1430 | Lawrence Ross      | m      | 1985-05-19 | art         | uhist        | 2010-08-15 | false     |
+             | 1431 | Diana Lee          | f      | 1988-10-08 | eng         | ubio         | 2010-08-15 | true      |
+             | 1432 | Douglas Robles     | m      | 1986-03-20 | bus         | ubusad       | 2010-08-15 | true      |
+             | 1433 | Carl Bailey        | m      | 1985-04-06 | art         | ustudio      | 2010-08-15 | false     |
+             | 1434 | Megan Palacios     | f      | 1989-12-10 | la          | gengl        | 2010-08-15 | true      |
+             | 1435 | Barbara West       | f      | 1990-01-16 | la          | uengl        | 2010-08-15 | true      |
+             | 1436 | Billy Howell       | m      | 1985-11-05 | art         | uhist        | 2010-08-15 | true      |
+             | 1437 | Melanie Woods      | f      | 1989-05-25 | eng         | umech        | 2010-08-15 | true      |
+             | 1438 | Keith Marks        | m      | 1987-10-11 | edu         | gedlead      | 2010-08-15 | true      |
+             | 1439 | William White      | m      | 1988-01-26 | edu         | psci         | 2010-08-15 | true      |
+             | 1440 | Alyssa Root        | f      | 1991-03-19 | ns          | gmth         | 2010-08-15 | true      |
+             | 1441 | Leola Gutierrez    | f      | 1988-12-04 | eng         | ucompsci     | 2010-08-15 | true      |
+             | 1442 | Maria Ochoa        | f      | 1992-01-20 | ph          | phd          | 2010-08-15 | true      |
+             | 1443 | Patricia Marks     | f      | 1989-11-19 | la          | psciwri      | 2010-08-15 | true      |
+             | 1444 | Shirley Johnson    | f      | 1988-09-27 | eng         | umech        | 2010-08-15 | true      |
+             | 1445 | Linda Woods        | f      | 1990-01-22 | la          | uengl        | 2010-08-15 | true      |
+             | 1446 | George Cooper      | m      | 1987-09-15 | edu         | gedlead      | 2010-08-15 | true      |
+             | 1447 | Ronald Elliot      | m      | 1985-12-31 | art         | ustudio      | 2010-08-15 | true      |
+             | 1448 | Amber Moore        | f      | 1990-06-18 | la          | gscitch      | 2010-08-15 | true      |
+             | 1449 | Lynn Pratt         | f      | 1989-12-23 | la          | upolisci     | 2010-08-15 | true      |
+             | 1450 | Linda Wolff        | f      | 1991-04-24 | ns          | pmth         | 2010-08-15 | true      |
+             | 1451 | Michael Vaughan    | m      | 1986-01-08 | art         | uhist        | 2010-08-15 | true      |
+             | 1452 | Mia Gonzalez       | f      | 1992-04-18 | ph          | phd          | 2010-08-15 | true      |
+             | 1453 | Sophia Hendrickson | f      | 1991-05-25 | ns          | gmth         | 2010-08-15 | true      |
+             | 1454 | Nancy Rhoades      | f      | 1992-05-03 | ph          | phd          | 2010-08-15 | true      |
+             | 1455 | Rebecca Inman      | f      | 1991-12-25 | ph          | phd          | 2010-08-15 | true      |
+             | 1456 | Charlotte Dickson  | f      | 1990-06-14 | la          | upolisci     | 2010-08-15 | true      |
+
+             ----
+             /student?year(start_date)=$year
+             SELECT "STUDENT"."ID",
+                    "STUDENT"."NAME",
+                    "STUDENT"."GENDER",
+                    "STUDENT"."DOB",
+                    "STUDENT"."SCHOOL_CODE",
+                    "STUDENT"."PROGRAM_CODE",
+                    "STUDENT"."START_DATE",
+                    "STUDENT"."IS_ACTIVE"
+             FROM "STUDENT"
+             WHERE (EXTRACT(YEAR FROM "STUDENT"."START_DATE") = 2010)
+             ORDER BY 1 ASC
+        - uri: course_by_id('comp', '304')
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | course                                                                               |
+             +-----------------+-----+-----------------+---------+----------------------------------+
+             | department_code | no  | title           | credits | description                      |
+            -+-----------------+-----+-----------------+---------+----------------------------------+-
+             | comp            | 304 | Database Theory |       4 | ER-models, normal forms,         |
+             :                 :     :                 :         : normalization and                :
+             :                 :     :                 :         : denormalization, database design :
+             :                 :     :                 :         : principles, introduction to      :
+             :                 :     :                 :         : modern Relational Database       :
+             :                 :     :                 :         : Management Systems, overview of  :
+             :                 :     :                 :         : non-relational systems.          :
+
+             ----
+             course[$dept.$no]
+             SELECT "COURSE"."DEPARTMENT_CODE",
+                    "COURSE"."NO",
+                    "COURSE"."TITLE",
+                    "COURSE"."CREDITS",
+                    "COURSE"."DESCRIPTION"
+             FROM "COURSE"
+             WHERE ("COURSE"."DEPARTMENT_CODE" = 'comp')
+                   AND ("COURSE"."NO" = 304)
+             ORDER BY 1 ASC, 2 ASC
+        - uri: /students_by_year()
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            Expected 1 argument; got 0
+            While parsing:
+                /students_by_year()
+                 ^^^^^^^^^^^^^^^^^^
+        - uri: course_by_id('comp.304')
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            Expected 2 arguments; got 1
+            While parsing:
+                course_by_id('comp.304')
+                ^^^^^^^^^^^^^^^^^^^^^^^^
       - suite: tweak.pool
         tests:
         - ctl: [ext, tweak.pool]
