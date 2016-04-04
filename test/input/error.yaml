@@ -184,8 +184,6 @@ tests:
     expect: 400
   - uri: /school.sort()
     expect: 400
-  - uri: /'SQL'={}
-    expect: 400
   - uri: /if(school)
     expect: 400
   - uri: /switch(school,department)

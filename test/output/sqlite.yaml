@@ -39176,15 +39176,6 @@ tests:
             While translating:
                 /school.sort()
                         ^^^^^^
-        - uri: /'SQL'={}
-          status: 400 Bad Request
-          headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          body: |
-            Expected at least one element
-            While translating:
-                /'SQL'={}
-                       ^^
         - uri: /if(school)
           status: 400 Bad Request
           headers:

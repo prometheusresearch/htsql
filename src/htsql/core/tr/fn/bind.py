@@ -33,8 +33,9 @@ from ..coerce import coerce
 from ..decorate import decorate
 from ..lookup import direct, expand, identify, guess_tag, unwrap
 from ..signature import (Signature, NullarySig, UnarySig, BinarySig,
-        CompareSig, IsEqualSig, IsTotallyEqualSig, IsInSig, IsNullSig,
-        IfNullSig, NullIfSig, AndSig, OrSig, NotSig, SortDirectionSig)
+        CompareSig, IsEqualSig, IsTotallyEqualSig, IsInSig, IsAmongSig,
+        IsNullSig, IfNullSig, NullIfSig, AndSig, OrSig, NotSig,
+        SortDirectionSig)
 from .signature import (AsSig, LimitSig, SortSig, CastSig, MakeDateSig,
         MakeDateTimeSig, CombineDateTimeSig, ExtractYearSig, ExtractMonthSig,
         ExtractDaySig, ExtractHourSig, ExtractMinuteSig, ExtractSecondSig,
@@ -947,10 +948,13 @@ class BindCombineDateTime(BindMonoFunction):
 
 class BindAmongBase(BindFunction):
 
-    signature = IsInSig
+    signature = IsAmongSig
     polarity = None
 
     def correlate(self, lop, rops):
+        if not rops:
+            return LiteralBinding(self.state.scope, self.polarity < 0,
+                                  coerce(BooleanDomain()), self.syntax)
         if isinstance(lop.domain, (EntityDomain, IdentityDomain)):
             ops = []
             for rop in rops:

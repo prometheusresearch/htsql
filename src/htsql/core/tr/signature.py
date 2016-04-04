@@ -378,6 +378,17 @@ class IsInSig(NArySig, PolarSig):
     """
 
 
+class IsAmongSig(IsInSig):
+    """
+    Denotes an N-ary equality (``={}`` and ``!={}``) operator.
+    """
+
+    slots = [
+            Slot('lop'),
+            Slot('rops', is_mandatory=False, is_singular=False),
+    ]
+
+
 class IsNullSig(UnarySig, PolarSig):
     """
     Denotes an ``is_null()`` operator.
