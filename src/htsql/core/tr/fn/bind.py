@@ -953,8 +953,10 @@ class BindAmongBase(BindFunction):
 
     def correlate(self, lop, rops):
         if not rops:
-            return LiteralBinding(self.state.scope, self.polarity < 0,
-                                  coerce(BooleanDomain()), self.syntax)
+            self.polarity = -self.polarity
+            op = self.correlate(lop, [lop])
+            del self.polarity
+            return op
         if isinstance(lop.domain, (EntityDomain, IdentityDomain)):
             ops = []
             for rop in rops:
