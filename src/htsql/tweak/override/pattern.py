@@ -572,7 +572,7 @@ class TablePatternVal(Validator):
         (?P<table> [\w*?]+ )
         \s* $
     """
-    regexp = re.compile(pattern, re.X|re.U)
+    regexp = re.compile(pattern, re.X|re.U|re.S)
 
     def __call__(self, value):
         if value is None:
@@ -603,7 +603,7 @@ class ColumnPatternVal(Validator):
         (?P<column> [\w*?]+ )
         \s* $
     """
-    regexp = re.compile(pattern, re.X|re.U)
+    regexp = re.compile(pattern, re.X|re.U|re.S)
 
     def __call__(self, value):
         if value is None:
@@ -642,7 +642,7 @@ class UniqueKeyPatternVal(Validator):
         (?: (?P<primary> ! ) | (?P<partial> \? ) )?
         \s* $
     """
-    regexp = re.compile(pattern, re.X|re.U)
+    regexp = re.compile(pattern, re.X|re.U|re.S)
 
     def __call__(self, value):
         if value is None:
@@ -691,7 +691,7 @@ class ForeignKeyPatternVal(Validator):
         \) )?
         \s* $
     """
-    regexp = re.compile(pattern, re.X|re.U)
+    regexp = re.compile(pattern, re.X|re.U|re.S)
 
     def __call__(self, value):
         if value is None:
@@ -747,7 +747,7 @@ class ClassPatternVal(Validator):
             (?P<syntax> \( .+ \) ) )
         ) \s* $
     """
-    regexp = re.compile(pattern, re.X|re.U)
+    regexp = re.compile(pattern, re.X|re.U|re.S)
 
     def __call__(self, value):
         if value is None:
@@ -800,7 +800,7 @@ class FieldPatternVal(Validator):
             (?P<syntax> \( .+ \) ) )
         ) \s* $
     """
-    regexp = re.compile(pattern, re.X|re.U)
+    regexp = re.compile(pattern, re.X|re.U|re.S)
     join_pattern = r"""
         (?: (?P<schema> [\w*?]+ ) \s*\.\s* )?
         (?P<table> [\w*?]+ )
@@ -817,7 +817,7 @@ class FieldPatternVal(Validator):
         \) )?
         \s*,?\s*
     """
-    join_regexp = re.compile(join_pattern, re.X|re.U)
+    join_regexp = re.compile(join_pattern, re.X|re.U|re.S)
 
     def __call__(self, value):
         if value is None:
@@ -921,7 +921,7 @@ class LabelVal(Validator):
         \s* \) )?
         $
     """
-    regexp = re.compile(pattern, re.X|re.U)
+    regexp = re.compile(pattern, re.X|re.U|re.S)
 
     def __call__(self, value):
         if value is None:
@@ -966,7 +966,7 @@ class QLabelVal(Validator):
         \s* \) )?
         $
     """
-    regexp = re.compile(pattern, re.X|re.U)
+    regexp = re.compile(pattern, re.X|re.U|re.S)
 
     def __call__(self, value):
         if value is None:
@@ -1011,7 +1011,7 @@ class CommandVal(Validator):
         \s* \)
         $
     """
-    regexp = re.compile(pattern, re.X|re.U)
+    regexp = re.compile(pattern, re.X|re.U|re.S)
 
     def __call__(self, value):
         if value is None:
