@@ -142,6 +142,8 @@ class CompilingState(object):
         """
         assert isinstance(term, Term)
         assert isinstance(expressions, listof(Expression))
+        # Prioritize scalar units.
+        expressions.sort(key=(lambda e: e.priority), reverse=True)
         # Iterate over the expressions to inject.
         for expression in expressions:
             # A quick check to avoid a costly adapter call.  This
@@ -1665,6 +1667,8 @@ class InjectScalar(Inject):
                                     unit_term.routes.copy())
         # And join it to the main term.
         extra_routes = dict((unit, unit_term.tag) for unit in units)
+        for unit in spread(self.space):
+            extra_routes[unit] = unit_term.routes[unit]
         return self.join_terms(self.term, unit_term, extra_routes)
 
 

@@ -63,6 +63,10 @@ class Expression(Hashable, Clonable, Printable):
         self.syntax = flow.binding.syntax
         point(self, flow)
 
+    @cachedproperty
+    def priority(self):
+        return 0
+
     def __str__(self):
         # Display the syntex node that gave rise to the expression.
         return str(self.syntax)
@@ -1438,6 +1442,13 @@ class Code(Expression):
         self.domain = domain
 
     @cachedproperty
+    def priority(self):
+        priority = 0
+        for unit in self.units:
+            priority += unit.priority
+        return priority
+
+    @cachedproperty
     def units(self):
         return self.get_units()
 
@@ -1609,6 +1620,10 @@ class Unit(Code):
                     flow=flow)
         self.space = space
 
+    @cachedproperty
+    def priority(self):
+        return 0
+
     @property
     def units(self):
         # Use `property` instead of `cachedproperty` to avoid
@@ -1733,6 +1748,10 @@ class ScalarUnit(CompoundUnit):
                     domain=code.domain,
                     flow=flow)
         self.companions = companions
+
+    @cachedproperty
+    def priority(self):
+        return 1 + len(self.companions)
 
     def __basis__(self):
         return (self.code, self.space)

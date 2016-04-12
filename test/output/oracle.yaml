@@ -15879,15 +15879,13 @@ tests:
              ----
              /department{code,school.code,boolean(school)}
              SELECT "DEPARTMENT"."CODE",
-                    "SCHOOL_1"."CODE",
-                    (CASE WHEN ("SCHOOL_2"."!" IS NOT NULL) THEN 1 ELSE 0 END)
+                    "SCHOOL"."CODE",
+                    (CASE WHEN ("SCHOOL"."!" IS NOT NULL) THEN 1 ELSE 0 END)
              FROM "DEPARTMENT"
-                  LEFT OUTER JOIN "SCHOOL" "SCHOOL_1"
-                                  ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL_1"."CODE")
-                  LEFT OUTER JOIN (SELECT 1 AS "!",
-                                          "SCHOOL"."CODE"
-                                   FROM "SCHOOL") "SCHOOL_2"
-                                  ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL_2"."CODE")
+                  LEFT OUTER JOIN (SELECT "SCHOOL"."CODE",
+                                          1 AS "!"
+                                   FROM "SCHOOL") "SCHOOL"
+                                  ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL"."CODE")
              ORDER BY 1 ASC
         - uri: /{exists(true())}
           status: 400 Bad Request
@@ -19777,26 +19775,24 @@ tests:
                ----
                /department{code,school.code,count(school.program),school.count(program)}
                SELECT "DEPARTMENT"."CODE",
-                      "SCHOOL_1"."CODE",
+                      "SCHOOL"."CODE",
                       COALESCE("PROGRAM"."count", 0),
-                      "SCHOOL_2"."count"
+                      "SCHOOL"."count"
                FROM "DEPARTMENT"
-                    LEFT OUTER JOIN "SCHOOL" "SCHOOL_1"
-                                    ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL_1"."CODE")
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
-                                            "PROGRAM"."SCHOOL_CODE"
-                                     FROM "PROGRAM"
-                                     GROUP BY "PROGRAM"."SCHOOL_CODE") "PROGRAM"
-                                    ON ("SCHOOL_1"."CODE" = "PROGRAM"."SCHOOL_CODE")
-                    LEFT OUTER JOIN (SELECT COALESCE("PROGRAM"."count", 0) AS "count",
-                                            "SCHOOL"."CODE"
+                    LEFT OUTER JOIN (SELECT "SCHOOL"."CODE",
+                                            COALESCE("PROGRAM"."count", 0) AS "count"
                                      FROM "SCHOOL"
                                           LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
                                                                   "PROGRAM"."SCHOOL_CODE"
                                                            FROM "PROGRAM"
                                                            GROUP BY "PROGRAM"."SCHOOL_CODE") "PROGRAM"
-                                                          ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL_CODE")) "SCHOOL_2"
-                                    ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL_2"."CODE")
+                                                          ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL_CODE")) "SCHOOL"
+                                    ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL"."CODE")
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "PROGRAM"."SCHOOL_CODE"
+                                     FROM "PROGRAM"
+                                     GROUP BY "PROGRAM"."SCHOOL_CODE") "PROGRAM"
+                                    ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL_CODE")
                ORDER BY 1 ASC
           - uri: /department{code,school.code, exists(school.program),school.exists(program)}
             status: 200 OK
@@ -19839,22 +19835,20 @@ tests:
                ----
                /department{code,school.code,exists(school.program),school.exists(program)}
                SELECT "DEPARTMENT"."CODE",
-                      "SCHOOL_1"."CODE",
+                      "SCHOOL"."CODE",
                       (CASE WHEN EXISTS(SELECT 1
                                         FROM "PROGRAM"
-                                        WHERE ("SCHOOL_1"."CODE" = "PROGRAM"."SCHOOL_CODE")
+                                        WHERE ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL_CODE")
                                               AND (1 <> 0)) THEN 1 ELSE 0 END),
-                      "SCHOOL_2"."exists"
+                      "SCHOOL"."exists"
                FROM "DEPARTMENT"
-                    LEFT OUTER JOIN "SCHOOL" "SCHOOL_1"
-                                    ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL_1"."CODE")
-                    LEFT OUTER JOIN (SELECT (CASE WHEN EXISTS(SELECT 1
+                    LEFT OUTER JOIN (SELECT "SCHOOL"."CODE",
+                                            (CASE WHEN EXISTS(SELECT 1
                                                               FROM "PROGRAM"
                                                               WHERE ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL_CODE")
-                                                                    AND (1 <> 0)) THEN 1 ELSE 0 END) AS "exists",
-                                            "SCHOOL"."CODE"
-                                     FROM "SCHOOL") "SCHOOL_2"
-                                    ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL_2"."CODE")
+                                                                    AND (1 <> 0)) THEN 1 ELSE 0 END) AS "exists"
+                                     FROM "SCHOOL") "SCHOOL"
+                                    ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL"."CODE")
                ORDER BY 1 ASC
           - uri: /{count(school)&false(),count(school)|true()}
             status: 200 OK
@@ -20096,9 +20090,9 @@ tests:
                ----
                /department{code,school{count(program?degree='ph'),count(program?degree='bs')},count(school.program?degree='ph'),count(school.program?degree='bs')}?code='mth'
                SELECT "DEPARTMENT"."CODE",
-                      "SCHOOL_1"."?",
-                      "SCHOOL_1"."count_1",
-                      "SCHOOL_1"."count_2",
+                      "SCHOOL"."?",
+                      "SCHOOL"."count_1",
+                      "SCHOOL"."count_2",
                       COALESCE("PROGRAM"."count_1", 0),
                       COALESCE("PROGRAM"."count_2", 0)
                FROM "DEPARTMENT"
@@ -20113,17 +20107,15 @@ tests:
                                                            FROM "PROGRAM"
                                                            WHERE ("PROGRAM"."DEGREE" IN ('ph', 'bs'))
                                                            GROUP BY "PROGRAM"."SCHOOL_CODE") "PROGRAM"
-                                                          ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL_CODE")) "SCHOOL_1"
-                                    ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL_1"."CODE")
-                    LEFT OUTER JOIN "SCHOOL" "SCHOOL_2"
-                                    ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL_2"."CODE")
+                                                          ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL_CODE")) "SCHOOL"
+                                    ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL"."CODE")
                     LEFT OUTER JOIN (SELECT COUNT((CASE WHEN ("PROGRAM"."DEGREE" = 'ph') THEN 1 END)) AS "count_1",
                                             COUNT((CASE WHEN ("PROGRAM"."DEGREE" = 'bs') THEN 1 END)) AS "count_2",
                                             "PROGRAM"."SCHOOL_CODE"
                                      FROM "PROGRAM"
                                      WHERE ("PROGRAM"."DEGREE" IN ('ph', 'bs'))
                                      GROUP BY "PROGRAM"."SCHOOL_CODE") "PROGRAM"
-                                    ON ("SCHOOL_2"."CODE" = "PROGRAM"."SCHOOL_CODE")
+                                    ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL_CODE")
                WHERE ("DEPARTMENT"."CODE" = 'mth')
                ORDER BY 1 ASC
           - uri: /define(course_0 := course, course_1 := course_0?credits=3, course_2
@@ -21070,16 +21062,16 @@ tests:
                       COALESCE("DEPARTMENT"."count", 0),
                       "SCHOOL_2"."!"
                FROM "SCHOOL" "SCHOOL_1"
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
-                                            "DEPARTMENT"."SCHOOL_CODE"
-                                     FROM "DEPARTMENT"
-                                     GROUP BY "DEPARTMENT"."SCHOOL_CODE") "DEPARTMENT"
-                                    ON ("SCHOOL_1"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
                     LEFT OUTER JOIN (SELECT 1 AS "!",
                                             "SCHOOL"."CODE"
                                      FROM "SCHOOL"
                                      WHERE ("SCHOOL"."NAME" NOT LIKE '%art%' ESCAPE '\')) "SCHOOL_2"
                                     ON ("SCHOOL_1"."CODE" = "SCHOOL_2"."CODE")
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "DEPARTMENT"."SCHOOL_CODE"
+                                     FROM "DEPARTMENT"
+                                     GROUP BY "DEPARTMENT"."SCHOOL_CODE") "DEPARTMENT"
+                                    ON ("SCHOOL_1"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
                ORDER BY "SCHOOL_1"."CODE" ASC
           - uri: /school{name,exists(department),{exists(department)}?name!~'art'}
             status: 200 OK
@@ -21144,20 +21136,18 @@ tests:
                /department{code,school{code},school{code}?name!~'art'}?code~'a'
                SELECT "DEPARTMENT"."CODE",
                       "SCHOOL_1"."?",
-                      "SCHOOL_2"."CODE",
-                      "SCHOOL_3"."?"
+                      "SCHOOL_1"."CODE",
+                      "SCHOOL_2"."?"
                FROM "DEPARTMENT"
                     LEFT OUTER JOIN (SELECT 1 AS "?",
                                             "SCHOOL"."CODE"
                                      FROM "SCHOOL") "SCHOOL_1"
                                     ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL_1"."CODE")
-                    LEFT OUTER JOIN "SCHOOL" "SCHOOL_2"
-                                    ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL_2"."CODE")
                     LEFT OUTER JOIN (SELECT 1 AS "?",
                                             "SCHOOL"."CODE"
                                      FROM "SCHOOL"
-                                     WHERE ("SCHOOL"."NAME" NOT LIKE '%art%' ESCAPE '\')) "SCHOOL_3"
-                                    ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL_3"."CODE")
+                                     WHERE ("SCHOOL"."NAME" NOT LIKE '%art%' ESCAPE '\')) "SCHOOL_2"
+                                    ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL_2"."CODE")
                WHERE ("DEPARTMENT"."CODE" LIKE '%a%' ESCAPE '\')
                ORDER BY 1 ASC
           - uri: /home()
@@ -21902,9 +21892,6 @@ tests:
                       "!_2"."!",
                       "!_2"."count"
                FROM DUAL "!_1"
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count"
-                                     FROM "SCHOOL") "SCHOOL"
-                                    ON (1 <> 0)
                     LEFT OUTER JOIN (SELECT 1 AS "!",
                                             COALESCE("SCHOOL"."count", 0) AS "count"
                                      FROM DUAL "!"
@@ -21912,6 +21899,9 @@ tests:
                                                            FROM "SCHOOL") "SCHOOL"
                                                           ON (1 <> 0)
                                      WHERE (0 <> 0)) "!_2"
+                                    ON (1 <> 0)
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count"
+                                     FROM "SCHOOL") "SCHOOL"
                                     ON (1 <> 0)
           - uri: /moniker((this()?false()).student)
             status: 200 OK
@@ -22951,9 +22941,9 @@ tests:
                ----
                /program.fork(part_of_code){root().program{school.code,code,part_of_code},school.code,code,part_of_code}
                SELECT "PROGRAM_3"."!",
-                      "PROGRAM_1"."SCHOOL_CODE",
-                      "PROGRAM_1"."CODE",
-                      "PROGRAM_1"."PART_OF_CODE",
+                      "PROGRAM_3"."SCHOOL_CODE",
+                      "PROGRAM_3"."CODE",
+                      "PROGRAM_3"."PART_OF_CODE",
                       "PROGRAM_2"."SCHOOL_CODE",
                       "PROGRAM_2"."CODE",
                       "PROGRAM_2"."PART_OF_CODE"
@@ -22965,7 +22955,8 @@ tests:
                                ON ("PROGRAM_1"."PART_OF_CODE" = "PROGRAM_2"."PART_OF_CODE")
                     INNER JOIN (SELECT 1 AS "!",
                                        "PROGRAM"."SCHOOL_CODE",
-                                       "PROGRAM"."CODE"
+                                       "PROGRAM"."CODE",
+                                       "PROGRAM"."PART_OF_CODE"
                                 FROM "PROGRAM") "PROGRAM_3"
                                ON (("PROGRAM_1"."SCHOOL_CODE" = "PROGRAM_3"."SCHOOL_CODE") AND ("PROGRAM_1"."CODE" = "PROGRAM_3"."CODE"))
                ORDER BY 2 ASC, 3 ASC, 5 ASC, 6 ASC
@@ -23585,20 +23576,17 @@ tests:
                ----
                /school{name,count(program),top(program){title,count(student)}}?campus='old'
                SELECT "SCHOOL"."NAME",
-                      COALESCE("PROGRAM_1"."count", 0),
-                      "PROGRAM_2"."?",
-                      "PROGRAM_3"."TITLE",
-                      "PROGRAM_2"."count"
+                      COALESCE("PROGRAM_2"."count", 0),
+                      "PROGRAM_1"."?",
+                      "PROGRAM_1"."TITLE",
+                      "PROGRAM_1"."count"
                FROM "SCHOOL"
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
-                                            "PROGRAM"."SCHOOL_CODE"
-                                     FROM "PROGRAM"
-                                     GROUP BY "PROGRAM"."SCHOOL_CODE") "PROGRAM_1"
-                                    ON ("SCHOOL"."CODE" = "PROGRAM_1"."SCHOOL_CODE")
                     LEFT OUTER JOIN (SELECT 1 AS "?",
+                                            "PROGRAM"."TITLE",
                                             COALESCE("STUDENT"."count", 0) AS "count",
                                             "PROGRAM"."SCHOOL_CODE"
-                                     FROM (SELECT "PROGRAM"."SCHOOL_CODE",
+                                     FROM (SELECT "PROGRAM"."TITLE",
+                                                  "PROGRAM"."SCHOOL_CODE",
                                                   "PROGRAM"."CODE",
                                                   ROW_NUMBER() OVER (PARTITION BY "PROGRAM"."SCHOOL_CODE" ORDER BY "PROGRAM"."SCHOOL_CODE" ASC, "PROGRAM"."CODE" ASC) AS "top"
                                            FROM "PROGRAM") "PROGRAM"
@@ -23609,17 +23597,13 @@ tests:
                                                            GROUP BY "STUDENT"."SCHOOL_CODE", "STUDENT"."PROGRAM_CODE") "STUDENT"
                                                           ON (("PROGRAM"."SCHOOL_CODE" = "STUDENT"."SCHOOL_CODE") AND ("PROGRAM"."CODE" = "STUDENT"."PROGRAM_CODE"))
                                      WHERE ("PROGRAM"."top" >= 1)
-                                           AND ("PROGRAM"."top" < 2)) "PROGRAM_2"
-                                    ON ("SCHOOL"."CODE" = "PROGRAM_2"."SCHOOL_CODE")
-                    LEFT OUTER JOIN (SELECT "PROGRAM"."TITLE",
+                                           AND ("PROGRAM"."top" < 2)) "PROGRAM_1"
+                                    ON ("SCHOOL"."CODE" = "PROGRAM_1"."SCHOOL_CODE")
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
                                             "PROGRAM"."SCHOOL_CODE"
-                                     FROM (SELECT "PROGRAM"."TITLE",
-                                                  "PROGRAM"."SCHOOL_CODE",
-                                                  ROW_NUMBER() OVER (PARTITION BY "PROGRAM"."SCHOOL_CODE" ORDER BY "PROGRAM"."SCHOOL_CODE" ASC, "PROGRAM"."CODE" ASC) AS "top"
-                                           FROM "PROGRAM") "PROGRAM"
-                                     WHERE ("PROGRAM"."top" >= 1)
-                                           AND ("PROGRAM"."top" < 2)) "PROGRAM_3"
-                                    ON ("SCHOOL"."CODE" = "PROGRAM_3"."SCHOOL_CODE")
+                                     FROM "PROGRAM"
+                                     GROUP BY "PROGRAM"."SCHOOL_CODE") "PROGRAM_2"
+                                    ON ("SCHOOL"."CODE" = "PROGRAM_2"."SCHOOL_CODE")
                WHERE ("SCHOOL"."CAMPUS" = 'old')
                ORDER BY "SCHOOL"."CODE" ASC
           - uri: /school{name, count(program), /top(program,3){title, count(student)}}?campus='old'
@@ -24106,15 +24090,13 @@ tests:
                ----
                /department{id(),school{id()}}
                SELECT "DEPARTMENT"."CODE",
-                      "SCHOOL_1"."!",
-                      "SCHOOL_2"."CODE"
+                      "SCHOOL"."!",
+                      "SCHOOL"."CODE"
                FROM "DEPARTMENT"
                     LEFT OUTER JOIN (SELECT 1 AS "!",
                                             "SCHOOL"."CODE"
-                                     FROM "SCHOOL") "SCHOOL_1"
-                                    ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL_1"."CODE")
-                    LEFT OUTER JOIN "SCHOOL" "SCHOOL_2"
-                                    ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL_2"."CODE")
+                                     FROM "SCHOOL") "SCHOOL"
+                                    ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL"."CODE")
                ORDER BY 1 ASC
           - uri: /course[astro.105].class.id()
             status: 200 OK
@@ -31018,15 +31000,14 @@ tests:
              ----
              /department{name,school{}}?!school|school.campus='north'
              SELECT "DEPARTMENT"."NAME",
-                    "SCHOOL_1"."school"
+                    "SCHOOL"."school"
              FROM "DEPARTMENT"
                   LEFT OUTER JOIN (SELECT 1 AS "school",
+                                          "SCHOOL"."CAMPUS",
                                           "SCHOOL"."CODE"
-                                   FROM "SCHOOL") "SCHOOL_1"
-                                  ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL_1"."CODE")
-                  LEFT OUTER JOIN "SCHOOL" "SCHOOL_2"
-                                  ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL_2"."CODE")
-             WHERE (("SCHOOL_1"."school" IS NULL) OR ("SCHOOL_2"."CAMPUS" = 'north'))
+                                   FROM "SCHOOL") "SCHOOL"
+                                  ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL"."CODE")
+             WHERE (("SCHOOL"."school" IS NULL) OR ("SCHOOL"."CAMPUS" = 'north'))
              ORDER BY "DEPARTMENT"."CODE" ASC
       - suite: special-characters
         tests:
@@ -35869,25 +35850,23 @@ tests:
              SELECT "field"."table_name",
                     "field"."name",
                     "field"."kind",
-                    "column_1"."!",
-                    "column_2"."domain",
-                    "link_1"."!",
-                    "link_2"."is_singular"
+                    "column"."!",
+                    "column"."domain",
+                    "link"."!",
+                    "link"."is_singular"
              FROM "field"
                   LEFT OUTER JOIN (SELECT 1 AS "!",
+                                          "column"."domain",
                                           "column"."table_name",
                                           "column"."name"
-                                   FROM "column") AS "column_1"
-                                  ON (("field"."table_name" = "column_1"."table_name") AND ("field"."name" = "column_1"."name"))
-                  LEFT OUTER JOIN "column" AS "column_2"
-                                  ON (("field"."table_name" = "column_2"."table_name") AND ("field"."name" = "column_2"."name"))
+                                   FROM "column") AS "column"
+                                  ON (("field"."table_name" = "column"."table_name") AND ("field"."name" = "column"."name"))
                   LEFT OUTER JOIN (SELECT 1 AS "!",
+                                          "link"."is_singular",
                                           "link"."table_name",
                                           "link"."name"
-                                   FROM "link") AS "link_1"
-                                  ON (("field"."table_name" = "link_1"."table_name") AND ("field"."name" = "link_1"."name"))
-                  LEFT OUTER JOIN "link" AS "link_2"
-                                  ON (("field"."table_name" = "link_2"."table_name") AND ("field"."name" = "link_2"."name"))
+                                   FROM "link") AS "link"
+                                  ON (("field"."table_name" = "link"."table_name") AND ("field"."name" = "link"."name"))
              WHERE ("field"."table_name" = 'school')
              ORDER BY 1 ASC, 2 ASC
         - uri: /column?table_name='program' {table{name}, field{name, sort}} /:meta
@@ -35940,24 +35919,21 @@ tests:
                     "link_1"."target_name",
                     "link_1"."name",
                     "link_2"."!",
-                    "link_3"."name",
-                    "link_4"."!",
-                    "link_5"."name"
+                    "link_2"."name",
+                    "link_3"."!",
+                    "link_3"."name"
              FROM "link" AS "link_1"
                   LEFT OUTER JOIN (SELECT 1 AS "!",
-                                          "link"."table_name",
-                                          "link"."name"
+                                          "link"."name",
+                                          "link"."table_name"
                                    FROM "link") AS "link_2"
                                   ON (("link_1"."target_name" = "link_2"."table_name") AND ("link_1"."reverse_name" = "link_2"."name"))
-                  LEFT OUTER JOIN "link" AS "link_3"
-                                  ON (("link_1"."target_name" = "link_3"."table_name") AND ("link_1"."reverse_name" = "link_3"."name"))
                   LEFT OUTER JOIN (SELECT 1 AS "!",
+                                          "link"."name",
                                           "link"."target_name",
                                           "link"."reverse_name"
-                                   FROM "link") AS "link_4"
-                                  ON (("link_1"."table_name" = "link_4"."target_name") AND ("link_1"."name" = "link_4"."reverse_name"))
-                  LEFT OUTER JOIN "link" AS "link_5"
-                                  ON (("link_1"."table_name" = "link_5"."target_name") AND ("link_1"."name" = "link_5"."reverse_name"))
+                                   FROM "link") AS "link_3"
+                                  ON (("link_1"."table_name" = "link_3"."target_name") AND ("link_1"."name" = "link_3"."reverse_name"))
              WHERE ("link_1"."table_name" = 'student')
              ORDER BY 1 ASC, 3 ASC
         - uri: /count(table)/:meta
