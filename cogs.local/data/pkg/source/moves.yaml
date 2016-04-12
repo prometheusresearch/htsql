@@ -62,7 +62,6 @@ variables:
     htsql
     htsql_sqlite
   install-requires: |
-    setuptools
     pyyaml
   console-scripts: |
     htsql-ctl = htsql.ctl:main
