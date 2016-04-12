@@ -5,9 +5,9 @@
 
 from ..adapter import Adapter, adapt, adapt_many
 from ..domain import (Domain, UntypedDomain, EntityDomain, RecordDomain,
-        BooleanDomain, NumberDomain, IntegerDomain, DecimalDomain, FloatDomain,
-        TextDomain, EnumDomain, DateDomain, TimeDomain, DateTimeDomain,
-        OpaqueDomain)
+        IdentityDomain, BooleanDomain, NumberDomain, IntegerDomain,
+        DecimalDomain, FloatDomain, TextDomain, EnumDomain, DateDomain,
+        TimeDomain, DateTimeDomain, OpaqueDomain)
 from ..error import Error, translate_guard
 from .coerce import coerce
 from .flow import (Flow, CollectFlow, SelectionFlow, HomeFlow,
@@ -154,7 +154,8 @@ class UnpackCollect(Unpack):
             code = self.state.encode(self.flow.seed)
             units = code.units
             space = None
-        elif isinstance(self.flow.seed.domain, RecordDomain):
+        elif isinstance(self.flow.seed.domain,
+                (RecordDomain, IdentityDomain)):
             bundle = self.state.unpack(self.flow.seed)
             space = self.state.relate(self.flow.seed)
             units = None
@@ -908,12 +909,23 @@ class UnpackIdentity(Unpack):
         segments = []
         indicators =  []
         space = self.state.relate(self.flow)
-        indicator = LiteralCode(True, coerce(BooleanDomain()), self.flow)
-        indicator = ScalarUnit(indicator, space, self.flow)
-        indicators.append(indicator)
+        true_indicator = LiteralCode(True, coerce(BooleanDomain()), self.flow)
+        true_indicator = ScalarUnit(true_indicator, space, self.flow)
+        indicators.append(true_indicator)
         for element in self.flow.elements:
             bundle = self.state.unpack(element)
-            codes.extend(bundle.codes)
+            for code in bundle.codes:
+                if (isinstance(code, ScalarUnit) and
+                    code.space.dominates(space) and
+                    isinstance(code.code, LiteralCode) and
+                    code.code.value is True):
+                    code = true_indicator
+                elif (not space.is_inflated and
+                      isinstance(code, ColumnUnit) and
+                      code.space.dominates(space) and
+                      code.space != space):
+                    code = code.clone(space=code.space.inflate())
+                codes.append(code)
             segments.extend(bundle.segments)
             if bundle.codes:
                 indicator = bundle.codes[0]
