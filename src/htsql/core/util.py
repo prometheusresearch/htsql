@@ -367,7 +367,7 @@ class TextBuffer(object):
     """
 
     # Characters to skip over.
-    skip_regexp = re.compile(r"(?: \s+ | [#] [^\r\n]* )+", re.X)
+    skip_regexp = re.compile(r"(?: \s+ | [#] [^\r\n]* )+", re.X|re.U)
 
     def __init__(self, text):
         assert isinstance(text, (str, unicode))
@@ -400,7 +400,7 @@ class TextBuffer(object):
             otherwise.
         """
         # Match the given pattern against the buffer head.
-        regexp = re.compile(pattern, re.X)
+        regexp = re.compile(pattern, re.X|re.U)
         match = regexp.match(self.text, self.index)
         return (match is not None)
 
@@ -422,7 +422,7 @@ class TextBuffer(object):
         # The matching block of text.
         block = None
         # Match the given pattern against the buffer head.
-        regexp = re.compile(pattern, re.X)
+        regexp = re.compile(pattern, re.X|re.U)
         match = regexp.match(self.text, self.index)
         if match is not None:
             # Extract the block that matched the pattern.
@@ -1080,7 +1080,7 @@ class DB(Clonable, Hashable, Printable):
     # 'engine://username:password@host:port/database?options'.
     key_chars = r'''[%0-9a-zA-Z_.-]+'''
     value_chars = r'''[%0-9a-zA-Z`~!#$^*()_+\\|\[\]{};'",.<>/-]+'''
-    pattern = r'''(?x)
+    pattern = r'''
         ^
         (?P<engine> %(key_chars)s )
         :
@@ -1098,7 +1098,7 @@ class DB(Clonable, Hashable, Printable):
                 (?: & %(key_chars)s = (?: %(value_chars)s )? )* )? )?
         $
     ''' % vars()
-    regexp = re.compile(pattern)
+    regexp = re.compile(pattern, re.X|re.U)
 
     def __init__(self, engine, database, username=None, password=None,
                  host=None, port=None, options=None):
