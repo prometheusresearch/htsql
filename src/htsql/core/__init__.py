@@ -6,7 +6,7 @@
 from . import (adapter, addon, application, cache, cmd, connect, context,
         domain, entity, error, introspect, split_sql, syn, tr, util, validator,
         wsgi)
-from .validator import DBVal, StrVal, BoolVal
+from .validator import DBVal, StrVal, BoolVal, UIntVal
 from .addon import Addon, Parameter, Variable, addon_registry
 from .connect import connect
 from .error import Error
@@ -40,6 +40,9 @@ class HTSQLAddon(Addon):
     The parameter `password` sets the database password.  It overrides
     the password given as a part of `db` parameter.
 
+    The parameter `query_cache_size` specifies the number of cached
+    query plans.  The default value is 1024.
+
     The parameter `debug`, if set to `True`, enables debug output.
     """
 
@@ -49,6 +52,9 @@ class HTSQLAddon(Addon):
                       hint="""the connection URI"""),
             Parameter('password', StrVal(),
                       hint="""override the password"""),
+            Parameter('query_cache_size', UIntVal(), default=1024,
+                      value_name="""size""",
+                      hint="""max size of the query cache"""),
             Parameter('debug', BoolVal(), default=False,
                       hint="""dump debug information""")
     ]

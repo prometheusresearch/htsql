@@ -36,7 +36,7 @@ class LRUCache(object):
 
     __slots__ = ('head', 'tail', 'items', 'size')
 
-    def __init__(self, size=4096):
+    def __init__(self, size):
         self.head = None
         self.tail = None
         self.items = {}
@@ -82,7 +82,10 @@ def cache_plan(key, plan):
         try:
             mapping = cache.values[cache_plan]
         except KeyError:
-            mapping = cache.values[cache_plan] = LRUCache()
+            size = context.app.htsql.query_cache_size
+            if not size:
+                return
+            mapping = cache.values[cache_plan] = LRUCache(size=size)
         mapping[key] = plan
 
 
