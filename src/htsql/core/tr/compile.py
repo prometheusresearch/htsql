@@ -614,6 +614,7 @@ class CompileSegment(Compile):
         for segment in self.expression.dependents:
             if segment in subtrees:
                 dependents.append(subtrees[segment])
+                continue
             self.state.push_superspace(self.expression.root)
             self.state.push_superspace(self.expression.space)
             term = self.state.compile(segment)
