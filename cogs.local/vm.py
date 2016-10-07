@@ -32,7 +32,7 @@ DEBIAN_ISO_URLS = [
 ]
 
 UBUNTU_ISO_URLS = [
-    "http://releases.ubuntu.com/precise/ubuntu-12.04.1-server-i386.iso",
+    "http://releases.ubuntu.com/16.04.1/ubuntu-16.04.1-server-i386.iso",
 ]
 
 CENTOS_ISO_URLS = [
@@ -540,7 +540,7 @@ class LinuxBenchVM(VM):
             self.put(DATA_ROOT+"/vm/%s-update.sh" % self.name, "/root/update.sh")
             self.run("/root/update.sh")
             self.run("rm /root/update.sh")
-            self.run("poweroff")
+            self.run("shutdown")
             self.wait()
             #self.compress(parent_vm.name)
             self.kvm("-daemonize")
@@ -650,7 +650,7 @@ def DEBIAN_ISO(path=None):
 
 @setting
 def UBUNTU_ISO(path=None):
-    """path to Ubuntu 12.04 CDROM image"""
+    """path to Ubuntu 16.04 CDROM image"""
     env.add(ubuntu_iso=path or None)
 
 

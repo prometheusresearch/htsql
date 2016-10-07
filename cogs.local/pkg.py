@@ -17,7 +17,7 @@ import yaml
 
 
 KEYSIG = '8E70D862' # identifier for HTSQL package signing key
-src_vm = LinuxBenchVM('src', 'debian', 22)
+src_vm = LinuxBenchVM('src', 'ubuntu', 22)
 rpm_vm = LinuxBenchVM('rpm', 'centos', 22)
 deb_vm = LinuxBenchVM('deb', 'debian', 22)
 

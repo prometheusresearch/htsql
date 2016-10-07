@@ -12,8 +12,8 @@ apt-get -q update
 # Install Mercurial.
 apt-get -qy install mercurial
 
-# Install Python 2.6 and required Python packages.
-apt-get -qy install python2.6
+# Install Python 2.7 and required Python packages.
+apt-get -qy install python2.7
 apt-get -qy install python-setuptools
 apt-get -qy install python-pip
 apt-get -qy install python-yaml
