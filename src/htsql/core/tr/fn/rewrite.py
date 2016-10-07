@@ -6,7 +6,7 @@
 from ...adapter import adapt, adapt_none
 from ..space import LiteralCode, FormulaCode
 from ..rewrite import RewriteBySignature
-from .signature import SubstringSig
+from .signature import SubstringSig, ExtractSig
 
 
 class RewriteFunction(RewriteBySignature):
@@ -27,6 +27,12 @@ class RewriteFunction(RewriteBySignature):
 class RewriteSubstring(RewriteFunction):
 
     adapt(SubstringSig)
+    is_null_regular = True
+
+
+class RewriteExtract(RewriteFunction):
+
+    adapt(ExtractSig)
     is_null_regular = True
 
 
