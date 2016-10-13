@@ -188,7 +188,7 @@ def prepare_parse():
                             rarm = stream.pull()        # assignment
                             rarms.append(rarm)
                         stream.pull()                   # `)`
-                    else:
+                    elif not (stream.peek(u'+') or stream.peek(u'-')):
                         rarm = stream.pull()            # flow_assignment
                         rarms.append(rarm)
                 is_flow = True
