@@ -58,7 +58,7 @@ class BuildExecuteClone(Utility):
                 if arc.column not in output_columns:
                     output_columns.append(arc.column)
             elif isinstance(arc, ChainArc):
-                for column in joins[0].origin_columns:
+                for column in arc.joins[0].origin_columns:
                     if column not in output_columns:
                         output_columns.append(column)
         syntax = VoidSyntax()
