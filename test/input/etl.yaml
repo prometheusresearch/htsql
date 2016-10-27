@@ -64,6 +64,9 @@ tests:
 - uri: /{manufacturer:='0992',
          code:='Z', title:='IdeaPad Z Series'} :as product_line
         /:insert
+- uri: /product_line[0992.Z]{
+         id(), code:='N', title:='IdeaPad N Series'}
+        /:clone
 - uri: /product_line
 - uri: /insert(product:={sku:='A0000001',
                          product_line:='6702.E',
@@ -73,6 +76,19 @@ tests:
 - uri: /merge(product:={sku:='A0000002',
                         product_line:=[0992.Z],
                         title:='Lenovo IdeaPad Z580'})
+- uri: /clone(product[A0000002]{id(),
+                                title:='Lenovo IdeaPad Z585',
+                                list_price:='749.00'})
+  expect: 409
+  ignore: true
+- uri: /clone(product[A0000002]{id(),
+                                sku:='A0000005',
+                                title:='Lenovo IdeaPad Z585',
+                                list_price:='749.00'})
+- uri: /clone(product[A0000002]{id(),
+                                sku:='A0000006',
+                                product_line:=[0992.N],
+                                title:='Lenovo IdeaPad N585'})
 - uri: /merge(product:={sku:='A0000002',
                         description:='IdeaPad Z Series laptops offer you a great balance of multimedia performance, affordability, and bold style, so you’re sure to make impressions as well as be entertained - no matter where you go',
                         list_price:='699.00'})

@@ -32,6 +32,10 @@ class UpdateCmd(ETLCmd):
     pass
 
 
+class CloneCmd(ETLCmd):
+    pass
+
+
 class DeleteCmd(ETLCmd):
     pass
 

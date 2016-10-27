@@ -10,8 +10,8 @@ from ....core.model import HomeNode, TableArc
 from ....core.entity import TableEntity
 from ....core.cmd.summon import Summon, recognize
 from ....core.syn.syntax import IdentifierSyntax, AssignSyntax, ReferenceSyntax
-from ..cmd.command import (CopyCmd, InsertCmd, MergeCmd, UpdateCmd, DeleteCmd,
-        TruncateCmd, DoCmd, IfCmd, ForCmd, WithCmd)
+from ..cmd.command import (CopyCmd, InsertCmd, MergeCmd, UpdateCmd, CloneCmd,
+        DeleteCmd, TruncateCmd, DoCmd, IfCmd, ForCmd, WithCmd)
 
 
 class SummonETL(Summon):
@@ -49,6 +49,12 @@ class SummonUpdate(SummonETL):
 
     call('update')
     cmd = UpdateCmd
+
+
+class SummonClone(SummonETL):
+
+    call('clone')
+    cmd = CloneCmd
 
 
 class SummonDelete(SummonETL):

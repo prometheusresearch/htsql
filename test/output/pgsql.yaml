@@ -39943,6 +39943,16 @@ tests:
           -+--------------+-
            | 0992.Z       |
 
+      - uri: /product_line[0992.Z]{ id(), code:='N', title:='IdeaPad N Series'} /:clone
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: |2+
+           | product_line |
+          -+--------------+-
+           | 0992.N       |
+
       - uri: /product_line
         status: 200 OK
         headers:
@@ -39953,6 +39963,7 @@ tests:
            +-------------------+------+--------------------+
            | manufacturer_code | code | title              |
           -+-------------------+------+--------------------+-
+           | 0992              | N    | IdeaPad N Series   |
            | 0992              | Z    | IdeaPad Z Series   |
            | 2376              | U    | Extreme Ultrabook  |
            | 6702              | E    | Lifebook E Series  |
@@ -39992,6 +40003,47 @@ tests:
            | product  |
           -+----------+-
            | A0000002 |
+
+      - uri: /clone(product[A0000002]{id(), title:='Lenovo IdeaPad Z585', list_price:='749.00'})
+        status: 409 Conflict
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        body: |
+          Got an error from the database driver:
+              duplicate key value violates unique constraint "product_pk"
+              DETAIL:  Key (sku)=(A0000002) already exists.
+          While executing SQL:
+              INSERT INTO "public"."product" ("sku", "manufacturer_code", "product_line_code", "title", "is_available", "description", "list_price")
+              VALUES (%s, %s, %s, %s, %s, %s, %s)
+              RETURNING "sku"
+          With parameters:
+              (u'A0000002', u'0992', u'Z', u'Lenovo IdeaPad Z585', True, None, Decimal('749.00'))
+          While cloning a record:
+              {[A0000002], 'Lenovo IdeaPad Z585', '749.00'}
+          While processing:
+              /clone(product[A0000002]{id(), title:='Lenovo IdeaPad Z585', list_price:='749.00'})
+               ^^^^^
+      - uri: /clone(product[A0000002]{id(), sku:='A0000005', title:='Lenovo IdeaPad
+          Z585', list_price:='749.00'})
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: |2+
+           | product  |
+          -+----------+-
+           | A0000005 |
+
+      - uri: /clone(product[A0000002]{id(), sku:='A0000006', product_line:=[0992.N],
+          title:='Lenovo IdeaPad N585'})
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        - [Vary, Accept]
+        body: |2+
+           | product  |
+          -+----------+-
+           | A0000006 |
 
       - uri: "/merge(product:={sku:='A0000002', description:='IdeaPad Z Series laptops
           offer you a great balance of multimedia performance, affordability, and
@@ -40191,7 +40243,11 @@ tests:
           ThinkPad T430        | true         |                                  |
           \           |\n | A0000004 | SNY               |                   | Sony
           Vaio SVE1711X1EB       | true         |                                  |
-          \   1023.20 |\n\n ----\n /product\n SELECT \"product\".\"sku\",\n        \"product\".\"manufacturer_code\",\n
+          \   1023.20 |\n | A0000005 | 0992              | Z                 | Lenovo
+          IdeaPad Z585         | true         |                                  |
+          \    749.00 |\n | A0000006 | 0992              | N                 | Lenovo
+          IdeaPad N585         | true         |                                  |
+          \           |\n\n ----\n /product\n SELECT \"product\".\"sku\",\n        \"product\".\"manufacturer_code\",\n
           \       \"product\".\"product_line_code\",\n        \"product\".\"title\",\n
           \       \"product\".\"is_available\",\n        \"product\".\"description\",\n
           \       \"product\".\"list_price\"\n FROM \"product\"\n ORDER BY 1 ASC\n"
@@ -40320,6 +40376,8 @@ tests:
            | A0000002.1       |
            | A0000003.1       |
            | A0000004.1       |
+           | A0000005.1       |
+           | A0000006.1       |
 
       - uri: /with(/category, /product)
         status: 400 Bad Request
