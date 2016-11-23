@@ -14327,6 +14327,67 @@ tests:
              ----
              /{sqrt(2),sqrt(2.0),sqrt(2e0)}
              SELECT SQRT(2.0::FLOAT8)
+        - uri: /accumulate(1,2,3)
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | accumulate(1,2,3) |
+            -+-------------------+-
+             |                 6 |
+
+             ----
+             /accumulate(1,2,3)
+             SELECT (1 + 2 + 3)
+             WHERE ((1 + 2 + 3) IS NOT NULL)
+        - uri: /accumulate(null)
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | accumulate(null) |
+            -+------------------+-
+             |                0 |
+
+             ----
+             /accumulate(null)
+             SELECT (0)
+             WHERE ((0) IS NOT NULL)
+        - uri: /accumulate(0,1,false,true,0=1,0!=1)
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Vary, Accept]
+          body: |2
+             | accumulate(0,1,false,true,0=1,0!=1) |
+            -+-------------------------------------+-
+             |                                   3 |
+
+             ----
+             /accumulate(0,1,false,true,0=1,0!=1)
+             SELECT (0 + 1 + (CASE WHEN FALSE THEN 1 ELSE 0 END) + (CASE WHEN TRUE THEN 1 ELSE 0 END) + (CASE WHEN (0 = 1) THEN 1 ELSE 0 END) + (CASE WHEN (0 <> 1) THEN 1 ELSE 0 END))
+             WHERE ((0 + 1 + (CASE WHEN FALSE THEN 1 ELSE 0 END) + (CASE WHEN TRUE THEN 1 ELSE 0 END) + (CASE WHEN (0 = 1) THEN 1 ELSE 0 END) + (CASE WHEN (0 <> 1) THEN 1 ELSE 0 END)) IS NOT NULL)
+        - uri: /accumulate(0,'one')
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            invalid integer literal: expected an integer in a decimal format; got 'one'
+            While translating:
+                /accumulate(0,'one')
+                              ^^^^^
+        - uri: /accumulate(0,text('one'))
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            Expected an integer value, got:
+                text
+            While translating:
+                /accumulate(0,text('one'))
+                              ^^^^^^^^^^^
       - suite: text-functions-and-operators
         tests:
         - uri: /{text(null()), text('OMGWTFBBQ')}

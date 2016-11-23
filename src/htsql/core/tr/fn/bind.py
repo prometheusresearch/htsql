@@ -44,9 +44,10 @@ from .signature import (AsSig, LimitSig, SortSig, CastSig, MakeDateSig,
         SubtractSig, DateDecrementSig, DateTimeDecrementSig, DateDifferenceSig,
         TodaySig, NowSig, MultiplySig, DivideSig, IfSig, SwitchSig,
         KeepPolaritySig, ReversePolaritySig, RoundSig, RoundToSig, TruncSig,
-        TruncToSig, SquareRootSig, LengthSig, ContainsSig, HasPrefixSig, ExistsSig, CountSig,
-        MinMaxSig, SumSig, AvgSig, AggregateSig, QuantifySig, DefineSig,
-        GivenSig, SelectSig, LinkSig, TopSig, GuardSig)
+        TruncToSig, SquareRootSig, LengthSig, ContainsSig, HasPrefixSig,
+        ExistsSig, CountSig, MinMaxSig, SumSig, AvgSig, AggregateSig,
+        QuantifySig, DefineSig, GivenSig, SelectSig, LinkSig, TopSig, GuardSig,
+        AccumulateSig)
 import sys
 
 
@@ -2387,5 +2388,40 @@ class CorrelateFloatAvg(CorrelateFunction):
     signature = AvgSig
     domains = [FloatDomain()]
     codomain = FloatDomain()
+
+
+class BindAccumulate(BindFunction):
+
+    call('accumulate')
+    signature = AccumulateSig
+
+    def correlate(self, ops):
+        zero = LiteralBinding(
+                self.state.scope, 0, coerce(IntegerDomain()), self.syntax)
+        one = LiteralBinding(
+                self.state.scope, 1, coerce(IntegerDomain()), self.syntax)
+        addends = []
+        for op in ops:
+            if isinstance(op.domain, BooleanDomain):
+                op = FormulaBinding(
+                        self.state.scope,
+                        IfSig(), IntegerDomain(), op.syntax,
+                        predicates=[op],
+                        consequents=[one],
+                        alternative=zero)
+            if not isinstance(op.domain, IntegerDomain):
+                domain = coerce(op.domain, IntegerDomain())
+                if not isinstance(domain, IntegerDomain):
+                    with translate_guard(op):
+                        raise Error(
+                                "Expected an integer value, got", str(op.domain))
+                op = ImplicitCastBinding(op, domain, op.syntax)
+            op = FormulaBinding(
+                    self.state.scope,
+                    IfNullSig(), op.domain, op.syntax, lop=op, rop=zero)
+            addends.append(op)
+        return FormulaBinding(self.state.scope,
+                              self.signature(), IntegerDomain(), self.syntax,
+                              ops=addends)
 
 

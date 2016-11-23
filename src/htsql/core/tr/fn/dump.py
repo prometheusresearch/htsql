@@ -19,7 +19,8 @@ from .signature import (AddSig, ConcatenateSig, DateIncrementSig,
         SubstringSig, UpperSig, LowerSig, TrimSig, TodaySig, NowSig,
         MakeDateSig, MakeDateTimeSig, CombineDateTimeSig, ExtractYearSig,
         ExtractMonthSig, ExtractDaySig, ExtractHourSig, ExtractMinuteSig,
-        ExtractSecondSig, ExistsSig, CountSig, MinMaxSig, SumSig, AvgSig)
+        ExtractSecondSig, ExistsSig, CountSig, MinMaxSig, SumSig, AvgSig,
+        AccumulateSig)
 
 
 class DumpFunction(DumpBySignature):
@@ -335,5 +336,11 @@ class DumpAvg(DumpFunction):
 
     adapt(AvgSig)
     template = "AVG({op})"
+
+
+class DumpAccumulate(DumpFunction):
+
+    adapt(AccumulateSig)
+    template = "({ops:union{ + }})"
 
 

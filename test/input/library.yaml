@@ -384,6 +384,15 @@ tests:
   # Square root
   - uri: /{sqrt(2), sqrt(2.0), sqrt(2e0)}
 
+  # Accumulate
+  - uri: /accumulate(1,2,3)
+  - uri: /accumulate(null)
+  - uri: /accumulate(0,1,false,true,0=1,0!=1)
+  - uri: /accumulate(0,'one')
+    expect: 400
+  - uri: /accumulate(0,text('one'))
+    expect: 400
+
 ########################################################################
 
 - title: Text Functions and Operators

@@ -401,3 +401,7 @@ class GivenSig(NArySig):
     pass
 
 
+class AccumulateSig(ConnectiveSig):
+    pass
+
+
