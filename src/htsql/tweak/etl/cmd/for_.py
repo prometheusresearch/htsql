@@ -23,7 +23,8 @@ class ProduceFor(Act):
         with transaction():
             input = act(self.command.iterator, self.action)
             if not (isinstance(input.domain, ListDomain) or
-                    isinstance(input.domain, RecordDomain)):
+                    isinstance(input.domain, RecordDomain) or
+                    input.data is None):
                 with act_guard(self.command.iterator):
                     raise Error("Expected a list value")
             if input:
