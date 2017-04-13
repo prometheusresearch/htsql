@@ -20,7 +20,7 @@ from .space import (RootSpace, ScalarSpace, DirectTableSpace, FiberTableSpace,
         QuotientSpace, ComplementSpace, MonikerSpace, LocatorSpace,
         ForkedSpace, AttachSpace, ClippedSpace, FilteredSpace, OrderedSpace,
         SegmentExpr, LiteralCode, FormulaCode, CastCode, ColumnUnit,
-        ScalarUnit, KernelUnit)
+        ScalarUnit, KernelUnit, CoveringUnit)
 from .signature import Signature, IsNullSig, NullIfSig, IsEqualSig, AndSig
 import decimal
 
@@ -378,6 +378,38 @@ class RelateAttach(Relate):
         if self.flow.condition is not None:
             filter = self.state.encode(self.flow.condition)
         return AttachSpace(base, seed, images, filter, self.flow)
+
+
+class EncodeClip(Encode):
+
+    adapt(ClipFlow)
+
+    def __call__(self):
+        root = self.state.relate(self.flow.base)
+        code = self.state.encode(self.flow.seed)
+        units = [unit for unit in code.units]
+        if not units:
+            space = RootSpace(None, self.flow)
+        else:
+            spaces = []
+            for unit in units:
+                if any(space.dominates(unit.space) for space in spaces):
+                    continue
+                spaces = [space for space in spaces
+                              if not unit.space.dominates(space)]
+                spaces.append(unit.space)
+            if len(spaces) > 1:
+                raise Error("Cannot deduce an unambiguous clip flow")
+            else:
+                [space] = spaces
+        if not space.spans(root):
+            raise Error("Expected a descendant clip flow")
+        filter = FormulaCode(IsNullSig(-1), coerce(BooleanDomain()),
+                             code.flow, op=code)
+        space = FilteredSpace(space, filter, space.flow)
+        space = ClippedSpace(root, space, self.flow.limit,
+                             self.flow.offset, self.flow)
+        return CoveringUnit(code, space, self.flow)
 
 
 class RelateClip(Relate):
