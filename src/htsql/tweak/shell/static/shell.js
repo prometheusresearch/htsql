@@ -1343,5 +1343,22 @@ $(document).ready(function() {
         run(config.queryOnStart, null, null, true);
     }
 
-});
+    if (typeof window.addEventListener === 'function') {
 
+        function handleMessage(evt) {
+            switch (evt.data.type) {
+                case 'getQuery':
+                    evt.source.postMessage({
+                        id: evt.data.id,
+                        data: getQuery(),
+                    }, '*');
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        window.addEventListener('message', handleMessage);
+    }
+
+});
