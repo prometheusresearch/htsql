@@ -1344,14 +1344,18 @@ $(document).ready(function() {
     }
 
     if (typeof window.addEventListener === 'function') {
+       var allowedOrigin = window.location.origin;
 
         function handleMessage(evt) {
+            if (evt.origin !== allowedOrigin) {
+                return;
+            }
             switch (evt.data.type) {
                 case 'getQuery':
                     evt.source.postMessage({
                         id: evt.data.id,
                         data: getQuery(),
-                    }, '*');
+                    }, allowedOrigin);
                     break;
                 default:
                     break;
