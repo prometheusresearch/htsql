@@ -51,6 +51,6 @@ class ProduceWith(Act):
             else:
                 meta = decorate(VoidBinding())
                 meta = meta.clone(domain=UntypedDomain())
-                return Product(meta, output)
+                return Product(meta, None)
 
 
