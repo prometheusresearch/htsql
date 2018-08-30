@@ -121,7 +121,7 @@ class htsql_download_vendor(Command):
                 remove_tree(build_dir)
             os.makedirs(build_dir)
             if url.endswith('.zip'):
-                archive = zipfile.ZipFile(io.StringIO(data))
+                archive = zipfile.ZipFile(io.BytesIO(data))
                 entries = archive.infolist()
                 assert entries
                 common = entries[0].filename
