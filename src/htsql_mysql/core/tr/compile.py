@@ -19,12 +19,12 @@ from .signature import (UserVariableSig, UserVariableAssignmentSig,
 class MySQLCompileCovering(CompileCovering):
 
     def clip(self, term, order, partition):
-        prefix = u"!htsql:%s" % term.tag
-        row_number = FormulaCode(UserVariableSig(u"%s:row_number" % prefix),
+        prefix = "!htsql:%s" % term.tag
+        row_number = FormulaCode(UserVariableSig("%s:row_number" % prefix),
                                  coerce(IntegerDomain()), self.space.flow)
         keys = []
         for idx, code in enumerate(partition):
-            key = FormulaCode(UserVariableSig(u"%s:partition:%s"
+            key = FormulaCode(UserVariableSig("%s:partition:%s"
                                               % (prefix, idx+1)),
                                               code.domain, self.space.flow)
             keys.append(key)

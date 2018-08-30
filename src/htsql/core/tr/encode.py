@@ -591,7 +591,7 @@ class ConvertUntyped(Convert):
         # a `ValueError` if the literal is not in a valid format.
         try:
             value = self.domain.parse(base.value)
-        except ValueError, exc:
+        except ValueError as exc:
             # FIXME: `domain.parse()` should raise `Error`?
             raise Error(str(exc))
         # Generate a new literal node with the converted value and
@@ -659,7 +659,7 @@ class ConvertTextToBoolean(Convert):
         # Encode the operand of the cast.
         code = self.state.encode(self.base)
         # An empty string.
-        empty_literal = LiteralCode(u'', self.base.domain, self.flow)
+        empty_literal = LiteralCode('', self.base.domain, self.flow)
         # Construct: `null_if(base,'')`.
         code = FormulaCode(NullIfSig(), self.base.domain, self.flow,
                            lop=code, rop=empty_literal)

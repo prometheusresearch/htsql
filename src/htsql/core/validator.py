@@ -106,18 +106,18 @@ class StrVal(Validator):
                 raise ValueError("the null value is not permitted")
 
         # A byte or a Unicode string is expected.
-        if not isinstance(value, (str, unicode)):
+        if not isinstance(value, str):
             raise ValueError("a string value is expected; got %r" % value)
 
         # Byte strings must be UTF-8 encoded.
         if isinstance(value, str):
             try:
                 value.decode('utf-8')
-            except UnicodeDecodeError, exc:
+            except UnicodeDecodeError as exc:
                 raise ValueError("unable to decode %r: %s" % (value, exc))
 
         # Translate Unicode strings to UTF-8 encoded byte strings.
-        if isinstance(value, unicode):
+        if isinstance(value, str):
             value = value.encode('utf-8')
 
         # Verify that the value does not contain the NUL character.
@@ -168,18 +168,18 @@ class WordVal(Validator):
                 raise ValueError("the null value is not permitted")
 
         # A byte or a Unicode string is expected.
-        if not isinstance(value, (str, unicode)):
+        if not isinstance(value, str):
             raise ValueError("a string value is expected; got %r" % value)
 
         # Byte strings must be UTF-8 encoded.
         if isinstance(value, str):
             try:
                 value.decode('utf-8')
-            except UnicodeDecodeError, exc:
+            except UnicodeDecodeError as exc:
                 raise ValueError("unable to decode %r: %s" % (value, exc))
 
         # Translate Unicode strings to UTF-8 encoded byte strings.
-        if isinstance(value, unicode):
+        if isinstance(value, str):
             value = value.encode('utf-8')
 
         # Check if the string matches the word pattern.
@@ -220,14 +220,14 @@ class NameVal(Validator):
                 raise ValueError("the null value is not permitted")
 
         # A byte or a Unicode string is expected.
-        if not isinstance(value, (str, unicode)):
+        if not isinstance(value, str):
             raise ValueError("a string value is expected; got %r" % value)
 
         # Byte strings must be UTF-8 encoded.
         if isinstance(value, str):
             try:
                 value = value.decode('utf-8')
-            except UnicodeDecodeError, exc:
+            except UnicodeDecodeError as exc:
                 raise ValueError("unable to decode %r: %s" % (value, exc))
 
         # Check if the string matches the name pattern.
@@ -270,11 +270,11 @@ class ChoiceVal(Validator):
                 raise ValueError("the null value is not permitted")
 
         # A byte or a Unicode string is expected.
-        if not isinstance(value, (str, unicode)):
+        if not isinstance(value, str):
             raise ValueError("a string value is expected; got %r" % value)
 
         # Translate Unicode strings to UTF-8 encoded byte strings.
-        if isinstance(value, unicode):
+        if isinstance(value, str):
             value = value.encode('utf-8')
 
         # Check if the value belongs to the specified set of choices.
@@ -351,8 +351,8 @@ class IntVal(Validator):
 
     def __init__(self, min_bound=None, max_bound=None, is_nullable=False):
         # Sanity check on the arguments.
-        assert isinstance(min_bound, maybe(oneof(int, long)))
-        assert isinstance(max_bound, maybe(oneof(int, long)))
+        assert isinstance(min_bound, maybe(oneof(int, int)))
+        assert isinstance(max_bound, maybe(oneof(int, int)))
         assert isinstance(is_nullable, bool)
 
         self.min_bound = min_bound
@@ -368,9 +368,9 @@ class IntVal(Validator):
                 raise ValueError("the null value is not permitted")
 
         # Convert string values; a non-numeric string triggers `ValueError`.
-        if isinstance(value, (str, unicode)):
+        if isinstance(value, str):
             value = int(value)
-        if not isinstance(value, (int, long)):
+        if not isinstance(value, int):
             raise ValueError("an integer value is required; got %r" % value)
 
         # Check the boundary conditions.
@@ -382,7 +382,7 @@ class IntVal(Validator):
                              " got %s" % (self.max_bound, value))
 
         # `value` is an integer or a long integer here.
-        assert isinstance(value, (int, long))
+        assert isinstance(value, int)
         return value
 
 
@@ -446,9 +446,9 @@ class FloatVal(Validator):
                 raise ValueError("the null value is not permitted")
 
         # Convert string and integer values.
-        if isinstance(value, (str, unicode)):
+        if isinstance(value, str):
             value = float(value)
-        if isinstance(value, (int, long)):
+        if isinstance(value, int):
             value = float(value)
         if not isinstance(value, float):
             raise ValueError("a float value is required; got %r" % value)
@@ -539,7 +539,7 @@ class SeqVal(Validator):
                 raise ValueError("the null value is not permitted")
 
         # Translate Unicode strings to UTF-8 byte strings.
-        if isinstance(value, unicode):
+        if isinstance(value, str):
             value = value.encode('utf-8')
 
         # If the value is a string, parse it and extract the elements.
@@ -610,7 +610,7 @@ class SeqVal(Validator):
         for idx, item in enumerate(value):
             try:
                 item = self.item_validator(item)
-            except ValueError, exc:
+            except ValueError as exc:
                 raise ValueError("invalid sequence item"
                                  " #%s (%s)" % (idx+1, exc))
             items.append(item)
@@ -685,7 +685,7 @@ class MapVal(Validator):
                 raise ValueError("the null value is not permitted")
 
         # Translate Unicode strings to UTF-8 encoded byte strings.
-        if isinstance(value, unicode):
+        if isinstance(value, str):
             value = value.encode('utf-8')
 
         # If the value is a string, parse it and extract the elements.
@@ -789,7 +789,7 @@ class MapVal(Validator):
         for key in sorted(value):
             try:
                 validated_key = self.key_validator(key)
-            except ValueError, exc:
+            except ValueError as exc:
                 raise ValueError("invalid mapping key (%s)" % exc)
             if validated_key in key_set:
                 raise ValueError("duplicate mapping key %r" % key)
@@ -797,7 +797,7 @@ class MapVal(Validator):
             item = value[key]
             try:
                 validated_item = self.item_validator(item)
-            except ValueError, exc:
+            except ValueError as exc:
                 raise ValueError("invalid mapping item for key %r (%s)"
                                  % (key, item))
             pairs.append((validated_key, validated_item))
@@ -827,7 +827,7 @@ class UnionVal(Validator):
         for validator in self.validators:
             try:
                 return validator(value)
-            except ValueError, exc:
+            except ValueError as exc:
                 messages.append(str(exc))
         raise ValueError("; ".join(messages))
 
@@ -852,7 +852,7 @@ class RecordVal(Validator):
             else:
                 raise ValueError("the null value is not permitted")
 
-        if isinstance(value, (str, unicode)):
+        if isinstance(value, str):
             validator = MapVal(WordVal(), AnyVal())
             value = validator(value)
 
@@ -922,7 +922,7 @@ class ExtensionVal(Validator):
                 raise ValueError("the null value is not permitted")
 
         # Translate Unicode strings to UTF-8 encoded byte strings.
-        if isinstance(value, unicode):
+        if isinstance(value, str):
             value = value.encode('utf-8')
 
         # If the value is a string, parse it and extract the elements.

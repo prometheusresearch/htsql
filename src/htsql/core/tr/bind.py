@@ -212,7 +212,7 @@ class Bind(Adapter):
 
 def hint_choices(choices):
     # Generate a hint from a list of choices.
-    assert isinstance(choices, listof(unicode))
+    assert isinstance(choices, listof(str))
     if not choices:
         return None
     chunks = ["did you mean:"]
@@ -767,7 +767,7 @@ class BindDirect(Bind):
 
     def __call__(self):
         base = self.state.bind(self.syntax.arm)
-        direction = {u'+': +1, u'-': -1}[self.syntax.symbol]
+        direction = {'+': +1, '-': -1}[self.syntax.symbol]
         return DirectionBinding(base, direction, self.syntax)
 
 
@@ -782,7 +782,7 @@ class BindReference(Bind):
         if recipe is None:
             model = self.syntax.identifier.name.lower()
             names = lookup_reference_set(self.state.scope)
-            choices = [u"$"+name for name in sorted(names)
+            choices = ["$"+name for name in sorted(names)
                                  if similar(model, name)]
             with choices_guard(choices):
                 raise Error("Found unknown reference", self.syntax)
@@ -908,7 +908,7 @@ class BindByName(Protocol):
     def __matches__(component, dispatch_key):
         # Check if the component matches the given function name
         # and the number of arguments.
-        assert isinstance(dispatch_key, tupleof(unicode, maybe(int)))
+        assert isinstance(dispatch_key, tupleof(str, maybe(int)))
 
         # The name and the number of arguments of the call node.
         key_name, key_arity = dispatch_key

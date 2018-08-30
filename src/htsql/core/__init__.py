@@ -78,12 +78,12 @@ class HTSQLAddon(Addon):
             raise ValueError("database address is not specified")
         try:
             connect().release()
-        except Error, exc:
+        except Error as exc:
             raise ValueError("failed to establish database connection: %s"
                              % exc)
         try:
             introspect()
-        except Error, exc:
+        except Error as exc:
             raise ValueError("failed to introspect the database: %s" % exc)
 
 

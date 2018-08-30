@@ -17,10 +17,10 @@ import fnmatch
 
 class IntrospectPGSQL(Introspect):
 
-    system_schema_names = [u'pg_*', u'information_schema']
+    system_schema_names = ['pg_*', 'information_schema']
     system_table_names = []
-    system_column_names = [u'tableoid', u'cmax', u'xmax',
-                           u'cmin', u'xmin', u'ctid']
+    system_column_names = ['tableoid', 'cmax', 'xmax',
+                           'cmin', 'xmin', 'ctid']
 
     def __call__(self):
         connection = connect()

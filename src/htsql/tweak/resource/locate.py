@@ -9,9 +9,9 @@ from ...core.adapter import Protocol
 import mimetypes
 import hashlib
 import os, os.path
-import cStringIO
+import io
 import zipfile
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import pkg_resources
 
 

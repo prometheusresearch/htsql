@@ -21,7 +21,7 @@ from ..core.validator import (Validator, BoolVal, StrVal, WordVal,
                               MapVal, ClassVal, AnyVal)
 from ..core.util import maybe, trim_doc, DB
 import traceback
-import StringIO
+import io
 import sys
 import os, os.path
 import shutil
@@ -46,7 +46,7 @@ DO_SAVE = object()
 DO_SKIP = object()
 
 
-class TermStringIO(StringIO.StringIO):
+class TermStringIO(io.StringIO):
     """
     A readable file-like object with an "echo".  Whenever some content is read
     from it, the same content is echoed to the specified `output` stream.
@@ -69,16 +69,16 @@ class TermStringIO(StringIO.StringIO):
     """
 
     def __init__(self, buf, output):
-        StringIO.StringIO.__init__(self, buf)
+        io.StringIO.__init__(self, buf)
         self.output = output
 
     def read(self, n=-1):
-        data = StringIO.StringIO.read(self, n)
+        data = io.StringIO.read(self, n)
         self.output.write(data)
         return data
 
     def readline(self, length=None):
-        data = StringIO.StringIO.readline(self, length)
+        data = io.StringIO.readline(self, length)
         self.output.write(data)
         return data
 
@@ -340,7 +340,7 @@ class TestCase(object):
         # the test case leaves the quiet mode, all the accumulated data
         # is dumped to the standard output stream.
         self.is_quiet = routine.quiet
-        self.quiet_buffer = StringIO.StringIO()
+        self.quiet_buffer = io.StringIO()
 
     def make_output(self, **attributes):
         # Generate a new test output record with the given attributes.
@@ -1583,7 +1583,7 @@ class CtlTestCase(RunAndCompareTestCase):
         # Run the routine; return the output
 
         # Prepare the standard streams and the script instance.
-        stdout = StringIO.StringIO()
+        stdout = io.StringIO()
         stderr = stdout
         stdin = TermStringIO(self.input.stdin, stdout)
         command_line = [self.routine.executable]+self.input.ctl
@@ -1892,8 +1892,8 @@ class PythonCodeTestCase(RunAndCompareTestCase):
         old_stdin = sys.stdin
         old_stdout = sys.stdout
         old_stderr = sys.stderr
-        sys.stdin = StringIO.StringIO(self.input.stdin)
-        sys.stdout = StringIO.StringIO()
+        sys.stdin = io.StringIO(self.input.stdin)
+        sys.stdout = io.StringIO()
         sys.stderr = sys.stdout
         # Prepare the code.
         code = self.load()
@@ -1901,7 +1901,7 @@ class PythonCodeTestCase(RunAndCompareTestCase):
         # Execute the code.
         exc_info = None
         try:
-            exec code in context
+            exec(code, context)
         except:
             exc_info = sys.exc_info()
         # Make new output record.
@@ -2026,7 +2026,7 @@ class SQLTestCase(SkipTestCase):
         from htsql.core.split_sql import split_sql
         try:
             app = HTSQL(self.input.connect)
-        except Exception, exc:
+        except Exception as exc:
             self.out_exception(sys.exc_info())
             return self.failed("*** an exception occured while"
                                " initializing an HTSQL application")
@@ -2038,14 +2038,14 @@ class SQLTestCase(SkipTestCase):
             # SQL statements.
             try:
                 statements = list(split_sql(sql))
-            except ValueError, exc:
+            except ValueError as exc:
                 return self.failed("*** invalid SQL: %s" % exc)
 
             # Realize the connector and connect to the database.
             try:
                 connection = connect(with_autocommit=self.input.autocommit)
                 cursor = connection.cursor()
-            except Error, exc:
+            except Error as exc:
                 return self.failed("*** failed to connect to the database:"
                                    "\n%s" % exc)
 
@@ -2054,7 +2054,7 @@ class SQLTestCase(SkipTestCase):
                 try:
                     # Execute the statement in the current connection.
                     cursor.execute(statement)
-                except Error, exc:
+                except Error as exc:
                     # Display the statement that caused a problem.
                     for line in statement.splitlines():
                         self.out(line, indent=4)
@@ -2072,7 +2072,7 @@ class SQLTestCase(SkipTestCase):
                 if not self.input.autocommit:
                     try:
                         connection.commit()
-                    except Error, exc:
+                    except Error as exc:
                         if not self.input.ignore:
                             return self.failed("*** failed to commit"
                                                " a transaction:\n%s" % exc)
@@ -2082,7 +2082,7 @@ class SQLTestCase(SkipTestCase):
             # of the `ignore` flag.
             try:
                 connection.close()
-            except Error, exc:
+            except Error as exc:
                 return self.failed("*** failed to close the connection:"
                                    "\n%s" % exc)
 
@@ -2532,7 +2532,7 @@ class RegressYAMLLoader(BaseYAMLLoader):
             key = self.construct_object(key_node, deep=True)
             try:
                 hash(key)
-            except TypeError, exc:
+            except TypeError as exc:
                 raise yaml.constructor.ConstructorError(
                         "while constructing a mapping",
                         node.start_mark,
@@ -2560,7 +2560,7 @@ class RegressYAMLLoader(BaseYAMLLoader):
         # If we can't find a suitable record class, it must be a regular
         # dictionary.
         if detected_record_class is None:
-            return dict(zip(keys, values))
+            return dict(list(zip(keys, values)))
 
         # Check that the node does not contain any keys other than
         # the record fields.
@@ -2584,7 +2584,7 @@ class RegressYAMLLoader(BaseYAMLLoader):
                 value = value_by_key[key]
                 try:
                     value = field.val(value)
-                except ValueError, exc:
+                except ValueError as exc:
                     raise yaml.constructor.ConstructorError(None, None,
                             "invalid field %r (%s)" % (key, exc),
                             value_mark_by_key[key])
@@ -2601,7 +2601,7 @@ class RegressYAMLLoader(BaseYAMLLoader):
         try:
             record = detected_record_class(self.routine, case_class,
                                            attributes, location)
-        except ValueError, exc:
+        except ValueError as exc:
             raise yaml.constructor.ConstructorError(None, None,
                     "invalid test data (%s)" % exc,
                     node.start_mark)
@@ -2635,19 +2635,19 @@ class RegressYAMLLoader(BaseYAMLLoader):
 
 # Register custom constructors for `!!str``, `!!map`` and ``!environ``.
 RegressYAMLLoader.add_constructor(
-        u'tag:yaml.org,2002:str',
+        'tag:yaml.org,2002:str',
         RegressYAMLLoader.construct_yaml_str)
 RegressYAMLLoader.add_constructor(
-        u'tag:yaml.org,2002:map',
+        'tag:yaml.org,2002:map',
         RegressYAMLLoader.construct_yaml_map)
 RegressYAMLLoader.add_constructor(
-        u'!environ',
+        '!environ',
         RegressYAMLLoader.construct_environ)
 
 
 # Register a resolver for ``!environ``.
 RegressYAMLLoader.add_implicit_resolver(
-        u'!environ', RegressYAMLLoader.environ_regexp, [u'$'])
+        '!environ', RegressYAMLLoader.environ_regexp, ['$'])
 
 
 class RegressYAMLDumper(BaseYAMLDumper):
@@ -2728,10 +2728,10 @@ class RegressYAMLDumper(BaseYAMLDumper):
             style = '|'
         try:
             data = data.decode('utf-8')
-            tag = u'tag:yaml.org,2002:str'
+            tag = 'tag:yaml.org,2002:str'
         except UnicodeDecodeError:
             data = data.encode('base64')
-            tag = u'tag:yaml.org,2002:binary'
+            tag = 'tag:yaml.org,2002:binary'
             style = '|'
         return self.represent_scalar(tag, data, style=style)
 
@@ -2750,7 +2750,7 @@ class RegressYAMLDumper(BaseYAMLDumper):
                 continue
             mapping.append((name, value))
         # Generate a mapping node.
-        return self.represent_mapping(u'tag:yaml.org,2002:map', mapping,
+        return self.represent_mapping('tag:yaml.org,2002:map', mapping,
                                       flow_style=False)
 
 
@@ -2938,7 +2938,7 @@ class RegressRoutine(Routine):
         loader = RegressYAMLLoader(self, True, False, stream)
         try:
             input = loader.load()
-        except yaml.YAMLError, exc:
+        except yaml.YAMLError as exc:
             raise ScriptError("failed to load test input data: %s" % exc)
         return input
 
@@ -2949,7 +2949,7 @@ class RegressRoutine(Routine):
         loader = RegressYAMLLoader(self, False, True, stream)
         try:
             input = loader.load()
-        except yaml.YAMLError, exc:
+        except yaml.YAMLError as exc:
             raise ScriptError("failed to load test output data: %s" % exc)
         return input
 
@@ -2964,7 +2964,7 @@ class RegressRoutine(Routine):
         dumper = RegressYAMLDumper(self, False, True, stream)
         try:
             dumper.dump(output)
-        except yaml.YAMLError, exc:
+        except yaml.YAMLError as exc:
             raise ScriptError("failed to write test output data: %s" % exc)
 
 

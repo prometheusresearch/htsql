@@ -19,7 +19,7 @@ from ..core.model import (HomeNode, InvalidNode, InvalidArc, TableArc,
 from ..core.classify import classify, normalize, relabel, localize
 from ..core.entity import UniqueKeyEntity, ForeignKeyEntity
 import traceback
-import StringIO
+import io
 import mimetypes
 import sys
 import os, os.path
@@ -418,7 +418,7 @@ class NodeChain(object):
             return None
         return self.names_by_node[self.nodes[-1]].get(name)
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(self.nodes)
 
     def clone(self):
@@ -615,14 +615,14 @@ class GetPostBaseCmd(Cmd):
         if (self.state.with_pager
                 and (length >= max_lines or width >= max_columns)):
             # Pipe the response to the pager.
-            stream = StringIO.StringIO()
+            stream = io.StringIO()
             response.dump(stream, self.state.with_headers)
             output = stream.getvalue()
             process = subprocess.Popen(self.routine.pager.split(),
                                        stdin=subprocess.PIPE)
             try:
                 process.communicate(output)
-            except IOError, exc:
+            except IOError as exc:
                 self.ctl.out(exc)
         else:
             # Dump the response.
@@ -1305,7 +1305,7 @@ class ShellRoutine(DBRoutine):
             directory = os.path.dirname(path)
             if not os.path.exists(directory):
                 try:
-                    os.mkdir(directory, 0700)
+                    os.mkdir(directory, 0o700)
                 except OSError:
                     return
             readline.write_history_file(path)
@@ -1324,7 +1324,7 @@ class ShellRoutine(DBRoutine):
             database = os.path.splitext(database)[0]
             prompt = "%s$ " % database
         try:
-            line = raw_input(prompt)
+            line = input(prompt)
         except EOFError:
             self.ctl.out()
             return True

@@ -15,7 +15,7 @@ from setuptools.command.egg_info import egg_info as setuptools_egg_info
 from distutils.cmd import Command
 from distutils.dir_util import remove_tree
 from distutils import log
-import os, os.path, re, hashlib, urllib2, cStringIO, zipfile
+import os, os.path, re, hashlib, urllib.request, urllib.error, urllib.parse, io, zipfile
 
 
 def get_version():
@@ -111,7 +111,7 @@ class htsql_download_vendor(Command):
             if os.path.exists(target):
                 continue
             log.info("downloading vendor package '%s'" % url)
-            stream = urllib2.urlopen(url)
+            stream = urllib.request.urlopen(url)
             data = stream.read()
             stream.close()
             assert hashlib.md5(data).hexdigest() == md5_hash
@@ -121,7 +121,7 @@ class htsql_download_vendor(Command):
                 remove_tree(build_dir)
             os.makedirs(build_dir)
             if url.endswith('.zip'):
-                archive = zipfile.ZipFile(cStringIO.StringIO(data))
+                archive = zipfile.ZipFile(io.StringIO(data))
                 entries = archive.infolist()
                 assert entries
                 common = entries[0].filename

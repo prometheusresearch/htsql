@@ -65,7 +65,7 @@ class EmitText(Emit):
                             bar.append((None, rowspan-1))
                 assert not row
                 if row_idx > 0:
-                    line = [u" "]
+                    line = [" "]
                     for idx in range(0, size+1):
                         is_horiz = False
                         is_vert = False
@@ -87,21 +87,21 @@ class EmitText(Emit):
                         else:
                             is_vert = True
                         if is_horiz and is_vert:
-                            line.append(u"+")
+                            line.append("+")
                         elif is_horiz:
-                            line.append(u"-")
+                            line.append("-")
                         elif is_vert:
-                            line.append(u"|")
+                            line.append("|")
                         else:
-                            line.append(u" ")
+                            line.append(" ")
                         if idx < size:
                             text, tail = last_bar[idx]
                             if tail == 0:
-                                line.append(u"-"*(widths[idx]+2))
+                                line.append("-"*(widths[idx]+2))
                             else:
-                                line.append(u" "*(widths[idx]+2))
+                                line.append(" "*(widths[idx]+2))
                         else:
-                            line.append(u"\n")
+                            line.append("\n")
                     yield "".join(line)
                 extent = 0
                 line = []
@@ -109,10 +109,10 @@ class EmitText(Emit):
                     text, tail = bar[idx]
                     if text is not None:
                         assert extent == 0, extent
-                        line.append(u" | ")
+                        line.append(" | ")
                     else:
                         if extent < 3:
-                            line.append(u" "*(3-extent))
+                            line.append(" "*(3-extent))
                             extent = 0
                         else:
                             extent -= 3
@@ -121,48 +121,48 @@ class EmitText(Emit):
                         line.append(text)
                         extent = len(text)
                     if extent < width:
-                        line.append(u" "*(width-extent))
+                        line.append(" "*(width-extent))
                         extent = 0
                     else:
                         extent -= width
                 assert extent == 0
-                line.append(u" |\n")
+                line.append(" |\n")
                 yield "".join(line)
-            line = [u"-+-"]
+            line = ["-+-"]
             for width in widths:
-                line.append(u"-"*width)
-                line.append(u"-+-")
-            line.append(u"\n")
-            yield u"".join(line)
+                line.append("-"*width)
+                line.append("-+-")
+            line.append("\n")
+            yield "".join(line)
         body = product_to_text.body(self.data, widths)
         for row in body:
             line = []
             is_last_solid = False
             for chunk, is_solid in row:
                 if is_last_solid or is_solid:
-                    line.append(u" | ")
+                    line.append(" | ")
                 else:
-                    line.append(u" : ")
+                    line.append(" : ")
                 line.append(chunk)
                 is_last_solid = is_solid
             if is_last_solid:
-                line.append(u" |\n")
+                line.append(" |\n")
             else:
-                line.append(u" :\n")
-            yield u"".join(line)
-        yield u"\n"
+                line.append(" :\n")
+            yield "".join(line)
+        yield "\n"
         if addon.debug and (self.meta.syntax or hasattr(self.product, 'sql')):
-            yield u" ----\n"
+            yield " ----\n"
             if self.meta.syntax:
-                yield u" %s\n" % self.meta.syntax
+                yield " %s\n" % self.meta.syntax
             if hasattr(self.product, 'sql'):
-                sql = re.sub(ur'[\0-\x09\x0b-\x1f\x7f]', u'\ufffd',
+                sql = re.sub(r'[\0-\x09\x0b-\x1f\x7f]', '\ufffd',
                              self.product.sql)
                 for line in sql.splitlines():
                     if line:
-                        yield u" %s\n" % line
+                        yield " %s\n" % line
                     else:
-                        yield u"\n"
+                        yield "\n"
 
 
 class ToText(Adapter):
@@ -182,19 +182,19 @@ class ToText(Adapter):
     def head(self, depth):
         if not self.size or not depth:
             return
-        yield [(u"", depth, self.size)]
+        yield [("", depth, self.size)]
 
     def body(self, data, widths):
         [width] = widths
         cell = self.dump(data)
-        yield [(u"%*s" % (-width, cell), True)]
+        yield [("%*s" % (-width, cell), True)]
 
     def widths(self, data):
         return [len(self.dump(data))]
 
     def dump(self, value):
         if value is None:
-            return u""
+            return ""
         return self.domain.dump(value)
 
 
@@ -206,43 +206,43 @@ class TextToText(ToText):
 
     threshold = 32
 
-    boundary_pattern = u"""(?<=\S) (?=\S)"""
+    boundary_pattern = """(?<=\S) (?=\S)"""
     boundary_regexp = re.compile(boundary_pattern)
 
-    unescaped_pattern = ur"""\A(?=[^ "])[^\x00-\x1F]+(?<=[^ "])\Z"""
+    unescaped_pattern = r"""\A(?=[^ "])[^\x00-\x1F]+(?<=[^ "])\Z"""
     unescaped_regexp = re.compile(unescaped_pattern)
 
-    escape_pattern = ur"""[\x00-\x1F"\\]"""
+    escape_pattern = r"""[\x00-\x1F"\\]"""
     escape_regexp = re.compile(escape_pattern)
     escape_table = {
-            u'\\': u'\\\\',
-            u'"': u'\\"',
-            u'\b': u'\\b',
-            u'\f': u'\\f',
-            u'\n': u'\\n',
-            u'\r': u'\\r',
-            u'\t': u'\\t',
+            '\\': '\\\\',
+            '"': '\\"',
+            '\b': '\\b',
+            '\f': '\\f',
+            '\n': '\\n',
+            '\r': '\\r',
+            '\t': '\\t',
     }
 
     def escape_replace(self, match):
         char = match.group()
         if char in self.escape_table:
             return self.escape_table[char]
-        return u"\\u%04x" % ord(char)
+        return "\\u%04x" % ord(char)
 
     def escape(self, value):
         if self.unescaped_regexp.match(value):
             return value
-        return u'"%s"' % self.escape_regexp.sub(self.escape_replace, value)
+        return '"%s"' % self.escape_regexp.sub(self.escape_replace, value)
 
     def body(self, data, widths):
         [width] = widths
         if data is None:
-            yield [(u" "*width, True)]
+            yield [(" "*width, True)]
             return
         value = self.escape(data)
         if len(value) <= width:
-            yield [(u"%*s" % (-width, value), True)]
+            yield [("%*s" % (-width, value), True)]
             return
         chunks = self.boundary_regexp.split(value)
         best_badnesses = []
@@ -276,9 +276,9 @@ class TextToText(ToText):
         idx = len(chunks)
         while idx > 0:
             size = best_sizes[idx-1]
-            group = u" ".join(chunks[idx-size:idx])
+            group = " ".join(chunks[idx-size:idx])
             assert len(group) <= width
-            line = u"%*s" % (-width, group)
+            line = "%*s" % (-width, group)
             lines.insert(0, line)
             idx -= size
         is_first = True
@@ -322,8 +322,8 @@ class NativeStringToText(ToText):
 
     def dump(self, value):
         if value is None:
-            return u""
-        return unicode(value)
+            return ""
+        return str(value)
 
 
 class NumberToText(NativeStringToText):
@@ -333,7 +333,7 @@ class NumberToText(NativeStringToText):
     def body(self, data, widths):
         [width] = widths
         cell = self.dump(data)
-        yield [(u"%*s" % (width, cell), True)]
+        yield [("%*s" % (width, cell), True)]
 
 
 class DecimalToText(ToText):
@@ -342,10 +342,10 @@ class DecimalToText(ToText):
 
     def dump(self, value):
         if value is None:
-            return u""
+            return ""
         sign, digits, exp = value.as_tuple()
         if not digits:
-            return unicode(value)
+            return str(value)
         if exp < -6 and value == value.normalize():
             value = value.normalize()
             sign, digits, exp = value.as_tuple()
@@ -354,7 +354,7 @@ class DecimalToText(ToText):
             # quantize result has too many digits for current context
             if exp+len(digits) < 28:
                 value = value.quantize(decimal.Decimal(1))
-        return unicode(value)
+        return str(value)
 
 
 class DateTimeToText(ToText):
@@ -363,11 +363,11 @@ class DateTimeToText(ToText):
 
     def dump(self, value):
         if value is None:
-            return u""
+            return ""
         elif not value.time():
-            return unicode(value.date())
+            return str(value.date())
         else:
-            return unicode(value)
+            return str(value)
 
 
 class OpaqueToText(ToText):
@@ -376,12 +376,12 @@ class OpaqueToText(ToText):
 
     def dump(self, value):
         if value is None:
-            return u""
-        if not isinstance(value, unicode):
+            return ""
+        if not isinstance(value, str):
             try:
                 value = str(value).decode('utf-8')
             except UnicodeDecodeError:
-                value = unicode(repr(value))
+                value = str(repr(value))
         return value
 
 
@@ -431,7 +431,7 @@ class RecordToText(ToText):
     def body(self, data, widths):
         if not self.size:
             return
-        dummies = [(u" "*width, False) for width in widths]
+        dummies = [(" "*width, False) for width in widths]
         if data is None:
             yield dummies
             return

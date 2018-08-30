@@ -106,9 +106,9 @@ class ResolveKeyPipe(object):
         if self.with_error:
             quote = None
             if self.name:
-                quote = u"%s[%s]" % (self.name, self.domain.dump(value))
+                quote = "%s[%s]" % (self.name, self.domain.dump(value))
             else:
-                quote = u"[%s]" % self.domain.dump(value)
+                quote = "[%s]" % self.domain.dump(value)
             raise Error("Unable to find an entity", quote)
         return None
 
@@ -204,7 +204,7 @@ class ExecuteUpdatePipe(object):
         assert isinstance(input_columns, listof(ColumnEntity))
         assert isinstance(key_columns, listof(ColumnEntity))
         assert isinstance(output_columns, listof(ColumnEntity))
-        assert isinstance(sql, unicode)
+        assert isinstance(sql, str)
         self.table = table
         self.input_columns = input_columns
         self.key_columns = key_columns
@@ -311,7 +311,7 @@ class ProduceMerge(Act):
                         row = extract_table(row)
                         key = execute_insert(row)
                     row = resolve_identity(key)
-                except Error, exc:
+                except Error as exc:
                     if extract_node.is_list:
                         message = "While merging record #%s" % (idx+1)
                     else:

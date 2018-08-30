@@ -5,7 +5,7 @@
 # A script to load regression data into the database.
 
 
-from __future__ import with_statement
+
 from htsql.core.util import listof
 from htsql.core.connect import connect
 import yaml, sys
@@ -40,7 +40,7 @@ if app.htsql.db.engine == 'oracle':
     converter = (lambda item: 1 if item is True else
                               0 if item is False else
                               item.encode('utf-8')
-                                  if isinstance(item, unicode) else item)
+                                  if isinstance(item, str) else item)
     with_schema = False
     with_numparams = True
     prelude = ["ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD'"]

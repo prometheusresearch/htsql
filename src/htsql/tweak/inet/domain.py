@@ -13,7 +13,7 @@ class INetDomain(Domain):
     family = 'inet'
 
     def parse(self, data):
-        assert isinstance(data, maybe(unicode))
+        assert isinstance(data, maybe(str))
         if data is None:
             return None
         data = data.encode('utf-8')
@@ -24,7 +24,7 @@ class INetDomain(Domain):
         return data.decode('utf-8')
 
     def dump(self, value):
-        assert isinstance(value, maybe(oneof(str, unicode)))
-        return unicode(value)
+        assert isinstance(value, maybe(oneof(str, str)))
+        return str(value)
 
 

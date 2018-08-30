@@ -5,7 +5,7 @@
 
 from ..error import Error, Mark, parse_guard
 import re
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 _escape_regexp = re.compile(r"""%(?P<code>[0-9A-Fa-f]{2})?""")
 
@@ -39,11 +39,11 @@ def decode(text):
 
     ``%``-encoded octets are decoded; the input text is converted to Unicode.
     """
-    assert isinstance(text, (str, unicode))
+    assert isinstance(text, str)
 
     # We accept both 8-bit and Unicode strings, but we need to decode %-escaped
     # UTF-8 octets before translating the query to Unicode.
-    if isinstance(text, unicode):
+    if isinstance(text, str):
         text = text.encode('utf-8')
 
     # Decode %-encoded UTF-8 octets.
@@ -52,14 +52,14 @@ def decode(text):
     # Convert the query to Unicode.
     try:
         text = text.decode('utf-8')
-    except UnicodeDecodeError, exc:
+    except UnicodeDecodeError as exc:
         # Prepare the error message.
         start = len(text[:exc.start].decode('utf-8', 'ignore'))
         end = len(text[:exc.end].decode('utf-8', 'ignore'))
         mark = Mark(text.decode('utf-8', 'replace'), start, end)
         with parse_guard(mark):
             raise Error("Cannot convert a byte sequence %s to UTF-8: %s"
-                        % (urllib2.quote(exc.object[exc.start:exc.end]),
+                        % (urllib.parse.quote(exc.object[exc.start:exc.end]),
                            exc.reason))
 
     return text

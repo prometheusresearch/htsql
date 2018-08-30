@@ -26,22 +26,22 @@ import math
 class MySQLFormatName(FormatName):
 
     def __call__(self):
-        self.stream.write(u"`%s`" % self.value.replace(u"`", u"``"))
+        self.stream.write("`%s`" % self.value.replace("`", "``"))
 
 
 class MySQLFormatLiteral(FormatLiteral):
 
     def __call__(self):
-        self.stream.write(u"'%s'" % self.value.replace(u"\\", ur"\\")
-                                              .replace(u"'", ur"\'")
-                                              .replace(u"\n", ur"\n")
-                                              .replace(u"\r", ur"\r"))
+        self.stream.write("'%s'" % self.value.replace("\\", r"\\")
+                                              .replace("'", r"\'")
+                                              .replace("\n", r"\n")
+                                              .replace("\r", r"\r"))
 
 
 class MySQLFormatPlaceholder(FormatPlaceholder):
 
     def __call__(self):
-        self.stream.write(u"%s")
+        self.stream.write("%s")
 
 
 class MySQLDumpFloat(DumpFloat):
@@ -53,7 +53,7 @@ class MySQLDumpFloat(DumpFloat):
             value = value+'e0'
         if value[0] == "-":
             value = "(%s)" % value
-        self.write(unicode(value))
+        self.write(str(value))
 
 
 class MySQLDumpDecimal(DumpDecimal):
@@ -67,19 +67,19 @@ class MySQLDumpDecimal(DumpDecimal):
             value = "%s." % value
         if value[0] == "-":
             value = "(%s)" % value
-        self.write(unicode(value))
+        self.write(str(value))
 
 
 class MySQLDumpDate(DumpDate):
 
     def __call__(self):
-        self.format("DATE({value:literal})", value=unicode(self.value))
+        self.format("DATE({value:literal})", value=str(self.value))
 
 
 class MySQLDumpTime(DumpTime):
 
     def __call__(self):
-        self.format("TIME({value:literal})", value=unicode(self.value))
+        self.format("TIME({value:literal})", value=str(self.value))
 
 
 class MySQLDumpDateTime(DumpDateTime):
@@ -87,7 +87,7 @@ class MySQLDumpDateTime(DumpDateTime):
     def __call__(self):
         # MySQLdb driver does not handle datetime values with microseconds.
         value = self.value.replace(microsecond=0, tzinfo=None)
-        self.format("TIMESTAMP({value:literal})", value=unicode(value))
+        self.format("TIMESTAMP({value:literal})", value=str(value))
 
 
 class MySQLDumpToInteger(DumpToInteger):

@@ -28,10 +28,10 @@ class CollectCopyPipe(object):
         self.dumps = [column.domain.dump for column in columns]
         self.stream = tempfile.TemporaryFile()
 
-    def __call__(self, row, unicode=unicode):
+    def __call__(self, row, str=str):
         self.stream.write(
             "\t".join([
-                unicode(item).encode('utf-8')
+                str(item).encode('utf-8')
                         .replace('\\', '\\\\')
                         .replace('\n', '\\n')
                         .replace('\r', '\\r')
@@ -96,7 +96,7 @@ class ProduceCopy(Act):
                     collect_copy(
                         extract_table(
                             extract_node(record)))
-                except Error, exc:
+                except Error as exc:
                     if extract_node.is_list:
                         message = "While copying record #%s" % (idx+1)
                     else:
@@ -108,7 +108,7 @@ class ProduceCopy(Act):
             extract_table = None
             try:
                 collect_copy.copy()
-            except Error, exc:
+            except Error as exc:
                 exc.wrap("While copying a batch of records", None)
                 raise
         meta = decorate(VoidBinding())

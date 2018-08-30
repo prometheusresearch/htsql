@@ -2,7 +2,7 @@
 import sys
 import os.path
 import re
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import mimetypes
 import wsgiref.simple_server, wsgiref.util
 from htsql import HTSQL
@@ -62,9 +62,9 @@ class Application(object):
         for item in query_string.split('&'):
             if '=' in item:
                 key, value = item.split('=', 1)
-                key = urllib.unquote_plus(key)
-                value = urllib.unquote_plus(value)
-                value = urllib.quote("'%s'" % value.replace("'", "''"))
+                key = urllib.parse.unquote_plus(key)
+                value = urllib.parse.unquote_plus(value)
+                value = urllib.parse.quote("'%s'" % value.replace("'", "''"))
                 variables[key] = value
         stream = open(path, 'rb')
         uri = stream.read()
@@ -75,7 +75,7 @@ class Application(object):
             request = Request(uri)
             try:
                 status, headers, body = request.render(environ)
-            except HTTPError, exc:
+            except HTTPError as exc:
                 return exc(environ, start_response)
             start_response(status, headers)
             return body
@@ -88,8 +88,8 @@ class Application(object):
         port = int(port)
         htsql = HTSQL(db)
         app = cls(htsql)
-        print >>sys.stderr, "Starting the SSI demo on http://%s:%s/" \
-                            % (host, port)
+        print("Starting the SSI demo on http://%s:%s/" \
+                            % (host, port), file=sys.stderr)
         httpd = wsgiref.simple_server.make_server(host, port, app)
         httpd.serve_forever()
 

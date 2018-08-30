@@ -24,11 +24,11 @@ class SQLiteDumpBoolean(DumpBoolean):
 
     def __call__(self):
         if self.value is None:
-            self.write(u"NULL")
+            self.write("NULL")
         if self.value is True:
-            self.write(u"1")
+            self.write("1")
         if self.value is False:
-            self.write(u"0")
+            self.write("0")
 
 
 class SQLiteDumpDecimal(DumpDecimal):
@@ -37,29 +37,29 @@ class SQLiteDumpDecimal(DumpDecimal):
         assert self.value.is_finite()
         value = float(self.value)
         if value >= 0.0:
-            self.write(u"%s" % value)
+            self.write("%s" % value)
         else:
-            self.write(u"(%s)" % value)
+            self.write("(%s)" % value)
 
 
 class SQLiteDumpDate(DumpDate):
 
     def __call__(self):
-        self.format("{value:literal}", value=unicode(self.value))
+        self.format("{value:literal}", value=str(self.value))
 
 
 class SQLiteDumpTime(DumpTime):
 
     def __call__(self):
         value = self.value.replace(tzinfo=None)
-        self.format("{value:literal}", value=unicode(value))
+        self.format("{value:literal}", value=str(value))
 
 
 class SQLiteDumpDateTime(DumpDateTime):
 
     def __call__(self):
         value = self.value.replace(tzinfo=None)
-        self.format("{value:literal}", value=unicode(value))
+        self.format("{value:literal}", value=str(value))
 
 
 class SQLiteDumpToFloat(DumpToFloat):
@@ -124,11 +124,11 @@ class SQLiteDumpRoundTo(DumpRoundTo):
             scale = self.phrase.precision.value
             if scale >= 0:
                 self.format("ROUND({op}, {scale:pass})",
-                            self.arguments, scale=unicode(scale))
+                            self.arguments, scale=str(scale))
             else:
                 power = 10**(-scale)
                 self.format("(ROUND({op} / {power:pass}.0) * {power:pass}.0)",
-                            self.arguments, power=unicode(power))
+                            self.arguments, power=str(power))
         else:
             self.format("(ROUND({op} * POWER(10, {precision}))"
                         " / POWER(10, {precision}))",

@@ -49,7 +49,7 @@ class ProduceUpdate(Act):
                     row = extract_table(row)
                     key = execute_update(key, row)
                     row = resolve_identity(key)
-                except Error, error:
+                except Error as error:
                     if extract_node.is_list:
                         message = "While updating record #%s" % (idx+1)
                     else:

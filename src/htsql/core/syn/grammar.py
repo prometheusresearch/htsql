@@ -148,7 +148,7 @@ class AltPat(Pattern):
         self.arms = arms
 
     def __unicode__(self):
-        return u"(%s)" % u" | ".join(unicode(arm) for arm in self.arms)
+        return "(%s)" % " | ".join(str(arm) for arm in self.arms)
 
     def encode(self, nfa, src, dst):
         # Encode:
@@ -167,7 +167,7 @@ class SeqPat(Pattern):
         self.arms = arms
 
     def __unicode__(self):
-        return u"(%s)" % u" ".join(unicode(arm) for arm in self.arms)
+        return "(%s)" % " ".join(str(arm) for arm in self.arms)
 
     def encode(self, nfa, src, dst):
         # Encode:
@@ -194,7 +194,7 @@ class ModPat(Pattern):
         self.modifier = modifier
 
     def __unicode__(self):
-        return u"%s%s" % (self.arm, self.modifier)
+        return "%s%s" % (self.arm, self.modifier)
 
     def encode(self, nfa, src, dst):
         # Encode `?`:
@@ -230,7 +230,7 @@ class SymPat(Pattern):
         self.symbol = symbol
 
     def __unicode__(self):
-        return unicode(self.symbol)
+        return str(self.symbol)
 
     def encode(self, nfa, src, dst):
         # Encode:
@@ -242,7 +242,7 @@ class EpsPat(Pattern):
     # Zero pattern.
 
     def __unicode__(self):
-        return u"()"
+        return "()"
 
     def encode(self, nfa, src, dst):
         # Encode:
@@ -357,10 +357,10 @@ class LexicalGrammar(Printable):
         # Dump textual representation of the grammar.
         chunks = []
         for rule in self.rules:
-            chunks.append(unicode(rule))
+            chunks.append(str(rule))
         for signal in self.signals:
-            chunks.append(unicode(signal))
-        return u"\n\n".join(chunks)
+            chunks.append(str(signal))
+        return "\n\n".join(chunks)
 
     def __call__(self):
         # Generates a scanner.  At least one tokenizer rule must exist.
@@ -375,12 +375,12 @@ class LexicalGrammar(Printable):
             for token in rule.tokens:
                 assert token.push is None or token.push in self.rules
                 pattern = str(token.pattern)
-                pattern = u"(?P<%s> %s )" % (token.name, pattern)
+                pattern = "(?P<%s> %s )" % (token.name, pattern)
                 patterns.append(pattern)
                 group = ScanTableGroup(token.name, token.error, token.is_junk,
                         token.is_symbol, token.unquote, token.pop, token.push)
                 groups.append(group)
-            pattern = u" | ".join(patterns)
+            pattern = " | ".join(patterns)
             regexp = re.compile(pattern, re.U|re.X)
             table = ScanTable(rule.name, regexp, groups)
             tables[table.name] = table
@@ -392,7 +392,7 @@ class LexicalGrammar(Printable):
             treatments.append(treatment)
 
         # Textual grammar representation.
-        doc = unicode(self)
+        doc = str(self)
 
         return Scanner(tables, treatments, doc)
 
@@ -403,7 +403,7 @@ class LexicalRule(Printable):
     """
 
     def __init__(self, name):
-        assert isinstance(name, unicode)
+        assert isinstance(name, str)
         self.name = name
         self.tokens = omap()
 
@@ -469,10 +469,10 @@ class LexicalRule(Printable):
 
     def __unicode__(self):
         chunks = []
-        chunks.append(u"[%s]" % self.name)
+        chunks.append("[%s]" % self.name)
         for token in self.tokens:
-            chunks.append(unicode(token))
-        return u"\n".join(chunks)
+            chunks.append(str(token))
+        return "\n".join(chunks)
 
 
 class LexicalToken(Printable):
@@ -480,14 +480,14 @@ class LexicalToken(Printable):
 
     def __init__(self, name, pattern, error, is_junk, is_symbol,
                  unquote, pop, push, doc):
-        assert isinstance(name, unicode)
+        assert isinstance(name, str)
         assert isinstance(pattern, Pattern)
         assert isinstance(error, maybe(str))
         assert isinstance(is_junk, bool)
         assert isinstance(is_symbol, bool)
         assert isinstance(pop, maybe(int))
-        assert isinstance(push, maybe(unicode))
-        assert isinstance(doc, unicode)
+        assert isinstance(push, maybe(str))
+        assert isinstance(doc, str)
         self.name = name
         self.pattern = pattern
         self.error = error
@@ -501,24 +501,24 @@ class LexicalToken(Printable):
     def __unicode__(self):
         chunks = [self.doc]
         if self.pop or self.push:
-            chunks.append(u" {")
+            chunks.append(" {")
             if self.pop:
-                chunks.append(u"pop: %s" % self.pop)
+                chunks.append("pop: %s" % self.pop)
             if self.pop and self.push:
-                chunks.append(u"; ")
+                chunks.append("; ")
             if self.push:
-                chunks.append(u"push: %s" % self.push)
-            chunks.append(u"}")
-        return u"".join(chunks)
+                chunks.append("push: %s" % self.push)
+            chunks.append("}")
+        return "".join(chunks)
 
 
 class LexicalSignal(Printable):
     # A matching rule for a signal token.
 
     def __init__(self, name, pattern, doc):
-        assert isinstance(name, unicode)
+        assert isinstance(name, str)
         assert isinstance(pattern, Pattern)
-        assert isinstance(doc, unicode)
+        assert isinstance(doc, str)
         self.name = name
         self.pattern = pattern
         self.doc = doc
@@ -531,7 +531,7 @@ class ScanTable(object):
     # Tokenizer context.
 
     def __init__(self, name, regexp, groups):
-        assert isinstance(name, unicode)
+        assert isinstance(name, str)
         assert isinstance(regexp, re._pattern_type)
         assert isinstance(groups, listof(ScanTableGroup))
         self.name = name
@@ -543,12 +543,12 @@ class ScanTableGroup(object):
     # Matching rule for tokenizer context.
 
     def __init__(self, name, error, is_junk, is_symbol, unquote, pop, push):
-        assert isinstance(name, unicode)
+        assert isinstance(name, str)
         assert isinstance(error, maybe(str))
         assert isinstance(is_junk, bool)
         assert isinstance(is_symbol, bool)
         assert isinstance(pop, maybe(int))
-        assert isinstance(push, maybe(unicode))
+        assert isinstance(push, maybe(str))
         self.name = name
         self.error = error
         self.is_junk = is_junk
@@ -562,7 +562,7 @@ class ScanTreatment(object):
     # Post-process treatment rule.
 
     def __init__(self, name, dfa):
-        assert isinstance(name, unicode)
+        assert isinstance(name, str)
         self.name = name
         self.dfa = dfa
 
@@ -574,7 +574,7 @@ class Scanner(Printable):
         assert isinstance(tables, omapof(ScanTable))
         assert len(tables) > 0
         assert isinstance(treatments, listof(ScanTreatment))
-        assert isinstance(doc, unicode)
+        assert isinstance(doc, str)
 
         self.start = next(iter(tables)).name
         self.tables = tables
@@ -582,7 +582,7 @@ class Scanner(Printable):
         self.doc = doc
 
     def __call__(self, text, start=None):
-        assert isinstance(text, unicode)
+        assert isinstance(text, str)
         assert start is None or start in self.tables
         # The name of the initial tokenizer context.
         if start is None:
@@ -659,7 +659,7 @@ class Scanner(Printable):
                         break
                     token = tokens[end]
                 if None in dfa[state]:
-                    token = Token(treatment.name, u"")
+                    token = Token(treatment.name, "")
                     point(token, tokens[start])
                     tokens.insert(start, token)
                     start = end+1
@@ -729,7 +729,7 @@ class SyntaxGrammar(Printable):
         return rule
 
     def __unicode__(self):
-        return u"\n".join(unicode(rule) for rule in self.rules)
+        return "\n".join(str(rule) for rule in self.rules)
 
     def __call__(self):
         # Generates a parser.
@@ -827,15 +827,15 @@ class SyntaxGrammar(Printable):
             table = ParseTable(rule.name, machine, rule.match, rule.fail)
             tables[table.name] = table
 
-        return Parser(tables, unicode(self))
+        return Parser(tables, str(self))
 
 
 class SyntaxRule(Printable):
     # A production rule.
 
     def __init__(self, name, dfa, match, fail, doc):
-        assert isinstance(name, unicode)
-        assert isinstance(doc, unicode)
+        assert isinstance(name, str)
+        assert isinstance(doc, str)
         self.name = name
         self.dfa = dfa
         self.match = match
@@ -858,7 +858,7 @@ class ParseTable(object):
     # A production rule compiled into a state machine.
 
     def __init__(self, name, machine, match, fail):
-        assert isinstance(name, unicode)
+        assert isinstance(name, str)
         self.name = name
         self.machine = machine
         self.match = match
@@ -907,7 +907,7 @@ class ParseStream(object):
         point(node, mark)
         return node
 
-    def __nonzero__(self):
+    def __bool__(self):
         return (self.index < len(self.nodes))
 
     def __len__(self):
@@ -919,7 +919,7 @@ class Parser(Printable):
 
     def __init__(self, tables, doc):
         assert isinstance(tables, omapof(ParseTable)) and len(tables) > 0
-        assert isinstance(doc, unicode)
+        assert isinstance(doc, str)
         self.start = next(iter(tables)).name
         self.tables = tables
         self.doc = doc

@@ -66,7 +66,7 @@ class AttributeProbe(Probe):
     """
 
     def __init__(self, name, arity):
-        assert isinstance(name, unicode)
+        assert isinstance(name, str)
         assert isinstance(arity, maybe(int))
         assert arity is None or arity >= 0
         self.name = name
@@ -108,7 +108,7 @@ class ReferenceProbe(Probe):
     """
 
     def __init__(self, name):
-        assert isinstance(name, unicode)
+        assert isinstance(name, str)
         self.name = name
         self.key = normalize(name)
 
@@ -334,7 +334,7 @@ class GuessHeader(Lookup):
     adapt(Binding, GuessHeaderProbe)
 
     def __call__(self):
-        value = unicode(self.binding.syntax)
+        value = str(self.binding.syntax)
         if value:
             return value
         return None
@@ -806,9 +806,9 @@ class GuessHeaderFromQuotient(Lookup):
             return super(GuessHeaderFromQuotient, self).__call__()
         if len(kernel_headers) == 1:
             [kernel_header] = kernel_headers
-            return u"%s^%s" % (seed_header, kernel_header)
+            return "%s^%s" % (seed_header, kernel_header)
         else:
-            return u"%s^{%s}" % (seed_header, u",".join(kernel_headers))
+            return "%s^{%s}" % (seed_header, ",".join(kernel_headers))
 
 
 class LookupAttributeInComplement(Lookup):
@@ -1164,7 +1164,7 @@ class GuessHeaderFromAlias(Lookup):
     adapt(AliasBinding, GuessHeaderProbe)
 
     def __call__(self):
-        return unicode(self.binding.syntax)
+        return str(self.binding.syntax)
 
 
 def prescribe(arc, binding):

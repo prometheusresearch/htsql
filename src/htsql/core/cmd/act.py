@@ -113,7 +113,7 @@ class RenderProducer(Act):
 
 
 def act(command, action):
-    assert isinstance(command, (Command, Syntax, unicode, str))
+    assert isinstance(command, (Command, Syntax, str))
     assert isinstance(action, Action)
     if not isinstance(command, Command):
         command = recognize(command)

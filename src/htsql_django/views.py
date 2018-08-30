@@ -13,9 +13,9 @@ def to_environ(request):
     prefix = reverse(gateway)
     if prefix.endswith('/'):
         prefix = prefix[:-1]
-    if isinstance(environ['PATH_INFO'], unicode):
+    if isinstance(environ['PATH_INFO'], str):
         environ['PATH_INFO'] = environ['PATH_INFO'].encode('utf-8')
-    if isinstance(environ['SCRIPT_NAME'], unicode):
+    if isinstance(environ['SCRIPT_NAME'], str):
         environ['SCRIPT_NAME'] = environ['SCRIPT_NAME'].encode('utf-8')
     assert environ['PATH_INFO'].startswith(prefix)
     assert environ['SCRIPT_NAME'] == ''

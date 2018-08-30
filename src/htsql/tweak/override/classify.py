@@ -51,7 +51,7 @@ class FieldCache(object):
                 parameters = list(parameters)
                 arity = len(parameters)
             signature = (field_name, arity)
-            name = u"%s.%s" % (class_name, field_name)
+            name = "%s.%s" % (class_name, field_name)
             if (class_name, None) not in self.node_by_signature:
                 addon.unused_pattern_cache.add(name.encode('utf-8'))
                 continue
@@ -195,7 +195,7 @@ class OverrideOrderTable(OrderTable):
         for idx, (name, parameters) \
                 in enumerate(addon.field_orders[class_name, None]):
             if name not in names or parameters is not None:
-                name = u"%s.%s" % (class_name, name)
+                name = "%s.%s" % (class_name, name)
                 addon.unused_pattern_cache.add(name.encode('utf-8'))
             else:
                 orders[name] = idx

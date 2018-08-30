@@ -75,7 +75,7 @@ class SQLAlchemyIntrospect(Introspect):
                     table.add_unique_key(columns, is_primary)
                 elif isinstance(key_record, ForeignKeyConstraint):
                     column_records = [table_record.columns[column_record]
-                                      if isinstance(column_record, basestring)
+                                      if isinstance(column_record, str)
                                       else column_record
                                       for column_record in key_record.columns]
                     names = [decode(column_record.name, column_record.quote)

@@ -8,7 +8,7 @@ from cogs.fs import sh, pipe, exe, cp, mv, rm, mktree, rmtree
 from cogs.log import log, debug, warn, fail, prompt
 import os, os.path
 import glob
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import socket
 import datetime
 import time
@@ -173,8 +173,8 @@ class VM(object):
             data = None
             debug("downloading: {} => {}", url, path)
             try:
-                data = urllib2.urlopen(url).read()
-            except urllib2.HTTPError:
+                data = urllib.request.urlopen(url).read()
+            except urllib.error.HTTPError:
                 pass
             if data is not None:
                 stream = open(path, 'w')
@@ -599,7 +599,7 @@ class WindowsBenchVM(VM):
             self.put(DATA_ROOT+"/vm/%s-update.cmd" % self.name,
                      "/cygdrive/c/INSTALL/UPDATE.CMD")
             self.run("reg add 'HKLM\Software\Microsoft\Windows\CurrentVersion\RunOnce'"
-                     " /v %s /t REG_SZ /d 'C:\INSTALL\UPDATE.CMD' /f" % self.name)
+                     " /v %s /t REG_SZ /d 'C:\INSTALL\\UPDATE.CMD' /f" % self.name)
             self.run("shutdown /r /t 0 /f")
             self.wait()
             #self.compress(parent_vm.name)

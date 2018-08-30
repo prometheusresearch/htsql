@@ -180,7 +180,7 @@ class ExtractValuePipe(object):
         except ValueError:
             message = "Failed to adapt value of %s to %s" \
                     % (self.name, self.to_domain)
-            quote = unicode(Value(self.from_domain, item))
+            quote = str(Value(self.from_domain, item))
             raise Error(message, quote)
 
 
@@ -386,7 +386,7 @@ class ExecuteInsertPipe(object):
         assert isinstance(table, TableEntity)
         assert isinstance(input_columns, listof(ColumnEntity))
         assert isinstance(output_columns, listof(ColumnEntity))
-        assert isinstance(sql, unicode)
+        assert isinstance(sql, str)
         self.table = table
         self.input_columns = input_columns
         self.output_columns = output_columns
@@ -535,9 +535,9 @@ class ResolveChainPipe(object):
         if len(data) != 1:
             quote = None
             if self.name:
-                quote = u"%s[%s]" % (self.name, self.domain.dump(value))
+                quote = "%s[%s]" % (self.name, self.domain.dump(value))
             else:
-                quote = u"[%s]" % self.domain.dump(value)
+                quote = "[%s]" % self.domain.dump(value)
             raise Error("Unable to resolve a link", quote)
         return data[0]
 
@@ -620,9 +620,9 @@ class CacheChainPipe(object):
         except KeyError:
             quote = None
             if self.name:
-                quote = u"%s[%s]" % (self.name, self.domain.dump(value))
+                quote = "%s[%s]" % (self.name, self.domain.dump(value))
             else:
-                quote = u"[%s]" % self.domain.dump(value)
+                quote = "[%s]" % self.domain.dump(value)
             raise Error("Unable to resolve a link", quote)
 
 
@@ -692,7 +692,7 @@ class ProduceInsert(Act):
                             execute_insert(
                                 extract_table(
                                     extract_node(record))))
-                except Error, exc:
+                except Error as exc:
                     if extract_node.is_list:
                         message = "While inserting record #%s" % (idx+1)
                     else:

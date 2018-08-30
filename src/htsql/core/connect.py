@@ -175,7 +175,7 @@ class CursorProxy(object):
             try:
                 with self.guard:
                     return self.cursor.execute(statement, *parameters)
-            except Error, exc:
+            except Error as exc:
                 exc.wrap("While executing SQL", statement)
                 if parameters:
                     parameters = parameters[0]
@@ -194,7 +194,7 @@ class CursorProxy(object):
             try:
                 with self.guard:
                     return self.cursor.executemany(statement, parameters_set)
-            except Error, exc:
+            except Error as exc:
                 exc.wrap("While executing SQL", statement)
                 if not parameters_set:
                     exc.wrap("With no parameters")
@@ -245,7 +245,7 @@ class CursorProxy(object):
         while True:
             with self.guard:
                 try:
-                    row = iterator.next()
+                    row = next(iterator)
                 except StopIteration:
                     row = None
             if row is None:

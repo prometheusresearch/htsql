@@ -32,7 +32,7 @@ class DjangoIntrospect(Introspect):
                         model._meta.auto_created not in seen_models):
                     continue
                 all_models.append(model)
-        schema = catalog.add_schema(u"")
+        schema = catalog.add_schema("")
         relations = []
         table_by_model = {}
         column_by_field = {}

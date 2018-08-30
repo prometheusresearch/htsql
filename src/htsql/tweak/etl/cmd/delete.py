@@ -25,7 +25,7 @@ class ExecuteDeletePipe(object):
     def __init__(self, table, key_columns, sql):
         assert isinstance(table, TableEntity)
         assert isinstance(key_columns, listof(ColumnEntity))
-        assert isinstance(sql, unicode)
+        assert isinstance(sql, str)
         self.table = table
         self.key_columns = key_columns
         self.sql = sql
@@ -95,7 +95,7 @@ class ProduceDelete(Act):
                     id_value, row = extract_node(record)
                     key = resolve_key(id_value)
                     execute_delete(key)
-                except Error, error:
+                except Error as error:
                     if extract_node.is_list:
                         message = "While deleting record #%s" % (idx+1)
                     else:

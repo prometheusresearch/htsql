@@ -59,8 +59,8 @@ source_encoding = 'utf-8'
 master_doc = 'index'
 
 # General information about the project.
-project = u'HTSQL'
-copyright = (u'2006-2013, Prometheus Reserch, LLC;'
+project = 'HTSQL'
+copyright = ('2006-2013, Prometheus Reserch, LLC;'
              ' written by Clark C. Evans and Kirill Simonov')
 
 # The version info for the project you're documenting, acts as replacement for
@@ -200,8 +200,8 @@ htmlhelp_basename = 'htsql_doc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'HTSQL.tex', u'HTSQL Documentation',
-    u'2006-2013, Prometheus Reserch, LLC', 'manual'),
+  ('index', 'HTSQL.tex', 'HTSQL Documentation',
+    '2006-2013, Prometheus Reserch, LLC', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

@@ -25,7 +25,7 @@ def createdb():
     from django.core.management import call_command
     from .polls.models import Poll, Choice
     call_command('syncdb', verbosity=0)
-    p = Poll(question="What's up?", pub_date=datetime(2011, 01, 01))
+    p = Poll(question="What's up?", pub_date=datetime(2011, 0o1, 0o1))
     p.save()
     p.choice_set.create(choice='Not much', votes=10)
     p.choice_set.create(choice='The sky', votes=20)

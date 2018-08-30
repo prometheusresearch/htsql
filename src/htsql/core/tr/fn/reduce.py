@@ -42,7 +42,7 @@ class ReduceConcatenate(ReduceBySignature):
     adapt(ConcatenateSig)
 
     def __call__(self):
-        empty = LiteralPhrase(u'', self.phrase.domain, self.phrase.expression)
+        empty = LiteralPhrase('', self.phrase.domain, self.phrase.expression)
         lop = self.phrase.lop
         if lop.is_nullable:
             lop = FormulaPhrase(IfNullSig(), lop.domain, False,

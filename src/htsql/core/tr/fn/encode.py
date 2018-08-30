@@ -49,17 +49,17 @@ class EncodeContains(EncodeFunction):
         rop = self.state.encode(self.flow.rop)
         if isinstance(rop, LiteralCode):
             if rop.value is not None:
-                value = (u"%" + rop.value.replace(u"\\", u"\\\\")
-                                         .replace(u"%", u"\\%")
-                                         .replace(u"_", u"\\_") + u"%")
+                value = ("%" + rop.value.replace("\\", "\\\\")
+                                         .replace("%", "\\%")
+                                         .replace("_", "\\_") + "%")
                 rop = rop.clone(value=value)
         else:
-            backslash_literal = LiteralCode(u"\\", rop.domain, self.flow)
-            xbackslash_literal = LiteralCode(u"\\\\", rop.domain, self.flow)
-            percent_literal = LiteralCode(u"%", rop.domain, self.flow)
-            xpercent_literal = LiteralCode(u"\\%", rop.domain, self.flow)
-            underscore_literal = LiteralCode(u"_", rop.domain, self.flow)
-            xunderscore_literal = LiteralCode(u"\\_", rop.domain, self.flow)
+            backslash_literal = LiteralCode("\\", rop.domain, self.flow)
+            xbackslash_literal = LiteralCode("\\\\", rop.domain, self.flow)
+            percent_literal = LiteralCode("%", rop.domain, self.flow)
+            xpercent_literal = LiteralCode("\\%", rop.domain, self.flow)
+            underscore_literal = LiteralCode("_", rop.domain, self.flow)
+            xunderscore_literal = LiteralCode("\\_", rop.domain, self.flow)
             rop = FormulaCode(ReplaceSig(), rop.domain, self.flow,
                               op=rop, old=backslash_literal,
                               new=xbackslash_literal)
@@ -86,17 +86,17 @@ class EncodeHasPrefix(EncodeFunction):
         rop = self.state.encode(self.flow.rop)
         if isinstance(rop, LiteralCode):
             if rop.value is not None:
-                value = (rop.value.replace(u"\\", u"\\\\")
-                                  .replace(u"%", u"\\%")
-                                  .replace(u"_", u"\\_") + u"%")
+                value = (rop.value.replace("\\", "\\\\")
+                                  .replace("%", "\\%")
+                                  .replace("_", "\\_") + "%")
                 rop = rop.clone(value=value)
         else:
-            backslash_literal = LiteralCode(u"\\", rop.domain, self.flow)
-            xbackslash_literal = LiteralCode(u"\\\\", rop.domain, self.flow)
-            percent_literal = LiteralCode(u"%", rop.domain, self.flow)
-            xpercent_literal = LiteralCode(u"\\%", rop.domain, self.flow)
-            underscore_literal = LiteralCode(u"_", rop.domain, self.flow)
-            xunderscore_literal = LiteralCode(u"\\_", rop.domain, self.flow)
+            backslash_literal = LiteralCode("\\", rop.domain, self.flow)
+            xbackslash_literal = LiteralCode("\\\\", rop.domain, self.flow)
+            percent_literal = LiteralCode("%", rop.domain, self.flow)
+            xpercent_literal = LiteralCode("\\%", rop.domain, self.flow)
+            underscore_literal = LiteralCode("_", rop.domain, self.flow)
+            xunderscore_literal = LiteralCode("\\_", rop.domain, self.flow)
             rop = FormulaCode(ReplaceSig(), rop.domain, self.flow,
                               op=rop, old=backslash_literal,
                               new=xbackslash_literal)
@@ -364,7 +364,7 @@ class EncodeReplace(EncodeFunction):
         op = self.state.encode(self.flow.op)
         old = self.state.encode(self.flow.old)
         new = self.state.encode(self.flow.new)
-        empty = LiteralCode(u'', old.domain, self.flow)
+        empty = LiteralCode('', old.domain, self.flow)
         old = FormulaCode(IfNullSig(), old.domain, self.flow,
                           lop=old, rop=empty)
         new = FormulaCode(IfNullSig(), old.domain, self.flow,
@@ -462,7 +462,7 @@ class WrapCountSum(WrapAggregate):
 
     def __call__(self):
         root = RootFlow(self.unit.binding)
-        zero_literal = LiteralFlow(root, u'0', UntypedDomain(),
+        zero_literal = LiteralFlow(root, '0', UntypedDomain(),
                                       self.unit.binding)
         zero_literal = CastFlow(zero_literal, self.unit.domain,
                                    self.unit.binding)

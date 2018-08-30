@@ -31,7 +31,7 @@ class ProduceWith(Act):
                 if isinstance(input.data, dict):
                     for key, value in sorted(input.data.items()):
                         try:
-                            if not isinstance(key, unicode):
+                            if not isinstance(key, str):
                                 raise TypeError
                             name = to_name(key)
                             value = Embed.__invoke__(value)

@@ -15,7 +15,7 @@ class Command(object):
 class UniversalCmd(Command):
 
     def __init__(self, query):
-        assert isinstance(query, (str, unicode))
+        assert isinstance(query, str)
         self.query = query
 
 

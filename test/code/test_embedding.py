@@ -7,45 +7,45 @@ db = __pbbt__['demo'].db
 htsql = HTSQL(db)
 
 uri = "/school{code, count(program), count(department)}"
-print "URI:", uri
+print("URI:", uri)
 for row in htsql.produce(uri):
-    print row
-print
+    print(row)
+print()
 
 uri = "/school{name, count(program)}?code=$school_code"
 school_code = "bus"
-print "URI:", uri
-print "$school_code: %r" % school_code
+print("URI:", uri)
+print("$school_code: %r" % school_code)
 for row in htsql.produce(uri, school_code=school_code):
-    print "%s: %s" % row
-print
+    print("%s: %s" % row)
+print()
 
 uri = "/school{name, num_prog:=count(program)}" \
       "?num_prog>=$min_prog&num_prog<=$max_prog"
 min_prog = 6
 max_prog = 8
-print "URI:", uri
-print "$min_prog: %r" % min_prog
-print "$max_prog: %r" % max_prog
+print("URI:", uri)
+print("$min_prog: %r" % min_prog)
+print("$max_prog: %r" % max_prog)
 for row in htsql.produce(uri, min_prog=min_prog, max_prog=max_prog):
-    print "%s: %s" % (row.name, row.num_prog)
-print
+    print("%s: %s" % (row.name, row.num_prog))
+print()
 
 uri = "/school?campus==$campus"
 campus = None
-print "URI:", uri
-print "$campus: %r" % campus
+print("URI:", uri)
+print("$campus: %r" % campus)
 for row in htsql.produce(uri, campus=campus):
-    print row
-print
+    print(row)
+print()
 
 uri = "/school?campus=$campus"
 campus = ['north', 'south']
-print "URI:", uri
-print "$campus: %r" % campus
+print("URI:", uri)
+print("$campus: %r" % campus)
 for row in htsql.produce(uri, campus=campus):
-    print row
-print
+    print(row)
+print()
 
 uri = "/{$untyped, $selector, $boolean, $integer, $float, $decimal," \
       " $date, $time, $datetime}"
@@ -60,19 +60,19 @@ if 'sqlite' in __pbbt__:
 date_value = datetime.date(2010, 4, 15)
 time_value = datetime.time(20, 3)
 datetime_value = datetime.datetime(2010, 4, 15, 20, 3)
-print "URI:", uri
-print "$untyped: %r" % untyped_value
-print "$selector: %r" % selector_value
-print "$boolean: %r" % boolean_value
-print "$integer: %r" % integer_value
-print "$float: %r" % float_value
+print("URI:", uri)
+print("$untyped: %r" % untyped_value)
+print("$selector: %r" % selector_value)
+print("$boolean: %r" % boolean_value)
+print("$integer: %r" % integer_value)
+print("$float: %r" % float_value)
 if sys.version_info[:2] == (2, 5):
-    print ("$decimal: %r" % decimal_value).replace('"', '\'')
+    print(("$decimal: %r" % decimal_value).replace('"', '\''))
 else:
-    print "$decimal: %r" % decimal_value
-print "$date: %r" % date_value
-print "$time: %r" % time_value
-print "$datetime: %r" % datetime_value
+    print("$decimal: %r" % decimal_value)
+print("$date: %r" % date_value)
+print("$time: %r" % time_value)
+print("$datetime: %r" % datetime_value)
 for row in htsql.produce(uri, untyped=untyped_value,
                               selector=selector_value,
                               boolean=boolean_value,
@@ -83,25 +83,25 @@ for row in htsql.produce(uri, untyped=untyped_value,
                               time=time_value,
                               datetime=datetime_value):
     if sys.version_info[:2] == (2, 5):
-        print str(row).replace('"', '\'')
+        print(str(row).replace('"', '\''))
     else:
-        print row
-print
+        print(row)
+print()
 
 htsql = HTSQL(db, {'tweak.meta': None})
 
 uri = "/meta(/link?table.name=$table_name)"
 table_name = "school"
-print "URI:", uri
-print "$table_name: %r" % table_name
+print("URI:", uri)
+print("$table_name: %r" % table_name)
 for row in htsql.produce(uri, table_name=table_name):
-    print row
-print
+    print(row)
+print()
 
 htsql = HTSQL(None, {'htsql': {'db': db}, 'tweak.autolimit': {'limit': 3}})
 
 uri = "/school"
-print "URI:", uri
+print("URI:", uri)
 for row in htsql.produce(uri):
-    print row
+    print(row)
 

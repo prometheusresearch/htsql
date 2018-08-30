@@ -56,8 +56,8 @@ class Application(object):
         port = int(port)
         htsql = HTSQL(db)
         app = cls(htsql)
-        print >>sys.stderr, "Starting the HTRAF demo on http://%s:%s/" \
-                            % (host, port)
+        print("Starting the HTRAF demo on http://%s:%s/" \
+                            % (host, port), file=sys.stderr)
         httpd = wsgiref.simple_server.make_server(host, port, app)
         httpd.serve_forever()
 

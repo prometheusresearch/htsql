@@ -10,7 +10,7 @@ from ..connect import transaction, scramble, unscramble
 from ..error import PermissionError
 import operator
 import tempfile
-import cPickle
+import pickle
 
 
 class Pipe(Clonable, YAMLable):
@@ -76,10 +76,10 @@ class SQLPipe(Pipe):
     def __yaml__(self):
         yield ('sql', self.sql+'\n')
         if self.input_domains:
-            yield ('input', [unicode(domain)
+            yield ('input', [str(domain)
                              for domain in self.input_domains])
         if self.output_domains:
-            yield ('output', [unicode(domain)
+            yield ('output', [str(domain)
                               for domain in self.output_domains])
 
 
@@ -124,14 +124,14 @@ class BatchSQLPipe(Pipe):
                 size = 0
                 while chunk:
                     size += 1
-                    cPickle.dump(chunk, stream, 2)
+                    pickle.dump(chunk, stream, 2)
                     chunk = cursor.fetchmany(batch)
                     chunk = [tuple([convert(item)
                                     for item, convert in zip(row, unscrambles)])
                              for row in chunk]
                 stream.seek(0)
-                def iterate(stream=stream, size=size, load=cPickle.load):
-                    for k in xrange(size):
+                def iterate(stream=stream, size=size, load=pickle.load):
+                    for k in range(size):
                         for row in load(stream):
                             yield row
                 return iterate(stream, size)
@@ -140,10 +140,10 @@ class BatchSQLPipe(Pipe):
     def __yaml__(self):
         yield ('sql', self.sql+'\n')
         if self.input_domains:
-            yield ('input', [unicode(domain)
+            yield ('input', [str(domain)
                              for domain in self.input_domains])
         if self.output_domains:
-            yield ('output', [unicode(domain)
+            yield ('output', [str(domain)
                               for domain in self.output_domains])
         yield ('batch', self.batch)
 
@@ -233,7 +233,7 @@ class IteratePipe(Pipe):
     def __call__(self):
         def iterate(input, make_value=self.value_pipe()):
             if isinstance(input, list):
-                return map(make_value, input)
+                return list(map(make_value, input))
             else:
                 return (make_value(item) for item in input)
         return iterate
@@ -274,7 +274,7 @@ class MixPipe(Pipe):
                        make_kid_keys=make_keys[1:]):
             parent = input[0]
             kids = input[1:]
-            kids_range = range(len(kids))
+            kids_range = list(range(len(kids)))
             tops = [0]*len(kids)
             output = []
             for parent_row in parent:

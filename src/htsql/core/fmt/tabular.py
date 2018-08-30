@@ -20,7 +20,7 @@ from ..domain import (Domain, BooleanDomain, NumberDomain, FloatDomain,
         DateTimeDomain, ListDomain, RecordDomain, UntypedDomain, VoidDomain,
         OpaqueDomain, Profile)
 import csv
-import cStringIO
+import io
 import math
 
 
@@ -62,7 +62,7 @@ class EmitCSV(Emit):
         headers = product_to_csv.headers()
         to_cells = product_to_csv.cells
         assert len(headers) == product_to_csv.width
-        output = cStringIO.StringIO()
+        output = io.StringIO()
         writer = csv.writer(output, dialect=self.format.dialect)
         writer.writerow([header.encode('utf-8') if header is not None else ""
                          for header in headers])
@@ -188,9 +188,9 @@ class BooleanToCSV(ToCSV):
         if value is None:
             yield [None]
         elif value is True:
-            yield [u"1"]
+            yield ["1"]
         elif value is False:
-            yield [u"0"]
+            yield ["0"]
 
 
 class NumberToCSV(ToCSV):
@@ -201,7 +201,7 @@ class NumberToCSV(ToCSV):
         if value is None:
             yield [None]
         else:
-            yield [unicode(value)]
+            yield [str(value)]
 
 
 class FloatToCSV(ToCSV):
@@ -212,7 +212,7 @@ class FloatToCSV(ToCSV):
         if value is None or math.isinf(value) or math.isnan(value):
             yield [None]
         else:
-            yield [unicode(value)]
+            yield [str(value)]
 
 
 class DecimalToCSV(ToCSV):
@@ -223,7 +223,7 @@ class DecimalToCSV(ToCSV):
         if value is None or not value.is_finite():
             yield [None]
         else:
-            yield [unicode(value)]
+            yield [str(value)]
 
 
 class TextToCSV(ToCSV):
@@ -244,7 +244,7 @@ class DateToCSV(ToCSV):
         if value is None:
             yield [None]
         else:
-            yield [unicode(value)]
+            yield [str(value)]
 
 
 class TimeToCSV(ToCSV):
@@ -255,7 +255,7 @@ class TimeToCSV(ToCSV):
         if value is None:
             yield [None]
         else:
-            yield [unicode(value)]
+            yield [str(value)]
 
 
 class DateTimeToCSV(ToCSV):
@@ -266,9 +266,9 @@ class DateTimeToCSV(ToCSV):
         if value is None:
             yield [None]
         elif not value.time():
-            yield [unicode(value.date())]
+            yield [str(value.date())]
         else:
-            yield [unicode(value)]
+            yield [str(value)]
 
 
 class OpaqueToCSV(ToCSV):
@@ -279,11 +279,11 @@ class OpaqueToCSV(ToCSV):
         if value is None:
             yield [None]
             return
-        if not isinstance(value, unicode):
+        if not isinstance(value, str):
             try:
                 value = str(value).decode('utf-8')
             except UnicodeDecodeError:
-                value = unicode(repr(value))
+                value = str(repr(value))
         yield [value]
 
 

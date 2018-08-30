@@ -16,7 +16,7 @@ import fnmatch
 
 class IntrospectMSSQL(Introspect):
 
-    system_schema_names = [u'guest', u'INFORMATION_SCHEMA', u'sys', u'db_*']
+    system_schema_names = ['guest', 'INFORMATION_SCHEMA', 'sys', 'db_*']
 
     def __call__(self):
         connection = connect()

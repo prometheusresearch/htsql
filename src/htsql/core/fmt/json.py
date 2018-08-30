@@ -52,7 +52,7 @@ def purge_null_keys(iterator):
             context = states.pop()
         token = next(iterator, JS_DONE)
         if context is JS_MAP:
-            while isinstance(token, unicode):
+            while isinstance(token, str):
                 key = token
                 token = next(iterator, JS_DONE)
                 if token is None:
@@ -78,75 +78,75 @@ def escape_json(value,
 def dump_json(iterator):
     states = []
     context = None
-    prefix = u""
+    prefix = ""
     next_token = next(iterator, JS_DONE)
     while True:
         token = next_token
         next_token = next(iterator, JS_DONE)
         if token is None:
-            line = u"null"
+            line = "null"
         elif token is True:
-            line = u"true"
+            line = "true"
         elif token is False:
-            line = u"false"
-        elif isinstance(token, unicode):
-            line = u"\"%s\"" % escape_json(token)
-        elif isinstance(token, (int, long)):
-            line = unicode(token)
+            line = "false"
+        elif isinstance(token, str):
+            line = "\"%s\"" % escape_json(token)
+        elif isinstance(token, int):
+            line = str(token)
         elif isinstance(token, float):
             if math.isinf(token) or math.isnan(token):
-                line = u"null"
+                line = "null"
             else:
-                line = unicode(token)
+                line = str(token)
         elif isinstance(token, decimal.Decimal):
             if not token.is_finite():
-                line = u"null"
+                line = "null"
             else:
-                line = unicode(token)
+                line = str(token)
         elif token is JS_SEQ:
             if next_token is JS_END:
-                line = u"[]"
+                line = "[]"
                 next_token = next(iterator, JS_DONE)
             else:
-                yield prefix+u"[\n"
+                yield prefix+"[\n"
                 states.append(context)
                 context = token
-                prefix = u"  "*len(states)
+                prefix = "  "*len(states)
                 continue
         elif token is JS_MAP:
             if next_token is JS_END:
-                line = u"{}"
+                line = "{}"
                 next_token = next(iterator, JS_DONE)
             else:
-                assert isinstance(next_token, unicode), repr(next_token)
-                yield prefix+u"{\n"
+                assert isinstance(next_token, str), repr(next_token)
+                yield prefix+"{\n"
                 states.append(context)
                 context = token
-                prefix = u"  "*len(states) + \
-                         u"\"%s\": " % escape_json(next_token)
+                prefix = "  "*len(states) + \
+                         "\"%s\": " % escape_json(next_token)
                 next_token = next(iterator, JS_DONE)
                 continue
         else:
             assert False, repr(token)
         if next_token is not JS_END and next_token is not JS_DONE:
-            yield prefix+line+u",\n"
+            yield prefix+line+",\n"
         else:
-            yield prefix+line+u"\n"
+            yield prefix+line+"\n"
         while next_token is JS_END and states:
             next_token = next(iterator, JS_DONE)
             if context is JS_SEQ:
-                line = u"]"
+                line = "]"
             elif context is JS_MAP:
-                line = u"}"
+                line = "}"
             context = states.pop()
-            prefix = u"  "*len(states)
+            prefix = "  "*len(states)
             if next_token is not JS_END and next_token is not JS_DONE:
-                yield prefix+line+u",\n"
+                yield prefix+line+",\n"
             else:
-                yield prefix+line+u"\n"
+                yield prefix+line+"\n"
         if context is JS_MAP:
-            assert isinstance(next_token, unicode), repr(next_token)
-            prefix = u"  "*len(states) + u"\"%s\": " % escape_json(next_token)
+            assert isinstance(next_token, str), repr(next_token)
+            prefix = "  "*len(states) + "\"%s\": " % escape_json(next_token)
             next_token = next(iterator, JS_DONE)
         if context is None:
             assert next_token is JS_DONE, repr(next_token)
@@ -186,10 +186,10 @@ class EmitRaw(Emit):
         meta = list(profile_to_raw(self.meta))
         data = to_raw(self.meta.domain)(self.data)
         yield JS_MAP
-        yield u"meta"
+        yield "meta"
         for token in meta:
             yield token
-        yield u"data"
+        yield "data"
         for token in data:
             yield token
         yield JS_END
@@ -210,7 +210,7 @@ class EmitJSON(Emit):
         if self.meta.tag:
             key = self.meta.tag
         else:
-            key = unicode(0)
+            key = str(0)
         yield JS_MAP
         yield key
         for token in product_to_json(self.data):
@@ -299,7 +299,7 @@ class NativeStringToRaw(ToRaw):
         if value is None:
             yield None
         else:
-            yield unicode(value)
+            yield str(value)
 
 
 class DateTimeToRaw(ToRaw):
@@ -311,9 +311,9 @@ class DateTimeToRaw(ToRaw):
         if value is None:
             yield None
         elif not value.time():
-            yield unicode(value.date())
+            yield str(value.date())
         else:
-            yield unicode(value)
+            yield str(value)
 
 
 class OpaqueToRaw(ToRaw):
@@ -325,11 +325,11 @@ class OpaqueToRaw(ToRaw):
         if value is None:
             yield None
             return
-        if not isinstance(value, unicode):
+        if not isinstance(value, str):
             try:
                 value = str(value).decode('utf-8')
             except UnicodeDecodeError:
-                value = unicode(repr(value))
+                value = str(repr(value))
         yield value
 
 
@@ -361,7 +361,7 @@ class SyntaxMetaToRaw(MetaToRaw):
         if self.profile.syntax is None:
             yield None
         else:
-            yield unicode(self.profile.syntax)
+            yield str(self.profile.syntax)
 
 
 class TagMetaToRaw(MetaToRaw):
@@ -400,7 +400,7 @@ class PathMetaToRaw(MetaToRaw):
                     yield None
                     return
                 names.append(labels[0].name)
-            yield u".".join(names)
+            yield ".".join(names)
 
 
 class DomainToRaw(Adapter):
@@ -413,8 +413,8 @@ class DomainToRaw(Adapter):
 
     def __call__(self):
         yield JS_MAP
-        yield u"type"
-        yield unicode(self.domain.__class__)
+        yield "type"
+        yield str(self.domain.__class__)
         yield JS_END
 
 
@@ -432,11 +432,11 @@ class ListDomainToRaw(DomainToRaw):
 
     def __call__(self):
         yield JS_MAP
-        yield u"type"
-        yield unicode(self.domain.__class__)
-        yield u"item"
+        yield "type"
+        yield str(self.domain.__class__)
+        yield "item"
         yield JS_MAP
-        yield u"domain"
+        yield "domain"
         for token in domain_to_raw(self.domain.item_domain):
             yield token
         yield JS_END
@@ -449,9 +449,9 @@ class RecordDomainToRaw(DomainToRaw):
 
     def __call__(self):
         yield JS_MAP
-        yield u"type"
-        yield unicode(self.domain.__class__)
-        yield u"fields"
+        yield "type"
+        yield str(self.domain.__class__)
+        yield "fields"
         yield JS_SEQ
         for field in self.domain.fields:
             for token in profile_to_raw(field):
@@ -466,8 +466,8 @@ class IdentityDomainToRaw(DomainToRaw):
 
     def __call__(self):
         yield JS_MAP
-        yield u"type"
-        yield unicode(self.domain.__class__)
+        yield "type"
+        yield str(self.domain.__class__)
         #yield u"fields"
         #yield JS_SEQ
         #for field in self.domain.fields:
@@ -506,7 +506,7 @@ class RecordToJSON(ToJSON):
                 key = field.tag
                 used.add(key)
             else:
-                key = unicode(idx)
+                key = str(idx)
             self.field_keys.append(key)
 
     def __call__(self):
@@ -552,7 +552,7 @@ class ListToJSON(ToJSON):
 def profile_to_raw(profile):
     yield JS_MAP
     for name in MetaToRaw.__catalogue__():
-        yield unicode(name)
+        yield str(name)
         for token in MetaToRaw.__invoke__(name, profile):
             yield token
     yield JS_END

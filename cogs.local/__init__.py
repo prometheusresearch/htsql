@@ -4,6 +4,6 @@
 
 
 # Register all tasks and settings.
-import check, dist, pkg, run, vm
+from . import check, dist, pkg, run, vm
 
 

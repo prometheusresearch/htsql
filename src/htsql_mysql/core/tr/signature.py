@@ -10,7 +10,7 @@ from htsql.core.tr.signature import (Signature, Slot,
 class UserVariableSig(NullarySig):
 
     def __init__(self, name):
-        assert isinstance(name, unicode) and len(name) > 0
+        assert isinstance(name, str) and len(name) > 0
         self.name = name
 
     def __basis__(self):

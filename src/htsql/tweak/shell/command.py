@@ -32,7 +32,7 @@ import itertools
 class ShellCmd(Command):
 
     def __init__(self, query=None, is_implicit=False):
-        assert isinstance(query, maybe(unicode))
+        assert isinstance(query, maybe(str))
         assert isinstance(is_implicit, bool)
         self.query = query
         self.is_implicit = is_implicit
@@ -41,14 +41,14 @@ class ShellCmd(Command):
 class CompleteCmd(Command):
 
     def __init__(self, names):
-        assert isinstance(names, listof(unicode))
+        assert isinstance(names, listof(str))
         self.names = names
 
 
 class ProduceCmd(Command):
 
     def __init__(self, query, page=None):
-        assert isinstance(query, unicode)
+        assert isinstance(query, str)
         assert isinstance(page, maybe(int))
         if page is None:
             page = 1
@@ -59,7 +59,7 @@ class ProduceCmd(Command):
 class AnalyzeCmd(Command):
 
     def __init__(self, query):
-        assert isinstance(query, unicode)
+        assert isinstance(query, str)
         self.query = query
 
 
@@ -87,7 +87,7 @@ class SummonShell(Summon):
             if isinstance(syntax, StringSyntax):
                 query = syntax.text
             else:
-                query = unicode(syntax)
+                query = str(syntax)
         command = ShellCmd(query, False)
         return command
 
@@ -167,7 +167,7 @@ class SummonWithPermissions(Summon):
                         raise Error("Expected a string literal")
                 try:
                     value = domain.parse(literal.text)
-                except ValueError, exc:
+                except ValueError as exc:
                     raise Error(str(exc))
             values.append(value)
         can_read, can_write = values
@@ -198,15 +198,15 @@ class RenderShell(Act):
         resource_root = (server_root + '/%s/shell/'
                          % context.app.tweak.resource.indicator)
         resource_root = resource_root.decode('utf-8')
-        if query is not None and query not in [u'', u'/']:
+        if query is not None and query not in ['', '/']:
             query_on_start = query
-            evaluate_on_start = u'true'
+            evaluate_on_start = 'true'
         else:
-            query_on_start = u'/'
-            evaluate_on_start = u'false'
-        can_read_on_start = unicode(context.env.can_read).lower()
-        can_write_on_start = unicode(context.env.can_write).lower()
-        implicit_shell = unicode(self.command.is_implicit).lower()
+            query_on_start = '/'
+            evaluate_on_start = 'false'
+        can_read_on_start = str(context.env.can_read).lower()
+        can_write_on_start = str(context.env.can_write).lower()
+        implicit_shell = str(self.command.is_implicit).lower()
         status = '200 OK'
         headers = [('Content-Type', 'text/html; charset=UTF-8')]
         if self.command.is_implicit:
@@ -280,9 +280,9 @@ class RenderComplete(Act):
 
     def render_names(self, names):
         yield JS_MAP
-        yield u"type"
-        yield u"complete"
-        yield u"names"
+        yield "type"
+        yield "complete"
+        yield "names"
         yield JS_SEQ
         for name in names:
             yield name
@@ -312,11 +312,11 @@ class RenderProduceAnalyze(Act):
                     product = safe_produce(command, cut=limit+1)
                 else:
                     product = produce(command)
-        except UnsupportedActionError, exc:
+        except UnsupportedActionError as exc:
             body = self.render_unsupported(exc)
-        except PermissionError, exc:
+        except PermissionError as exc:
             body = self.render_permissions(exc)
-        except Error, exc:
+        except Error as exc:
             body = self.render_error(exc)
         else:
             if isinstance(self.command, AnalyzeCmd):
@@ -336,16 +336,16 @@ class RenderProduceAnalyze(Act):
 
     def render_unsupported(self, exc):
         yield JS_MAP
-        yield u"type"
-        yield u"unsupported"
+        yield "type"
+        yield "unsupported"
         yield JS_END
 
     def render_permissions(self, exc):
-        detail = unicode(exc)
+        detail = str(exc)
         yield JS_MAP
-        yield u"type"
-        yield u"permissions"
-        yield u"detail"
+        yield "type"
+        yield "permissions"
+        yield "detail"
         yield detail
         yield JS_END
 
@@ -357,34 +357,34 @@ class RenderProduceAnalyze(Act):
         first_column = None
         last_line = None
         last_column = None
-        detail = unicode(exc)
+        detail = str(exc)
         for paragraph in reversed(exc.paragraphs):
             if isinstance(paragraph.quote, Mark) and paragraph.quote:
                 mark = paragraph.quote
                 break
         if mark:
-            first_break = mark.text.rfind(u'\n', 0, mark.start)+1
-            last_break = mark.text.rfind(u'\n', 0, mark.end)+1
-            first_line = mark.text.count(u'\n', 0, first_break)
-            last_line = mark.text.count(u'\n', 0, last_break)
+            first_break = mark.text.rfind('\n', 0, mark.start)+1
+            last_break = mark.text.rfind('\n', 0, mark.end)+1
+            first_line = mark.text.count('\n', 0, first_break)
+            last_line = mark.text.count('\n', 0, last_break)
             first_column = mark.start-first_break
             last_column = mark.end-last_break
         if hint is not None:
             hint = hint.decode('utf-8')
         yield JS_MAP
-        yield u"type"
-        yield u"error"
-        yield u"detail"
+        yield "type"
+        yield "error"
+        yield "detail"
         yield detail
-        yield u"hint"
+        yield "hint"
         yield hint
-        yield u"first_line"
+        yield "first_line"
         yield first_line
-        yield u"first_column"
+        yield "first_column"
         yield first_column
-        yield u"last_line"
+        yield "last_line"
         yield last_line
-        yield u"last_column"
+        yield "last_column"
         yield last_column
         yield JS_END
 
@@ -396,15 +396,15 @@ class RenderProduceAnalyze(Act):
             data = data[:limit]
         data = product_to_raw(data)
         yield JS_MAP
-        yield u"type"
-        yield u"product"
-        yield u"meta"
+        yield "type"
+        yield "product"
+        yield "meta"
         for token in meta:
             yield token
-        yield u"data"
+        yield "data"
         for token in data:
             yield token
-        yield u"more"
+        yield "more"
         yield (limit is not None and
                isinstance(product.data, list) and
                len(product.data) > limit)
@@ -412,19 +412,19 @@ class RenderProduceAnalyze(Act):
 
     def render_empty(self):
         yield JS_MAP
-        yield u"type"
-        yield u"empty"
+        yield "type"
+        yield "empty"
         yield JS_END
 
     def render_sql(self, plan):
         if 'sql' in plan.properties:
             sql = plan.properties['sql']
         else:
-            sql = u""
+            sql = ""
         yield JS_MAP
-        yield u"type"
-        yield u"sql"
-        yield u"sql"
+        yield "type"
+        yield "sql"
+        yield "sql"
         yield sql
         yield JS_END
 

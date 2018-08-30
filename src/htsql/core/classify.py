@@ -197,7 +197,7 @@ class CallTable(Call):
         table = self.arc.table
         yield table.name, table.schema.priority
         if table.schema.name:
-            name = u"%s %s" % (table.schema.name, table.name)
+            name = "%s %s" % (table.schema.name, table.name)
             yield name, -1
 
 
@@ -213,7 +213,7 @@ class CallChain(Call):
 
     adapt(ChainArc)
 
-    path_word = u"via"
+    path_word = "via"
 
     def __call__(self):
         is_primary = True
@@ -238,7 +238,7 @@ class CallChain(Call):
             origin_name = foreign_key.origin_columns[-1].name
             target_name = foreign_key.target_columns[-1].name
             if origin_name.endswith(target_name):
-                prefix = origin_name[:-len(target_name)].rstrip(u' _-')
+                prefix = origin_name[:-len(target_name)].rstrip(' _-')
                 if not prefix:
                     prefix = target
             column = origin_name
@@ -250,10 +250,10 @@ class CallChain(Call):
         else:
             yield target, 3
         if not is_direct and prefix:
-            name = u"%s %s %s" % (target, self.path_word, prefix)
+            name = "%s %s %s" % (target, self.path_word, prefix)
             yield name, 2
         if not is_direct and column:
-            name = u"%s %s %s" % (target, self.path_word, column)
+            name = "%s %s %s" % (target, self.path_word, column)
             yield name, 1
 
 

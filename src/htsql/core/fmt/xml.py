@@ -27,8 +27,8 @@ class XML_START(XML_SIGNAL):
     is_start = True
 
     def __init__(self, tag, attributes=[]):
-        assert isinstance(tag, unicode)
-        assert isinstance(attributes, listof(tupleof(unicode, unicode)))
+        assert isinstance(tag, str)
+        assert isinstance(attributes, listof(tupleof(str, str)))
         self.tag = tag
         self.attributes = attributes
 
@@ -53,7 +53,7 @@ class XML_TEXT(XML_SIGNAL):
     is_text = True
 
     def __init__(self, data):
-        assert isinstance(data, unicode)
+        assert isinstance(data, str)
         self.data = data
 
     def __str__(self):
@@ -83,7 +83,7 @@ def dump_xml(iterator):
                 return signal[0](*signal[1:])
             elif isinstance(signal, type):
                 return signal()
-            elif isinstance(signal, unicode):
+            elif isinstance(signal, str):
                 return XML_TEXT(signal)
             return signal
         except StopIteration:
@@ -91,24 +91,24 @@ def dump_xml(iterator):
     tags = []
     is_newline = True
     next_signal = pull()
-    yield u"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
+    yield "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
     while next_signal is not None:
         signal = next_signal
         next_signal = pull()
         chunks = []
         if signal.is_start:
             if not is_newline:
-                chunks.append(u"\n")
-            chunks.append(u"  "*len(tags))
-            chunks.append(u"<")
+                chunks.append("\n")
+            chunks.append("  "*len(tags))
+            chunks.append("<")
             chunks.append(signal.tag)
             for attribute, value in signal.attributes:
-                chunks.append(u" %s=\"%s\"" % (attribute,
+                chunks.append(" %s=\"%s\"" % (attribute,
                                                escape_xml(value)))
             if next_signal.is_end:
-                chunks.append(u" />\n")
+                chunks.append(" />\n")
             else:
-                chunks.append(u">")
+                chunks.append(">")
             if next_signal.is_end:
                 signal = next_signal
                 next_signal = pull()
@@ -120,22 +120,22 @@ def dump_xml(iterator):
             tag = tags.pop()
             chunks = []
             if is_newline:
-                chunks.append(u"  "*len(tags))
-            chunks.append(u"</")
+                chunks.append("  "*len(tags))
+            chunks.append("</")
             chunks.append(tag)
-            chunks.append(u">\n")
+            chunks.append(">\n")
             is_newline = True
         elif signal.is_text:
             chunks = []
             if not next_signal.is_end and not is_newline:
-                chunks.append(u"\n")
+                chunks.append("\n")
                 is_newline = True
             if is_newline:
-                chunks.append(u"  "*len(tags))
+                chunks.append("  "*len(tags))
             chunks.append(escape_xml(signal.data))
             if is_newline:
-                chunks.append(u"\n")
-        yield u"".join(chunks)
+                chunks.append("\n")
+        yield "".join(chunks)
 
 
 class EmitXMLHeaders(EmitHeaders):
@@ -165,10 +165,10 @@ class EmitXML(Emit):
                 not re.match(r"""^[Xx][Mm][Ll]|^_\d*$""", self.meta.tag)):
             tag = self.meta.tag
         else:
-            tag = u"_"
+            tag = "_"
         product_to_xml = to_xml(self.meta.domain, tag)
-        yield XML_START, u"htsql:result", [(u"xmlns:htsql",
-                                            u"http://htsql.org/2010/xml")]
+        yield XML_START, "htsql:result", [("xmlns:htsql",
+                                            "http://htsql.org/2010/xml")]
         for signal in product_to_xml(self.data):
             yield signal
         yield XML_END
@@ -180,7 +180,7 @@ class ToXML(Adapter):
 
     def __init__(self, domain, tag):
         assert isinstance(domain, Domain)
-        assert isinstance(tag, unicode)
+        assert isinstance(tag, str)
         self.domain = domain
         self.tag = tag
 
@@ -208,7 +208,7 @@ class RecordToXML(ToXML):
                 tag = field.tag
                 used.add(tag)
             else:
-                tag = u"_%s" % (idx+1)
+                tag = "_%s" % (idx+1)
             field_to_xml = to_xml(field.domain, tag)
             self.fields_to_xml.append(field_to_xml)
 
@@ -248,7 +248,7 @@ class NativeToXML(ToXML):
     def scatter(self, value):
         if value is not None:
             yield XML_START, self.tag
-            yield unicode(value)
+            yield str(value)
             yield XML_END
 
 
@@ -261,14 +261,14 @@ class DecimalToXML(ToXML):
             return
         sign, digits, exp = value.as_tuple()
         if not digits:
-            value = unicode(value)
+            value = str(value)
         else:
             if exp < -6 and value == value.normalize():
                 value = value.normalize()
                 sign, digits, exp = value.as_tuple()
             if exp > 0:
                 value = value.quantize(decimal.Decimal(1))
-            value = unicode(value)
+            value = str(value)
         yield XML_START, self.tag
         yield value
         yield XML_END
@@ -283,9 +283,9 @@ class DateTimeToXML(ToXML):
             return
         yield XML_START, self.tag
         if not value.time():
-            yield unicode(value.date())
+            yield str(value.date())
         else:
-            yield unicode(value)
+            yield str(value)
         yield XML_END
 
 
@@ -297,11 +297,11 @@ class OpaqueToXML(ToXML):
         if value is None:
             return
         yield XML_START, self.tag
-        if not isinstance(value, unicode):
+        if not isinstance(value, str):
             try:
                 value = str(value).decode('utf-8')
             except UnicodeDecodeError:
-                value = unicode(repr(value))
+                value = str(repr(value))
         yield value
         yield XML_END
 

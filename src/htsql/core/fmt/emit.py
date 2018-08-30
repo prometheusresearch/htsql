@@ -74,17 +74,17 @@ class EmitProxy(Emit):
 
 
 def emit_headers(format, product):
-    if isinstance(format, (str, unicode)):
+    if isinstance(format, str):
         format = Accept.__invoke__(format)
         assert not isinstance(format, DefaultFormat), "unknown format"
     return list(EmitHeaders.__invoke__(format, product))
 
 
 def emit(format, product):
-    if isinstance(format, (str, unicode)):
+    if isinstance(format, str):
         format = Accept.__invoke__(format)
         assert not isinstance(format, DefaultFormat), "unknown format"
-    tail = (line.encode('utf-8') if isinstance(line, unicode) else line
+    tail = (line.encode('utf-8') if isinstance(line, str) else line
             for line in Emit.__invoke__(format, product))
     head = []
     for chunk in tail:

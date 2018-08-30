@@ -287,9 +287,9 @@ class PGCatalogIntrospectPGSQL(IntrospectPGSQL):
         catalog = super(PGCatalogIntrospectPGSQL, self).__call__()
         for schema_name, table_name in sorted(self.primary_keys):
             column_names = self.primary_keys[schema_name, table_name]
-            schema_name = unicode(schema_name)
-            table_name = unicode(table_name)
-            column_names = map(unicode, column_names)
+            schema_name = str(schema_name)
+            table_name = str(table_name)
+            column_names = list(map(str, column_names))
             if schema_name not in catalog:
                 continue
             schema = catalog[schema_name]
@@ -308,8 +308,8 @@ class PGCatalogIntrospectPGSQL(IntrospectPGSQL):
             table.add_primary_key(columns)
         for origin_schema_name, origin_table_name in sorted(self.foreign_keys):
             keys = self.foreign_keys[origin_schema_name, origin_table_name]
-            origin_schema_name = unicode(origin_schema_name)
-            origin_table_name = unicode(origin_table_name)
+            origin_schema_name = str(origin_schema_name)
+            origin_table_name = str(origin_table_name)
             if origin_schema_name not in catalog:
                 continue
             origin_schema = catalog[schema_name]
@@ -318,10 +318,10 @@ class PGCatalogIntrospectPGSQL(IntrospectPGSQL):
             origin = origin_schema[origin_table_name]
             for (origin_column_names, (target_schema_name, target_table_name),
                     target_column_names) in keys:
-                origin_column_names = map(unicode, origin_column_names)
-                target_schema_name = unicode(target_schema_name)
-                target_table_name = unicode(target_table_name)
-                target_column_names = map(unicode, target_column_names)
+                origin_column_names = list(map(str, origin_column_names))
+                target_schema_name = str(target_schema_name)
+                target_table_name = str(target_table_name)
+                target_column_names = list(map(str, target_column_names))
                 if any(column_name not in origin.columns
                        for column_name in origin_column_names):
                     continue

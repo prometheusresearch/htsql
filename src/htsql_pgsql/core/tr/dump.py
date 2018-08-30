@@ -18,21 +18,21 @@ from htsql.core.tr.fn.dump import (DumpLike, DumpDateIncrement,
 class PGSQLFormatLiteral(FormatLiteral):
 
     def __call__(self):
-        value = self.value.replace(u"'", u"''")
-        if u"\\" in value:
-            value = value.replace(u"\\", u"\\\\")
-            self.stream.write(u"E'%s'" % value)
+        value = self.value.replace("'", "''")
+        if "\\" in value:
+            value = value.replace("\\", "\\\\")
+            self.stream.write("E'%s'" % value)
         else:
-            self.stream.write(u"'%s'" % value)
+            self.stream.write("'%s'" % value)
 
 
 class PGSQLFormatPlaceholder(FormatPlaceholder):
 
     def __call__(self):
         if self.value is None:
-            self.stream.write(u"%s")
+            self.stream.write("%s")
         else:
-            self.stream.write(u"%%(%s)s" % self.value)
+            self.stream.write("%%(%s)s" % self.value)
 
 
 class PGSQLDumpSortDirection(DumpSortDirection):
@@ -49,30 +49,30 @@ class PGSQLDumpFloat(DumpFloat):
 
     def __call__(self):
         if self.value >= 0.0:
-            self.write(u"%s::FLOAT8" % repr(self.value))
+            self.write("%s::FLOAT8" % repr(self.value))
         else:
-            self.write(u"'%s'::FLOAT8" % repr(self.value))
+            self.write("'%s'::FLOAT8" % repr(self.value))
 
 
 class PGSQLDumpDecimal(DumpDecimal):
 
     def __call__(self):
         if not self.value.is_signed():
-            self.write(u"%s::NUMERIC" % self.value)
+            self.write("%s::NUMERIC" % self.value)
         else:
-            self.write(u"'%s'::NUMERIC" % self.value)
+            self.write("'%s'::NUMERIC" % self.value)
 
 
 class PGSQLDumpDate(DumpDate):
 
     def __call__(self):
-        self.format("{value:literal}::DATE", value=unicode(self.value))
+        self.format("{value:literal}::DATE", value=str(self.value))
 
 
 class PGSQLDumpTime(DumpTime):
 
     def __call__(self):
-        self.format("{value:literal}::TIME", value=unicode(self.value))
+        self.format("{value:literal}::TIME", value=str(self.value))
 
 
 class PGSQLDumpDateTime(DumpDateTime):
@@ -80,10 +80,10 @@ class PGSQLDumpDateTime(DumpDateTime):
     def __call__(self):
         if self.value.tzinfo is None:
             self.format("{value:literal}::TIMESTAMP",
-                        value=unicode(self.value))
+                        value=str(self.value))
         else:
             self.format("{value:literal}::TIMESTAMPTZ",
-                        value=unicode(self.value))
+                        value=str(self.value))
 
 
 class PGSQLDumpToFloat(DumpToFloat):

@@ -4,7 +4,7 @@
 
 
 from ..util import Clonable, Hashable, Printable, YAMLable
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 
 class Token(Clonable, Hashable, Printable, YAMLable):
@@ -21,15 +21,15 @@ class Token(Clonable, Hashable, Printable, YAMLable):
     """
 
     def __init__(self, code, text):
-        assert isinstance(code, unicode)
-        assert isinstance(text, unicode)
+        assert isinstance(code, str)
+        assert isinstance(text, str)
         self.code = code
         self.text = text
 
     def __basis__(self):
         return (self.code, self.text)
 
-    def __nonzero__(self):
+    def __bool__(self):
         # `False` for EOF token; `True` otherwise.
         return bool(self.code)
 
@@ -37,18 +37,18 @@ class Token(Clonable, Hashable, Printable, YAMLable):
         # '$', '`<code>`:<text>' or '%<code>:<text>'
         chunks = []
         if not self.code:
-            chunks.append(u"$")
+            chunks.append("$")
         elif self.code.isalpha():
-            chunks.append(u"%"+self.code)
+            chunks.append("%"+self.code)
         else:
-            chunks.append(u"`%s`" % self.code.replace(u"`", u"``"))
+            chunks.append("`%s`" % self.code.replace("`", "``"))
         if self.text:
-            chunks.append(u":")
+            chunks.append(":")
             text = self.text.encode('utf-8')
-            text = urllib.quote(text, safe='')
+            text = urllib.parse.quote(text, safe='')
             text = text.decode('utf-8')
             chunks.append(text)
-        return u"".join(chunks)
+        return "".join(chunks)
 
     def __yaml__(self):
         yield ('code', self.code)
@@ -61,54 +61,54 @@ class Token(Clonable, Hashable, Printable, YAMLable):
 #
 
 # The query end.
-END = u''
+END = ''
 
 # A sequence of alphanumeric characters that does not start with a digit.
-NAME = u'NAME'
+NAME = 'NAME'
 
 # A sequence of characters enclosed in single quotes.
-STRING = u'STRING'
+STRING = 'STRING'
 
 # An unsigned integer number.
-INTEGER = u'INTEGER'
+INTEGER = 'INTEGER'
 
 # An unsigned decimal number.
-DECIMAL = u'DECIMAL'
+DECIMAL = 'DECIMAL'
 
 # An unsigned number in exponentional notation.
-FLOAT = u'FLOAT'
+FLOAT = 'FLOAT'
 
 # A sequence of alphanumeric characters (including `-`) in an identity literal.
-LABEL = u'LABEL'
+LABEL = 'LABEL'
 
 # Various operator and punctuation symbols.
 SYMBOLS = [
     # comparison operators
-    u'=', u'!=', u'==', u'!==', u'~', u'!~', u'<', u'<=', u'>', u'>=',
+    '=', '!=', '==', '!==', '~', '!~', '<', '<=', '>', '>=',
 
     # logical operators
-    u'!', u'&', u'|',
+    '!', '&', '|',
 
     # arithmetic operators
-    u'+', u'-', u'*', u'/',
+    '+', '-', '*', '/',
 
     # flow operators
-    u'^', u'?', u'->', u'@',
+    '^', '?', '->', '@',
 
     # assignment operator
-    u':=',
+    ':=',
 
     # punctuation
-    u'(', u')', u'[', u']', u'{', u'}', u'.', u',', u':', u';', u'$',
+    '(', ')', '[', ']', '{', '}', '.', ',', ':', ';', '$',
 ]
 
 # A signalling token for `+` and `-` direction indicators.
-DIRSIG = u'DIRSIG'
+DIRSIG = 'DIRSIG'
 
 # A signalling token for `/` `:` sequence starting a pipe notation.
-PIPESIG = u'PIPESIG'
+PIPESIG = 'PIPESIG'
 
 # A signalling token for the LHS of assignment operator (`:=`).
-LHSSIG = u'LHSSIG'
+LHSSIG = 'LHSSIG'
 
 

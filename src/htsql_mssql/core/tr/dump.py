@@ -25,23 +25,23 @@ import math
 class MSSQLFormatName(FormatName):
 
     def __call__(self):
-        self.stream.write(u"[%s]" % self.value.replace(u"]", u"]]"))
+        self.stream.write("[%s]" % self.value.replace("]", "]]"))
 
 
 class MSSQLFormatPlaceholder(FormatPlaceholder):
 
     def __call__(self):
-        self.stream.write(u"%s")
+        self.stream.write("%s")
 
 
 class MSSQLDumpBranch(DumpBranch):
 
     def dump_select(self):
         aliases = self.state.select_aliases_by_tag[self.frame.tag]
-        self.write(u"SELECT ")
+        self.write("SELECT ")
         self.indent()
         if self.frame.limit is not None:
-            self.write(u"TOP "+unicode(self.frame.limit))
+            self.write("TOP "+str(self.frame.limit))
             self.newline()
         for index, phrase in enumerate(self.frame.select):
             alias = None
@@ -62,7 +62,7 @@ class MSSQLDumpBranch(DumpBranch):
                 self.format("{selection}",
                             selection=phrase)
             if index < len(self.frame.select)-1:
-                self.write(u",")
+                self.write(",")
                 self.newline()
         self.dedent()
 
@@ -91,9 +91,9 @@ class MSSQLDumpBoolean(DumpBoolean):
 
     def __call__(self):
         if self.value is True:
-            self.write(u"1")
+            self.write("1")
         if self.value is False:
-            self.write(u"0")
+            self.write("0")
 
 
 class MSSQLDumpInteger(DumpInteger):
@@ -103,11 +103,11 @@ class MSSQLDumpInteger(DumpInteger):
             raise Error("Got invalid integer value")
         if abs(self.value) < 2**31:
             if self.value >= 0:
-                self.write(unicode(self.value))
+                self.write(str(self.value))
             else:
-                self.write(u"(%s)" % self.value)
+                self.write("(%s)" % self.value)
         else:
-            self.write(u"CAST(%s AS BIGINT)" % self.value)
+            self.write("CAST(%s AS BIGINT)" % self.value)
 
 
 class MSSQLDumpFloat(DumpFloat):
@@ -119,7 +119,7 @@ class MSSQLDumpFloat(DumpFloat):
             value = value+'e0'
         if value[0] == '-':
             value = "(%s)" % value
-        self.write(unicode(value))
+        self.write(str(value))
 
 
 class MSSQLDumpDecimal(DumpDecimal):
@@ -133,14 +133,14 @@ class MSSQLDumpDecimal(DumpDecimal):
             value = "%s." % value
         if value[0] == '-':
             value = "(%s)" % value
-        self.write(unicode(value))
+        self.write(str(value))
 
 
 class MSSQLDumpDate(DumpDate):
 
     def __call__(self):
         self.format("CAST({value:literal} AS DATETIME)",
-                    value=unicode(self.value))
+                    value=str(self.value))
 
 
 class MSSQLDumpTime(DumpTime):
@@ -151,7 +151,7 @@ class MSSQLDumpTime(DumpTime):
         value = repr(value)
         if 'e' not in value and 'E' not in value:
             value = value+'e0'
-        self.write(unicode(value))
+        self.write(str(value))
 
 
 class MSSQLDumpDateTime(DumpDateTime):
@@ -159,9 +159,9 @@ class MSSQLDumpDateTime(DumpDateTime):
     def __call__(self):
         value = self.value.replace(tzinfo=None)
         if not value.microsecond:
-            value = unicode(value)
+            value = str(value)
         else:
-            value = unicode(value)[:-3]
+            value = str(value)[:-3]
         self.format("CAST({value:literal} AS DATETIME)", value=value)
 
 
@@ -319,7 +319,7 @@ class MSSQLDumpRoundTo(DumpRoundTo):
         if scale is not None:
             self.format("CAST(ROUND({op}, {precision})"
                         " AS DECIMAL(38,{scale:pass}))",
-                        self.arguments, self.signature, scale=unicode(scale))
+                        self.arguments, self.signature, scale=str(scale))
         else:
             self.format("ROUND({op}, {precision})",
                         self.arguments, self.signature)
@@ -353,7 +353,7 @@ class MSSQLDumpTruncTo(DumpTruncTo):
                         " CAST(POWER(10e0, {precision}) AS DECIMAL(38,19)),"
                         " {precision})"
                         " AS DECIMAL(38,{scale:pass}))",
-                        self.arguments, self.signature, scale=unicode(scale))
+                        self.arguments, self.signature, scale=str(scale))
         else:
             self.format("ROUND({op} -"
                         " (CASE WHEN {op} >= 0 THEN 0.5 ELSE -0.5 END) /"

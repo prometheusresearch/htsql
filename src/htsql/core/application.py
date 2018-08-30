@@ -154,7 +154,7 @@ class Application(object):
                         value = configuration[addon_name][parameter.attribute]
                         try:
                             value = parameter.validator(value)
-                        except ValueError, exc:
+                        except ValueError as exc:
                             raise ImportError("invalid parameter %r"
                                               " of addon %r: %s"
                                               % (parameter.attribute,
@@ -181,7 +181,7 @@ class Application(object):
             for addon in self.addons:
                 try:
                     addon.validate()
-                except ValueError, exc:
+                except ValueError as exc:
                     raise ImportError("failed to initialize %r: %s"
                                       % (addon.name, exc))
 

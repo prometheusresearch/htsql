@@ -72,8 +72,8 @@ You could access individual fields of an output row either by name
 .. sourcecode:: python
 
     >>> for row in rows:
-    ...     print "%s: %s" % (row.name, row[1])
-    ...
+    ...     print("%s: %s" % (row.name, row[1]))
+    ... 
     School of Art and Design: 2
     School of Business: 3
     College of Education: 2
@@ -90,8 +90,8 @@ It is easy to pass parameters to the query:
 
     >>> for row in htsql.produce("/department{name}?school.code=$school_code",
     ...                          school_code='ns'):
-    ...     print row
-    ...
+    ...     print(row)
+    ... 
     department(name=u'Astronomy')
     department(name=u'Chemistry')
     department(name=u'Mathematics')
@@ -205,8 +205,8 @@ Reference
 
         >>> rows = htsql.produce("/program{code,title}?school.code='ns'")
         >>> for row in rows:
-        ...     print row
-        ...
+        ...     print(row)
+        ... 
         program(code=u'gmth', title=u'Masters of Science in Mathematics')
         program(code=u'pmth', title=u'Doctorate of Science in Mathematics')
         program(code=u'uastro', title=u'Bachelor of Science in Astronomy')
@@ -233,8 +233,8 @@ Reference
         >>> rows = htsql.produce("/program.limit(3)"
         ...                      "{code,num_std:=count(student)}")
         >>> for row in rows:
-        ...     print row.code, row.num_std
-        ...
+        ...     print(row.code, row.num_std)
+        ... 
         gart 16
         uhist 20
         ustudio 26
@@ -246,7 +246,7 @@ Reference
 
         >>> rows = htsql.produce("/program?school.code=$school_code",
         ...                      school_code='ns')
-        >>> print [row.code for row in rows]
+        >>> print([row.code for row in rows])
         [u'gmth', u'pmth', u'uastro', u'uchem', u'umth', u'uphys']
 
     Values passed as parameters are converted to HTSQL literals.  The
@@ -275,5 +275,6 @@ Reference
     +---------------------------+---------------------------+
     | ``list``, ``tuple``       | ``record``                |
     +---------------------------+---------------------------+
+
 
 

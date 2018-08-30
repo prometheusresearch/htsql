@@ -30,7 +30,7 @@ import weakref
 
 def matches(entity, pattern):
     assert isinstance(entity, maybe(NamedEntity))
-    assert isinstance(pattern, maybe(unicode))
+    assert isinstance(pattern, maybe(str))
     if entity is None:
         return (pattern is None)
     if pattern is None:
@@ -45,14 +45,14 @@ class Pattern(Printable):
         raise NotImplementedError()
 
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        return str(self).encode('utf-8')
 
 
 class TablePattern(Pattern):
 
     def __init__(self, schema_pattern, table_pattern):
-        assert isinstance(schema_pattern, maybe(unicode))
-        assert isinstance(table_pattern, unicode)
+        assert isinstance(schema_pattern, maybe(str))
+        assert isinstance(table_pattern, str)
         self.schema_pattern = schema_pattern
         self.table_pattern = table_pattern
 
@@ -65,16 +65,16 @@ class TablePattern(Pattern):
 
     def __unicode__(self):
         if self.schema_pattern is not None:
-            return u"%s.%s" % (self.schema_pattern, self.table_pattern)
+            return "%s.%s" % (self.schema_pattern, self.table_pattern)
         return self.table_pattern
 
 
 class ColumnPattern(Pattern):
 
     def __init__(self, schema_pattern, table_pattern, column_pattern):
-        assert isinstance(schema_pattern, maybe(unicode))
-        assert isinstance(table_pattern, maybe(unicode))
-        assert isinstance(column_pattern, unicode)
+        assert isinstance(schema_pattern, maybe(str))
+        assert isinstance(table_pattern, maybe(str))
+        assert isinstance(column_pattern, str)
         self.schema_pattern = schema_pattern
         self.table_pattern = table_pattern
         self.column_pattern = column_pattern
@@ -97,16 +97,16 @@ class ColumnPattern(Pattern):
         if self.table_pattern is not None:
             chunks.append(self.table_pattern)
         chunks.append(self.column_pattern)
-        return u".".join(chunks)
+        return ".".join(chunks)
 
 
 class UniqueKeyPattern(Pattern):
 
     def __init__(self, schema_pattern, table_pattern, column_patterns,
                  is_primary, is_partial):
-        assert isinstance(schema_pattern, maybe(unicode))
-        assert isinstance(table_pattern, unicode)
-        assert isinstance(column_patterns, listof(unicode))
+        assert isinstance(schema_pattern, maybe(str))
+        assert isinstance(table_pattern, str)
+        assert isinstance(column_patterns, listof(str))
         assert len(column_patterns) > 0
         assert isinstance(is_primary, bool)
         assert isinstance(is_partial, bool)
@@ -143,14 +143,14 @@ class UniqueKeyPattern(Pattern):
         chunks = []
         if self.schema_pattern is not None:
             chunks.append(self.schema_pattern)
-            chunks.append(u".")
+            chunks.append(".")
         chunks.append(self.table_pattern)
-        chunks.append(u"(%s)" % ",".join(self.column_patterns))
+        chunks.append("(%s)" % ",".join(self.column_patterns))
         if self.is_primary:
-            chunks.append(u"!")
+            chunks.append("!")
         if self.is_partial:
-            chunks.append(u"?")
-        return u"".join(chunks)
+            chunks.append("?")
+        return "".join(chunks)
 
 
 class ForeignKeyPattern(Pattern):
@@ -158,13 +158,13 @@ class ForeignKeyPattern(Pattern):
     def __init__(self, schema_pattern, table_pattern, column_patterns,
                  target_schema_pattern, target_table_pattern,
                  target_column_patterns, is_partial):
-        assert isinstance(schema_pattern, maybe(unicode))
-        assert isinstance(table_pattern, unicode)
-        assert isinstance(column_patterns, listof(unicode))
+        assert isinstance(schema_pattern, maybe(str))
+        assert isinstance(table_pattern, str)
+        assert isinstance(column_patterns, listof(str))
         assert len(column_patterns) > 0
-        assert isinstance(target_schema_pattern, maybe(unicode))
-        assert isinstance(target_table_pattern, unicode)
-        assert isinstance(target_column_patterns, maybe(listof(unicode)))
+        assert isinstance(target_schema_pattern, maybe(str))
+        assert isinstance(target_table_pattern, str)
+        assert isinstance(target_column_patterns, maybe(listof(str)))
         assert (target_column_patterns is None or
                 len(target_column_patterns) == len(column_patterns))
         assert isinstance(is_partial, bool)
@@ -231,19 +231,19 @@ class ForeignKeyPattern(Pattern):
         chunks = []
         if self.schema_pattern is not None:
             chunks.append(self.schema_pattern)
-            chunks.append(u".")
+            chunks.append(".")
         chunks.append(self.table_pattern)
-        chunks.append(u"(%s)" % u",".join(self.column_patterns))
+        chunks.append("(%s)" % ",".join(self.column_patterns))
         if self.is_partial:
             chunks.append("?")
         chunks.append(" -> ")
         if self.target_schema_pattern is not None:
             chunks.append(self.target_schema_pattern)
-            chunks.append(u".")
+            chunks.append(".")
         chunks.append(self.target_table_pattern)
         if self.target_column_patterns is not None:
-            chunks.append(u"(%s)" % u",".join(self.target_column_patterns))
-        return u"".join(chunks)
+            chunks.append("(%s)" % ",".join(self.target_column_patterns))
+        return "".join(chunks)
 
 
 class ArcPattern(Pattern):
@@ -262,7 +262,7 @@ class ColumnArcPattern(ArcPattern):
     is_column = True
 
     def __init__(self, column_pattern):
-        assert isinstance(column_pattern, unicode)
+        assert isinstance(column_pattern, str)
         self.column_pattern = column_pattern
 
     def extract(self, node, parameters):
@@ -291,8 +291,8 @@ class TableArcPattern(ArcPattern):
     is_table = True
 
     def __init__(self, schema_pattern, table_pattern):
-        assert isinstance(schema_pattern, maybe(unicode))
-        assert isinstance(table_pattern, unicode)
+        assert isinstance(schema_pattern, maybe(str))
+        assert isinstance(table_pattern, str)
         self.schema_pattern = schema_pattern
         self.table_pattern = table_pattern
 
@@ -319,7 +319,7 @@ class TableArcPattern(ArcPattern):
 
     def __unicode__(self):
         if self.schema_pattern is not None:
-            return u"%s.%s" % (self.schema_pattern, self.schema_pattern)
+            return "%s.%s" % (self.schema_pattern, self.schema_pattern)
         return self.table_pattern
 
 
@@ -328,13 +328,13 @@ class JoinPattern(Pattern):
     def __init__(self, schema_pattern, table_pattern, column_patterns,
                  target_schema_pattern, target_table_pattern,
                  target_column_patterns):
-        assert isinstance(schema_pattern, maybe(unicode))
-        assert isinstance(table_pattern, unicode)
-        assert isinstance(column_patterns, maybe(listof(unicode)))
+        assert isinstance(schema_pattern, maybe(str))
+        assert isinstance(table_pattern, str)
+        assert isinstance(column_patterns, maybe(listof(str)))
         assert column_patterns is None or len(column_patterns) > 0
-        assert isinstance(target_schema_pattern, maybe(unicode))
-        assert isinstance(target_table_pattern, unicode)
-        assert isinstance(target_column_patterns, maybe(listof(unicode)))
+        assert isinstance(target_schema_pattern, maybe(str))
+        assert isinstance(target_table_pattern, str)
+        assert isinstance(target_column_patterns, maybe(listof(str)))
         assert (target_column_patterns is None or
                 len(target_column_patterns) > 0)
         assert (column_patterns is None or target_column_patterns is None or
@@ -388,18 +388,18 @@ class JoinPattern(Pattern):
         chunks = []
         if self.schema_pattern is not None:
             chunks.append(self.schema_pattern)
-            chunks.append(u".")
+            chunks.append(".")
         chunks.append(self.table_pattern)
         if self.column_patterns is not None:
-            chunks.append(u"(%s)" % u",".join(self.column_patterns))
+            chunks.append("(%s)" % ",".join(self.column_patterns))
         chunks.append(" -> ")
         if self.target_schema_pattern is not None:
             chunks.append(self.target_schema_pattern)
-            chunks.append(u".")
+            chunks.append(".")
         chunks.append(self.target_table_pattern)
         if self.target_column_patterns is not None:
-            chunks.append(u"(%s)" % u",".join(self.target_column_patterns))
-        return u"".join(chunks)
+            chunks.append("(%s)" % ",".join(self.target_column_patterns))
+        return "".join(chunks)
 
 
 class ChainArcPattern(ArcPattern):
@@ -428,7 +428,7 @@ class ChainArcPattern(ArcPattern):
         return ChainArc(table, joins)
 
     def __unicode__(self):
-        return u", ".join(unicode(pattern) for pattern in self.join_patterns)
+        return ", ".join(str(pattern) for pattern in self.join_patterns)
 
 
 class SyntaxArcPattern(ArcPattern):
@@ -436,16 +436,16 @@ class SyntaxArcPattern(ArcPattern):
     is_syntax = True
 
     def __init__(self, syntax):
-        assert isinstance(syntax, unicode)
+        assert isinstance(syntax, str)
         self.syntax = syntax
 
     def extract(self, node, parameters):
         assert isinstance(node, Node)
-        syntax = parse(self.syntax, u'flow_pipe')
+        syntax = parse(self.syntax, 'flow_pipe')
         return SyntaxArc(node, parameters, syntax)
 
     def __unicode__(self):
-        return unicode(self.syntax)
+        return str(self.syntax)
 
 
 class BindGlobal(BindByName):
@@ -461,7 +461,7 @@ class BindGlobal(BindByName):
         return (component.__app__() is context.app)
 
     def __call__(self):
-        body = parse(self.body, u'flow_pipe')
+        body = parse(self.body, 'flow_pipe')
         recipe = SubstitutionRecipe(self.state.scope, [],
                                     self.parameters, body)
         recipe = ClosedRecipe(recipe)
@@ -471,11 +471,11 @@ class BindGlobal(BindByName):
 class GlobalPattern(ArcPattern):
 
     def __init__(self, syntax):
-        assert isinstance(syntax, unicode)
+        assert isinstance(syntax, str)
         self.syntax = syntax
 
     def register(self, app, name, parameters):
-        assert isinstance(name, unicode)
+        assert isinstance(name, str)
         class_name = "Bind%s" % name.title().replace('_', '').encode('utf-8')
         arity = None
         if parameters is not None:
@@ -491,7 +491,7 @@ class GlobalPattern(ArcPattern):
         return bind_class
 
     def __unicode__(self):
-        return unicode(self.syntax)
+        return str(self.syntax)
 
 
 class CustomCmd(Command):
@@ -544,11 +544,11 @@ class SummonCommand(Summon):
 class CommandPattern(Pattern):
 
     def __init__(self, syntax):
-        assert isinstance(syntax, unicode)
+        assert isinstance(syntax, str)
         self.syntax = syntax
 
     def register(self, app, name, parameters):
-        assert isinstance(name, unicode)
+        assert isinstance(name, str)
         class_name = "Summon%s" % name.title().replace('_', '').encode('utf-8')
         parameters = list(parameters)
         namespace = {
@@ -561,7 +561,7 @@ class CommandPattern(Pattern):
         return summon_class
 
     def __unicode__(self):
-        return unicode(self.syntax)
+        return str(self.syntax)
 
 
 class TablePatternVal(Validator):
@@ -579,7 +579,7 @@ class TablePatternVal(Validator):
             return ValueError("the null value is not permitted")
         if isinstance(value, str):
             value = value.decode('utf-8', 'replace')
-        if isinstance(value, unicode):
+        if isinstance(value, str):
             match = self.regexp.match(value)
             if match is None:
                 raise ValueError("expected table pattern, got %r"
@@ -610,7 +610,7 @@ class ColumnPatternVal(Validator):
             return ValueError("the null value is not permitted")
         if isinstance(value, str):
             value = value.decode('utf-8', 'replace')
-        if isinstance(value, unicode):
+        if isinstance(value, str):
             match = self.regexp.match(value)
             if match is None:
                 raise ValueError("expected column pattern, got %r"
@@ -649,7 +649,7 @@ class UniqueKeyPatternVal(Validator):
             return ValueError("the null value is not permitted")
         if isinstance(value, str):
             value = value.decode('utf-8', 'replace')
-        if isinstance(value, unicode):
+        if isinstance(value, str):
             match = self.regexp.match(value)
             if match is None:
                 raise ValueError("expected unique key pattern, got %r"
@@ -698,7 +698,7 @@ class ForeignKeyPatternVal(Validator):
             return ValueError("the null value is not permitted")
         if isinstance(value, str):
             value = value.decode('utf-8', 'replace')
-        if isinstance(value, unicode):
+        if isinstance(value, str):
             match = self.regexp.match(value)
             if match is None:
                 raise ValueError("expected foreign key pattern, got %r"
@@ -754,7 +754,7 @@ class ClassPatternVal(Validator):
             return ValueError("the null value is not permitted")
         if isinstance(value, str):
             value = value.decode('utf-8', 'replace')
-        if isinstance(value, unicode):
+        if isinstance(value, str):
             match = self.regexp.match(value)
             if match is None:
                 raise ValueError("expected class pattern, got %r"
@@ -824,7 +824,7 @@ class FieldPatternVal(Validator):
             return ValueError("the null value is not permitted")
         if isinstance(value, str):
             value = value.decode('utf-8', 'replace')
-        if isinstance(value, unicode):
+        if isinstance(value, str):
             match = self.regexp.match(value)
             if match is None:
                 raise ValueError("expected field pattern, got %r"
@@ -889,7 +889,7 @@ class GlobalPatternVal(Validator):
             return ValueError("the null value is not permitted")
         if isinstance(value, str):
             value = value.decode('utf-8', 'replace')
-        if isinstance(value, unicode):
+        if isinstance(value, str):
             value = GlobalPattern(value)
         if not isinstance(value, GlobalPattern):
             raise ValueError("expected global pattern, got %r" % value)
@@ -903,7 +903,7 @@ class CommandPatternVal(Validator):
             return ValueError("the null value is not permitted")
         if isinstance(value, str):
             value = value.decode('utf-8', 'replace')
-        if isinstance(value, unicode):
+        if isinstance(value, str):
             value = CommandPattern(value)
         if not isinstance(value, CommandPattern):
             raise ValueError("expected command pattern, got %r" % value)
@@ -928,7 +928,7 @@ class LabelVal(Validator):
             return ValueError("the null value is not permitted")
         if isinstance(value, str):
             value = value.decode('utf-8', 'replace')
-        if isinstance(value, unicode):
+        if isinstance(value, str):
             match = self.regexp.match(value)
             if match is None:
                 raise ValueError("expected label, got %r"
@@ -942,7 +942,7 @@ class LabelVal(Validator):
                     if not name:
                         continue
                     is_reference = False
-                    if name.startswith(u"$"):
+                    if name.startswith("$"):
                         is_reference = True
                         name = name[1:]
                     name = normalize(name)
@@ -973,7 +973,7 @@ class QLabelVal(Validator):
             return ValueError("the null value is not permitted")
         if isinstance(value, str):
             value = value.decode('utf-8', 'replace')
-        if isinstance(value, unicode):
+        if isinstance(value, str):
             match = self.regexp.match(value)
             if match is None:
                 raise ValueError("expected label, got %r"
@@ -988,7 +988,7 @@ class QLabelVal(Validator):
                     if not name:
                         continue
                     is_reference = False
-                    if name.startswith(u"$"):
+                    if name.startswith("$"):
                         is_reference = True
                         name = name[1:]
                     name = normalize(name)
@@ -1018,7 +1018,7 @@ class CommandVal(Validator):
             return ValueError("the null value is not permitted")
         if isinstance(value, str):
             value = value.decode('utf-8', 'replace')
-        if isinstance(value, unicode):
+        if isinstance(value, str):
             match = self.regexp.match(value)
             if match is None:
                 raise ValueError("expected command label, got %r"

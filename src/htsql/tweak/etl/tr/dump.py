@@ -43,36 +43,36 @@ class SerializeInsert(Utility, DumpBase):
                         table=self.table.name)
 
     def dump_columns(self):
-        self.write(u" (")
+        self.write(" (")
         for idx, column in enumerate(self.columns):
             self.format("{column:name}", column=column.name)
             if idx < len(self.columns)-1:
-                self.write(u", ")
-        self.write(u")")
+                self.write(", ")
+        self.write(")")
 
     def dump_no_columns(self):
         pass
 
     def dump_values(self):
         self.newline()
-        self.write(u"VALUES (")
+        self.write("VALUES (")
         for idx, column in enumerate(self.columns):
             self.format("{index:placeholder}", index=None)
             if idx < len(self.columns)-1:
-                self.write(u", ")
-        self.write(u")")
+                self.write(", ")
+        self.write(")")
 
     def dump_no_values(self):
         self.newline()
-        self.write(u"DEFAULT VALUES")
+        self.write("DEFAULT VALUES")
 
     def dump_returning(self):
         self.newline()
-        self.write(u"RETURNING ")
+        self.write("RETURNING ")
         for idx, column in enumerate(self.returning_columns):
             self.format("{column:name}", column=column.name)
             if idx < len(self.returning_columns)-1:
-                self.write(u", ")
+                self.write(", ")
 
 
 class SerializeUpdate(Utility, DumpBase):
@@ -110,7 +110,7 @@ class SerializeUpdate(Utility, DumpBase):
 
     def dump_columns(self):
         self.newline()
-        self.write(u"SET ")
+        self.write("SET ")
         self.indent()
         for idx, column in enumerate(self.columns):
             if idx > 0:
@@ -118,25 +118,25 @@ class SerializeUpdate(Utility, DumpBase):
             self.format("{column:name} = {index:placeholder}",
                         column=column.name, index=None)
             if idx < len(self.columns)-1:
-                self.write(u",")
+                self.write(",")
         self.dedent()
 
     def dump_keys(self):
         self.newline()
-        self.write(u"WHERE ")
+        self.write("WHERE ")
         for idx, column in enumerate(self.key_columns):
             if idx > 0:
-                self.write(u" AND ")
+                self.write(" AND ")
             self.format("{column:name} = {index:placeholder}",
                         column=column.name, index=None)
 
     def dump_returning(self):
         self.newline()
-        self.write(u"RETURNING ")
+        self.write("RETURNING ")
         for idx, column in enumerate(self.returning_columns):
             self.format("{column:name}", column=column.name)
             if idx < len(self.returning_columns)-1:
-                self.write(u", ")
+                self.write(", ")
 
 
 class SerializeDelete(Utility, DumpBase):
@@ -166,10 +166,10 @@ class SerializeDelete(Utility, DumpBase):
 
     def dump_keys(self):
         self.newline()
-        self.write(u"WHERE ")
+        self.write("WHERE ")
         for idx, column in enumerate(self.key_columns):
             if idx > 0:
-                self.write(u" AND ")
+                self.write(" AND ")
             self.format("{column:name} = {index:placeholder}",
                         column=column.name, index=None)
 

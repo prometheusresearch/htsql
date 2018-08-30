@@ -167,7 +167,7 @@ class SummonSQL(Summon):
 
 
 def recognize(syntax):
-    assert isinstance(syntax, (Syntax, unicode, str))
+    assert isinstance(syntax, (Syntax, str))
     if not isinstance(syntax, Syntax):
         syntax = parse(syntax)
     command = Recognize.__invoke__(syntax)

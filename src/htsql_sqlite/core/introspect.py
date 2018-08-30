@@ -24,7 +24,7 @@ class IntrospectSQLite(Introspect):
 
         catalog = make_catalog()
 
-        schema = catalog.add_schema(u'')
+        schema = catalog.add_schema('')
 
         cursor.execute("""
             SELECT *
@@ -85,9 +85,9 @@ class IntrospectSQLite(Introspect):
                     # See `http://www.sqlite.org/cvstrac/tktview?tn=3800`
                     # and `http://www.sqlite.org/src/ci/600482d161`.
                     # The bug is fixed in SQLite 3.6.14.
-                    if (target_name.startswith(u'"') and
-                            target_name.endswith(u'"')):
-                        target_name = target_name[1:-1].replace(u'""', u'"')
+                    if (target_name.startswith('"') and
+                            target_name.endswith('"')):
+                        target_name = target_name[1:-1].replace('""', '"')
                     target_by_id[row.id] = schema[target_name]
                     target_columns_by_id[row.id] = []
                 target = target_by_id[row.id]

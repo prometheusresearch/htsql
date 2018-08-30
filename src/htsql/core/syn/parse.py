@@ -74,15 +74,15 @@ def prepare_parse():
         larms = []
         larm = stream.pull()        # parameter
         larms.append(larm)
-        while stream.peek(u'.'):
+        while stream.peek('.'):
             stream.pull()           # `.`
             larm = stream.pull()    # parameter
             larms.append(larm)
         rarms = None
-        if stream.peek(u'('):
+        if stream.peek('('):
             rarms = []
             stream.pull()               # `(`
-            while not stream.peek(u')'):
+            while not stream.peek(')'):
                 rarm = stream.pull()    # parameter
                 rarms.append(rarm)
             stream.pull()               # `)`
@@ -136,11 +136,11 @@ def prepare_parse():
             identifier = stream.pull()  # identifier
             rarms = []
             is_open = True
-            if stream and not (stream.peek(u'/') or stream.peek(PIPESIG)):
-                if stream.peek(u'('):
+            if stream and not (stream.peek('/') or stream.peek(PIPESIG)):
+                if stream.peek('('):
                     is_open = False
                     stream.pull()                   # `(`
-                    while not stream.peek(u')'):
+                    while not stream.peek(')'):
                         arm = stream.pull()         # assignment
                         rarms.append(arm)
                     stream.pull()                   # `)`
@@ -170,7 +170,7 @@ def prepare_parse():
         while stream:
             if stream.peek(DIRSIG):
                 stream.pull()               # %DIRSIG
-            if stream.peek(u'+') or stream.peek(u'-'):
+            if stream.peek('+') or stream.peek('-'):
                 direction = stream.pull()   # `+` | `-`
                 syntax = DirectSyntax(direction.text, syntax)
                 stream.mark(syntax)
@@ -180,15 +180,15 @@ def prepare_parse():
                 identifier = stream.pull()  # identifier
                 rarms = []
                 is_open = True
-                if stream and not stream.peek(u':'):
-                    if stream.peek(u'('):
+                if stream and not stream.peek(':'):
+                    if stream.peek('('):
                         is_open = False
                         stream.pull()                   # `(`
-                        while not stream.peek(u')'):
+                        while not stream.peek(')'):
                             rarm = stream.pull()        # assignment
                             rarms.append(rarm)
                         stream.pull()                   # `)`
-                    elif not (stream.peek(u'+') or stream.peek(u'-')):
+                    elif not (stream.peek('+') or stream.peek('-')):
                         rarm = stream.pull()            # flow_assignment
                         rarms.append(rarm)
                 is_flow = True
@@ -210,13 +210,13 @@ def prepare_parse():
     def match_flow(stream):
         syntax = stream.pull()              # disjunction
         while stream:
-            if stream.peek(u'?'):
+            if stream.peek('?'):
                 larm = syntax
                 stream.pull()               # `?`
                 rarm = stream.pull()        # disjunction
                 syntax = FilterSyntax(larm, rarm)
                 stream.mark(syntax)
-            elif stream.peek(u'^'):
+            elif stream.peek('^'):
                 larm = syntax
                 stream.pull()               # `^`
                 rarm = stream.pull()        # disjunction
@@ -227,7 +227,7 @@ def prepare_parse():
                 rarm = stream.pull()        # record
                 syntax = SelectSyntax(larm, rarm)
                 stream.mark(syntax)
-                while stream.peek(u'.'):
+                while stream.peek('.'):
                     stream.pull()           # `.`
                     larm = syntax
                     rarm = stream.pull()    # location
@@ -267,7 +267,7 @@ def prepare_parse():
 
     @negation.set_match
     def match_negation(stream):
-        if stream.peek(u'!'):
+        if stream.peek('!'):
             operator = stream.pull()    # `!`
             arm = stream.pull()         # negation
             syntax = PrefixSyntax(operator.text, arm)
@@ -308,7 +308,7 @@ def prepare_parse():
 
     @factor.set_match
     def match_factor(stream):
-        if stream.peek(u'+') or stream.peek(u'-'):
+        if stream.peek('+') or stream.peek('-'):
             prefix = stream.pull()  # `+` | `-`
             arm = stream.pull()     # factor
             syntax = PrefixSyntax(prefix.text, arm)
@@ -326,7 +326,7 @@ def prepare_parse():
     @linking.set_match
     def match_linking(stream):
         syntax = stream.pull()      # composition
-        if stream.peek(u'->'):
+        if stream.peek('->'):
             larm = syntax
             stream.pull()           # `->`
             rarm = stream.pull()    # flow
@@ -435,7 +435,7 @@ def prepare_parse():
         index = None
         is_open = True
         if stream:
-            if stream.peek(u'('):
+            if stream.peek('('):
                 is_open = False
                 stream.pull()           # `(`
                 index = stream.pull()   # %INTEGER
@@ -474,7 +474,7 @@ def prepare_parse():
             identifier = syntax
             stream.pull()               # `(`
             arms = []
-            while not stream.peek(u')'):
+            while not stream.peek(')'):
                 arm = stream.pull()     # assignment
                 arms.append(arm)
             stream.pull()               # `)`
@@ -516,7 +516,7 @@ def prepare_parse():
     def match_record(stream):
         stream.pull()               # `{`
         arms = []
-        while not stream.peek(u'}'):
+        while not stream.peek('}'):
             arm = stream.pull()     # assignment
             arms.append(arm)
         stream.pull()               # `}`
@@ -532,19 +532,19 @@ def prepare_parse():
     @list_.set_match
     def match_list(stream):
         stream.pull()                       # `(`
-        if stream.peek(u')'):
+        if stream.peek(')'):
             stream.pull()                   # `)`
             syntax = ListSyntax([])
             stream.mark(syntax)
         else:
             arm = stream.pull()             # assignment
-            if stream.peek(u')'):
+            if stream.peek(')'):
                 stream.pull()               # `)`
                 syntax = GroupSyntax(arm)
             else:
                 arms = [arm]
                 stream.pull()               # `,`
-                while not stream.peek(u')'):
+                while not stream.peek(')'):
                     arm = stream.pull()     # assignment
                     arms.append(arm)
                 stream.pull()               # `)`
@@ -565,10 +565,10 @@ def prepare_parse():
     ''')
 
     def match_identity(stream):
-        is_hard = stream.peek(u'[')
+        is_hard = stream.peek('[')
         stream.pull()               # `[` | `(`
         arms = []
-        while not (stream.peek(u']') or stream.peek(u')')):
+        while not (stream.peek(']') or stream.peek(')')):
             arm = stream.pull()     # label
             arms.append(arm)
         stream.pull()               # `]` | `)`

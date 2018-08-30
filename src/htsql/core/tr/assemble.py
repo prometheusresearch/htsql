@@ -1072,7 +1072,7 @@ class AssembleSegment(Assemble):
             dependent = self.state.assemble(subterm)
             index_by_term[subterm] = len(dependents)
             dependents.append(dependent)
-        for subterm in index_by_term.keys():
+        for subterm in list(index_by_term.keys()):
             index_by_term[subterm] -= len(dependents)
         return dependents, index_by_term
 

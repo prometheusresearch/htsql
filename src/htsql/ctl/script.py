@@ -212,7 +212,7 @@ class Script(object):
             # Execute the routine.
             return routine.run()
 
-        except (ScriptError, IOError, KeyboardInterrupt), exc:
+        except (ScriptError, IOError, KeyboardInterrupt) as exc:
             # Regular exceptions are passed through and produce a traceback.
             # However for a selected list of exceptions, we want to omit
             # the traceback and just show the error message.  These exceptions
@@ -508,7 +508,7 @@ class Script(object):
             else:
                 try:
                     value = argument.validator(value)
-                except ValueError, exc:
+                except ValueError as exc:
                     raise ScriptError("invalid parameter %r: %s"
                                       % (argument.attribute, exc))
             attributes[argument.attribute] = value
@@ -547,7 +547,7 @@ class Script(object):
                 if value != '-':
                     try:
                         value = option.validator(value)
-                    except ValueError, exc:
+                    except ValueError as exc:
                         raise ScriptError("invalid parameter %r: %s"
                                           % (option.attribute, exc))
                 else:

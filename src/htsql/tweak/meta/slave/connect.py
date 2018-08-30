@@ -144,7 +144,7 @@ class BuildMetaDatabase(Utility):
                     VALUES (?, ?, ?, ?)
                 """, [table_name, name, kind, sort])
                 if isinstance(arc, ColumnArc):
-                    domain = unicode(arc.column.domain.__class__)
+                    domain = str(arc.column.domain.__class__)
                     is_mandatory = (not arc.column.is_nullable)
                     cursor.execute("""
                         INSERT INTO "column" (table_name, name,

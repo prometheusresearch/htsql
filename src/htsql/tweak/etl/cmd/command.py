@@ -50,7 +50,7 @@ class TruncateCmd(Command):
 class DoCmd(Command):
 
     def __init__(self, blocks):
-        assert isinstance(blocks, listof(tupleof(maybe(unicode), Command)))
+        assert isinstance(blocks, listof(tupleof(maybe(str), Command)))
         self.blocks = blocks
 
 
@@ -69,7 +69,7 @@ class IfCmd(Command):
 class ForCmd(Command):
 
     def __init__(self, name, iterator, body):
-        assert isinstance(name, unicode)
+        assert isinstance(name, str)
         assert isinstance(iterator, Command)
         assert isinstance(body, Command)
         self.name = name

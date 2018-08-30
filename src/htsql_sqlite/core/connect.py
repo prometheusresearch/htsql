@@ -92,7 +92,7 @@ class UnscrambleSQLiteInteger(Unscramble):
     def convert(value):
         if value is None:
             return None
-        if isinstance(value, (int, long)):
+        if isinstance(value, int):
             return value
         raise Error("Expected an integer value, got", repr(value))
 
@@ -136,7 +136,7 @@ class UnscrambleSQLiteText(Unscramble):
                 value = value.decode('utf-8')
             except UnicodeDecodeError:
                 pass
-        if not isinstance(value, unicode):
+        if not isinstance(value, str):
             raise Error("Expected a text value, got", repr(value))
         return value
 
@@ -151,7 +151,7 @@ class UnscrambleSQLiteDate(Unscramble):
             return None
         if isinstance(value, datetime.date):
             return value
-        if not isinstance(value, (str, unicode)):
+        if not isinstance(value, str):
             raise Error("Expected a date value, got", repr(value))
         converter = sqlite3.converters['DATE']
         value = converter(value)
@@ -168,7 +168,7 @@ class UnscrambleSQLiteTime(Unscramble):
             return None
         if isinstance(value, datetime.time):
             return value
-        if not isinstance(value, (str, unicode)):
+        if not isinstance(value, str):
             raise Error("Expected a time value, got", repr(value))
         # FIXME: verify that the value is in valid format.
         hour, minute, second = value.split(':')
@@ -195,7 +195,7 @@ class UnscrambleSQLiteDateTime(Unscramble):
             return None
         if isinstance(value, datetime.datetime):
             return value
-        if not isinstance(value, (str, unicode)):
+        if not isinstance(value, str):
             raise Error("Expected a timestamp value, got", repr(value))
         converter = sqlite3.converters['TIMESTAMP']
         value = converter(value)

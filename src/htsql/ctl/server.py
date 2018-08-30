@@ -14,12 +14,12 @@ This module implements the `server` routine.
 from .option import HostOption, PortOption, QuietOption
 from .request import DBRoutine
 import socket
-import SocketServer
+import socketserver
 import wsgiref.simple_server
 import binascii
 
 
-class HTSQLServer(SocketServer.ThreadingMixIn,
+class HTSQLServer(socketserver.ThreadingMixIn,
                   wsgiref.simple_server.WSGIServer, object):
     # We override `WSGIServer` to pass a `ServerRoutine` object to the
     # constructor.  The routine is used to get the server address

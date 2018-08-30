@@ -116,13 +116,13 @@ class CollectionDictionaryLoader(object):
         val = record[idx]
         if val == 'null':
             return None
-        if isinstance(val, (str, unicode)):
+        if isinstance(val, str):
             return self.dequote(val)
         return val
 
     def get_date(self, columns, record, colname):
         val = self.get(columns, record, colname)
-        if val is not None and isinstance(val, (str, unicode)):
+        if val is not None and isinstance(val, str):
             return datetime.datetime.strptime(val, '%Y-%m-%d').date()
         return val
 

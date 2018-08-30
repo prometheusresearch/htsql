@@ -32,7 +32,7 @@ class OracleSerializeSegment(SerializeSegment):
 class OracleFormatPlaceholder(FormatPlaceholder):
 
     def __call__(self):
-        self.stream.write(u":%s" % self.value)
+        self.stream.write(":%s" % self.value)
 
 
 class OracleDumpScalar(Dump):
@@ -40,7 +40,7 @@ class OracleDumpScalar(Dump):
     adapt(ScalarFrame)
 
     def __call__(self):
-        self.write(u"DUAL")
+        self.write("DUAL")
 
 
 class OracleDumpBranch(DumpBranch):
@@ -87,15 +87,15 @@ class OracleDumpAnchor(DumpAnchor):
                 alias = None
         self.newline()
         if self.clause.is_cross:
-            self.write(u"CROSS JOIN ")
+            self.write("CROSS JOIN ")
         elif self.clause.is_inner:
-            self.write(u"INNER JOIN ")
+            self.write("INNER JOIN ")
         elif self.clause.is_left and not self.clause.is_right:
-            self.write(u"LEFT OUTER JOIN ")
+            self.write("LEFT OUTER JOIN ")
         elif self.clause.is_right and not self.clause.is_left:
-            self.write(u"RIGHT OUTER JOIN ")
+            self.write("RIGHT OUTER JOIN ")
         else:
-            self.write(u"FULL OUTER JOIN ")
+            self.write("FULL OUTER JOIN ")
         self.indent()
         self.state.push_hook(with_aliases=True)
         if alias is not None:
@@ -132,18 +132,18 @@ class OracleDumpBoolean(DumpBoolean):
 
     def __call__(self):
         if self.value is True:
-            self.write(u"1")
+            self.write("1")
         if self.value is False:
-            self.write(u"0")
+            self.write("0")
 
 
 class OracleDumpInteger(DumpInteger):
 
     def __call__(self):
         if self.value >= 0:
-            self.write(unicode(self.value))
+            self.write(str(self.value))
         else:
-            self.write(u"(%s)" % self.value)
+            self.write("(%s)" % self.value)
 
 
 class OracleDumpFloat(DumpFloat):
@@ -151,22 +151,22 @@ class OracleDumpFloat(DumpFloat):
     def __call__(self):
         assert not math.isinf(self.value) and not math.isnan(self.value)
         if self.value >= 0.0:
-            self.write(u"%rD" % self.value)
+            self.write("%rD" % self.value)
         else:
-            self.write(u"(%rD)" % self.value)
+            self.write("(%rD)" % self.value)
 
 
 class OracleDumpTime(DumpTime):
 
     def __call__(self):
         self.format("INTERVAL {value:literal} HOUR TO SECOND",
-                    value=unicode(self.value))
+                    value=str(self.value))
 
 
 class OracleDumpDateTime(DumpDateTime):
 
     def __call__(self):
-        self.format("TIMESTAMP {value:literal}", value=unicode(self.value))
+        self.format("TIMESTAMP {value:literal}", value=str(self.value))
 
 
 class OracleDumpToFloat(DumpToFloat):
@@ -282,7 +282,7 @@ class OracleDumpRowNumber(DumpBySignature):
     adapt(RowNumSig)
 
     def __call__(self):
-        self.write(u"ROWNUM")
+        self.write("ROWNUM")
 
 
 class OracleDumpLength(DumpLength):

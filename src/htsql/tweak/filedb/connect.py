@@ -80,7 +80,7 @@ class BuildFileDB(Utility):
                 """, (table_name,)+meta)
             try:
                 stream = open(source_file, mode="rU")
-            except IOError, exc:
+            except IOError as exc:
                 raise Error("Failed to open file", source_file)
             reader = csv.reader(stream)
             try:
@@ -99,7 +99,7 @@ class BuildFileDB(Utility):
                 if name:
                     name = to_name(name)
                 if not name or name in column_names or re.match(r"^_\d+$", name):
-                    name = u"_%s" % (idx+1)
+                    name = "_%s" % (idx+1)
                 column_names.append(name)
             records = []
             for row in reader:

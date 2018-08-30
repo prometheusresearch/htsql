@@ -67,7 +67,7 @@ class ExtensionRoutine(Routine):
             raise ScriptError("unknown extension %s" % self.addon)
         try:
             addon_class = addon_registry.load(self.addon)
-        except Exception, exc:
+        except Exception as exc:
             raise ScriptError("failed to load extension %s: %s"
                               % (self.addon, exc))
         hint = addon_class.get_hint()

@@ -1040,7 +1040,7 @@ class BindAmongBase(BindFunction):
             if isinstance(rop.domain, UntypedDomain):
                 try:
                     value = lop.domain.parse(rop.value)
-                except ValueError, exc:
+                except ValueError as exc:
                     raise Error("Cannot coerce [%s] to %s"
                                 % (rop.value, lop.domain), exc)
                 rop = LiteralBinding(rop.base, value, lop.domain, rop.syntax)

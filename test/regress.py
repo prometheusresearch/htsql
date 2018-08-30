@@ -7,7 +7,7 @@ from pbbt import Test, Field, BaseCase, MatchCase
 from pbbt.check import choiceof, maybe, oneof, listof, tupleof, dictof
 from pbbt.std import is_filename, to_identifier
 import re
-import StringIO
+import io
 import traceback
 import tempfile
 import shutil
@@ -17,19 +17,19 @@ import os
 import time
 
 
-class TermStringIO(StringIO.StringIO):
+class TermStringIO(io.StringIO):
 
     def __init__(self, buf, output):
-        StringIO.StringIO.__init__(self, buf)
+        io.StringIO.__init__(self, buf)
         self.output = output
 
     def read(self, n=-1):
-        data = StringIO.StringIO.read(self, n)
+        data = io.StringIO.read(self, n)
         self.output.write(data)
         return data
 
     def readline(self, length=None):
-        data = StringIO.StringIO.readline(self, length)
+        data = io.StringIO.readline(self, length)
         self.output.write(data)
         return data
 
@@ -86,14 +86,14 @@ class SQLCase(BaseCase):
         with app:
             try:
                 statements = list(split_sql(source))
-            except ValueError, exc:
+            except ValueError as exc:
                 self.ctl.failed("cannot parse SQL: %s" % exc)
                 return
 
             try:
                 connection = connect(with_autocommit=self.input.autocommit)
                 cursor = connection.cursor()
-            except Error, exc:
+            except Error as exc:
                 self.ui.literal(str(exc))
                 self.ctl.failed("failed to connect to the database")
                 return
@@ -101,7 +101,7 @@ class SQLCase(BaseCase):
             for statement in statements:
                 try:
                     cursor.execute(statement)
-                except Error, exc:
+                except Error as exc:
                     self.ui.literal(statement)
                     self.ui.literal(str(exc))
                     if not self.input.ignore:
@@ -113,7 +113,7 @@ class SQLCase(BaseCase):
                 if not self.input.autocommit:
                     try:
                         connection.commit()
-                    except Error, exc:
+                    except Error as exc:
                         self.ui.literal(str(exc))
                         if not self.input.ignore:
                             self.ctl.failed("failed to commit the transaction")
@@ -121,7 +121,7 @@ class SQLCase(BaseCase):
 
             try:
                 connection.close()
-            except Error, exc:
+            except Error as exc:
                 self.ui.literal(str(exc))
                 self.ctl.failed("failed to close the connection")
                 return
@@ -311,7 +311,7 @@ class CtlCase(MatchCase):
         stdout = Field(str)
 
     def run(self):
-        stdout = StringIO.StringIO()
+        stdout = io.StringIO()
         stderr = stdout
         stdin = TermStringIO(self.input.stdin, stdout)
         command_line = ['htsql-ctl']+self.input.ctl
