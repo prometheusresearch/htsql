@@ -8,7 +8,7 @@ from ..fmt.format import Format
 from ..syn.syntax import Syntax
 
 
-class Command(object):
+class Command:
     pass
 
 

@@ -10,7 +10,7 @@ from .pipe import (RecordPipe, AnnihilatePipe, IteratePipe, ComposePipe,
         ValuePipe, SinglePipe)
 
 
-class PackingState(object):
+class PackingState:
 
     def __init__(self, segment, name):
         self.segment_stack = []

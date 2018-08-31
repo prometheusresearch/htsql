@@ -9,6 +9,12 @@ STUDENT_NAME_SEED = 200
 CURDATE = datetime.datetime.strptime('2011-06-01', '%Y-%m-%d').date()
 
 
+class LegacyRandom(random.Random):
+
+    def randrange(self, l, h, _int=int):
+        return _int(l + _int(self.random()*(h-l)))
+
+
 class NameGenerator(object):
 
     def generate_male(self):
@@ -56,7 +62,7 @@ class StatNameGenerator(NameGenerator):
 
     def __init__(self, name_data, seed=0):
         self.name_data = name_data
-        self.rg = random.Random(seed)
+        self.rg = LegacyRandom(seed)
 
     def binary_search(self, names, value, high, low):
         if high == low or (high - low == 1):
@@ -302,13 +308,13 @@ class InstructorGenerator(BaseDataGenerator):
         self.instructor_data = []
         self.confidential_data = []
         self.appointment_data = []
-        self.gender_gen = random.Random(RANDOM_SEED)
-        self.title_gen = random.Random(RANDOM_SEED)
-        self.phone_gen = random.Random(RANDOM_SEED)
-        self.email_gen = random.Random(RANDOM_SEED)
-        self.ssn_gen = random.Random(RANDOM_SEED)
-        self.paygrade_gen = random.Random(RANDOM_SEED)
-        self.fraction_gen = random.Random(RANDOM_SEED)
+        self.gender_gen = LegacyRandom(RANDOM_SEED)
+        self.title_gen = LegacyRandom(RANDOM_SEED)
+        self.phone_gen = LegacyRandom(RANDOM_SEED)
+        self.email_gen = LegacyRandom(RANDOM_SEED)
+        self.ssn_gen = LegacyRandom(RANDOM_SEED)
+        self.paygrade_gen = LegacyRandom(RANDOM_SEED)
+        self.fraction_gen = LegacyRandom(RANDOM_SEED)
 
     def generate_phone(self):
         if self.phone_gen.randint(1,100) <= self.NULL_PERCENT:
@@ -380,7 +386,7 @@ class InstructorGenerator(BaseDataGenerator):
         ]
 
     def generate_content(self):
-        load_gen = random.Random(RANDOM_SEED)
+        load_gen = LegacyRandom(RANDOM_SEED)
         for depcode in sorted(self.dictionary.departments):
             load = load_gen.uniform(self.COURSES_PER_INSTRUCTOR[0], self.COURSES_PER_INSTRUCTOR[1])
             total_courses = self.dictionary.departments[depcode]
@@ -422,9 +428,9 @@ class ClassGenerator(BaseDataGenerator):
         self.class_data = []
         self.class_fill_map = {}
         self.class_seq = self.CLASS_SEQ_OFFSET
-        self.instructor_gen = random.Random(RANDOM_SEED)
-        self.course_gen = random.Random(RANDOM_SEED)
-        self.class_gen = random.Random(RANDOM_SEED)
+        self.instructor_gen = LegacyRandom(RANDOM_SEED)
+        self.course_gen = LegacyRandom(RANDOM_SEED)
+        self.class_gen = LegacyRandom(RANDOM_SEED)
 
     def get_class_fill(self, class_seq):
         if class_seq in self.class_fill_map:
@@ -547,9 +553,9 @@ class EnrollmentGenerator(BaseDataGenerator):
         self.counter = 0
         self.enrollment_data = []
         self.semester_classes = {}
-        self.grade_gen = random.Random(rand.randint(0, 100000))
-        self.course_gen = random.Random(rand.randint(0, 100000))
-        self.status_gen = random.Random(rand.randint(0, 100000))
+        self.grade_gen = LegacyRandom(rand.randint(0, 100000))
+        self.course_gen = LegacyRandom(rand.randint(0, 100000))
+        self.status_gen = LegacyRandom(rand.randint(0, 100000))
         self.sorted_courses = sorted(dictionary.courses)
 
     # returns random course by specified classification (or its children if required),
@@ -721,7 +727,7 @@ class EnrollmentGenerator(BaseDataGenerator):
         self.distribute_courses()
         self.get_semester_classes()
         level = 0
-        credits_gen = random.Random(RANDOM_SEED)
+        credits_gen = LegacyRandom(RANDOM_SEED)
         for semester in self.dictionary.semesters:
             study_time = (semester["end_date"] - self.student["start_date"]).days
             if study_time > 0 and study_time < 4 * 356 \
@@ -764,13 +770,13 @@ class StudentGenerator(BaseDataGenerator):
         self.student_counter = 0
         self.cur_year = datetime.datetime.now().year
         self.student_data = []
-        self.gender_gen = random.Random(RANDOM_SEED)
-        self.dob_gen = random.Random(RANDOM_SEED)
-        self.active_gen = random.Random(RANDOM_SEED)
-        self.school_gen = random.Random(RANDOM_SEED)
+        self.gender_gen = LegacyRandom(RANDOM_SEED)
+        self.dob_gen = LegacyRandom(RANDOM_SEED)
+        self.active_gen = LegacyRandom(RANDOM_SEED)
+        self.school_gen = LegacyRandom(RANDOM_SEED)
         self.program_gen = {}
         for school_code in sorted(self.dictionary.school_programs):
-            self.program_gen[school_code] = random.Random(RANDOM_SEED)
+            self.program_gen[school_code] = LegacyRandom(RANDOM_SEED)
 
     def generate_student(self, semester):
         gender = self.generate_gender(self.gender_gen)
@@ -797,7 +803,7 @@ class StudentGenerator(BaseDataGenerator):
         ]
 
     def generate_content(self):
-        admission_gen = random.Random(RANDOM_SEED)
+        admission_gen = LegacyRandom(RANDOM_SEED)
         for semester in self.dictionary.semesters:
             if semester["season"] == 'fall' and semester["begin_date"] <= CURDATE:
                 # make admission
@@ -830,7 +836,7 @@ def generate(content):
     studgen.generate_content()
     result.extend(studgen.get_content())
 
-    r = random.Random(RANDOM_SEED)
+    r = LegacyRandom(RANDOM_SEED)
     enr_result = []
     for student in studgen.student_data:
         enrgen = EnrollmentGenerator(dictionary, student, classgen, r)

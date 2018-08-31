@@ -33,10 +33,9 @@ class XML_START(XML_SIGNAL):
         self.attributes = attributes
 
     def __str__(self):
-        return "<%s%s>" % (self.tag.encode('utf-8'),
+        return "<%s%s>" % (self.tag,
                            "".join(" %s=\"%s\""
-                                    % (attribute.encode('utf-8'),
-                                       escape_xml(value).encode('utf-8'))
+                                    % (attribute, escape_xml(value))
                                    for attribute, value in self.attributes))
 
 
@@ -57,7 +56,7 @@ class XML_TEXT(XML_SIGNAL):
         self.data = data
 
     def __str__(self):
-        return escape_xml(self.data).encode('utf-8')
+        return escape_xml(self.data)
 
 
 def escape_xml(data, escape_regexp=re.compile(r"""[\x00-\x1F\x7F<>&"]"""),
@@ -145,7 +144,7 @@ class EmitXMLHeaders(EmitHeaders):
     def __call__(self):
         filename = None
         if self.meta.header:
-            filename = self.meta.header.encode('utf-8')
+            filename = self.meta.header
         if not filename:
             filename = '_'
         filename = filename.replace('\\', '\\\\').replace('"', '\\"')
@@ -297,12 +296,7 @@ class OpaqueToXML(ToXML):
         if value is None:
             return
         yield XML_START, self.tag
-        if not isinstance(value, str):
-            try:
-                value = str(value).decode('utf-8')
-            except UnicodeDecodeError:
-                value = str(repr(value))
-        yield value
+        yield str(value)
         yield XML_END
 
 

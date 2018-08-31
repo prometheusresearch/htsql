@@ -15,12 +15,12 @@ import urllib.request, urllib.error, urllib.parse
 import pkg_resources
 
 
-class Resource(object):
+class Resource:
 
     def __init__(self, name, data, mimetype=None, disposition='inline',
                  etag=None):
         assert isinstance(name, str) and '/' not in name
-        assert isinstance(data, str)
+        assert isinstance(data, bytes)
         assert isinstance(mimetype, maybe(str))
         assert disposition in ['inline', 'attachment']
         assert isinstance(etag, maybe(str))
@@ -78,7 +78,7 @@ class LocatePackage(Locate):
         if not os.path.isfile(filename):
             return super(LocatePackage, self).__call__()
         name = os.path.basename(filename)
-        stream = open(filename)
+        stream = open(filename, 'rb')
         data = stream.read()
         stream.close()
         stat = os.stat(filename)

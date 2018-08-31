@@ -118,7 +118,7 @@ tests:
           wsgiref.util.setup_testing_defaults(environ)
           response.status = None
           response.headers = None
-          response.body = ''.join(__pbbt__['htsql'](environ, start_response))
+          response.body = b''.join(__pbbt__['htsql'](environ, start_response))
           return (response.status, response.headers, response.body)
       status, headers, body = request({'PATH_INFO': "/"})
       token = None
@@ -138,11 +138,11 @@ tests:
       }
       status, headers, body = request(environ)
       assert status == "200 OK"
-      print status
+      print(status)
       for header, value in headers:
-          print "%s: %s" % (header, value)
-      print
-      print body
+          print("%s: %s" % (header, value))
+      print()
+      print(body.decode('utf-8'))
 
   # Test with unprotected read enabled
   - load: demo

@@ -16,7 +16,7 @@ from .util import maybe
 import re
 
 
-class SQLToken(object):
+class SQLToken:
     """
     Declares a regular expression pattern to be used by the SQL splitter.
 

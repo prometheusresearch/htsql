@@ -24,7 +24,6 @@ class ProduceTruncate(Act):
             raise PermissionError("No write permissions")
         with transaction() as connection:
             sql = serialize_truncate(self.command.table)
-            sql = sql.encode('utf-8')
             meta = decorate(VoidBinding())
             data = None
             cursor = connection.cursor()

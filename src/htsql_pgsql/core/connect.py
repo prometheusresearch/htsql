@@ -62,25 +62,3 @@ class UnscramblePGSQLError(UnscrambleError):
         return super(UnscramblePGSQLError, self).__call__()
 
 
-class UnscramblePGSQLText(Unscramble):
-
-    adapt(TextDomain)
-
-    @staticmethod
-    def convert(value):
-        if isinstance(value, str):
-            value = value.decode('utf-8')
-        return value
-
-
-class UnscramblePGSQLEnum(Unscramble):
-
-    adapt(EnumDomain)
-
-    @staticmethod
-    def convert(value):
-        if isinstance(value, str):
-            value = value.decode('utf-8')
-        return value
-
-

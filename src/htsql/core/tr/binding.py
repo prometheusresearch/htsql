@@ -48,7 +48,7 @@ class Binding(Clonable, Printable):
         # Inherit the error context from the syntax node.
         point(self, syntax)
 
-    def __unicode__(self):
+    def __str__(self):
         return str(self.syntax)
 
 
@@ -931,7 +931,7 @@ class SubstitutionRecipe(Recipe):
                 chunks.append(".")
             if is_reference:
                 chunks.append("$")
-            chunks.append(name.encode('utf-8'))
+            chunks.append(name)
         if self.parameters is not None:
             chunks.append("(")
             for index, (name, is_reference) in enumerate(self.parameters):
@@ -939,7 +939,7 @@ class SubstitutionRecipe(Recipe):
                     chunks.append(",")
                 if is_reference:
                     chunks.append("$")
-                chunks.append(name.encode('utf-8'))
+                chunks.append(name)
             chunks.append(")")
         if chunks:
             chunks.append(" := ")

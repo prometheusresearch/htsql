@@ -40,7 +40,7 @@ class CSRFWSGI(WSGI):
             can_read = can_read and addon.allow_cs_read
             can_write = can_write and addon.allow_cs_write
         if not token:
-            token = binascii.b2a_hex(os.urandom(self.csrf_secret_length))
+            token = binascii.b2a_hex(os.urandom(self.csrf_secret_length)).decode('ascii')
             path = self.environ.get('SCRIPT_NAME', '')
             if not path.endswith('/'):
                 path += '/'

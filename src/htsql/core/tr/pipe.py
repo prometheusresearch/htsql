@@ -42,7 +42,7 @@ class SQLPipe(Pipe):
         self.output_domains = output_domains
 
     def __call__(self):
-        def run_sql(input, sql=self.sql.encode('utf-8'),
+        def run_sql(input, sql=self.sql,
                            input_domains=self.input_domains,
                            output_domains=self.output_domains):
             if not context.env.can_read:
@@ -92,7 +92,7 @@ class BatchSQLPipe(Pipe):
         self.batch = batch
 
     def __call__(self):
-        def run_sql(input, sql=self.sql.encode('utf-8'),
+        def run_sql(input, sql=self.sql,
                            input_domains=self.input_domains,
                            output_domains=self.output_domains,
                            batch=self.batch):

@@ -34,12 +34,12 @@ class Pattern(Printable):
             closure[src] = set(dst for symbol, dst in nfa[src]
                                    if symbol is None)
         # Reorder the states, targets first.
-        ordered_states = toposort(sorted(closure),
-                          (lambda s: sorted(closure[s])))
+        ordered_states = toposort(sorted(closure, key=(lambda n: n if n is not None else -1)),
+                          (lambda s: sorted(closure[s], key=(lambda n: n if n is not None else -1))))
         ordered_states.remove(None)
         # Transitively close zero transitions.
         for src in ordered_states:
-            for dst in sorted(closure[src]):
+            for dst in sorted(closure[src], key=(lambda n: n if n is not None else -1)):
                 closure[src] |= closure[dst]
         # Memorize if the initial state contains a zero exit rule.
         is_epsilon = (None in closure[0])
@@ -115,12 +115,12 @@ class Pattern(Printable):
                     for symbol, dst in nfa[src]:
                         moves.setdefault(symbol, set()).add(dst)
             # Iterate over the transition table.
-            for symbol in sorted(moves):
+            for symbol in sorted(moves, key=(lambda n: n if n is not None else ())):
                 # Keep zero exit rules intact.
                 if symbol is None:
                     continue
                 # Replace a set of NFA states with a DFA state.
-                states = tuple(sorted(moves[symbol]))
+                states = tuple(sorted(moves[symbol], key=(lambda n: n if n is not None else -1)))
                 if states in index_by_states:
                     target = index_by_states[states]
                 else:
@@ -147,7 +147,7 @@ class AltPat(Pattern):
         assert isinstance(arms, listof(Pattern)) and len(arms) >= 1
         self.arms = arms
 
-    def __unicode__(self):
+    def __str__(self):
         return "(%s)" % " | ".join(str(arm) for arm in self.arms)
 
     def encode(self, nfa, src, dst):
@@ -166,7 +166,7 @@ class SeqPat(Pattern):
         assert isinstance(arms, listof(Pattern)) and len(arms) >= 1
         self.arms = arms
 
-    def __unicode__(self):
+    def __str__(self):
         return "(%s)" % " ".join(str(arm) for arm in self.arms)
 
     def encode(self, nfa, src, dst):
@@ -193,7 +193,7 @@ class ModPat(Pattern):
         self.arm = arm
         self.modifier = modifier
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s%s" % (self.arm, self.modifier)
 
     def encode(self, nfa, src, dst):
@@ -229,7 +229,7 @@ class SymPat(Pattern):
         assert symbol is not None
         self.symbol = symbol
 
-    def __unicode__(self):
+    def __str__(self):
         return str(self.symbol)
 
     def encode(self, nfa, src, dst):
@@ -241,7 +241,7 @@ class SymPat(Pattern):
 class EpsPat(Pattern):
     # Zero pattern.
 
-    def __unicode__(self):
+    def __str__(self):
         return "()"
 
     def encode(self, nfa, src, dst):
@@ -310,7 +310,6 @@ class LexicalGrammar(Printable):
         Adds and returns a new tokenizer rule.
         """
         assert isinstance(name, str)
-        name = name.decode('utf-8')
         assert name not in self.rules, name
         rule = LexicalRule(name)
         self.rules[rule.name] = rule
@@ -334,7 +333,6 @@ class LexicalGrammar(Printable):
         """
         assert isinstance(descriptor, str)
 
-        descriptor = descriptor.decode('utf-8')
         buffer = PatternBuffer(descriptor)
         name = buffer.pull(r"\w+")
         if name is None:
@@ -353,7 +351,7 @@ class LexicalGrammar(Printable):
         self.signals[signal.name] = signal
         return signal
 
-    def __unicode__(self):
+    def __str__(self):
         # Dump textual representation of the grammar.
         chunks = []
         for rule in self.rules:
@@ -445,9 +443,6 @@ class LexicalRule(Printable):
         assert isinstance(is_symbol, bool)
         assert isinstance(pop, maybe(int))
         assert isinstance(push, maybe(str))
-        descriptor = descriptor.decode('utf-8')
-        if push is not None:
-            push = push.decode('utf-8')
 
         buffer = PatternBuffer(descriptor)
         name = buffer.pull(r"\w+")
@@ -467,7 +462,7 @@ class LexicalRule(Printable):
         self.tokens[token.name] = token
         return token
 
-    def __unicode__(self):
+    def __str__(self):
         chunks = []
         chunks.append("[%s]" % self.name)
         for token in self.tokens:
@@ -498,7 +493,7 @@ class LexicalToken(Printable):
         self.push = push
         self.doc = doc
 
-    def __unicode__(self):
+    def __str__(self):
         chunks = [self.doc]
         if self.pop or self.push:
             chunks.append(" {")
@@ -523,11 +518,11 @@ class LexicalSignal(Printable):
         self.pattern = pattern
         self.doc = doc
 
-    def __unicode__(self):
+    def __str__(self):
         return self.doc
 
 
-class ScanTable(object):
+class ScanTable:
     # Tokenizer context.
 
     def __init__(self, name, regexp, groups):
@@ -539,7 +534,7 @@ class ScanTable(object):
         self.groups = groups
 
 
-class ScanTableGroup(object):
+class ScanTableGroup:
     # Matching rule for tokenizer context.
 
     def __init__(self, name, error, is_junk, is_symbol, unquote, pop, push):
@@ -558,7 +553,7 @@ class ScanTableGroup(object):
         self.push = push
 
 
-class ScanTreatment(object):
+class ScanTreatment:
     # Post-process treatment rule.
 
     def __init__(self, name, dfa):
@@ -605,7 +600,7 @@ class Scanner(Printable):
                 with parse_guard(mark):
                     if position < len(text):
                         raise Error("Got unexpected character %r"
-                                    % text[position].encode('utf-8'))
+                                    % text[position])
                     else:
                         raise Error("Got unexpected end of input")
             # The position of the next token.
@@ -668,7 +663,7 @@ class Scanner(Printable):
 
         return tokens
 
-    def __unicode__(self):
+    def __str__(self):
         return self.doc
 
 
@@ -702,7 +697,6 @@ class SyntaxGrammar(Printable):
             blocking token and returns an exception object.
         """
         assert isinstance(descriptor, str)
-        descriptor = descriptor.decode('utf-8')
 
         buffer = PatternBuffer(descriptor)
         name = buffer.pull(r"\w+")
@@ -728,7 +722,7 @@ class SyntaxGrammar(Printable):
         self.rules[rule.name] = rule
         return rule
 
-    def __unicode__(self):
+    def __str__(self):
         return "\n".join(str(rule) for rule in self.rules)
 
     def __call__(self):
@@ -739,7 +733,7 @@ class SyntaxGrammar(Printable):
         for rule in self.rules:
             assert None not in rule.dfa[0], rule.name
             for moves in rule.dfa:
-                for key in sorted(moves):
+                for key in sorted(moves, key=(lambda n: n if n is not None else ())):
                     if key is None:
                         continue
                     symbol, is_terminal = key
@@ -792,7 +786,7 @@ class SyntaxGrammar(Printable):
                 # Build a new state table as a mapping from
                 # token code to a pair `(nonterminal, state)`.
                 transitions = {}
-                for key in sorted(moves):
+                for key in sorted(moves, key=(lambda n: n if n is not None else ())):
                     # Exit and terminal input rules are copied trivially.
                     if key is None:
                         transitions[None] = (None, None)
@@ -850,11 +844,11 @@ class SyntaxRule(Printable):
         assert self.fail is None
         self.fail = fail
 
-    def __unicode__(self):
+    def __str__(self):
         return self.doc
 
 
-class ParseTable(object):
+class ParseTable:
     # A production rule compiled into a state machine.
 
     def __init__(self, name, machine, match, fail):
@@ -865,7 +859,7 @@ class ParseTable(object):
         self.fail = fail
 
 
-class ParseStream(object):
+class ParseStream:
     """
     A buffer of :class:`.Token` and :class:`.Syntax` nodes.
     """
@@ -924,7 +918,7 @@ class Parser(Printable):
         self.tables = tables
         self.doc = doc
 
-    def __unicode__(self):
+    def __str__(self):
         return self.doc
 
     def __call__(self, tokens, start=None):

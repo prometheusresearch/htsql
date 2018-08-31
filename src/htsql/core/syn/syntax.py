@@ -30,7 +30,7 @@ class VoidSyntax(Syntax):
     def __basis__(self):
         return ()
 
-    def __unicode__(self):
+    def __str__(self):
         return ""
 
 
@@ -46,7 +46,7 @@ class SkipSyntax(Syntax):
     def __basis__(self):
         return ()
 
-    def __unicode__(self):
+    def __str__(self):
         return "/"
 
 
@@ -74,7 +74,7 @@ class AssignSyntax(Syntax):
     def __basis__(self):
         return (self.larm, self.rarm)
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s:=%s" % (self.larm, self.rarm)
 
     def __yaml__(self):
@@ -128,7 +128,7 @@ class SpecifySyntax(Syntax):
         return (tuple(self.larms), tuple(self.rarms)
                                    if self.rarms is not None else None)
 
-    def __unicode__(self):
+    def __str__(self):
         chunks = []
         chunks.append(".".join(str(arm) for arm in self.larms))
         if self.rarms is not None:
@@ -189,7 +189,7 @@ class FunctionSyntax(ApplySyntax):
     def __basis__(self):
         return (self.identifier, tuple(self.arms))
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s(%s)" % (self.identifier,
                             ",".join(str(arm) for arm in self.arms))
 
@@ -243,7 +243,7 @@ class PipeSyntax(ApplySyntax):
     def __basis__(self):
         return (self.identifier, self.larm, tuple(self.rarms), self.is_open)
 
-    def __unicode__(self):
+    def __str__(self):
         chunks = []
         chunks.append(str(self.larm))
         if self.is_flow:
@@ -299,7 +299,7 @@ class OperatorSyntax(ApplySyntax):
     def __basis__(self):
         return (self.symbol, self.larm, self.rarm)
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s%s%s" % (self.larm, self.symbol, self.rarm)
 
     def __yaml__(self):
@@ -333,7 +333,7 @@ class PrefixSyntax(ApplySyntax):
     def __basis__(self):
         return (self.symbol, self.arm)
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s%s" % (self.symbol, self.arm)
 
     def __yaml__(self):
@@ -466,7 +466,7 @@ class DirectSyntax(Syntax):
     def __basis__(self):
         return (self.symbol, self.arm)
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s%s" % (self.arm, self.symbol)
 
     def __yaml__(self):
@@ -500,7 +500,7 @@ class ComposeSyntax(Syntax):
 
     endswithint_regexp = re.compile(r'(?:\W|\A)\d+\Z', re.U)
 
-    def __unicode__(self):
+    def __str__(self):
         chunks = []
         chunk = str(self.larm)
         chunks.append(chunk)
@@ -542,7 +542,7 @@ class UnpackSyntax(Syntax):
     def __basis__(self):
         return (self.index, self.is_open)
 
-    def __unicode__(self):
+    def __str__(self):
         chunks = []
         chunks.append("*")
         if not self.is_open:
@@ -571,7 +571,7 @@ class LiftSyntax(Syntax):
     def __basis__(self):
         return ()
 
-    def __unicode__(self):
+    def __str__(self):
         return "^"
 
 
@@ -594,7 +594,7 @@ class GroupSyntax(Syntax):
     def __basis__(self):
         return (self.arm,)
 
-    def __unicode__(self):
+    def __str__(self):
         return "(%s)" % self.arm
 
     def __yaml__(self):
@@ -625,7 +625,7 @@ class SelectSyntax(Syntax):
     def __basis__(self):
         return (self.larm, self.rarm)
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s%s" % (self.larm, self.rarm)
 
     def __yaml__(self):
@@ -657,7 +657,7 @@ class LocateSyntax(Syntax):
     def __basis__(self):
         return (self.larm, self.rarm)
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s%s" % (self.larm, self.rarm)
 
     def __yaml__(self):
@@ -684,7 +684,7 @@ class RecordSyntax(Syntax):
     def __basis__(self):
         return (tuple(self.arms),)
 
-    def __unicode__(self):
+    def __str__(self):
         return "{%s}" % ",".join(str(arm) for arm in self.arms)
 
     def __yaml__(self):
@@ -710,7 +710,7 @@ class ListSyntax(Syntax):
     def __basis__(self):
         return (tuple(self.arms),)
 
-    def __unicode__(self):
+    def __str__(self):
         chunks = []
         chunks.append("(")
         chunks.append("".join(str(arm) for arm in self.arms))
@@ -749,7 +749,7 @@ class IdentitySyntax(Syntax):
     def __basis__(self):
         return (tuple(self.arms), self.is_hard)
 
-    def __unicode__(self):
+    def __str__(self):
         chunks = []
         if self.is_hard:
             chunks.append("[")
@@ -790,7 +790,7 @@ class ReferenceSyntax(Syntax):
     def __basis__(self):
         return (self.identifier,)
 
-    def __unicode__(self):
+    def __str__(self):
         return "$%s" % self.identifier
 
     def __yaml__(self):
@@ -820,7 +820,7 @@ class IdentifierSyntax(Syntax):
     def __basis__(self):
         return (self.text,)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.text
 
     def __yaml__(self):
@@ -847,7 +847,7 @@ class LiteralSyntax(Syntax):
     def __basis__(self):
         return (self.text,)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.text
 
     def __yaml__(self):
@@ -861,7 +861,7 @@ class StringSyntax(LiteralSyntax):
     A string literal is a sequence of characters enclosed in single quotes.
     """
 
-    def __unicode__(self):
+    def __str__(self):
         return to_literal(self.text)
 
 
@@ -873,7 +873,7 @@ class LabelSyntax(LiteralSyntax):
     identity constructor.
     """
 
-    def __unicode__(self):
+    def __str__(self):
         # Should be safe without escaping?
         return self.text
 

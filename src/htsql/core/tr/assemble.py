@@ -72,7 +72,7 @@ class Claim(Hashable, Printable):
         return "(%s)->%s->%s" % (self.unit, self.broker, self.target)
 
 
-class Gate(object):
+class Gate:
     """
     Encapsulates a dispatching context.
 
@@ -127,7 +127,7 @@ class Gate(object):
         self.routes = routes
 
 
-class AssemblingState(object):
+class AssemblingState:
     """
     Encapsulates the state of the assembling process.
 

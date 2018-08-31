@@ -44,9 +44,9 @@ class TweakGatewayAddon(Addon):
                 instance = app.__class__(db)
             else:
                 instance = app.__class__(None, db)
-            class_name = "Summon%s" % name.title().replace('_', '').encode('utf-8')
+            class_name = "Summon%s" % name.title().replace('_', '')
             namespace = {
-                '__names__': [name.encode('utf-8')],
+                '__names__': [name],
                 'instance': instance,
             }
             summon_class = type(class_name, (SummonGateway,), namespace)

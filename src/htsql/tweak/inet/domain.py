@@ -16,15 +16,14 @@ class INetDomain(Domain):
         assert isinstance(data, maybe(str))
         if data is None:
             return None
-        data = data.encode('utf-8')
         try:
             data = socket.inet_ntoa(socket.inet_aton(data))
         except socket.error:
             raise ValueError("invalid IPv4 address")
-        return data.decode('utf-8')
+        return data
 
     def dump(self, value):
-        assert isinstance(value, maybe(oneof(str, str)))
+        assert isinstance(value, maybe(str))
         return str(value)
 
 

@@ -8,7 +8,7 @@ import threading
 import functools
 
 
-class GeneralCache(object):
+class GeneralCache:
 
     def __init__(self):
         self.values = {}

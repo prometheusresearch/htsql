@@ -6952,10 +6952,10 @@ tests:
              | name                          | avg(department.count(course)) |
             -+-------------------------------+-------------------------------+-
              | School of Art & Design        |                            19 |
-             | School of Business            |           14.6666666666666667 |
+             | School of Business            |                 14.6666666667 |
              | College of Education          |                          17.5 |
              | School of Engineering         |                         17.75 |
-             | School of Arts and Humanities |           19.1666666666666667 |
+             | School of Arts and Humanities |                 19.1666666667 |
              | School of Music & Dance       |                             0 |
              | School of Natural Sciences    |                          18.5 |
              | Public Honorariums            |                               |
@@ -7022,14 +7022,14 @@ tests:
              +------------------------+------------------------------+
              | name                   | avg((course?no>400).credits) |
             -+------------------------+------------------------------+-
-             | Accounting             |           3.7142857142857143 |
-             | Art History            |           3.5555555555555556 |
+             | Accounting             |                3.71428571429 |
+             | Art History            |                3.55555555556 |
              | Astronomy              |                          2.8 |
-             | Bioengineering         |           4.3333333333333333 |
+             | Bioengineering         |                4.33333333333 |
              | Bursar's Office        |                              |
              | Career Development     |                              |
              | Chemistry              |                            3 |
-             | Computer Science       |           3.1666666666666667 |
+             | Computer Science       |                3.16666666667 |
              | Economics              |                         3.25 |
              | Educational Policy     |                            3 |
              | Electrical Engineering |                          3.2 |
@@ -7037,16 +7037,16 @@ tests:
              | History                |                            3 |
              | Foreign Languages      |                         3.75 |
              | Mechanical Engineering |                          3.2 |
-             | Management & Marketing |           3.2727272727272727 |
+             | Management & Marketing |                3.27272727273 |
              | Mathematics            |                              |
              | Parents & Alumni       |                              |
              | Physics                |                          3.4 |
              | Piano                  |                              |
              | Political Science      |                         3.25 |
-             | Psychology             |           3.6666666666666667 |
-             | Studio Art             |           3.6666666666666667 |
+             | Psychology             |                3.66666666667 |
+             | Studio Art             |                3.66666666667 |
              | Strings                |                              |
-             | Teacher Education      |           4.6363636363636364 |
+             | Teacher Education      |                4.63636363636 |
              | Vocals                 |                              |
              | Wind                   |                              |
 
@@ -7126,26 +7126,26 @@ tests:
              | acc    |                  42 |                 3.5 |
              | arthis |                  70 |                 3.5 |
              | astro  |                  66 |                   3 |
-             | be     |                  55 |  3.2352941176470588 |
+             | be     |                  55 |       3.23529411765 |
              | bursar |                   0 |                     |
              | career |                   0 |                     |
-             | chem   |                  53 |  2.9444444444444444 |
-             | comp   |                  69 |  3.2857142857142857 |
-             | econ   |                  53 |  3.5333333333333333 |
+             | chem   |                  53 |       2.94444444444 |
+             | comp   |                  69 |       3.28571428571 |
+             | econ   |                  53 |       3.53333333333 |
              | edpol  |                  45 |                   3 |
-             | ee     |                  43 |  3.0714285714285714 |
-             | eng    |                  74 |  3.5238095238095238 |
-             | hist   |                  58 |  3.4117647058823529 |
-             | lang   |                  75 |  3.5714285714285714 |
-             | me     |                  58 |  3.0526315789473684 |
-             | mm     |                  57 |  3.3529411764705882 |
-             | mth    |                  40 |  3.6363636363636364 |
+             | ee     |                  43 |       3.07142857143 |
+             | eng    |                  74 |       3.52380952381 |
+             | hist   |                  58 |       3.41176470588 |
+             | lang   |                  75 |       3.57142857143 |
+             | me     |                  58 |       3.05263157895 |
+             | mm     |                  57 |       3.35294117647 |
+             | mth    |                  40 |       3.63636363636 |
              | parent |                   0 |                     |
-             | phys   |                  77 |  3.3478260869565217 |
+             | phys   |                  77 |       3.34782608696 |
              | pia    |                   0 |                     |
-             | poli   |                  60 |  3.1578947368421053 |
-             | psych  |                  56 |  3.2941176470588235 |
-             | stdart |                  68 |  3.7777777777777778 |
+             | poli   |                  60 |       3.15789473684 |
+             | psych  |                  56 |       3.29411764706 |
+             | stdart |                  68 |       3.77777777778 |
              | str    |                   0 |                     |
              | tched  |                  76 |                   4 |
              | voc    |                   0 |                     |
@@ -7554,20 +7554,20 @@ tests:
              | Economics              |                            4 |                                    4 |                                    3 |                                 3.25 |
              | Educational Policy     |                            5 |                                    3 |                                    3 |                                    3 |
              | Electrical Engineering |                            5 |                                    3 |                                    2 |                                  2.8 |
-             | English                |                            7 |                                    5 |                                    3 |                   3.7142857142857143 |
+             | English                |                            7 |                                    5 |                                    3 |                        3.71428571429 |
              | History                |                            5 |                                    4 |                                    3 |                                  3.2 |
              | Foreign Languages      |                            5 |                                    4 |                                    3 |                                  3.6 |
-             | Mechanical Engineering |                            6 |                                    4 |                                    2 |                   2.6666666666666667 |
+             | Mechanical Engineering |                            6 |                                    4 |                                    2 |                        2.66666666667 |
              | Management & Marketing |                            1 |                                    3 |                                    3 |                                    3 |
              | Mathematics            |                            4 |                                    5 |                                    3 |                                    4 |
              | Parents & Alumni       |                            0 |                                      |                                      |                                      |
-             | Physics                |                            6 |                                    6 |                                    2 |                   4.1666666666666667 |
+             | Physics                |                            6 |                                    6 |                                    2 |                        4.16666666667 |
              | Piano                  |                            0 |                                      |                                      |                                      |
              | Political Science      |                            4 |                                    3 |                                    3 |                                    3 |
              | Psychology             |                            4 |                                    3 |                                    3 |                                    3 |
              | Studio Art             |                            6 |                                    6 |                                    3 |                                    4 |
              | Strings                |                            0 |                                      |                                      |                                      |
-             | Teacher Education      |                            3 |                                    4 |                                    3 |                   3.3333333333333333 |
+             | Teacher Education      |                            3 |                                    4 |                                    3 |                        3.33333333333 |
              | Vocals                 |                            0 |                                      |                                      |                                      |
              | Wind                   |                            0 |                                      |                                      |                                      |
 
@@ -7612,20 +7612,20 @@ tests:
              | Economics              |                4 |                      4 |                      3 |                   3.25 |
              | Educational Policy     |                5 |                      3 |                      3 |                      3 |
              | Electrical Engineering |                5 |                      3 |                      2 |                    2.8 |
-             | English                |                7 |                      5 |                      3 |     3.7142857142857143 |
+             | English                |                7 |                      5 |                      3 |          3.71428571429 |
              | History                |                5 |                      4 |                      3 |                    3.2 |
              | Foreign Languages      |                5 |                      4 |                      3 |                    3.6 |
-             | Mechanical Engineering |                6 |                      4 |                      2 |     2.6666666666666667 |
+             | Mechanical Engineering |                6 |                      4 |                      2 |          2.66666666667 |
              | Management & Marketing |                1 |                      3 |                      3 |                      3 |
              | Mathematics            |                4 |                      5 |                      3 |                      4 |
              | Parents & Alumni       |                0 |                        |                        |                        |
-             | Physics                |                6 |                      6 |                      2 |     4.1666666666666667 |
+             | Physics                |                6 |                      6 |                      2 |          4.16666666667 |
              | Piano                  |                0 |                        |                        |                        |
              | Political Science      |                4 |                      3 |                      3 |                      3 |
              | Psychology             |                4 |                      3 |                      3 |                      3 |
              | Studio Art             |                6 |                      6 |                      3 |                      4 |
              | Strings                |                0 |                        |                        |                        |
-             | Teacher Education      |                3 |                      4 |                      3 |     3.3333333333333333 |
+             | Teacher Education      |                3 |                      4 |                      3 |          3.33333333333 |
              | Vocals                 |                0 |                        |                        |                        |
              | Wind                   |                0 |                        |                        |                        |
 
@@ -7672,20 +7672,20 @@ tests:
              | Economics              |                4 |                      4 |                      3 |                   3.25 |
              | Educational Policy     |                5 |                      3 |                      3 |                      3 |
              | Electrical Engineering |                5 |                      3 |                      2 |                    2.8 |
-             | English                |                7 |                      5 |                      3 |     3.7142857142857143 |
+             | English                |                7 |                      5 |                      3 |          3.71428571429 |
              | History                |                5 |                      4 |                      3 |                    3.2 |
              | Foreign Languages      |                5 |                      4 |                      3 |                    3.6 |
-             | Mechanical Engineering |                6 |                      4 |                      2 |     2.6666666666666667 |
+             | Mechanical Engineering |                6 |                      4 |                      2 |          2.66666666667 |
              | Management & Marketing |                1 |                      3 |                      3 |                      3 |
              | Mathematics            |                4 |                      5 |                      3 |                      4 |
              | Parents & Alumni       |                0 |                        |                        |                        |
-             | Physics                |                6 |                      6 |                      2 |     4.1666666666666667 |
+             | Physics                |                6 |                      6 |                      2 |          4.16666666667 |
              | Piano                  |                0 |                        |                        |                        |
              | Political Science      |                4 |                      3 |                      3 |                      3 |
              | Psychology             |                4 |                      3 |                      3 |                      3 |
              | Studio Art             |                6 |                      6 |                      3 |                      4 |
              | Strings                |                0 |                        |                        |                        |
-             | Teacher Education      |                3 |                      4 |                      3 |     3.3333333333333333 |
+             | Teacher Education      |                3 |                      4 |                      3 |          3.33333333333 |
              | Vocals                 |                0 |                        |                        |                        |
              | Wind                   |                0 |                        |                        |                        |
 
@@ -7725,30 +7725,30 @@ tests:
              | name                   | count(freshman) | max(freshman.credits) | min(freshman.credits) | avg(freshman.credits) | count(sophomore) | max(sophomore.credits) | min(sophomore.credits) | avg(sophomore.credits) | count(junior) | max(junior.credits) | min(junior.credits) | avg(junior.credits) | count(senior) | max(senior.credits) | min(senior.credits) | avg(senior.credits) |
             -+------------------------+-----------------+-----------------------+-----------------------+-----------------------+------------------+------------------------+------------------------+------------------------+---------------+---------------------+---------------------+---------------------+---------------+---------------------+---------------------+---------------------+-
              | Accounting             |               1 |                     2 |                     2 |                     2 |                2 |                      3 |                      3 |                      3 |             2 |                   5 |                   3 |                   4 |             3 |                   3 |                   3 |                   3 |
-             | Art History            |               2 |                     4 |                     3 |                   3.5 |                5 |                      6 |                      3 |                    3.8 |             4 |                   3 |                   3 |                   3 |             3 |                   5 |                   3 |  3.6666666666666667 |
+             | Art History            |               2 |                     4 |                     3 |                   3.5 |                5 |                      6 |                      3 |                    3.8 |             4 |                   3 |                   3 |                   3 |             3 |                   5 |                   3 |       3.66666666667 |
              | Astronomy              |               5 |                     5 |                     2 |                   3.2 |                6 |                      5 |                      1 |                      3 |             6 |                   4 |                   2 |                   3 |             5 |                   4 |                   2 |                 2.8 |
              | Bioengineering         |               5 |                     3 |                     2 |                   2.8 |                5 |                      4 |                      3 |                    3.2 |             4 |                   3 |                   3 |                   3 |             2 |                   8 |                   2 |                   5 |
              | Bursar's Office        |               0 |                       |                       |                       |                0 |                        |                        |                        |             0 |                     |                     |                     |             0 |                     |                     |                     |
              | Career Development     |               0 |                       |                       |                       |                0 |                        |                        |                        |             0 |                     |                     |                     |             0 |                     |                     |                     |
              | Chemistry              |               5 |                     5 |                     2 |                   3.4 |                6 |                      3 |                      2 |                    2.5 |             6 |                   4 |                   2 |                   3 |             0 |                     |                     |                     |
-             | Computer Science       |               6 |                     6 |                     3 |    3.6666666666666667 |                5 |                      3 |                      2 |                    2.8 |             4 |                   4 |                   3 |                 3.5 |             2 |                   3 |                   3 |                   3 |
+             | Computer Science       |               6 |                     6 |                     3 |         3.66666666667 |                5 |                      3 |                      2 |                    2.8 |             4 |                   4 |                   3 |                 3.5 |             2 |                   3 |                   3 |                   3 |
              | Economics              |               3 |                     6 |                     3 |                     5 |                4 |                      4 |                      3 |                   3.25 |             4 |                   3 |                   3 |                   3 |             4 |                   4 |                   3 |                3.25 |
              | Educational Policy     |               3 |                     3 |                     3 |                     3 |                5 |                      3 |                      3 |                      3 |             4 |                   3 |                   3 |                   3 |             3 |                   3 |                   3 |                   3 |
-             | Electrical Engineering |               1 |                     4 |                     4 |                     4 |                5 |                      3 |                      2 |                    2.8 |             3 |                   3 |                   3 |                   3 |             3 |                   4 |                   3 |  3.3333333333333333 |
-             | English                |               7 |                     5 |                     2 |    3.7142857142857143 |                7 |                      5 |                      3 |     3.7142857142857143 |             5 |                   5 |                   3 |                 3.4 |             2 |                   3 |                   2 |                 2.5 |
+             | Electrical Engineering |               1 |                     4 |                     4 |                     4 |                5 |                      3 |                      2 |                    2.8 |             3 |                   3 |                   3 |                   3 |             3 |                   4 |                   3 |       3.33333333333 |
+             | English                |               7 |                     5 |                     2 |         3.71428571429 |                7 |                      5 |                      3 |          3.71428571429 |             5 |                   5 |                   3 |                 3.4 |             2 |                   3 |                   2 |                 2.5 |
              | History                |               4 |                     5 |                     3 |                   4.5 |                5 |                      4 |                      3 |                    3.2 |             3 |                   3 |                   3 |                   3 |             3 |                   3 |                   3 |                   3 |
-             | Foreign Languages      |               6 |                     6 |                     3 |    3.6666666666666667 |                5 |                      4 |                      3 |                    3.6 |             6 |                   4 |                   2 |  3.3333333333333333 |             4 |                   5 |                   3 |                3.75 |
-             | Mechanical Engineering |               4 |                     3 |                     3 |                     3 |                6 |                      4 |                      2 |     2.6666666666666667 |             4 |                   4 |                   3 |                 3.5 |             2 |                   3 |                   3 |                   3 |
+             | Foreign Languages      |               6 |                     6 |                     3 |         3.66666666667 |                5 |                      4 |                      3 |                    3.6 |             6 |                   4 |                   2 |       3.33333333333 |             4 |                   5 |                   3 |                3.75 |
+             | Mechanical Engineering |               4 |                     3 |                     3 |                     3 |                6 |                      4 |                      2 |          2.66666666667 |             4 |                   4 |                   3 |                 3.5 |             2 |                   3 |                   3 |                   3 |
              | Management & Marketing |               0 |                       |                       |                       |                1 |                      3 |                      3 |                      3 |             5 |                   5 |                   3 |                 3.6 |             4 |                   5 |                   3 |                 3.5 |
              | Mathematics            |               5 |                     4 |                     3 |                   3.4 |                4 |                      5 |                      3 |                      4 |             2 |                   4 |                   3 |                 3.5 |             0 |                     |                     |                     |
              | Parents & Alumni       |               0 |                       |                       |                       |                0 |                        |                        |                        |             0 |                     |                     |                     |             0 |                     |                     |                     |
-             | Physics                |              10 |                     4 |                     2 |                   2.8 |                6 |                      6 |                      2 |     4.1666666666666667 |             2 |                   4 |                   3 |                 3.5 |             2 |                   4 |                   4 |                   4 |
+             | Physics                |              10 |                     4 |                     2 |                   2.8 |                6 |                      6 |                      2 |          4.16666666667 |             2 |                   4 |                   3 |                 3.5 |             2 |                   4 |                   4 |                   4 |
              | Piano                  |               0 |                       |                       |                       |                0 |                        |                        |                        |             0 |                     |                     |                     |             0 |                     |                     |                     |
              | Political Science      |               6 |                     3 |                     3 |                     3 |                4 |                      3 |                      3 |                      3 |             5 |                   5 |                   3 |                 3.4 |             2 |                   4 |                   3 |                 3.5 |
-             | Psychology             |               3 |                     5 |                     2 |    3.3333333333333333 |                4 |                      3 |                      3 |                      3 |             7 |                   4 |                   2 |  3.2857142857142857 |             1 |                   4 |                   4 |                   4 |
-             | Studio Art             |               4 |                     4 |                     3 |    3.6666666666666667 |                6 |                      6 |                      3 |                      4 |             3 |                   4 |                   3 |  3.6666666666666667 |             2 |                   6 |                   4 |                   5 |
+             | Psychology             |               3 |                     5 |                     2 |         3.33333333333 |                4 |                      3 |                      3 |                      3 |             7 |                   4 |                   2 |       3.28571428571 |             1 |                   4 |                   4 |                   4 |
+             | Studio Art             |               4 |                     4 |                     3 |         3.66666666667 |                6 |                      6 |                      3 |                      4 |             3 |                   4 |                   3 |       3.66666666667 |             2 |                   6 |                   4 |                   5 |
              | Strings                |               0 |                       |                       |                       |                0 |                        |                        |                        |             0 |                     |                     |                     |             0 |                     |                     |                     |
-             | Teacher Education      |               4 |                     3 |                     3 |                     3 |                3 |                      4 |                      3 |     3.3333333333333333 |             1 |                   3 |                   3 |                   3 |             4 |                   4 |                   3 |                3.75 |
+             | Teacher Education      |               4 |                     3 |                     3 |                     3 |                3 |                      4 |                      3 |          3.33333333333 |             1 |                   3 |                   3 |                   3 |             4 |                   4 |                   3 |                3.75 |
              | Vocals                 |               0 |                       |                       |                       |                0 |                        |                        |                        |             0 |                     |                     |                     |             0 |                     |                     |                     |
              | Wind                   |               0 |                       |                       |                       |                0 |                        |                        |                        |             0 |                     |                     |                     |             0 |                     |                     |                     |
 
@@ -7803,39 +7803,39 @@ tests:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | department                                                                                                                                                                                                                                                                                                             |
-             +------------------------+-----------------------------------------------------------------------+-----------------------------------------------------------------------+-----------------------------------------------------------------------+-----------------------------------------------------------------------+
-             |                        | stats(freshman)                                                       | stats(sophomore)                                                      | stats(junior)                                                         | stats(senior)                                                         |
-             |                        +------------+------------------+------------------+--------------------+------------+------------------+------------------+--------------------+------------+------------------+------------------+--------------------+------------+------------------+------------------+--------------------+
-             | name                   | count(set) | max(set.credits) | min(set.credits) | avg(set.credits)   | count(set) | max(set.credits) | min(set.credits) | avg(set.credits)   | count(set) | max(set.credits) | min(set.credits) | avg(set.credits)   | count(set) | max(set.credits) | min(set.credits) | avg(set.credits)   |
-            -+------------------------+------------+------------------+------------------+--------------------+------------+------------------+------------------+--------------------+------------+------------------+------------------+--------------------+------------+------------------+------------------+--------------------+-
-             | Accounting             |          1 |                2 |                2 |                  2 |          2 |                3 |                3 |                  3 |          2 |                5 |                3 |                  4 |          3 |                3 |                3 |                  3 |
-             | Art History            |          2 |                4 |                3 |                3.5 |          5 |                6 |                3 |                3.8 |          4 |                3 |                3 |                  3 |          3 |                5 |                3 | 3.6666666666666667 |
-             | Astronomy              |          5 |                5 |                2 |                3.2 |          6 |                5 |                1 |                  3 |          6 |                4 |                2 |                  3 |          5 |                4 |                2 |                2.8 |
-             | Bioengineering         |          5 |                3 |                2 |                2.8 |          5 |                4 |                3 |                3.2 |          4 |                3 |                3 |                  3 |          2 |                8 |                2 |                  5 |
-             | Bursar's Office        |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |
-             | Career Development     |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |
-             | Chemistry              |          5 |                5 |                2 |                3.4 |          6 |                3 |                2 |                2.5 |          6 |                4 |                2 |                  3 |          0 |                  |                  |                    |
-             | Computer Science       |          6 |                6 |                3 | 3.6666666666666667 |          5 |                3 |                2 |                2.8 |          4 |                4 |                3 |                3.5 |          2 |                3 |                3 |                  3 |
-             | Economics              |          3 |                6 |                3 |                  5 |          4 |                4 |                3 |               3.25 |          4 |                3 |                3 |                  3 |          4 |                4 |                3 |               3.25 |
-             | Educational Policy     |          3 |                3 |                3 |                  3 |          5 |                3 |                3 |                  3 |          4 |                3 |                3 |                  3 |          3 |                3 |                3 |                  3 |
-             | Electrical Engineering |          1 |                4 |                4 |                  4 |          5 |                3 |                2 |                2.8 |          3 |                3 |                3 |                  3 |          3 |                4 |                3 | 3.3333333333333333 |
-             | English                |          7 |                5 |                2 | 3.7142857142857143 |          7 |                5 |                3 | 3.7142857142857143 |          5 |                5 |                3 |                3.4 |          2 |                3 |                2 |                2.5 |
-             | History                |          4 |                5 |                3 |                4.5 |          5 |                4 |                3 |                3.2 |          3 |                3 |                3 |                  3 |          3 |                3 |                3 |                  3 |
-             | Foreign Languages      |          6 |                6 |                3 | 3.6666666666666667 |          5 |                4 |                3 |                3.6 |          6 |                4 |                2 | 3.3333333333333333 |          4 |                5 |                3 |               3.75 |
-             | Mechanical Engineering |          4 |                3 |                3 |                  3 |          6 |                4 |                2 | 2.6666666666666667 |          4 |                4 |                3 |                3.5 |          2 |                3 |                3 |                  3 |
-             | Management & Marketing |          0 |                  |                  |                    |          1 |                3 |                3 |                  3 |          5 |                5 |                3 |                3.6 |          4 |                5 |                3 |                3.5 |
-             | Mathematics            |          5 |                4 |                3 |                3.4 |          4 |                5 |                3 |                  4 |          2 |                4 |                3 |                3.5 |          0 |                  |                  |                    |
-             | Parents & Alumni       |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |
-             | Physics                |         10 |                4 |                2 |                2.8 |          6 |                6 |                2 | 4.1666666666666667 |          2 |                4 |                3 |                3.5 |          2 |                4 |                4 |                  4 |
-             | Piano                  |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |
-             | Political Science      |          6 |                3 |                3 |                  3 |          4 |                3 |                3 |                  3 |          5 |                5 |                3 |                3.4 |          2 |                4 |                3 |                3.5 |
-             | Psychology             |          3 |                5 |                2 | 3.3333333333333333 |          4 |                3 |                3 |                  3 |          7 |                4 |                2 | 3.2857142857142857 |          1 |                4 |                4 |                  4 |
-             | Studio Art             |          4 |                4 |                3 | 3.6666666666666667 |          6 |                6 |                3 |                  4 |          3 |                4 |                3 | 3.6666666666666667 |          2 |                6 |                4 |                  5 |
-             | Strings                |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |
-             | Teacher Education      |          4 |                3 |                3 |                  3 |          3 |                4 |                3 | 3.3333333333333333 |          1 |                3 |                3 |                  3 |          4 |                4 |                3 |               3.75 |
-             | Vocals                 |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |
-             | Wind                   |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |
+             | department                                                                                                                                                                                                                                                                                                     |
+             +------------------------+---------------------------------------------------------------------+---------------------------------------------------------------------+---------------------------------------------------------------------+---------------------------------------------------------------------+
+             |                        | stats(freshman)                                                     | stats(sophomore)                                                    | stats(junior)                                                       | stats(senior)                                                       |
+             |                        +------------+------------------+------------------+------------------+------------+------------------+------------------+------------------+------------+------------------+------------------+------------------+------------+------------------+------------------+------------------+
+             | name                   | count(set) | max(set.credits) | min(set.credits) | avg(set.credits) | count(set) | max(set.credits) | min(set.credits) | avg(set.credits) | count(set) | max(set.credits) | min(set.credits) | avg(set.credits) | count(set) | max(set.credits) | min(set.credits) | avg(set.credits) |
+            -+------------------------+------------+------------------+------------------+------------------+------------+------------------+------------------+------------------+------------+------------------+------------------+------------------+------------+------------------+------------------+------------------+-
+             | Accounting             |          1 |                2 |                2 |                2 |          2 |                3 |                3 |                3 |          2 |                5 |                3 |                4 |          3 |                3 |                3 |                3 |
+             | Art History            |          2 |                4 |                3 |              3.5 |          5 |                6 |                3 |              3.8 |          4 |                3 |                3 |                3 |          3 |                5 |                3 |    3.66666666667 |
+             | Astronomy              |          5 |                5 |                2 |              3.2 |          6 |                5 |                1 |                3 |          6 |                4 |                2 |                3 |          5 |                4 |                2 |              2.8 |
+             | Bioengineering         |          5 |                3 |                2 |              2.8 |          5 |                4 |                3 |              3.2 |          4 |                3 |                3 |                3 |          2 |                8 |                2 |                5 |
+             | Bursar's Office        |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |
+             | Career Development     |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |
+             | Chemistry              |          5 |                5 |                2 |              3.4 |          6 |                3 |                2 |              2.5 |          6 |                4 |                2 |                3 |          0 |                  |                  |                  |
+             | Computer Science       |          6 |                6 |                3 |    3.66666666667 |          5 |                3 |                2 |              2.8 |          4 |                4 |                3 |              3.5 |          2 |                3 |                3 |                3 |
+             | Economics              |          3 |                6 |                3 |                5 |          4 |                4 |                3 |             3.25 |          4 |                3 |                3 |                3 |          4 |                4 |                3 |             3.25 |
+             | Educational Policy     |          3 |                3 |                3 |                3 |          5 |                3 |                3 |                3 |          4 |                3 |                3 |                3 |          3 |                3 |                3 |                3 |
+             | Electrical Engineering |          1 |                4 |                4 |                4 |          5 |                3 |                2 |              2.8 |          3 |                3 |                3 |                3 |          3 |                4 |                3 |    3.33333333333 |
+             | English                |          7 |                5 |                2 |    3.71428571429 |          7 |                5 |                3 |    3.71428571429 |          5 |                5 |                3 |              3.4 |          2 |                3 |                2 |              2.5 |
+             | History                |          4 |                5 |                3 |              4.5 |          5 |                4 |                3 |              3.2 |          3 |                3 |                3 |                3 |          3 |                3 |                3 |                3 |
+             | Foreign Languages      |          6 |                6 |                3 |    3.66666666667 |          5 |                4 |                3 |              3.6 |          6 |                4 |                2 |    3.33333333333 |          4 |                5 |                3 |             3.75 |
+             | Mechanical Engineering |          4 |                3 |                3 |                3 |          6 |                4 |                2 |    2.66666666667 |          4 |                4 |                3 |              3.5 |          2 |                3 |                3 |                3 |
+             | Management & Marketing |          0 |                  |                  |                  |          1 |                3 |                3 |                3 |          5 |                5 |                3 |              3.6 |          4 |                5 |                3 |              3.5 |
+             | Mathematics            |          5 |                4 |                3 |              3.4 |          4 |                5 |                3 |                4 |          2 |                4 |                3 |              3.5 |          0 |                  |                  |                  |
+             | Parents & Alumni       |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |
+             | Physics                |         10 |                4 |                2 |              2.8 |          6 |                6 |                2 |    4.16666666667 |          2 |                4 |                3 |              3.5 |          2 |                4 |                4 |                4 |
+             | Piano                  |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |
+             | Political Science      |          6 |                3 |                3 |                3 |          4 |                3 |                3 |                3 |          5 |                5 |                3 |              3.4 |          2 |                4 |                3 |              3.5 |
+             | Psychology             |          3 |                5 |                2 |    3.33333333333 |          4 |                3 |                3 |                3 |          7 |                4 |                2 |    3.28571428571 |          1 |                4 |                4 |                4 |
+             | Studio Art             |          4 |                4 |                3 |    3.66666666667 |          6 |                6 |                3 |                4 |          3 |                4 |                3 |    3.66666666667 |          2 |                6 |                4 |                5 |
+             | Strings                |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |
+             | Teacher Education      |          4 |                3 |                3 |                3 |          3 |                4 |                3 |    3.33333333333 |          1 |                3 |                3 |                3 |          4 |                4 |                3 |             3.75 |
+             | Vocals                 |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |
+             | Wind                   |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |
 
              ----
              /department.define(freshman:=course?no>=100&no<200,sophomore:=course?no>=200&no<300,junior:=course?no>=300&no<400,senior:=course?no>=400&no<500,stats(set):={count(set),max(set.credits),min(set.credits),avg(set.credits)}){name,stats(freshman),stats(sophomore),stats(junior),stats(senior)}
@@ -7955,39 +7955,39 @@ tests:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | department                                                                                                                                                                                                                                                                                                             |
-             +------------------------+-----------------------------------------------------------------------+-----------------------------------------------------------------------+-----------------------------------------------------------------------+-----------------------------------------------------------------------+
-             |                        | stats(1)                                                              | stats(2)                                                              | stats(3)                                                              | stats(4)                                                              |
-             |                        +------------+------------------+------------------+--------------------+------------+------------------+------------------+--------------------+------------+------------------+------------------+--------------------+------------+------------------+------------------+--------------------+
-             | name                   | count(set) | max(set.credits) | min(set.credits) | avg(set.credits)   | count(set) | max(set.credits) | min(set.credits) | avg(set.credits)   | count(set) | max(set.credits) | min(set.credits) | avg(set.credits)   | count(set) | max(set.credits) | min(set.credits) | avg(set.credits)   |
-            -+------------------------+------------+------------------+------------------+--------------------+------------+------------------+------------------+--------------------+------------+------------------+------------------+--------------------+------------+------------------+------------------+--------------------+-
-             | Accounting             |          1 |                2 |                2 |                  2 |          2 |                3 |                3 |                  3 |          2 |                5 |                3 |                  4 |          3 |                3 |                3 |                  3 |
-             | Art History            |          2 |                4 |                3 |                3.5 |          5 |                6 |                3 |                3.8 |          4 |                3 |                3 |                  3 |          3 |                5 |                3 | 3.6666666666666667 |
-             | Astronomy              |          5 |                5 |                2 |                3.2 |          6 |                5 |                1 |                  3 |          6 |                4 |                2 |                  3 |          5 |                4 |                2 |                2.8 |
-             | Bioengineering         |          5 |                3 |                2 |                2.8 |          5 |                4 |                3 |                3.2 |          4 |                3 |                3 |                  3 |          2 |                8 |                2 |                  5 |
-             | Bursar's Office        |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |
-             | Career Development     |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |
-             | Chemistry              |          5 |                5 |                2 |                3.4 |          6 |                3 |                2 |                2.5 |          6 |                4 |                2 |                  3 |          0 |                  |                  |                    |
-             | Computer Science       |          6 |                6 |                3 | 3.6666666666666667 |          5 |                3 |                2 |                2.8 |          4 |                4 |                3 |                3.5 |          2 |                3 |                3 |                  3 |
-             | Economics              |          3 |                6 |                3 |                  5 |          4 |                4 |                3 |               3.25 |          4 |                3 |                3 |                  3 |          4 |                4 |                3 |               3.25 |
-             | Educational Policy     |          3 |                3 |                3 |                  3 |          5 |                3 |                3 |                  3 |          4 |                3 |                3 |                  3 |          3 |                3 |                3 |                  3 |
-             | Electrical Engineering |          1 |                4 |                4 |                  4 |          5 |                3 |                2 |                2.8 |          3 |                3 |                3 |                  3 |          3 |                4 |                3 | 3.3333333333333333 |
-             | English                |          7 |                5 |                2 | 3.7142857142857143 |          7 |                5 |                3 | 3.7142857142857143 |          5 |                5 |                3 |                3.4 |          2 |                3 |                2 |                2.5 |
-             | History                |          4 |                5 |                3 |                4.5 |          5 |                4 |                3 |                3.2 |          3 |                3 |                3 |                  3 |          3 |                3 |                3 |                  3 |
-             | Foreign Languages      |          6 |                6 |                3 | 3.6666666666666667 |          5 |                4 |                3 |                3.6 |          6 |                4 |                2 | 3.3333333333333333 |          4 |                5 |                3 |               3.75 |
-             | Mechanical Engineering |          4 |                3 |                3 |                  3 |          6 |                4 |                2 | 2.6666666666666667 |          4 |                4 |                3 |                3.5 |          2 |                3 |                3 |                  3 |
-             | Management & Marketing |          0 |                  |                  |                    |          1 |                3 |                3 |                  3 |          5 |                5 |                3 |                3.6 |          4 |                5 |                3 |                3.5 |
-             | Mathematics            |          5 |                4 |                3 |                3.4 |          4 |                5 |                3 |                  4 |          2 |                4 |                3 |                3.5 |          0 |                  |                  |                    |
-             | Parents & Alumni       |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |
-             | Physics                |         10 |                4 |                2 |                2.8 |          6 |                6 |                2 | 4.1666666666666667 |          2 |                4 |                3 |                3.5 |          2 |                4 |                4 |                  4 |
-             | Piano                  |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |
-             | Political Science      |          6 |                3 |                3 |                  3 |          4 |                3 |                3 |                  3 |          5 |                5 |                3 |                3.4 |          2 |                4 |                3 |                3.5 |
-             | Psychology             |          3 |                5 |                2 | 3.3333333333333333 |          4 |                3 |                3 |                  3 |          7 |                4 |                2 | 3.2857142857142857 |          1 |                4 |                4 |                  4 |
-             | Studio Art             |          4 |                4 |                3 | 3.6666666666666667 |          6 |                6 |                3 |                  4 |          3 |                4 |                3 | 3.6666666666666667 |          2 |                6 |                4 |                  5 |
-             | Strings                |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |
-             | Teacher Education      |          4 |                3 |                3 |                  3 |          3 |                4 |                3 | 3.3333333333333333 |          1 |                3 |                3 |                  3 |          4 |                4 |                3 |               3.75 |
-             | Vocals                 |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |
-             | Wind                   |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |          0 |                  |                  |                    |
+             | department                                                                                                                                                                                                                                                                                                     |
+             +------------------------+---------------------------------------------------------------------+---------------------------------------------------------------------+---------------------------------------------------------------------+---------------------------------------------------------------------+
+             |                        | stats(1)                                                            | stats(2)                                                            | stats(3)                                                            | stats(4)                                                            |
+             |                        +------------+------------------+------------------+------------------+------------+------------------+------------------+------------------+------------+------------------+------------------+------------------+------------+------------------+------------------+------------------+
+             | name                   | count(set) | max(set.credits) | min(set.credits) | avg(set.credits) | count(set) | max(set.credits) | min(set.credits) | avg(set.credits) | count(set) | max(set.credits) | min(set.credits) | avg(set.credits) | count(set) | max(set.credits) | min(set.credits) | avg(set.credits) |
+            -+------------------------+------------+------------------+------------------+------------------+------------+------------------+------------------+------------------+------------+------------------+------------------+------------------+------------+------------------+------------------+------------------+-
+             | Accounting             |          1 |                2 |                2 |                2 |          2 |                3 |                3 |                3 |          2 |                5 |                3 |                4 |          3 |                3 |                3 |                3 |
+             | Art History            |          2 |                4 |                3 |              3.5 |          5 |                6 |                3 |              3.8 |          4 |                3 |                3 |                3 |          3 |                5 |                3 |    3.66666666667 |
+             | Astronomy              |          5 |                5 |                2 |              3.2 |          6 |                5 |                1 |                3 |          6 |                4 |                2 |                3 |          5 |                4 |                2 |              2.8 |
+             | Bioengineering         |          5 |                3 |                2 |              2.8 |          5 |                4 |                3 |              3.2 |          4 |                3 |                3 |                3 |          2 |                8 |                2 |                5 |
+             | Bursar's Office        |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |
+             | Career Development     |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |
+             | Chemistry              |          5 |                5 |                2 |              3.4 |          6 |                3 |                2 |              2.5 |          6 |                4 |                2 |                3 |          0 |                  |                  |                  |
+             | Computer Science       |          6 |                6 |                3 |    3.66666666667 |          5 |                3 |                2 |              2.8 |          4 |                4 |                3 |              3.5 |          2 |                3 |                3 |                3 |
+             | Economics              |          3 |                6 |                3 |                5 |          4 |                4 |                3 |             3.25 |          4 |                3 |                3 |                3 |          4 |                4 |                3 |             3.25 |
+             | Educational Policy     |          3 |                3 |                3 |                3 |          5 |                3 |                3 |                3 |          4 |                3 |                3 |                3 |          3 |                3 |                3 |                3 |
+             | Electrical Engineering |          1 |                4 |                4 |                4 |          5 |                3 |                2 |              2.8 |          3 |                3 |                3 |                3 |          3 |                4 |                3 |    3.33333333333 |
+             | English                |          7 |                5 |                2 |    3.71428571429 |          7 |                5 |                3 |    3.71428571429 |          5 |                5 |                3 |              3.4 |          2 |                3 |                2 |              2.5 |
+             | History                |          4 |                5 |                3 |              4.5 |          5 |                4 |                3 |              3.2 |          3 |                3 |                3 |                3 |          3 |                3 |                3 |                3 |
+             | Foreign Languages      |          6 |                6 |                3 |    3.66666666667 |          5 |                4 |                3 |              3.6 |          6 |                4 |                2 |    3.33333333333 |          4 |                5 |                3 |             3.75 |
+             | Mechanical Engineering |          4 |                3 |                3 |                3 |          6 |                4 |                2 |    2.66666666667 |          4 |                4 |                3 |              3.5 |          2 |                3 |                3 |                3 |
+             | Management & Marketing |          0 |                  |                  |                  |          1 |                3 |                3 |                3 |          5 |                5 |                3 |              3.6 |          4 |                5 |                3 |              3.5 |
+             | Mathematics            |          5 |                4 |                3 |              3.4 |          4 |                5 |                3 |                4 |          2 |                4 |                3 |              3.5 |          0 |                  |                  |                  |
+             | Parents & Alumni       |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |
+             | Physics                |         10 |                4 |                2 |              2.8 |          6 |                6 |                2 |    4.16666666667 |          2 |                4 |                3 |              3.5 |          2 |                4 |                4 |                4 |
+             | Piano                  |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |
+             | Political Science      |          6 |                3 |                3 |                3 |          4 |                3 |                3 |                3 |          5 |                5 |                3 |              3.4 |          2 |                4 |                3 |              3.5 |
+             | Psychology             |          3 |                5 |                2 |    3.33333333333 |          4 |                3 |                3 |                3 |          7 |                4 |                2 |    3.28571428571 |          1 |                4 |                4 |                4 |
+             | Studio Art             |          4 |                4 |                3 |    3.66666666667 |          6 |                6 |                3 |                4 |          3 |                4 |                3 |    3.66666666667 |          2 |                6 |                4 |                5 |
+             | Strings                |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |
+             | Teacher Education      |          4 |                3 |                3 |                3 |          3 |                4 |                3 |    3.33333333333 |          1 |                3 |                3 |                3 |          4 |                4 |                3 |             3.75 |
+             | Vocals                 |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |
+             | Wind                   |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |          0 |                  |                  |                  |
 
              ----
              /department.define(stats($level):={count(set),max(set.credits),min(set.credits),avg(set.credits)} :given set:=course?no>=$level*100&no<($level+1)*100){name,stats(1),stats(2),stats(3),stats(4)}
@@ -12543,7 +12543,7 @@ tests:
           body: |2
              | 4154781481226426191177580544000000.808017424794512875886459904961710757005754368000000000 |
             -+-------------------------------------------------------------------------------------------+-
-             | 4154781481226426191177580544000000.808017424794512875886459904961710757005754368000000000 |
+             |                                                                         4.15478148123E+33 |
 
              ----
              /{4154781481226426191177580544000000.808017424794512875886459904961710757005754368000000000}
@@ -12666,7 +12666,7 @@ tests:
           body: |2
              | datetime('2010-04-15') | datetime('2010-04-15 20:13') | datetime('2010-04-15T20:13:04.5') | datetime('2010-04-15 20:13:04.5 -0400') |
             -+------------------------+------------------------------+-----------------------------------+-----------------------------------------+-
-             | 2010-04-15             | 2010-04-15 20:13:00          | 2010-04-15 20:13:04.500000        | 2010-04-15 19:13:04.500000-05:00        |
+             | 2010-04-15 00:00:00    | 2010-04-15 20:13:00          | 2010-04-15 20:13:04.500000        | 2010-04-15 19:13:04.500000-05:00        |
 
              ----
              /{datetime('2010-04-15'),datetime('2010-04-15 20:13'),datetime('2010-04-15T20:13:04.5'),datetime('2010-04-15 20:13:04.5 -0400')}
@@ -13964,9 +13964,9 @@ tests:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | 7920/9504              | 7.25/0.875         | 120207e-5/57721e-5 |
-            -+------------------------+--------------------+--------------------+-
-             | 0.83333333333333333333 | 8.2857142857142857 |      2.08255227733 |
+             | 7920/9504      | 7.25/0.875    | 120207e-5/57721e-5 |
+            -+----------------+---------------+--------------------+-
+             | 0.833333333333 | 8.28571428571 |      2.08255227733 |
 
              ----
              /{7920/9504,7.25/0.875,120207e-5/57721e-5}
@@ -14024,9 +14024,9 @@ tests:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | 7/2.125            | 7/271828e-5   | 2.125/271828e-5 |
-            -+--------------------+---------------+-----------------+-
-             | 3.2941176470588235 | 2.57515782039 |  0.781744338332 |
+             | 7/2.125       | 7/271828e-5   | 2.125/271828e-5 |
+            -+---------------+---------------+-----------------+-
+             | 3.29411764706 | 2.57515782039 |  0.781744338332 |
 
              ----
              /{7/2.125,7/271828e-5,2.125/271828e-5}
@@ -15198,7 +15198,7 @@ tests:
           body: |2
              | datetime(date('2010-04-15')) |
             -+------------------------------+-
-             | 2010-04-15                   |
+             | 2010-04-15 00:00:00          |
 
              ----
              /{datetime(date('2010-04-15'))}
@@ -15283,7 +15283,7 @@ tests:
           body: |2
              | datetime(2010,4,15) | datetime(2010,4,15,20,13) | datetime(2010,4,15,20,13,4.5) |
             -+---------------------+---------------------------+-------------------------------+-
-             | 2010-04-15          | 2010-04-15 20:13:00       | 2010-04-15 20:13:04.500000    |
+             | 2010-04-15 00:00:00 | 2010-04-15 20:13:00       | 2010-04-15 20:13:04.500000    |
 
              ----
              /{datetime(2010,4,15),datetime(2010,4,15,20,13),datetime(2010,4,15,20,13,4.5)}
@@ -15939,7 +15939,7 @@ tests:
           body: |2
              | sum(course{credits}?department_code='be') | count(course{credits}?department_code='be') | avg(course{credits}?department_code='be') |
             -+-------------------------------------------+---------------------------------------------+-------------------------------------------+-
-             |                                        55 |                                          17 |                        3.2352941176470588 |
+             |                                        55 |                                          17 |                             3.23529411765 |
 
              ----
              /{sum(course{credits}?department_code='be'),count(course{credits}?department_code='be'),avg(course{credits}?department_code='be')}
@@ -18865,7 +18865,7 @@ tests:
             body: |2
                | count(course) | min(course.credits) | max(course.credits) | avg(course.credits) |
               -+---------------+---------------------+---------------------+---------------------+-
-               |           358 |                   0 |                   8 |  3.3567415730337079 |
+               |           358 |                   0 |                   8 |       3.35674157303 |
 
                ----
                /{count(course),min(course.credits),max(course.credits),avg(course.credits)}
@@ -19536,22 +19536,22 @@ tests:
                |                  42 |                    12 |                 3.5 |
                |                  70 |                    20 |                 3.5 |
                |                  66 |                    22 |                   3 |
-               |                  55 |                    17 |  3.2352941176470588 |
-               |                  53 |                    18 |  2.9444444444444444 |
-               |                  69 |                    21 |  3.2857142857142857 |
-               |                  53 |                    15 |  3.5333333333333333 |
+               |                  55 |                    17 |       3.23529411765 |
+               |                  53 |                    18 |       2.94444444444 |
+               |                  69 |                    21 |       3.28571428571 |
+               |                  53 |                    15 |       3.53333333333 |
                |                  45 |                    15 |                   3 |
-               |                  43 |                    14 |  3.0714285714285714 |
-               |                  74 |                    21 |  3.5238095238095238 |
-               |                  58 |                    17 |  3.4117647058823529 |
-               |                  75 |                    21 |  3.5714285714285714 |
-               |                  58 |                    19 |  3.0526315789473684 |
-               |                  57 |                    17 |  3.3529411764705882 |
-               |                  40 |                    11 |  3.6363636363636364 |
-               |                  77 |                    23 |  3.3478260869565217 |
-               |                  60 |                    19 |  3.1578947368421053 |
-               |                  56 |                    17 |  3.2941176470588235 |
-               |                  68 |                    18 |  3.7777777777777778 |
+               |                  43 |                    14 |       3.07142857143 |
+               |                  74 |                    21 |       3.52380952381 |
+               |                  58 |                    17 |       3.41176470588 |
+               |                  75 |                    21 |       3.57142857143 |
+               |                  58 |                    19 |       3.05263157895 |
+               |                  57 |                    17 |       3.35294117647 |
+               |                  40 |                    11 |       3.63636363636 |
+               |                  77 |                    23 |       3.34782608696 |
+               |                  60 |                    19 |       3.15789473684 |
+               |                  56 |                    17 |       3.29411764706 |
+               |                  68 |                    18 |       3.77777777778 |
                |                  76 |                    19 |                   4 |
 
                ----
@@ -19814,26 +19814,26 @@ tests:
                +------------------------+---------------------+---------------------+
                | name                   | sum(course.credits) | avg(course.credits) |
               -+------------------------+---------------------+---------------------+-
-               | Physics                |                  77 |  3.3478260869565217 |
+               | Physics                |                  77 |       3.34782608696 |
                | Teacher Education      |                  76 |                   4 |
-               | Foreign Languages      |                  75 |  3.5714285714285714 |
-               | English                |                  74 |  3.5238095238095238 |
+               | Foreign Languages      |                  75 |       3.57142857143 |
+               | English                |                  74 |       3.52380952381 |
                | Art History            |                  70 |                 3.5 |
-               | Computer Science       |                  69 |  3.2857142857142857 |
-               | Studio Art             |                  68 |  3.7777777777777778 |
+               | Computer Science       |                  69 |       3.28571428571 |
+               | Studio Art             |                  68 |       3.77777777778 |
                | Astronomy              |                  66 |                   3 |
-               | Political Science      |                  60 |  3.1578947368421053 |
-               | History                |                  58 |  3.4117647058823529 |
-               | Mechanical Engineering |                  58 |  3.0526315789473684 |
-               | Management & Marketing |                  57 |  3.3529411764705882 |
-               | Psychology             |                  56 |  3.2941176470588235 |
-               | Bioengineering         |                  55 |  3.2352941176470588 |
-               | Chemistry              |                  53 |  2.9444444444444444 |
-               | Economics              |                  53 |  3.5333333333333333 |
+               | Political Science      |                  60 |       3.15789473684 |
+               | History                |                  58 |       3.41176470588 |
+               | Mechanical Engineering |                  58 |       3.05263157895 |
+               | Management & Marketing |                  57 |       3.35294117647 |
+               | Psychology             |                  56 |       3.29411764706 |
+               | Bioengineering         |                  55 |       3.23529411765 |
+               | Chemistry              |                  53 |       2.94444444444 |
+               | Economics              |                  53 |       3.53333333333 |
                | Educational Policy     |                  45 |                   3 |
-               | Electrical Engineering |                  43 |  3.0714285714285714 |
+               | Electrical Engineering |                  43 |       3.07142857143 |
                | Accounting             |                  42 |                 3.5 |
-               | Mathematics            |                  40 |  3.6363636363636364 |
+               | Mathematics            |                  40 |       3.63636363636 |
                | Bursar's Office        |                   0 |                     |
                | Career Development     |                   0 |                     |
                | Parents & Alumni       |                   0 |                     |
@@ -21923,7 +21923,7 @@ tests:
                | code | count(code->department{school_code}) | avg((code->department{school_code}).sum(course.credits)) |
               -+------+--------------------------------------+----------------------------------------------------------+-
                | art  |                                    1 |                                                       68 |
-               | bus  |                                    3 |                                      50.6666666666666667 |
+               | bus  |                                    3 |                                            50.6666666667 |
                | edu  |                                    2 |                                                     60.5 |
                | eng  |                                    4 |                                                    56.25 |
                | la   |                                    6 |                                                     65.5 |
@@ -24111,16 +24111,16 @@ tests:
             - [Content-Type, text/plain; charset=UTF-8]
             - [Vary, Accept]
             body: |2
-               | school                                               |
-               +------+--------+--------+--------+--------------------+
-               | code | min(c) | max(c) | sum(c) | avg(c)             |
-              -+------+--------+--------+--------+--------------------+-
-               | art  |      0 |      6 |     68 | 3.7777777777777778 |
-               | bus  |      2 |      6 |    152 | 3.4545454545454545 |
-               | edu  |      3 |      6 |    121 | 3.5588235294117647 |
-               | eng  |      2 |      8 |    225 | 3.1690140845070423 |
-               | la   |      2 |      6 |    393 | 3.4173913043478261 |
-               | ns   |      1 |      6 |    236 | 3.1891891891891892 |
+               | school                                          |
+               +------+--------+--------+--------+---------------+
+               | code | min(c) | max(c) | sum(c) | avg(c)        |
+              -+------+--------+--------+--------+---------------+-
+               | art  |      0 |      6 |     68 | 3.77777777778 |
+               | bus  |      2 |      6 |    152 | 3.45454545455 |
+               | edu  |      3 |      6 |    121 | 3.55882352941 |
+               | eng  |      2 |      8 |    225 | 3.16901408451 |
+               | la   |      2 |      6 |    393 | 3.41739130435 |
+               | ns   |      1 |      6 |    236 | 3.18918918919 |
 
                ----
                /school.define(c:=department.course.credits){code,min(c),max(c),sum(c),avg(c)}?exists(c)
@@ -35987,7 +35987,7 @@ tests:
           body: |2
              | avg(school.count(program)) |
             -+----------------------------+-
-             |         4.4444444444444444 |
+             |              4.44444444444 |
 
              ----
              /avg(school.count(program))
@@ -36018,7 +36018,7 @@ tests:
           body: |2
              | avg(school.count(program)) |
             -+----------------------------+-
-             |         4.4444444444444444 |
+             |              4.44444444444 |
 
              ----
              /avg(school.count(program))
@@ -36049,7 +36049,7 @@ tests:
           body: |2
              | avg(school.count(program)) |
             -+----------------------------+-
-             |         4.4444444444444444 |
+             |              4.44444444444 |
 
              ----
              /avg(school.count(program))
@@ -36391,12 +36391,12 @@ tests:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | student                                                     |
-             +------------------+--------+------------+--------------------+
-             | full_name        | gender | dob        | avg_grade          |
-            -+------------------+--------+------------+--------------------+-
-             | Michael Castillo | m      | 1984-04-04 | 2.3851851851851852 |
-             | Marsha Mason     | f      | 1986-05-20 | 2.4471698113207547 |
+             | student                                                |
+             +------------------+--------+------------+---------------+
+             | full_name        | gender | dob        | avg_grade     |
+            -+------------------+--------+------------+---------------+-
+             | Michael Castillo | m      | 1984-04-04 | 2.38518518519 |
+             | Marsha Mason     | f      | 1986-05-20 | 2.44716981132 |
 
              ----
              /student?count(class)>55
@@ -36435,19 +36435,19 @@ tests:
           - [Content-Type, text/plain; charset=UTF-8]
           - [Vary, Accept]
           body: |2
-             | active_students()                                         |
-             +----------------+--------+------------+--------------------+
-             | full_name      | gender | dob        | avg_grade          |
-            -+----------------+--------+------------+--------------------+-
-             | Robert Johnson | m      | 1982-08-24 | 2.3653061224489796 |
-             | Carlos Sanchez | m      | 1982-12-10 | 2.5333333333333333 |
-             | Justin Thomas  | m      | 1983-10-25 | 2.1861111111111111 |
-             | Merle Johnson  | m      | 1983-10-14 |                2.4 |
-             | Eddie Lucas    | m      | 1984-06-28 | 2.3291666666666667 |
-             | Ronald Barber  | m      | 1984-12-14 | 2.2958333333333333 |
-             | Peter Molina   | m      | 1985-07-14 |              2.125 |
-             | Lester Lewis   | m      | 1985-07-12 | 2.2461538461538462 |
-             | Sidney Delgado | m      | 1985-07-02 | 2.3214285714285714 |
+             | active_students()                                    |
+             +----------------+--------+------------+---------------+
+             | full_name      | gender | dob        | avg_grade     |
+            -+----------------+--------+------------+---------------+-
+             | Robert Johnson | m      | 1982-08-24 | 2.36530612245 |
+             | Carlos Sanchez | m      | 1982-12-10 | 2.53333333333 |
+             | Justin Thomas  | m      | 1983-10-25 | 2.18611111111 |
+             | Merle Johnson  | m      | 1983-10-14 |           2.4 |
+             | Eddie Lucas    | m      | 1984-06-28 | 2.32916666667 |
+             | Ronald Barber  | m      | 1984-12-14 | 2.29583333333 |
+             | Peter Molina   | m      | 1985-07-14 |         2.125 |
+             | Lester Lewis   | m      | 1985-07-12 | 2.24615384615 |
+             | Sidney Delgado | m      | 1985-07-02 | 2.32142857143 |
 
              ----
              /(program?code='gart').active_students()
@@ -39695,15 +39695,15 @@ tests:
       - py: test/code/test_embedding.py
         stdout: |
           URI: /school{code, count(program), count(department)}
-          school(code=u'art', [1]=3L, [2]=1L)
-          school(code=u'bus', [1]=6L, [2]=3L)
-          school(code=u'edu', [1]=7L, [2]=2L)
-          school(code=u'eng', [1]=8L, [2]=4L)
-          school(code=u'la', [1]=9L, [2]=6L)
-          school(code=u'mus', [1]=0L, [2]=4L)
-          school(code=u'ns', [1]=6L, [2]=4L)
-          school(code=u'ph', [1]=1L, [2]=0L)
-          school(code=u'sc', [1]=0L, [2]=0L)
+          school(code='art', [1]=3, [2]=1)
+          school(code='bus', [1]=6, [2]=3)
+          school(code='edu', [1]=7, [2]=2)
+          school(code='eng', [1]=8, [2]=4)
+          school(code='la', [1]=9, [2]=6)
+          school(code='mus', [1]=0, [2]=4)
+          school(code='ns', [1]=6, [2]=4)
+          school(code='ph', [1]=1, [2]=0)
+          school(code='sc', [1]=0, [2]=0)
 
           URI: /school{name, count(program)}?code=$school_code
           $school_code: 'bus'
@@ -39719,14 +39719,14 @@ tests:
 
           URI: /school?campus==$campus
           $campus: None
-          school(code=u'ph', name=u'Public Honorariums', campus=None)
-          school(code=u'sc', name=u'School of Continuing Studies', campus=None)
+          school(code='ph', name='Public Honorariums', campus=None)
+          school(code='sc', name='School of Continuing Studies', campus=None)
 
           URI: /school?campus=$campus
           $campus: ['north', 'south']
-          school(code=u'bus', name=u'School of Business', campus=u'south')
-          school(code=u'eng', name=u'School of Engineering', campus=u'north')
-          school(code=u'mus', name=u'School of Music & Dance', campus=u'south')
+          school(code='bus', name='School of Business', campus='south')
+          school(code='eng', name='School of Engineering', campus='north')
+          school(code='mus', name='School of Music & Dance', campus='south')
 
           URI: /{$untyped, $selector, $boolean, $integer, $float, $decimal, $date, $time, $datetime}
           $untyped: 'HTSQL'
@@ -39738,17 +39738,17 @@ tests:
           $date: datetime.date(2010, 4, 15)
           $time: datetime.time(20, 3)
           $datetime: datetime.datetime(2010, 4, 15, 20, 3)
-          Record([0]=u'HTSQL', [1]=Record([0]=u'HTTP', [1]=u'SQL'), [2]=True, [3]=3571, [4]=-0.57721, [5]=Decimal('0.875'), [6]=datetime.date(2010, 4, 15), [7]=datetime.time(20, 3), [8]=datetime.datetime(2010, 4, 15, 20, 3))
+          Record([0]='HTSQL', [1]=Record([0]='HTTP', [1]='SQL'), [2]=True, [3]=3571, [4]=-0.57721, [5]=Decimal('0.875'), [6]=datetime.date(2010, 4, 15), [7]=datetime.time(20, 3), [8]=datetime.datetime(2010, 4, 15, 20, 3))
 
           URI: /meta(/link?table.name=$table_name)
           $table_name: 'school'
-          link(table_name=u'school', name=u'department', is_singular=False, target_name=u'department', reverse_name=u'school')
-          link(table_name=u'school', name=u'program', is_singular=False, target_name=u'program', reverse_name=u'school')
+          link(table_name='school', name='department', is_singular=False, target_name='department', reverse_name='school')
+          link(table_name='school', name='program', is_singular=False, target_name='program', reverse_name='school')
 
           URI: /school
-          school(code=u'art', name=u'School of Art & Design', campus=u'old')
-          school(code=u'bus', name=u'School of Business', campus=u'south')
-          school(code=u'edu', name=u'College of Education', campus=u'old')
+          school(code='art', name='School of Art & Design', campus='old')
+          school(code='bus', name='School of Business', campus='south')
+          school(code='edu', name='College of Education', campus='old')
   - include: test/input/etl.yaml
     output:
       suite: etl
@@ -39926,7 +39926,7 @@ tests:
               VALUES (%s)
               RETURNING "code"
           With parameters:
-              (u'SMSN',)
+              ('SMSN',)
           While inserting record #1:
               {'SMSN'}
           While processing:
@@ -39945,7 +39945,7 @@ tests:
               VALUES (%s)
               RETURNING "code"
           With parameters:
-              (u'Samsung',)
+              ('Samsung',)
           While inserting record #1:
               {'Samsung'}
           While processing:

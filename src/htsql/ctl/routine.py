@@ -20,7 +20,7 @@ import re
 # Indicates that the argument has no default value and thus cannot be omitted.
 MANDATORY_ARGUMENT = object()
 
-class Argument(object):
+class Argument:
     """
     Describes an argument of a script routine.
 
@@ -78,7 +78,7 @@ class Argument(object):
         return signature
 
 
-class Routine(object):
+class Routine:
     """
     Describes a script routine.
 

@@ -16,7 +16,7 @@ from ..core.validator import Validator, StrVal, UIntVal, ExtensionVal
 import re
 
 
-class Option(object):
+class Option:
     """
     Describes a script option.
 

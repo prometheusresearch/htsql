@@ -35,16 +35,10 @@ class EmbedValue(Embed):
 
 class EmbedUntyped(Embed):
 
-    adapt_many(str, str)
+    adapt(str)
 
     def __call__(self):
         data = self.data
-        if isinstance(data, str):
-            try:
-                data = data.decode('utf-8')
-            except UnicodeDecodeError:
-                raise TypeError("a string is expected to be encoded in UTF-8:"
-                                " %s" % repr(data))
         if "\0" in data:
             raise TypeError("a string should not contain a NIL character:"
                             " %s" % repr(data))

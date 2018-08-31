@@ -354,7 +354,17 @@ class DecimalToText(ToText):
             # quantize result has too many digits for current context
             if exp+len(digits) < 28:
                 value = value.quantize(decimal.Decimal(1))
-        return str(value)
+        return "{:.12}".format(value)
+
+
+class FloatToText(ToText):
+
+    adapt(FloatDomain)
+
+    def dump(self, value):
+        if value is None:
+            return ""
+        return "{:.12}".format(value)
 
 
 class DateTimeToText(ToText):
@@ -377,12 +387,7 @@ class OpaqueToText(ToText):
     def dump(self, value):
         if value is None:
             return ""
-        if not isinstance(value, str):
-            try:
-                value = str(value).decode('utf-8')
-            except UnicodeDecodeError:
-                value = str(repr(value))
-        return value
+        return str(value)
 
 
 class VoidToText(ToText):
@@ -497,7 +502,7 @@ class ListToText(ToText):
         return widths
 
 
-class MetaToText(object):
+class MetaToText:
 
     def __init__(self, profile):
         self.profile = profile
@@ -537,7 +542,7 @@ class MetaToText(object):
         total = sum(widths) + 3*(self.size-1)
         if self.profile.header and len(self.profile.header) > total:
             extra = len(self.profile.header) - total
-            inc = extra/self.size
+            inc = extra//self.size
             rem = extra - inc*self.size
             for idx in range(len(widths)):
                 widths[idx] += inc

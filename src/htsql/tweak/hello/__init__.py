@@ -35,7 +35,7 @@ class RenderHello(Act):
         status = "200 OK"
         address = context.app.tweak.hello.address
         repeat = context.app.tweak.hello.repeat
-        line = "Hello, " + address.capitalize() + "!\n"
+        line = ("Hello, " + address.capitalize() + "!\n").encode('utf-8')
         headers = [('Content-Type', "text/plain; charset=UTF-8")]
         body = [line]*repeat
         return (status, headers, body)

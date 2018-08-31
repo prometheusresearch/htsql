@@ -42,7 +42,7 @@ class EmitCSVHeaders(EmitHeaders):
         extension = self.extensions[self.format.dialect]
         filename = None
         if self.meta.header:
-            filename = self.meta.header.encode('utf-8')
+            filename = self.meta.header
         if not filename:
             filename = '_'
         filename = filename.replace('\\', '\\\\').replace('"', '\\"')
@@ -64,13 +64,13 @@ class EmitCSV(Emit):
         assert len(headers) == product_to_csv.width
         output = io.StringIO()
         writer = csv.writer(output, dialect=self.format.dialect)
-        writer.writerow([header.encode('utf-8') if header is not None else ""
+        writer.writerow([header if header is not None else ""
                          for header in headers])
         yield output.getvalue()
         output.seek(0)
         output.truncate()
         for row in to_cells(self.data):
-            writer.writerow([item.encode('utf-8') if item is not None else ""
+            writer.writerow([item if item is not None else ""
                              for item in row])
             yield output.getvalue()
             output.seek(0)
@@ -279,12 +279,7 @@ class OpaqueToCSV(ToCSV):
         if value is None:
             yield [None]
             return
-        if not isinstance(value, str):
-            try:
-                value = str(value).decode('utf-8')
-            except UnicodeDecodeError:
-                value = str(repr(value))
-        yield [value]
+        yield [str(value)]
 
 
 to_csv = ToCSV.__invoke__

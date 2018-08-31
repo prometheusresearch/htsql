@@ -79,10 +79,9 @@ class AttributeProbe(Probe):
         # or:
         #   ?<key>(_,...)
         if self.arity is None:
-            return "?%s" % self.key.encode('utf-8')
+            return "?%s" % self.key
         else:
-            return "?%s(%s)" % (self.key.encode('utf-8'),
-                                ",".join(["_"]*self.arity))
+            return "?%s(%s)" % (self.key, ",".join(["_"]*self.arity))
 
 
 class AttributeSetProbe(Probe):
@@ -115,7 +114,7 @@ class ReferenceProbe(Probe):
     def __str__(self):
         # Display:
         #   ?$<key>
-        return "?$%s" % self.key.encode('utf-8')
+        return "?$%s" % self.key
 
 
 class ReferenceSetProbe(Probe):

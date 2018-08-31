@@ -20,7 +20,7 @@ from .flow import (Flow, CollectFlow, SelectionFlow, HomeFlow, RootFlow,
 from .lookup import direct
 
 
-class RoutingState(object):
+class RoutingState:
 
     def __init__(self):
         self.cache = {}

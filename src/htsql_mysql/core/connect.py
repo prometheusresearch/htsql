@@ -63,24 +63,11 @@ class UnscrambleMySQLBoolean(Unscramble):
         return (value != 0)
 
 
-class UnscrambleMySQLText(Unscramble):
-
-    adapt(TextDomain)
-
-    @staticmethod
-    def convert(value):
-        if isinstance(value, str):
-            value = value.decode('utf-8')
-        return value
-
-
 class UnscrambleMySQLEnum(Unscramble):
 
     adapt(EnumDomain)
 
     def convert(self, value):
-        if isinstance(value, str):
-            value = value.decode('utf-8')
         if value not in self.domain.labels:
             value = None
         return value

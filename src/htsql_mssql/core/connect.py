@@ -58,17 +58,6 @@ class UnscrambleMSSQLBoolean(Unscramble):
         return (value != 0)
 
 
-class UnscrambleMSSQLText(Unscramble):
-
-    adapt(TextDomain)
-
-    @staticmethod
-    def convert(value):
-        if isinstance(value, str):
-            value = value.decode('utf-8')
-        return value
-
-
 class UnscrambleMSSQLDate(Unscramble):
 
     adapt(DateDomain)

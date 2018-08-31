@@ -22,7 +22,7 @@ from .term import (Term, ScalarTerm, TableTerm, FilterTerm, JoinTerm,
 from .stitch import arrange, spread, sew, tie
 
 
-class CompilingState(object):
+class CompilingState:
     """
     Encapsulates the state of the compiling process.
 

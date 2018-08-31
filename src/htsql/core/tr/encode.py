@@ -25,7 +25,7 @@ from .signature import Signature, IsNullSig, NullIfSig, IsEqualSig, AndSig
 import decimal
 
 
-class EncodingState(object):
+class EncodingState:
 
     def __init__(self):
         self.flow_to_code = {}
@@ -57,7 +57,7 @@ class EncodingState(object):
             return self.flow_to_bundle[flow]
 
 
-class Bundle(object):
+class Bundle:
 
     def __init__(self, codes, segments):
         self.codes = codes

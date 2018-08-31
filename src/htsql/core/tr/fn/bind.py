@@ -82,8 +82,7 @@ class BindFunction(BindByName):
             else:
                 message = "%s or more arguments" % min_args
             raise Error("Function '%s' expects %s; got %s"
-                        % (self.name.encode('utf-8'),
-                           message, len(operands)))
+                        % (self.name, message, len(operands)))
 
         for index, slot in enumerate(self.signature.slots):
             name = slot.name
@@ -283,12 +282,12 @@ class Correlate(Component):
 
     def __call__(self):
         if isinstance(self.binding.syntax, OperatorSyntax):
-            name = "operator '%s'" % self.binding.syntax.symbol.encode('utf-8')
+            name = "operator '%s'" % self.binding.syntax.symbol
         elif isinstance(self.binding.syntax, PrefixSyntax):
             name = "unary operator '%s'" \
-                    % self.binding.syntax.symbol.encode('utf-8')
+                    % self.binding.syntax.symbol
         elif isinstance(self.binding.syntax, ApplySyntax):
-            name = "function '%s'" % self.binding.syntax.name.encode('utf-8')
+            name = "function '%s'" % self.binding.syntax.name
         else:
             name = "'%s'" % self.binding.syntax
         key_signature, domain_vector = self.__dispatch_key__
@@ -460,7 +459,7 @@ class BindDistinct(BindMacro):
         if recipes is None:
             with translate_guard(op):
                 raise Error("Function '%s' expects an argument with a selector"
-                            % self.name.encode('utf-8'))
+                            % self.name)
         kernels = []
         for syntax, recipe in recipes:
             element = self.state.use(recipe, syntax, scope=seed)
@@ -505,7 +504,7 @@ class BindAs(BindMacro):
         if not isinstance(title, (StringSyntax, IdentifierSyntax)):
             with translate_guard(title):
                 raise Error("Function '%s' expects a string literal"
-                            " or an identifier" % self.name.encode('utf-8'))
+                            " or an identifier" % self.name)
         base = self.state.bind(base)
         return TitleBinding(base, title, self.syntax)
 
@@ -520,7 +519,7 @@ class BindGuard(BindMacro):
             with translate_guard(reference):
                 raise Error("Function '%s' expects a reference"
                             " as the first argument"
-                            % self.name.encode('utf-8'))
+                            % self.name)
         value = self.state.bind(reference)
         if isinstance(value, AliasBinding):
             value = value.base
@@ -642,7 +641,7 @@ class BindTop(BindMacro):
         except ValueError:
             with translate_guard(argument):
                 raise Error("Function '%s' expects a non-negative integer"
-                            % self.name.encode('utf-8'))
+                            % self.name)
         return value
 
     def expand(self, seed, limit=None, offset=None):
@@ -700,7 +699,7 @@ class BindLimit(BindMacro):
         except ValueError:
             with translate_guard(argument):
                 raise Error("Function '%s' expects a non-negative integer"
-                            % self.name.encode('utf-8'))
+                            % self.name)
         return value
 
     def expand(self, limit, offset=None):
@@ -726,7 +725,7 @@ class BindSort(BindMacro):
                 if domain is None:
                     with translate_guard(binding):
                         raise Error("Function '%s' expects a scalar"
-                                    " expression" % self.name.encode('utf-8'))
+                                    " expression" % self.name)
                 binding = ImplicitCastBinding(binding, domain, binding.syntax)
                 bindings.append(binding)
             else:
@@ -804,7 +803,7 @@ class BindGiven(BindMacro):
             if not isinstance(assignment, AssignmentBinding):
                 with translate_guard(op):
                     raise Error("Function '%s' expects an assignment"
-                                " expression" % self.name.encode('utf-8'))
+                                " expression" % self.name)
             name, is_reference = assignment.terms[0]
             arity = None
             if is_reference:
@@ -2004,7 +2003,7 @@ class BindIf(BindFunction):
         operands = list(reversed(self.syntax.arguments))
         if len(operands) < 2:
             raise Error("Function '%s' expects 2 or more arguments;"
-                        " got %s" % (self.name.encode('utf-8'),
+                        " got %s" % (self.name,
                                      len(operands)))
         predicates = []
         consequents = []
@@ -2062,8 +2061,7 @@ class BindSwitch(BindFunction):
         operands = list(reversed(self.syntax.arguments))
         if len(operands) < 3:
             raise Error("Function '%s' expects 3 or more arguments;"
-                        " got %s" % (self.name.encode('utf-8'),
-                                     len(operands)))
+                        " got %s" % (self.name, len(operands)))
         variable = None
         variants = []
         consequents = []
@@ -2129,12 +2127,10 @@ class BindRecode(BindSwitch):
         operands = list(reversed(self.syntax.arguments))
         if len(operands) < 3:
             raise Error("Function '%s' expects 3 or more arguments;"
-                        " got %s" % (self.name.encode('utf-8'),
-                                     len(operands)))
+                        " got %s" % (self.name, len(operands)))
         if len(operands) % 2 == 0:
             raise Error("Function '%s' expects an odd number of arguments;"
-                        " got %s" % (self.name.encode('utf-8'),
-                                     len(operands)))
+                        " got %s" % (self.name, len(operands)))
         variable = None
         variants = []
         consequents = []
@@ -2163,7 +2159,7 @@ class BindExistsBase(BindFunction):
             if len(recipes) != 1:
                 with translate_guard(op):
                     raise Error("Function '%s' expects 1 argument; got %s"
-                                % (self.name.encode('utf-8'), len(recipes)))
+                                % (self.name, len(recipes)))
             plural_base = op
             syntax, recipe = recipes[0]
             op = self.state.use(recipe, syntax)
@@ -2200,7 +2196,7 @@ class BindCount(BindFunction):
             if len(recipes) != 1:
                 with translate_guard(op):
                     raise Error("Function '%s' expects 1 argument; got %s"
-                                % (self.name.encode('utf-8'), len(recipes)))
+                                % (self.name, len(recipes)))
             plural_base = op
             syntax, recipe = recipes[0]
             op = self.state.use(recipe, syntax)
@@ -2225,7 +2221,7 @@ class BindPolyAggregate(BindPolyFunction):
             if len(recipes) != 1:
                 with translate_guard(op):
                     raise Error("Function '%s' expects 1 argument; got %s"
-                                % (self.name.encode('utf-8'), len(recipes)))
+                                % (self.name, len(recipes)))
             plural_base = op
             syntax, recipe = recipes[0]
             op = self.state.use(recipe, syntax)
@@ -2250,7 +2246,7 @@ class BindMinMaxBase(BindPolyAggregate):
             if len(recipes) != 1:
                 with translate_guard(op):
                     raise Error("Function '%s' expects 1 argument; got %s"
-                                % (self.name.encode('utf-8'), len(recipes)))
+                                % (self.name, len(recipes)))
             plural_base = op
             syntax, recipe = recipes[0]
             op = self.state.use(recipe, syntax)

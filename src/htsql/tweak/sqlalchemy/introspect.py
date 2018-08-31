@@ -21,8 +21,6 @@ def decode(name, quote=None):
     if not quote and name == name.lower():
         if context.app.htsql.db.engine == 'oracle':
             name = name.upper()
-    if isinstance(name, str):
-        name = name.decode('utf-8')
     return name
 
 

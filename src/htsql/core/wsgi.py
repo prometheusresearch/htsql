@@ -47,7 +47,7 @@ class WSGI(Utility):
         if method != 'GET':
             self.start_response('400 Bad Request',
                                 [('Content-Type', 'text/plain')])
-            return ["%s requests are not permitted.\n" % method]
+            return [("%s requests are not permitted.\n" % method).encode('utf-8')]
         # Process the query.
         uri = self.request()
         try:

@@ -89,7 +89,7 @@ class ConfigYAMLLoader(BaseYAMLLoader):
                     "expected a file name, but found an empty node",
                     node.start_mark)
         basename = getattr(self.stream, 'name', None)
-        filename = node.value.encode('utf-8')
+        filename = node.value
         if not os.path.isabs(filename):
             if not basename:
                 raise yaml.constructor.ConstructorError(None, None,
@@ -111,7 +111,7 @@ ConfigYAMLLoader.add_constructor('!include',
         ConfigYAMLLoader.construct_include)
 
 
-class Request(object):
+class Request:
     """
     Represents a WSGI request.
 
@@ -230,7 +230,7 @@ class Request(object):
             response.set(status=status, headers=headers)
             # Note that we don't expect the application to use the returned
             # stream object, so we don't keep it.
-            return io.StringIO()
+            return io.BytesIO()
 
         # Copy the `environ` dictionary in case the application modifies it.
         # TODO: that is not enough to make `execute()` truly re-entrant: for
@@ -243,7 +243,7 @@ class Request(object):
         try:
             iterator = app(environ, start_response)
             try:
-                response.set(body=''.join(iterator))
+                response.set(body=b''.join(iterator))
             finally:
                 if hasattr(iterator, 'close'):
                     iterator.close()
@@ -254,7 +254,7 @@ class Request(object):
         return response
 
 
-class Response(object):
+class Response:
     """
     Represents a response to a WSGI request.
 
@@ -297,7 +297,7 @@ class Response(object):
                 self.status[:3].isdigit() and
                 self.status[3:4] == ' ' and
                 isinstance(self.headers, listof(tupleof(str, str))) and
-                isinstance(self.body, str) and
+                isinstance(self.body, bytes) and
                 self.exc_info is None)
 
     def dump(self, stream, with_headers=False):

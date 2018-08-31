@@ -41,7 +41,7 @@ except:
     fcntl = None
 
 
-class Cmd(object):
+class Cmd:
     """
     Describes a shell command.
 
@@ -352,7 +352,7 @@ class PagerCmd(Cmd):
             self.ctl.out("** pager is disabled")
 
 
-class ScanState(object):
+class ScanState:
 
     def __init__(self):
         self.indicator = '/'
@@ -386,7 +386,7 @@ class ScanState(object):
         return copy
 
 
-class NodeChain(object):
+class NodeChain:
 
     def __init__(self, app):
         self.app = app
@@ -454,10 +454,9 @@ class GetPostBaseCmd(Cmd):
         # FIXME: handle post arguments.
         if routine.state.app is None:
             return
-        argument = argument.decode('utf-8', 'replace')
         tokens = cls.regexp.findall(argument)
         tokens = [token for token in tokens if not token.startswith('#')]
-        tokens = [''] + [token.encode('utf-8') for token in tokens] + ['']
+        tokens = [''] + [token for token in tokens] + ['']
         state = ScanState()
         for idx in range(1, len(tokens)-1):
             token = tokens[idx]
@@ -517,7 +516,7 @@ class GetPostBaseCmd(Cmd):
         chain = NodeChain(routine.state.app)
         chain.push(HomeNode())
         for identifier in identifiers:
-            identifier = normalize(identifier.decode('utf-8'))
+            identifier = normalize(identifier)
             chain_copy = chain.clone()
             while chain:
                 label = chain.label(identifier)
@@ -528,7 +527,7 @@ class GetPostBaseCmd(Cmd):
             chain = chain_copy
             chain.push(node)
         labels = chain.labels()
-        names = [label.name.encode('utf-8') for label in labels]
+        names = [label.name for label in labels]
         return names
 
     def execute(self):
@@ -607,7 +606,7 @@ class GetPostBaseCmd(Cmd):
         length = len(lines)
         if self.state.with_headers:
             length += len(response.headers)+2
-        width = max(len(line.decode('utf-8', 'replace'))
+        width = max(len(line)
                     for line in lines) if lines else 0
 
         # Check if the output fits the terminal screen.
@@ -746,7 +745,7 @@ class RunCmd(GetPostBaseCmd):
             stream.close()
 
 
-class ShellState(object):
+class ShellState:
     """
     Holds mutable shell parameters.
 
@@ -826,7 +825,7 @@ class DescribeCmd(Cmd):
                       if label.arity is None and
                          not isinstance(label.arc, InvalidArc)]
         for name in path:
-            node_by_name = dict((label.name.encode('utf-8'), label.target)
+            node_by_name = dict((label.name, label.target)
                                 for label in labels)
             if name not in node_by_name:
                 return None
@@ -835,7 +834,7 @@ class DescribeCmd(Cmd):
                 labels = [label for label in classify(node)
                           if label.arity is None and
                              not isinstance(label.arc, InvalidArc)]
-        return [label.name.encode('utf-8') for label in labels]
+        return [label.name for label in labels]
 
     def execute(self):
         path = []
@@ -843,7 +842,7 @@ class DescribeCmd(Cmd):
             path = [name.strip() for name in self.argument.split('.')]
         arc = None
         for name in path:
-            if to_name(name).encode('utf-8') != name.lower():
+            if to_name(name) != name.lower():
                 self.ctl.out("** invalid identifier %r" % name)
                 return
             if arc is None:
@@ -854,7 +853,7 @@ class DescribeCmd(Cmd):
                 labels = [label for label in classify(node)
                           if label.arity is None and
                              not isinstance(label.arc, InvalidArc)]
-            arc_by_name = dict((label.name.encode('utf-8'), label.arc)
+            arc_by_name = dict((label.name, label.arc)
                                 for label in labels)
             if name.lower() not in arc_by_name:
                 self.ctl.out("** unknown identifier %r" % name)
@@ -904,7 +903,7 @@ class DescribeCmd(Cmd):
                 target_labels = relabel(TableArc(arc.target.table))
             target_name = None
             if target_labels:
-                target_name = target_labels[0].name.encode('utf-8')
+                target_name = target_labels[0].name
             if arc.is_contracting:
                 kind = "link"
             else:
@@ -947,7 +946,7 @@ class DescribeCmd(Cmd):
                     if not identity_labels:
                         break
                     identity_names.append(
-                            identity_labels[0].name.encode('utf-8'))
+                            identity_labels[0].name)
                 else:
                     yield ""
                     yield "Identity:"
@@ -1016,20 +1015,19 @@ class DescribeCmd(Cmd):
 
     def get_label_signature(self, label):
         if label.arity is None:
-            return label.name.encode('utf-8')
+            return label.name
         elif label.arity == 0:
-            return "%s()" % label.name.encode('utf-8')
+            return "%s()" % label.name
         else:
             if isinstance(label.arc, SyntaxArc):
                 parameters = []
                 for name, is_reference in label.arc.parameters:
-                    name = name.encode('utf-8')
                     if is_reference:
                         name = "$%s" % name
                     parameters.append(name)
             else:
                 parameters = ["?"]*len(label.arity)
-            return "%s(%s)" % (label.name.encode('utf-8'),
+            return "%s(%s)" % (label.name,
                                ",".join(parameters))
 
 

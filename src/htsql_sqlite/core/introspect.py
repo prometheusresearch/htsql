@@ -16,7 +16,7 @@ class IntrospectSQLite(Introspect):
 
     @staticmethod
     def escape_name(name):
-        return '"%s"' % name.encode('utf-8').replace('"', '""')
+        return '"%s"' % name.replace('"', '""')
 
     def __call__(self):
         connection = connect()
@@ -109,7 +109,7 @@ class IntrospectSQLiteDomain(Protocol):
 
     @classmethod
     def __dispatch__(interface, name, *args, **kwds):
-        return name.lower().encode('utf-8')
+        return name.lower()
 
     @classmethod
     def __matches__(component, dispatch_key):
@@ -168,7 +168,7 @@ class IntrospectSQLiteDateTimeDomain(IntrospectSQLiteDomain):
     call('date', 'time')
 
     def __call__(self):
-        key = self.name.encode('utf-8').lower()
+        key = self.name.lower()
         if 'datetime' in key or 'timestamp' in key:
             return DateTimeDomain()
         if 'date' in key:

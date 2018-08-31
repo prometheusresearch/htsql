@@ -17,7 +17,7 @@ from .signature import (Signature, isformula, IsEqualSig, IsTotallyEqualSig,
         SortDirectionSig, FromPredicateSig, ToPredicateSig)
 
 
-class ReducingState(object):
+class ReducingState:
     """
     Encapsulates the state of the reducing and collapsing processes.
 

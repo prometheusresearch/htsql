@@ -21,7 +21,7 @@ from .pack import pack
 from .pipe import SQLPipe, RecordPipe, ComposePipe, ProducePipe
 
 
-class CacheItem(object):
+class CacheItem:
 
     __slots__ = ('prev', 'next', 'key', 'value')
 
@@ -32,7 +32,7 @@ class CacheItem(object):
         self.value = value
 
 
-class LRUCache(object):
+class LRUCache:
 
     __slots__ = ('head', 'tail', 'items', 'size')
 
@@ -45,8 +45,8 @@ class LRUCache(object):
     def __getitem__(self, key):
         item = self.items[key]
         if item.prev is not None:
-            item.prev.next = item.__next__
-            if item.__next__ is not None:
+            item.prev.next = item.next
+            if item.next is not None:
                 item.next.prev = item.prev
             else:
                 self.tail = item.prev

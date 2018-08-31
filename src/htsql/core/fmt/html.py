@@ -17,9 +17,9 @@ from .format import HTMLFormat
 from .emit import EmitHeaders, Emit
 from ..error import Error, InternalServerError, Mark
 from ..domain import (Domain, BooleanDomain, NumberDomain, DecimalDomain,
-        TextDomain, EnumDomain, DateDomain, TimeDomain, DateTimeDomain,
-        ListDomain, RecordDomain, UntypedDomain, VoidDomain, OpaqueDomain,
-        Profile)
+        FloatDomain, TextDomain, EnumDomain, DateDomain, TimeDomain,
+        DateTimeDomain, ListDomain, RecordDomain, UntypedDomain, VoidDomain,
+        OpaqueDomain, Profile)
 import pkg_resources
 import cgi
 import re
@@ -45,9 +45,9 @@ class TextBlock(Block):
         if len(lines) == 0:
             line = ""
         elif len(lines) == 1:
-            line = lines[0].rstrip().encode('utf-8')
+            line = lines[0].rstrip()
         else:
-            line = lines[0].rstrip().encode('utf-8')+'...'
+            line = lines[0].rstrip()+'...'
         return line
 
 
@@ -93,9 +93,9 @@ class TextCase(Case):
         if len(lines) == 0:
             line = ""
         elif len(lines) == 1:
-            line = lines[0].rstrip().encode('utf-8')
+            line = lines[0].rstrip()
         else:
-            line = lines[0].rstrip().encode('utf-8')+'...'
+            line = lines[0].rstrip()+'...'
         return line
 
 
@@ -148,7 +148,7 @@ class TemplateError(InternalServerError, Error):
     pass
 
 
-class Template(object):
+class Template:
 
     text_pattern = r"""
         (?: [^{] | [{] [^{%#] )+
@@ -180,11 +180,11 @@ class Template(object):
         self.case = case
 
     def scan(self, stream):
-        if isinstance(stream, str):
+        if isinstance(stream, (str, bytes)):
             input = stream
         else:
             input = stream.read()
-        if isinstance(input, str):
+        if isinstance(input, bytes):
             try:
                 input = input.decode('utf-8')
             except UnicodeDecodeError as exc:
@@ -207,12 +207,12 @@ class Template(object):
                 mark = Mark(input, pos, pos)
                 raise TemplateError("invalid template expression", mark)
             if match.group('echo') is not None:
-                name = match.group('name').encode('utf-8')
+                name = match.group('name')
                 mark = Mark(input, match.start('echo'), match.end('echo'))
                 yield EchoBlock(name, mark)
             elif match.group('clause') is not None:
-                action = match.group('action').encode('utf-8')
-                names = match.group('names').encode('utf-8').split()
+                action = match.group('action')
+                names = match.group('names').split()
                 mark = Mark(input, match.start('clause'), match.end('clause'))
                 yield ClauseBlock(action, names, mark)
             pos = match.end()
@@ -291,7 +291,6 @@ class Template(object):
                 raise TemplateError("undefined context variable", case.mark)
             value = context[case.name]
             if value is not None:
-                assert not isinstance(value, str)
                 if isinstance(value, str):
                     yield value
                 else:
@@ -617,7 +616,17 @@ class DecimalToHTML(ToHTML):
             sign, digits, exp = value.as_tuple()
         if exp > 0:
             value = value.quantize(decimal.Decimal(1))
-        return str(value)
+        return "{:.12}".format(value)
+
+
+class FloatToHTML(ToHTML):
+
+    adapt(FloatDomain)
+
+    def dump(self, value):
+        if value is None:
+            return value
+        return "{:.12}".format(value)
 
 
 class BooleanToHTML(ToHTML):
@@ -660,15 +669,10 @@ class OpaqueToHTML(ToHTML):
     def dump(self, value):
         if value is None:
             return None
-        if not isinstance(value, str):
-            try:
-                value = str(value).decode('utf-8')
-            except UnicodeDecodeError:
-                value = str(repr(value))
-        return value
+        return str(value)
 
 
-class MetaToHTML(object):
+class MetaToHTML:
 
     def __init__(self, profile):
         assert isinstance(profile, Profile)

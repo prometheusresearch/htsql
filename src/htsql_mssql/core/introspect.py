@@ -176,7 +176,7 @@ class IntrospectMSSQLDomain(Protocol):
 
     @classmethod
     def __dispatch__(component, schema_name, type_name, *args, **kwds):
-        return (schema_name.encode('utf-8'), type_name.encode('utf-8'))
+        return (schema_name, type_name)
 
     @classmethod
     def __matches__(component, dispatch_key):

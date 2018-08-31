@@ -17,7 +17,40 @@ import sys
 import types
 
 
-class Component(object):
+class ComponentMeta(type):
+    # Augments method names with prefix `<name>.` to make the adapter
+    # name visible in tracebacks.
+
+    def __new__(mcls, name, bases, content):
+        # Iterate over all values in the class namespace.
+        for value in list(content.values()):
+            # Ignore non-function attributes.
+            if not isinstance(value, types.FunctionType):
+                continue
+            # Update the code name and regenerate the code object.
+            code = value.__code__
+            code_name = code.co_name
+            if '.' in code_name:
+                continue
+            code_name = '%s.%s' % (name, code_name)
+            code = types.CodeType(code.co_argcount, code.co_kwonlyargcount,
+                                  code.co_nlocals, code.co_stacksize,
+                                  code.co_flags, code.co_code, code.co_consts,
+                                  code.co_names, code.co_varnames,
+                                  code.co_filename, code_name,
+                                  code.co_firstlineno, code.co_lnotab,
+                                  code.co_freevars, code.co_cellvars)
+            # Patch the function object.
+            value.__code__ = code
+        # Create the class.
+        return type.__new__(mcls, name, bases, content)
+
+    def __repr__(cls):
+        # Overriden to make a printable representation.
+        return "%s.%s" % (cls.__module__, cls.__name__)
+
+
+class Component(metaclass=ComponentMeta):
     """
     A unit of extension in the HTSQL component architecture.
 
@@ -34,38 +67,6 @@ class Component(object):
     *protocols*; see :class:`Utility`, :class:`Adapter`, :class:`Protocol`
     respectively.
     """
-
-    # Augment method names with prefix `<name>.` to make the adapter
-    # name visible in tracebacks.
-    class __metaclass__(type):
-
-        def __new__(mcls, name, bases, content):
-            # Iterate over all values in the class namespace.
-            for value in list(content.values()):
-                # Ignore non-function attributes.
-                if not isinstance(value, types.FunctionType):
-                    continue
-                # Update the code name and regenerate the code object.
-                code = value.__code__
-                code_name = code.co_name
-                if '.' in code_name:
-                    continue
-                code_name = '%s.%s' % (name, code_name)
-                code = types.CodeType(code.co_argcount, code.co_nlocals,
-                                      code.co_stacksize, code.co_flags,
-                                      code.co_code, code.co_consts,
-                                      code.co_names, code.co_varnames,
-                                      code.co_filename, code_name,
-                                      code.co_firstlineno, code.co_lnotab,
-                                      code.co_freevars, code.co_cellvars)
-                # Patch the function object.
-                value.__code__ = code
-            # Create the class.
-            return type.__new__(mcls, name, bases, content)
-
-        def __repr__(cls):
-            # Overriden to make a printable representation.
-            return "%s.%s" % (cls.__module__, cls.__name__)
 
     @staticmethod
     def __components__():
@@ -283,10 +284,6 @@ class Component(object):
         instance = realization(*args, **kwds)
         return instance()
 
-    def __new__(interface, *args, **kwds):
-        # Only realizations are permitted to instantiate.
-        assert False
-
     def __call__(self):
         """
         Executes the implementation.
@@ -309,9 +306,6 @@ class Realization(Component):
 
     __interface__ = None
     __dispatch_key__ = None
-
-    # Allow realizations to instantiate.
-    __new__ = object.__new__
 
 
 try:
@@ -639,7 +633,7 @@ class Protocol(Component):
                 if name not in seen:
                     names.append(name)
                     seen.add(name)
-        names.sort()
+        names.sort(key=(lambda n: str(n)))
         return names
 
 
@@ -663,7 +657,7 @@ def call(*names):
     frame.f_locals['__names__'] = list(names)
 
 
-class ComponentRegistry(object):
+class ComponentRegistry:
     """
     Contains cached components and realizations.
     """
@@ -705,6 +699,5 @@ class ComponentRegistry(object):
         # A mapping: (interface, dispatch_key) -> realization (populated by
         # `Component.__realize__()`).
         self.realizations = {}
-
 
 

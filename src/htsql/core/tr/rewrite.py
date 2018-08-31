@@ -17,7 +17,7 @@ from .signature import Signature, OrSig, AndSig, IsEqualSig, isformula
 from .fn.signature import IfSig
 
 
-class RewritingState(object):
+class RewritingState:
     """
     Encapsulates the state of the rewriting process.
 

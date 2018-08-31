@@ -20,7 +20,7 @@ from ..tr.dump import serialize_delete
 import itertools
 
 
-class ExecuteDeletePipe(object):
+class ExecuteDeletePipe:
 
     def __init__(self, table, key_columns, sql):
         assert isinstance(table, TableEntity)
@@ -39,7 +39,7 @@ class ExecuteDeletePipe(object):
             raise PermissionError("No write permissions")
         with transaction() as connection:
             cursor = connection.cursor()
-            cursor.execute(self.sql.encode('utf-8'), key_row)
+            cursor.execute(self.sql, key_row)
 
 
 class BuildExecuteDelete(Utility):

@@ -11,14 +11,14 @@ from ...core.classify import (classify, TraceHome, TraceTable,
                             OrderTable)
 
 
-class ClassCache(object):
+class ClassCache:
 
     def __init__(self):
         self.names_by_arc = {}
         self.arc_by_signature = {}
         addon = context.app.tweak.override
         node = HomeNode()
-        for name, parameters in sorted(addon.class_labels):
+        for name, parameters in sorted(addon.class_labels, key=(lambda k: (k[0], k[1] or ()))):
             pattern = addon.class_labels[name, parameters]
             arity = None
             if parameters is not None:
@@ -33,7 +33,7 @@ class ClassCache(object):
             self.arc_by_signature[signature] = arc
 
 
-class FieldCache(object):
+class FieldCache:
 
     def __init__(self):
         self.names_by_arc_by_node = {}
@@ -44,7 +44,7 @@ class FieldCache(object):
         for label in classify(HomeNode()):
             self.node_by_signature[label.name, label.arity] = label.target
             self.name_by_node[label.target] = label.name
-        for class_name, field_name, parameters in sorted(addon.field_labels):
+        for class_name, field_name, parameters in sorted(addon.field_labels, key=(lambda k: (k[0], k[1], k[2] or ()))):
             pattern = addon.field_labels[class_name, field_name, parameters]
             arity = None
             if parameters is not None:
@@ -53,7 +53,7 @@ class FieldCache(object):
             signature = (field_name, arity)
             name = "%s.%s" % (class_name, field_name)
             if (class_name, None) not in self.node_by_signature:
-                addon.unused_pattern_cache.add(name.encode('utf-8'))
+                addon.unused_pattern_cache.add(name)
                 continue
             node = self.node_by_signature[class_name, None]
             arc = pattern.extract(node, parameters)
@@ -84,7 +84,7 @@ class OverrideTraceHome(TraceHome):
         cache = class_cache()
         arcs = []
         arcs.extend(super(OverrideTraceHome, self).__call__())
-        for signature in sorted(cache.arc_by_signature):
+        for signature in sorted(cache.arc_by_signature, key=(lambda k: (k[0], k[1] if k[1] is not None else -1))):
             arc = cache.arc_by_signature[signature]
             arcs.append(arc)
         for arc in arcs:
@@ -103,7 +103,7 @@ class OverrideTraceTable(TraceTable):
         arcs = []
         arcs.extend(super(OverrideTraceTable, self).__call__())
         arc_by_signature = cache.arc_by_signature_by_node.get(self.node, {})
-        for signature in sorted(arc_by_signature):
+        for signature in sorted(arc_by_signature, key=(lambda k: (k[0], k[1] if k[1] is not None else -1))):
             arc = arc_by_signature[signature]
             arcs.append(arc)
         for arc in arcs:
@@ -196,7 +196,7 @@ class OverrideOrderTable(OrderTable):
                 in enumerate(addon.field_orders[class_name, None]):
             if name not in names or parameters is not None:
                 name = "%s.%s" % (class_name, name)
-                addon.unused_pattern_cache.add(name.encode('utf-8'))
+                addon.unused_pattern_cache.add(name)
             else:
                 orders[name] = idx
         labels = [label.clone(is_public=(label.name in orders))
@@ -210,10 +210,10 @@ class OverrideOrderTable(OrderTable):
 def validate():
     addon = context.app.tweak.override
     cache = field_cache()
-    for name, parameters in sorted(addon.field_orders):
+    for name, parameters in sorted(addon.field_orders, key=(lambda k: (k[0], k[1] or ()))):
         if (parameters is not None or
                 (name, None) not in cache.node_by_signature):
-            addon.unused_pattern_cache.add(name.encode('utf-8'))
+            addon.unused_pattern_cache.add(name)
             continue
         node = cache.node_by_signature[name, None]
         classify(node)

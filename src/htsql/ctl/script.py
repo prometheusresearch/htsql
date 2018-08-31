@@ -20,7 +20,7 @@ import sys
 import pkg_resources
 
 
-class Script(object):
+class Script:
     """
     Implements a command-line application with the following interface::
 

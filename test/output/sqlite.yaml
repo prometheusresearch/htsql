@@ -12547,7 +12547,7 @@ tests:
 
              ----
              /{4154781481226426191177580544000000.808017424794512875886459904961710757005754368000000000}
-             SELECT 4.15478148123e+33
+             SELECT 4.154781481226426e+33
         - uri: /{decimal('vingt-cinq')}
           status: 400 Bad Request
           headers:
@@ -12666,7 +12666,7 @@ tests:
           body: |2
              | datetime('2010-04-15') | datetime('2010-04-15 20:13') | datetime('2010-04-15T20:13:04.5') | datetime('2010-04-15 20:13:04.5 -0400') |
             -+------------------------+------------------------------+-----------------------------------+-----------------------------------------+-
-             | 2010-04-15             | 2010-04-15 20:13:00          | 2010-04-15 20:13:04.500000        | 2010-04-15 20:13:04.500000              |
+             | 2010-04-15 00:00:00    | 2010-04-15 20:13:00          | 2010-04-15 20:13:04.500000        | 2010-04-15 20:13:04.500000              |
 
              ----
              /{datetime('2010-04-15'),datetime('2010-04-15 20:13'),datetime('2010-04-15T20:13:04.5'),datetime('2010-04-15 20:13:04.5 -0400')}
@@ -15175,7 +15175,7 @@ tests:
           body: |2
              | datetime(date('2010-04-15')) |
             -+------------------------------+-
-             | 2010-04-15                   |
+             | 2010-04-15 00:00:00          |
 
              ----
              /{datetime(date('2010-04-15'))}
@@ -15251,7 +15251,7 @@ tests:
           body: |2
              | datetime(2010,4,15) | datetime(2010,4,15,20,13) | datetime(2010,4,15,20,13,4.5) |
             -+---------------------+---------------------------+-------------------------------+-
-             | 2010-04-15          | 2010-04-15 20:13:00       | 2010-04-15 20:13:04           |
+             | 2010-04-15 00:00:00 | 2010-04-15 20:13:00       | 2010-04-15 20:13:04           |
 
              ----
              /{datetime(2010,4,15),datetime(2010,4,15,20,13),datetime(2010,4,15,20,13,4.5)}
@@ -39790,15 +39790,15 @@ tests:
       - py: test/code/test_embedding.py
         stdout: |
           URI: /school{code, count(program), count(department)}
-          school(code=u'art', [1]=3, [2]=1)
-          school(code=u'bus', [1]=6, [2]=3)
-          school(code=u'edu', [1]=7, [2]=2)
-          school(code=u'eng', [1]=8, [2]=4)
-          school(code=u'la', [1]=9, [2]=6)
-          school(code=u'mus', [1]=0, [2]=4)
-          school(code=u'ns', [1]=6, [2]=4)
-          school(code=u'ph', [1]=1, [2]=0)
-          school(code=u'sc', [1]=0, [2]=0)
+          school(code='art', [1]=3, [2]=1)
+          school(code='bus', [1]=6, [2]=3)
+          school(code='edu', [1]=7, [2]=2)
+          school(code='eng', [1]=8, [2]=4)
+          school(code='la', [1]=9, [2]=6)
+          school(code='mus', [1]=0, [2]=4)
+          school(code='ns', [1]=6, [2]=4)
+          school(code='ph', [1]=1, [2]=0)
+          school(code='sc', [1]=0, [2]=0)
 
           URI: /school{name, count(program)}?code=$school_code
           $school_code: 'bus'
@@ -39814,14 +39814,14 @@ tests:
 
           URI: /school?campus==$campus
           $campus: None
-          school(code=u'ph', name=u'Public Honorariums', campus=None)
-          school(code=u'sc', name=u'School of Continuing Studies', campus=None)
+          school(code='ph', name='Public Honorariums', campus=None)
+          school(code='sc', name='School of Continuing Studies', campus=None)
 
           URI: /school?campus=$campus
           $campus: ['north', 'south']
-          school(code=u'bus', name=u'School of Business', campus=u'south')
-          school(code=u'eng', name=u'School of Engineering', campus=u'north')
-          school(code=u'mus', name=u'School of Music & Dance', campus=u'south')
+          school(code='bus', name='School of Business', campus='south')
+          school(code='eng', name='School of Engineering', campus='north')
+          school(code='mus', name='School of Music & Dance', campus='south')
 
           URI: /{$untyped, $selector, $boolean, $integer, $float, $decimal, $date, $time, $datetime}
           $untyped: 'HTSQL'
@@ -39833,14 +39833,14 @@ tests:
           $date: datetime.date(2010, 4, 15)
           $time: datetime.time(20, 3)
           $datetime: datetime.datetime(2010, 4, 15, 20, 3)
-          Record([0]=u'HTSQL', [1]=Record([0]=u'HTTP', [1]=u'SQL'), [2]=True, [3]=3571, [4]=-0.57721, [5]=None, [6]=datetime.date(2010, 4, 15), [7]=datetime.time(20, 3), [8]=datetime.datetime(2010, 4, 15, 20, 3))
+          Record([0]='HTSQL', [1]=Record([0]='HTTP', [1]='SQL'), [2]=True, [3]=3571, [4]=-0.57721, [5]=None, [6]=datetime.date(2010, 4, 15), [7]=datetime.time(20, 3), [8]=datetime.datetime(2010, 4, 15, 20, 3))
 
           URI: /meta(/link?table.name=$table_name)
           $table_name: 'school'
-          link(table_name=u'school', name=u'department', is_singular=False, target_name=u'department', reverse_name=u'school')
-          link(table_name=u'school', name=u'program', is_singular=False, target_name=u'program', reverse_name=u'school')
+          link(table_name='school', name='department', is_singular=False, target_name='department', reverse_name='school')
+          link(table_name='school', name='program', is_singular=False, target_name='program', reverse_name='school')
 
           URI: /school
-          school(code=u'art', name=u'School of Art & Design', campus=u'old')
-          school(code=u'bus', name=u'School of Business', campus=u'south')
-          school(code=u'edu', name=u'College of Education', campus=u'old')
+          school(code='art', name='School of Art & Design', campus='old')
+          school(code='bus', name='School of Business', campus='south')
+          school(code='edu', name='College of Education', campus='old')

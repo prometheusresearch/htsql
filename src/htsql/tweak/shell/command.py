@@ -186,18 +186,16 @@ class RenderShell(Act):
         query = self.command.query
         resource = locate('/shell/index.html')
         assert resource is not None
-        database_name = context.app.htsql.db.database.decode('utf-8', 'replace')
-        htsql_version = __version__.decode('ascii')
-        htsql_legal = __legal__.decode('ascii')
+        database_name = context.app.htsql.db.database
+        htsql_version = __version__
+        htsql_legal = __legal__
         server_root = context.app.tweak.shell.server_root
         if server_root is None:
             server_root = wsgiref.util.application_uri(self.action.environ)
         if server_root.endswith('/'):
             server_root = server_root[:-1]
-        server_root = server_root.decode('utf-8')
         resource_root = (server_root + '/%s/shell/'
                          % context.app.tweak.resource.indicator)
-        resource_root = resource_root.decode('utf-8')
         if query is not None and query not in ['', '/']:
             query_on_start = query
             evaluate_on_start = 'true'
@@ -211,7 +209,7 @@ class RenderShell(Act):
         headers = [('Content-Type', 'text/html; charset=UTF-8')]
         if self.command.is_implicit:
             headers.append(('Vary', 'Accept'))
-        template = Template(resource.data)
+        template = Template(resource.data.decode('utf-8'))
         body = template(resource_root=cgi.escape(resource_root, True),
                         database_name=cgi.escape(database_name, True),
                         htsql_version=cgi.escape(htsql_version, True),
@@ -299,7 +297,7 @@ class RenderProduceAnalyze(Act):
         addon = context.app.tweak.shell
         status = "200 OK"
         headers = [('Content-Type', 'application/javascript')]
-        command = UniversalCmd(self.command.query.encode('utf-8'))
+        command = UniversalCmd(self.command.query)
         limit = None
         try:
             if isinstance(self.command, AnalyzeCmd):
@@ -369,8 +367,6 @@ class RenderProduceAnalyze(Act):
             last_line = mark.text.count('\n', 0, last_break)
             first_column = mark.start-first_break
             last_column = mark.end-last_break
-        if hint is not None:
-            hint = hint.decode('utf-8')
         yield JS_MAP
         yield "type"
         yield "error"

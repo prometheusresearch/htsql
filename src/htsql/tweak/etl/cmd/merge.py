@@ -30,7 +30,7 @@ from ..tr.dump import serialize_update
 import itertools
 
 
-class ExtractIdentityPipe(object):
+class ExtractIdentityPipe:
 
     def __init__(self, node, arcs, id_indices, other_indices):
         self.node = node
@@ -67,7 +67,7 @@ class BuildExtractIdentity(Utility):
                 else:
                     label = labels[0]
                     raise Error("Missing identity field %s"
-                                % label.name.encode('utf-8'))
+                                % label.name)
             index = index_by_arc[arc]
             id_indices.append(index)
         other_indices = []
@@ -80,7 +80,7 @@ class BuildExtractIdentity(Utility):
         return ExtractIdentityPipe(self.node, arcs, id_indices, other_indices)
 
 
-class ResolveKeyPipe(object):
+class ResolveKeyPipe:
 
     def __init__(self, name, columns, domain, pipe, with_error):
         self.name = name
@@ -196,7 +196,7 @@ class BuildResolveKey(Utility):
                               self.with_error)
 
 
-class ExecuteUpdatePipe(object):
+class ExecuteUpdatePipe:
 
     def __init__(self, table, input_columns, key_columns,
                  output_columns, sql):
@@ -228,7 +228,7 @@ class ExecuteUpdatePipe(object):
             raise PermissionError("No write permissions")
         with transaction() as connection:
             cursor = connection.cursor()
-            cursor.execute(self.sql.encode('utf-8'), row+key_row)
+            cursor.execute(self.sql, row+key_row)
             rows = cursor.fetchall()
             if len(rows) != 1:
                 raise Error("Unable to locate the updated row")

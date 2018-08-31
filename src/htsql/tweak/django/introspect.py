@@ -43,8 +43,6 @@ class DjangoIntrospect(Introspect):
             name = meta.db_table
             if is_upper:
                 name = name.upper()
-            if isinstance(name, str):
-                name = name.decode('utf-8')
             table = schema.add_table(name)
             table_by_model[model] = table
             for field in meta.local_fields:
@@ -54,8 +52,6 @@ class DjangoIntrospect(Introspect):
                 name = field.column
                 if is_upper:
                     name = name.upper()
-                if isinstance(name, str):
-                    name = name.decode('utf-8')
                 is_nullable = bool(field.null)
                 column = table.add_column(name, domain, is_nullable)
                 column_by_field[field] = column

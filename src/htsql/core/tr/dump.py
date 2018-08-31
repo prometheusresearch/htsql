@@ -34,7 +34,7 @@ import re
 import math
 
 
-class Stream(io.StringIO, object):
+class Stream(io.StringIO):
     """
     Implements a writable file-like object.
 
@@ -49,7 +49,6 @@ class Stream(io.StringIO, object):
     to revert to the previous indentation level, :meth:`newline`
     to set the position to the current indentation level.
     """
-    # Note: we inherit from `object` to be able to use `super()`.
 
     def __init__(self):
         # Initialize the `StringIO` object.
@@ -111,11 +110,12 @@ class Stream(io.StringIO, object):
         output = self.getvalue()
         # Blank the stream and return the content.
         self.truncate(0)
+        self.seek(0)
         self.column = 0
         return output
 
 
-class Hook(object):
+class Hook:
     """
     Encapsulates serializing hints and instructions.
 
@@ -129,7 +129,7 @@ class Hook(object):
         self.with_aliases = with_aliases
 
 
-class SerializingState(object):
+class SerializingState:
     """
     Encapsulates the state of the serializing process.
 
@@ -527,8 +527,6 @@ class DumpBase(Adapter):
         `namespaces`, `keywords` (dictionaries)
             Dictionaries containing substitution variables.
         """
-        if isinstance(template, str):
-            template = template.decode()
         assert isinstance(template, str)
         # Aggregate variables from the given namespaces.  A namespace is
         # either a dictionary or an object with variables as attributes.
@@ -562,12 +560,10 @@ class DumpBase(Adapter):
             # of the variable and realize a `Format` instance to perform
             # the substitution.
             else:
-                name = match.group('name').encode()
+                name = match.group('name')
                 kind = match.group('kind')
                 if kind is None:
                     kind = 'default'
-                else:
-                    kind = kind.encode()
                 modifier = match.group('modifier')
                 assert name in variables, name
                 value = variables[name]

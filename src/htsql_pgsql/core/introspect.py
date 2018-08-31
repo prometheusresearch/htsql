@@ -176,7 +176,7 @@ class IntrospectPGSQLDomain(Protocol):
 
     @classmethod
     def __dispatch__(component, schema_name, name, *args, **kwds):
-        return (schema_name.encode('utf-8'), name.encode('utf-8'))
+        return (schema_name, name)
 
     @classmethod
     def __matches__(component, dispatch_key):

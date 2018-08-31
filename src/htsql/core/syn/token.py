@@ -33,7 +33,7 @@ class Token(Clonable, Hashable, Printable, YAMLable):
         # `False` for EOF token; `True` otherwise.
         return bool(self.code)
 
-    def __unicode__(self):
+    def __str__(self):
         # '$', '`<code>`:<text>' or '%<code>:<text>'
         chunks = []
         if not self.code:
@@ -44,9 +44,8 @@ class Token(Clonable, Hashable, Printable, YAMLable):
             chunks.append("`%s`" % self.code.replace("`", "``"))
         if self.text:
             chunks.append(":")
-            text = self.text.encode('utf-8')
+            text = self.text
             text = urllib.parse.quote(text, safe='')
-            text = text.decode('utf-8')
             chunks.append(text)
         return "".join(chunks)
 

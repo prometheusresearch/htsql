@@ -91,7 +91,7 @@ class SegmentExpr(Expression):
                 tuple(self.dependents))
 
 
-class Family(object):
+class Family:
     """
     Represents the target class of a space.
 

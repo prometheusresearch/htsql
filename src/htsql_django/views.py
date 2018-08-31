@@ -33,7 +33,7 @@ def gateway(request):
     def start_response(status, headers, exc_info=None):
         output.status = status
         output.headers = headers
-    output.body = ''.join(instance(environ, start_response))
+    output.body = b''.join(instance(environ, start_response))
     response = HttpResponse(output.body, status=int(output.status.split()[0]))
     for header, value in output.headers:
         response[header] = value

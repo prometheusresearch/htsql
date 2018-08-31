@@ -41,11 +41,8 @@ def matches(entity, pattern):
 
 class Pattern(Printable):
 
-    def __unicode__(self):
-        raise NotImplementedError()
-
     def __str__(self):
-        return str(self).encode('utf-8')
+        raise NotImplementedError()
 
 
 class TablePattern(Pattern):
@@ -63,7 +60,7 @@ class TablePattern(Pattern):
         return (matches(entity.schema, self.schema_pattern) and
                 matches(entity, self.table_pattern))
 
-    def __unicode__(self):
+    def __str__(self):
         if self.schema_pattern is not None:
             return "%s.%s" % (self.schema_pattern, self.table_pattern)
         return self.table_pattern
@@ -90,7 +87,7 @@ class ColumnPattern(Pattern):
                 matches(entity.table, self.table_pattern) and
                 matches(entity, self.column_pattern))
 
-    def __unicode__(self):
+    def __str__(self):
         chunks = []
         if self.schema_pattern is not None:
             chunks.append(self.schema_pattern)
@@ -139,7 +136,7 @@ class UniqueKeyPattern(Pattern):
             columns.append(column)
         return columns
 
-    def __unicode__(self):
+    def __str__(self):
         chunks = []
         if self.schema_pattern is not None:
             chunks.append(self.schema_pattern)
@@ -227,7 +224,7 @@ class ForeignKeyPattern(Pattern):
                     return
         return columns
 
-    def __unicode__(self):
+    def __str__(self):
         chunks = []
         if self.schema_pattern is not None:
             chunks.append(self.schema_pattern)
@@ -282,7 +279,7 @@ class ColumnArcPattern(ArcPattern):
             return
         return ColumnArc(node.table, matched_column)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.column_pattern
 
 
@@ -317,7 +314,7 @@ class TableArcPattern(ArcPattern):
             return
         return TableArc(matched_table)
 
-    def __unicode__(self):
+    def __str__(self):
         if self.schema_pattern is not None:
             return "%s.%s" % (self.schema_pattern, self.schema_pattern)
         return self.table_pattern
@@ -384,7 +381,7 @@ class JoinPattern(Pattern):
             return
         return matched_join
 
-    def __unicode__(self):
+    def __str__(self):
         chunks = []
         if self.schema_pattern is not None:
             chunks.append(self.schema_pattern)
@@ -427,7 +424,7 @@ class ChainArcPattern(ArcPattern):
             node = TableNode(join.target)
         return ChainArc(table, joins)
 
-    def __unicode__(self):
+    def __str__(self):
         return ", ".join(str(pattern) for pattern in self.join_patterns)
 
 
@@ -444,7 +441,7 @@ class SyntaxArcPattern(ArcPattern):
         syntax = parse(self.syntax, 'flow_pipe')
         return SyntaxArc(node, parameters, syntax)
 
-    def __unicode__(self):
+    def __str__(self):
         return str(self.syntax)
 
 
@@ -476,21 +473,21 @@ class GlobalPattern(ArcPattern):
 
     def register(self, app, name, parameters):
         assert isinstance(name, str)
-        class_name = "Bind%s" % name.title().replace('_', '').encode('utf-8')
+        class_name = "Bind%s" % name.title().replace('_', '')
         arity = None
         if parameters is not None:
             arity = len(parameters)
             parameters = list(parameters)
         namespace = {
             '__app__': weakref.ref(app),
-            '__names__': [(name.encode('utf-8'), arity)],
+            '__names__': [(name, arity)],
             'parameters': parameters,
             'body': self.syntax,
         }
         bind_class = type(class_name, (BindGlobal,), namespace)
         return bind_class
 
-    def __unicode__(self):
+    def __str__(self):
         return str(self.syntax)
 
 
@@ -549,18 +546,18 @@ class CommandPattern(Pattern):
 
     def register(self, app, name, parameters):
         assert isinstance(name, str)
-        class_name = "Summon%s" % name.title().replace('_', '').encode('utf-8')
+        class_name = "Summon%s" % name.title().replace('_', '')
         parameters = list(parameters)
         namespace = {
             '__app__': weakref.ref(app),
-            '__names__': [name.encode('utf-8')],
+            '__names__': [name],
             'parameters': parameters,
             'body': self.syntax,
         }
         summon_class = type(class_name, (SummonCommand,), namespace)
         return summon_class
 
-    def __unicode__(self):
+    def __str__(self):
         return str(self.syntax)
 
 
@@ -578,12 +575,10 @@ class TablePatternVal(Validator):
         if value is None:
             return ValueError("the null value is not permitted")
         if isinstance(value, str):
-            value = value.decode('utf-8', 'replace')
-        if isinstance(value, str):
             match = self.regexp.match(value)
             if match is None:
                 raise ValueError("expected table pattern, got %r"
-                                 % value.encode('utf-8'))
+                                 % value)
             schema_pattern = match.group('schema')
             if schema_pattern is not None:
                 schema_pattern = schema_pattern.lower()
@@ -609,12 +604,10 @@ class ColumnPatternVal(Validator):
         if value is None:
             return ValueError("the null value is not permitted")
         if isinstance(value, str):
-            value = value.decode('utf-8', 'replace')
-        if isinstance(value, str):
             match = self.regexp.match(value)
             if match is None:
                 raise ValueError("expected column pattern, got %r"
-                                 % value.encode('utf-8'))
+                                 % value)
             schema_pattern = match.group('schema')
             if schema_pattern is not None:
                 schema_pattern = schema_pattern.lower()
@@ -648,12 +641,10 @@ class UniqueKeyPatternVal(Validator):
         if value is None:
             return ValueError("the null value is not permitted")
         if isinstance(value, str):
-            value = value.decode('utf-8', 'replace')
-        if isinstance(value, str):
             match = self.regexp.match(value)
             if match is None:
                 raise ValueError("expected unique key pattern, got %r"
-                                 % value.encode('utf-8'))
+                                 % value)
             schema_pattern = match.group('schema')
             if schema_pattern is not None:
                 schema_pattern = schema_pattern.lower()
@@ -697,12 +688,10 @@ class ForeignKeyPatternVal(Validator):
         if value is None:
             return ValueError("the null value is not permitted")
         if isinstance(value, str):
-            value = value.decode('utf-8', 'replace')
-        if isinstance(value, str):
             match = self.regexp.match(value)
             if match is None:
                 raise ValueError("expected foreign key pattern, got %r"
-                                 % value.encode('utf-8'))
+                                 % value)
             schema_pattern = match.group('schema')
             if schema_pattern is not None:
                 schema_pattern = schema_pattern.lower()
@@ -724,7 +713,7 @@ class ForeignKeyPatternVal(Validator):
                 if len(target_column_patterns) != len(column_patterns):
                     raise ValueError("origin and target columns do not match"
                                      " in foreign key pattern %r"
-                                     % value.encode('utf-8'))
+                                     % value)
             is_partial = bool(match.group('partial'))
             value = ForeignKeyPattern(schema_pattern, table_pattern,
                         column_patterns, target_schema_pattern,
@@ -753,12 +742,10 @@ class ClassPatternVal(Validator):
         if value is None:
             return ValueError("the null value is not permitted")
         if isinstance(value, str):
-            value = value.decode('utf-8', 'replace')
-        if isinstance(value, str):
             match = self.regexp.match(value)
             if match is None:
                 raise ValueError("expected class pattern, got %r"
-                                 % value.encode('utf-8'))
+                                 % value)
             if match.group('is_table'):
                 schema_pattern = match.group('schema')
                 if schema_pattern is not None:
@@ -823,12 +810,10 @@ class FieldPatternVal(Validator):
         if value is None:
             return ValueError("the null value is not permitted")
         if isinstance(value, str):
-            value = value.decode('utf-8', 'replace')
-        if isinstance(value, str):
             match = self.regexp.match(value)
             if match is None:
                 raise ValueError("expected field pattern, got %r"
-                                 % value.encode('utf-8'))
+                                 % value)
             if match.group('is_column'):
                 column_pattern = match.group('column').lower()
                 value = ColumnArcPattern(column_pattern)
@@ -863,7 +848,7 @@ class FieldPatternVal(Validator):
                             len(column_patterns) != len(target_column_patterns)):
                         raise ValueError("origin and target columns do not match"
                                          " in join pattern %r"
-                                         % value.encode('utf-8'))
+                                         % value)
                     join_pattern = JoinPattern(schema_pattern, table_pattern,
                                                column_patterns,
                                                target_schema_pattern,
@@ -888,8 +873,6 @@ class GlobalPatternVal(Validator):
         if value is None:
             return ValueError("the null value is not permitted")
         if isinstance(value, str):
-            value = value.decode('utf-8', 'replace')
-        if isinstance(value, str):
             value = GlobalPattern(value)
         if not isinstance(value, GlobalPattern):
             raise ValueError("expected global pattern, got %r" % value)
@@ -901,8 +884,6 @@ class CommandPatternVal(Validator):
     def __call__(self, value):
         if value is None:
             return ValueError("the null value is not permitted")
-        if isinstance(value, str):
-            value = value.decode('utf-8', 'replace')
         if isinstance(value, str):
             value = CommandPattern(value)
         if not isinstance(value, CommandPattern):
@@ -927,12 +908,10 @@ class LabelVal(Validator):
         if value is None:
             return ValueError("the null value is not permitted")
         if isinstance(value, str):
-            value = value.decode('utf-8', 'replace')
-        if isinstance(value, str):
             match = self.regexp.match(value)
             if match is None:
                 raise ValueError("expected label, got %r"
-                                 % value.encode('utf-8'))
+                                 % value)
             label = normalize(match.group('label'))
             parameters = None
             if match.group('parameters') is not None:
@@ -972,12 +951,10 @@ class QLabelVal(Validator):
         if value is None:
             return ValueError("the null value is not permitted")
         if isinstance(value, str):
-            value = value.decode('utf-8', 'replace')
-        if isinstance(value, str):
             match = self.regexp.match(value)
             if match is None:
                 raise ValueError("expected label, got %r"
-                                 % value.encode('utf-8'))
+                                 % value)
             qualifier = normalize(match.group('qualifier'))
             label = normalize(match.group('label'))
             parameters = None
@@ -1017,12 +994,10 @@ class CommandVal(Validator):
         if value is None:
             return ValueError("the null value is not permitted")
         if isinstance(value, str):
-            value = value.decode('utf-8', 'replace')
-        if isinstance(value, str):
             match = self.regexp.match(value)
             if match is None:
                 raise ValueError("expected command label, got %r"
-                                 % value.encode('utf-8'))
+                                 % value)
             label = normalize(match.group('label'))
             parameters = []
             for parameter in match.group('parameters').split(','):

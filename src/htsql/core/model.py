@@ -62,7 +62,7 @@ class Label(Clonable, Printable):
         self.is_public = is_public
 
     def __str__(self):
-        return "%s%s (%s): %s -> %s" % (self.name.encode('utf-8'),
+        return "%s%s (%s): %s -> %s" % (self.name,
                                         "(%s)" % ",".join(["_"]*self.arity)
                                         if self.arity is not None else "",
                                         self.arc, self.origin, self.target)

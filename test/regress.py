@@ -272,7 +272,7 @@ class QueryCase(MatchCase):
         new_output = self.Output(uri=self.input.uri,
                                  status=response.status,
                                  headers=response.headers,
-                                 body=response.body)
+                                 body=response.body.decode('utf-8', 'replace'))
 
         if not response.status.startswith(str(self.input.expect)):
             text = self.render(self.output)

@@ -30,11 +30,8 @@ class Entity(Printable):
     def freeze(self):
         pass
 
-    def __unicode__(self):
-        return "[%s]" % id(self)
-
     def __str__(self):
-        return str(self).encode('utf-8')
+        return "[%s]" % id(self)
 
 
 class MutableEntity(Entity):
@@ -60,7 +57,7 @@ class NamedEntity(Entity):
         super(NamedEntity, self).__init__(owner)
         self.name = name
 
-    def __unicode__(self):
+    def __str__(self):
         if self.name:
             return self.name
         else:
@@ -105,11 +102,8 @@ class EntitySet(Printable):
     def items(self):
         return [(entity.name, entity) for entity in self.entities]
 
-    def __unicode__(self):
-        return "[%s]" % ", ".join(entity.name for entity in self.entities)
-
     def __str__(self):
-        return str(self).encode('utf-8')
+        return "[%s]" % ", ".join(entity.name for entity in self.entities)
 
 
 class MutableEntitySet(EntitySet):
@@ -247,7 +241,7 @@ class TableEntity(NamedEntity):
     def schema(self):
         return self.owner()
 
-    def __unicode__(self):
+    def __str__(self):
         if not self.schema.name:
             return self.name
         return "%s.%s" % (self.schema, self.name)
@@ -346,7 +340,7 @@ class ColumnEntity(NamedEntity, MutableEntity):
                 for foreign_key in self.table.referring_foreign_keys
                 if self in foreign_key.target_columns]
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s.%s" % (self.table, self.name)
 
 
@@ -406,7 +400,7 @@ class UniqueKeyEntity(Entity):
     def origin(self):
         return self.owner()
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s(%s)" % (self.origin,
                             ",".join(column.name
                                       for column in self.origin_columns))
@@ -492,7 +486,7 @@ class ForeignKeyEntity(Entity):
     def target(self):
         return self.coowner()
 
-    def __unicode__(self):
+    def __str__(self):
         return ("%s(%s) -> %s(%s)"
                 % (self.origin,
                    ",".join(column.name for column in self.origin_columns),
@@ -613,7 +607,7 @@ class Join(Printable, Hashable):
     def reverse(self):
         raise NotImplementedError()
 
-    def __unicode__(self):
+    def __str__(self):
         # Generate a string of the form:
         #   schema.table(column,...) -> schema.table(column,...)
         return "%s(%s) -> %s(%s)" % \
@@ -621,9 +615,6 @@ class Join(Printable, Hashable):
                  ",".join(column.name for column in self.origin_columns),
                  self.target,
                  ",".join(column.name for column in self.target_columns))
-
-    def __str__(self):
-        return str(self).encode('utf-8')
 
     def __contains__(self, column_pair):
         return (column_pair in list(zip(self.origin_columns, self.target_columns)))

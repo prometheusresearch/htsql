@@ -23,7 +23,7 @@ class DjangoTransact(Transact):
         return DjangoTransactionGuard()
 
 
-class DjangoTransactionGuard(object):
+class DjangoTransactionGuard:
 
     def __init__(self):
         self.is_nested = None

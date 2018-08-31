@@ -155,7 +155,7 @@ class IntrospectMySQLDomain(Protocol):
 
     @classmethod
     def __dispatch__(component, data_type, *args, **kwds):
-        return data_type.encode('utf-8')
+        return data_type
 
     def __init__(self, data_type, column_type, length, precision, scale):
         self.data_type = data_type

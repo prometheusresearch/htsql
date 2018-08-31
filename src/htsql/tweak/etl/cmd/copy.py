@@ -18,7 +18,7 @@ from .insert import BuildExtractNode, BuildExtractTable
 import tempfile
 
 
-class CollectCopyPipe(object):
+class CollectCopyPipe:
 
     def __init__(self, table, columns):
         assert isinstance(table, TableEntity)
@@ -31,7 +31,7 @@ class CollectCopyPipe(object):
     def __call__(self, row, str=str):
         self.stream.write(
             "\t".join([
-                str(item).encode('utf-8')
+                str(item)
                         .replace('\\', '\\\\')
                         .replace('\n', '\\n')
                         .replace('\r', '\\r')
@@ -51,8 +51,8 @@ class CollectCopyPipe(object):
                 cursor = cursor.cursor
                 cursor.copy_from(
                         self.stream,
-                        table='"%s"' % self.table.name.encode('utf-8'),
-                        columns=['"%s"' % column.name.encode('utf-8')
+                        table='"%s"' % self.table.name,
+                        columns=['"%s"' % column.name
                                  for column in self.columns])
 
 

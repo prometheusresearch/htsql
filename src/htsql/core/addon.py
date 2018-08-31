@@ -18,7 +18,7 @@ import threading
 import pkg_resources
 
 
-class GlobalAddonRegistry(object):
+class GlobalAddonRegistry:
 
     global_state = {}
 
@@ -64,7 +64,7 @@ class GlobalAddonRegistry(object):
 addon_registry = GlobalAddonRegistry()
 
 
-class Parameter(object):
+class Parameter:
 
     def __init__(self, attribute, validator, default=None,
                  value_name=None, hint=None):
@@ -99,7 +99,7 @@ class Parameter(object):
         return "%s=%s" % (attribute, value_name)
 
 
-class Variable(object):
+class Variable:
 
     def __init__(self, attribute, default=None):
         assert isinstance(attribute, str)
@@ -108,7 +108,7 @@ class Variable(object):
         self.default = default
 
 
-class Addon(object):
+class Addon:
     """
     Implements an addon for HTSQL applications.
 

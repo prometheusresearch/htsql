@@ -2726,13 +2726,7 @@ class RegressYAMLDumper(BaseYAMLDumper):
         style = None
         if data.endswith('\n'):
             style = '|'
-        try:
-            data = data.decode('utf-8')
-            tag = 'tag:yaml.org,2002:str'
-        except UnicodeDecodeError:
-            data = data.encode('base64')
-            tag = 'tag:yaml.org,2002:binary'
-            style = '|'
+        tag = 'tag:yaml.org,2002:str'
         return self.represent_scalar(tag, data, style=style)
 
     def represent_record(self, data):

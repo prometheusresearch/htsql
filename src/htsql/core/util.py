@@ -21,7 +21,7 @@ import yaml
 #
 
 
-class maybe(object):
+class maybe:
     """
     Checks if a value is either ``None`` or an instance of the specified type.
 
@@ -37,7 +37,7 @@ class maybe(object):
         return (value is None or isinstance(value, self.value_type))
 
 
-class oneof(object):
+class oneof:
     """
     Checks if a value is an instance of one of the specified types.
 
@@ -56,7 +56,7 @@ class oneof(object):
         return False
 
 
-class listof(object):
+class listof:
     """
     Checks if a value is a list containing elements of the specified type.
 
@@ -78,7 +78,7 @@ class listof(object):
         return True
 
 
-class setof(object):
+class setof:
     """
     Checks if a value is a set containing elements of the specified type.
 
@@ -100,7 +100,7 @@ class setof(object):
         return True
 
 
-class tupleof(object):
+class tupleof:
     """
     Checks if a value is a tuple with the fixed number of elements
     of the specified types.
@@ -123,7 +123,7 @@ class tupleof(object):
         return True
 
 
-class dictof(object):
+class dictof:
     """
     Checks if a value is a dictionary with keys and elements of
     the specified types.
@@ -148,7 +148,7 @@ class dictof(object):
         return True
 
 
-class omapof(object):
+class omapof:
     """
     Checks if a value is an :class:`omap` object with elements of the specified
     type.
@@ -171,7 +171,7 @@ class omapof(object):
         return True
 
 
-class subclassof(object):
+class subclassof:
     """
     Checks if a value is a subclass of the specified class.
 
@@ -187,7 +187,7 @@ class subclassof(object):
         return (isinstance(value, type) and issubclass(value, self.class_type))
 
 
-class filelike(object):
+class filelike:
     """
     Checks if a value is a file or a file-like object.
 
@@ -286,8 +286,6 @@ def to_name(text):
     - an empty string is replaced with ``'_'``.
     """
     assert isinstance(text, str)
-    if isinstance(text, str):
-        text = text.decode('utf-8', 'replace')
     if not text:
         text = "_"
     text = unicodedata.normalize('NFC', text).lower()
@@ -351,7 +349,7 @@ def similar(model, sample):
     # if the distance is not greater than `1 + 1/5 * len(model)`.
     M = len(model)
     N = len(sample)
-    threshold = 1+M/5
+    threshold = 1+M//5
     INF = threshold+1
     # Bail out early if the threshold is impossible to reach.
     if abs(M-N) > threshold:
@@ -385,7 +383,7 @@ def similar(model, sample):
     return ((M, N) in distance)
 
 
-class TextBuffer(object):
+class TextBuffer:
     """
     Reads the input text in blocks matching some regular expressions.
 
@@ -481,16 +479,12 @@ class TextBuffer(object):
         excerpt = self.text
         # The head position.
         index = self.index
-        # Convert the buffer to unicode and adjust the position.
-        if isinstance(excerpt, str):
-            excerpt = excerpt.decode('utf-8', 'replace')
-            index = len(excerpt[:index].decode('utf-8', 'replace'))
         # Extract the line around the head position.
         start = excerpt.rfind("\n", 0, index)+1
         end = excerpt.find("\n", start)
         if end == -1:
             end = len(self.text)
-        excerpt = excerpt[start:end].encode('utf-8')
+        excerpt = excerpt[start:end]
         # Make a pointer to the buffer head.
         indent = index-start
         pointer = ' '*indent + '^'
@@ -595,7 +589,7 @@ def toposort(elements, order, is_total=False):
 #
 
 
-class cachedproperty(object):
+class cachedproperty:
     """
     Implements a cached property decorator.
 
@@ -767,7 +761,7 @@ class omap(frozenomap, collections.MutableMapping):
 #
 
 
-class Clonable(object):
+class Clonable:
     """
     A clonable object.
 
@@ -881,7 +875,7 @@ except ImportError:
     pass
 
 
-class Hashable(object):
+class Hashable:
     """
     An immutable object with by-value comparison semantics.
 
@@ -982,29 +976,25 @@ except ImportError:
     pass
 
 
-class Printable(object):
+class Printable:
     """
     An object with default string representation.
 
     A subclass of :class:`Printable` is expected to reimplement the
-    :meth:`__unicode__` method.
+    :meth:`__str__` method.
     """
 
     __slots__ = ()
 
-    def __unicode__(self):
-        # Override in subclasses.
-        return "-"
-
     def __str__(self):
-        # Reuse implementation of `__unicode__`.
-        return str(self).encode('utf-8')
+        # Override in subclasses.
+        raise NotImplementedError("%s.__str__()" % self.__class__.__name__)
 
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, self)
 
 
-class YAMLable(object):
+class YAMLable:
     """
     An object with YAML representation.
 
@@ -1025,9 +1015,6 @@ class YAMLable(object):
     def __str__(self):
         return self.to_yaml()
 
-    def __unicode__(self):
-        return self.to_yaml().decode('utf-8')
-
     def __repr__(self):
         return "<%s>" % self.__class__.__name__
 
@@ -1038,19 +1025,11 @@ class YAMLableDumper(yaml.Dumper):
     def represent_str(self, data):
         # Represent both `str` and `unicode` objects as YAML strings.
         # Use block style for multiline strings.
-        if isinstance(data, str):
-            data = data.encode('utf-8')
         tag = None
         style = None
         if data.endswith('\n'):
             style = '|'
-        try:
-            data = data.decode('utf-8')
-            tag = 'tag:yaml.org,2002:str'
-        except UnicodeDecodeError:
-            data = data.encode('base64')
-            tag = 'tag:yaml.org,2002:binary'
-            style = '|'
+        tag = 'tag:yaml.org,2002:str'
         return self.represent_scalar(tag, data, style=style)
 
     def represent_yamlable(self, data):
@@ -1220,11 +1199,6 @@ class DB(Clonable, Hashable, Printable):
         if isinstance(value, cls):
             return value
 
-        # We expect a connection URI to be a regular string, but we allow
-        # Unicode strings too.
-        if isinstance(value, str):
-            value = value.encode('utf-8')
-
         # If a string is given, assume it is a connection URI and parse it.
         if isinstance(value, str):
             match = cls.regexp.search(value)
@@ -1281,25 +1255,15 @@ class DB(Clonable, Hashable, Printable):
             options = value.get('options')
 
             # Sanity check on the values.
-            if isinstance(engine, str):
-                engine = engine.encode('utf-8')
             if not isinstance(engine, str):
                 raise ValueError("engine must be a string; got %r" % engine)
-            if isinstance(database, str):
-                database = database.encode('utf-8')
             if not isinstance(database, str):
                 raise ValueError("database must be a string; got %r"
                                  % database)
-            if isinstance(username, str):
-                username = username.encode('utf-8')
             if not isinstance(username, maybe(str)):
                 raise ValueError("username must be a string; got %r" % username)
-            if isinstance(password, str):
-                password = password.encode('utf-8')
             if not isinstance(password, maybe(str)):
                 raise ValueError("password must be a string; got %r" % password)
-            if isinstance(host, str):
-                host = host.encode('utf-8')
             if not isinstance(host, maybe(str)):
                 raise ValueError("host must be a string; got %r" % host)
             if isinstance(port, str):
@@ -1319,7 +1283,7 @@ class DB(Clonable, Hashable, Printable):
         # We are done, produce an instance.
         return cls(engine, database, username, password, host, port, options)
 
-    def __unicode__(self):
+    def __str__(self):
         """Generate a connection URI corresponding to the parameters."""
         # The generated URI should only contain ASCII characters because
         # we want it to translate to Unicode without decoding errors.

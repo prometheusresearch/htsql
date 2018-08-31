@@ -48,7 +48,7 @@ class Classify(Adapter):
                 contenders_by_arity = {}
                 for arc in arcs_by_bid[name, weight]:
                     contenders_by_arity.setdefault(arc.arity, []).append(arc)
-                for arity in sorted(contenders_by_arity):
+                for arity in sorted(contenders_by_arity, key=(lambda a: a if a is not None else -1)):
                     signature = (name, arity)
                     contenders = contenders_by_arity[arity]
                     if signature in arc_by_signature:
@@ -72,7 +72,7 @@ class Classify(Adapter):
             name = name_by_arc[arc]
             label = Label(name, arc, False)
             labels.append(label)
-        for signature in sorted(rejections_by_signature):
+        for signature in sorted(rejections_by_signature, key=(lambda s: (s[0], s[1] if s[1] is not None else -1))):
             name, arity = signature
             alternatives = []
             seen = set()

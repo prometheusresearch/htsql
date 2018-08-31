@@ -8,7 +8,7 @@ from ..adapter import Adapter, Utility, adapt
 from ..domain import Domain, ListDomain, RecordDomain, Profile
 
 
-class Format(object):
+class Format:
     pass
 
 

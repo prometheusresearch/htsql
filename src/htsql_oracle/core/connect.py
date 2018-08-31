@@ -105,8 +105,6 @@ class UnscrambleOracleText(Unscramble):
             except cx_Oracle.Error as exc:
                 message = str(exc)
                 raise Error(message, exc)
-        if isinstance(value, str):
-            value = value.decode('utf-8')
         return value
 
 

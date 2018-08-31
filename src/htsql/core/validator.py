@@ -16,7 +16,7 @@ from .domain import Record
 import re
 
 
-class Validator(object):
+class Validator:
     """
     Validators check if a given value conforms the specified format.
 
@@ -109,17 +109,6 @@ class StrVal(Validator):
         if not isinstance(value, str):
             raise ValueError("a string value is expected; got %r" % value)
 
-        # Byte strings must be UTF-8 encoded.
-        if isinstance(value, str):
-            try:
-                value.decode('utf-8')
-            except UnicodeDecodeError as exc:
-                raise ValueError("unable to decode %r: %s" % (value, exc))
-
-        # Translate Unicode strings to UTF-8 encoded byte strings.
-        if isinstance(value, str):
-            value = value.encode('utf-8')
-
         # Verify that the value does not contain the NUL character.
         if '\0' in value:
             raise ValueError("NUL character is not allowed; got %r" % value)
@@ -171,17 +160,6 @@ class WordVal(Validator):
         if not isinstance(value, str):
             raise ValueError("a string value is expected; got %r" % value)
 
-        # Byte strings must be UTF-8 encoded.
-        if isinstance(value, str):
-            try:
-                value.decode('utf-8')
-            except UnicodeDecodeError as exc:
-                raise ValueError("unable to decode %r: %s" % (value, exc))
-
-        # Translate Unicode strings to UTF-8 encoded byte strings.
-        if isinstance(value, str):
-            value = value.encode('utf-8')
-
         # Check if the string matches the word pattern.
         if not self.regexp.match(value):
             raise ValueError("a string containing alphanumeric characters,"
@@ -222,13 +200,6 @@ class NameVal(Validator):
         # A byte or a Unicode string is expected.
         if not isinstance(value, str):
             raise ValueError("a string value is expected; got %r" % value)
-
-        # Byte strings must be UTF-8 encoded.
-        if isinstance(value, str):
-            try:
-                value = value.decode('utf-8')
-            except UnicodeDecodeError as exc:
-                raise ValueError("unable to decode %r: %s" % (value, exc))
 
         # Check if the string matches the name pattern.
         if not self.regexp.match(value):
@@ -272,10 +243,6 @@ class ChoiceVal(Validator):
         # A byte or a Unicode string is expected.
         if not isinstance(value, str):
             raise ValueError("a string value is expected; got %r" % value)
-
-        # Translate Unicode strings to UTF-8 encoded byte strings.
-        if isinstance(value, str):
-            value = value.encode('utf-8')
 
         # Check if the value belongs to the specified set of choices.
         if value not in self.choices:
@@ -538,10 +505,6 @@ class SeqVal(Validator):
             else:
                 raise ValueError("the null value is not permitted")
 
-        # Translate Unicode strings to UTF-8 byte strings.
-        if isinstance(value, str):
-            value = value.encode('utf-8')
-
         # If the value is a string, parse it and extract the elements.
         if isinstance(value, str):
 
@@ -683,10 +646,6 @@ class MapVal(Validator):
                 return None
             else:
                 raise ValueError("the null value is not permitted")
-
-        # Translate Unicode strings to UTF-8 encoded byte strings.
-        if isinstance(value, str):
-            value = value.encode('utf-8')
 
         # If the value is a string, parse it and extract the elements.
         if isinstance(value, str):
@@ -920,10 +879,6 @@ class ExtensionVal(Validator):
                 return None
             else:
                 raise ValueError("the null value is not permitted")
-
-        # Translate Unicode strings to UTF-8 encoded byte strings.
-        if isinstance(value, str):
-            value = value.encode('utf-8')
 
         # If the value is a string, parse it and extract the elements.
         if isinstance(value, str):

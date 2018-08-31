@@ -17,7 +17,7 @@ from .error import Error, EngineError
 from .context import context
 
 
-class DBErrorGuard(object):
+class DBErrorGuard:
     """
     Guards against DBAPI exception.
 
@@ -68,7 +68,7 @@ class DBErrorGuard(object):
             raise EngineError("Got an error from the database driver", error)
 
 
-class ConnectionProxy(object):
+class ConnectionProxy:
     """
     Wraps a DBAPI connection object.
 
@@ -133,7 +133,7 @@ class ConnectionProxy(object):
         self.is_busy = False
 
 
-class CursorProxy(object):
+class CursorProxy:
     """
     Wraps a DBAPI cursor object.
 
@@ -359,7 +359,7 @@ class Transact(Utility):
         return TransactionGuard()
 
 
-class TransactionGuard(object):
+class TransactionGuard:
 
     def __init__(self):
         self.connection = context.env.connection

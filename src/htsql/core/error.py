@@ -28,7 +28,7 @@ class HTTPError(Exception):
         # Implement a WSGI entry point.
         start_response(self.status,
                        [('Content-Type', 'text/plain; charset=UTF-8')])
-        return [str(self), "\n"]
+        return [str(self).encode('utf-8'), b"\n"]
 
 
 class BadRequestError(HTTPError):
@@ -88,14 +88,10 @@ class Paragraph(Printable):
 
     def __init__(self, message, quote):
         assert isinstance(message, str)
-        if isinstance(message, str):
-            message = message.decode('utf-8', 'replace')
-        if isinstance(quote, str):
-            quote = quote.decode('utf-8', 'replace')
         self.message = message
         self.quote = quote
 
-    def __unicode__(self):
+    def __str__(self):
         if not self.quote:
             return self.message
         lines = str(self.quote).splitlines()
@@ -122,15 +118,12 @@ class Error(BadRequestError):
             paragraph = Paragraph(message, quote)
         self.paragraphs.append(paragraph)
 
-    def __unicode__(self):
-        return "\n".join(str(paragraph) for paragraph in self.paragraphs)
-
     def __str__(self):
-        return str(self).encode('utf-8')
+        return "\n".join(str(paragraph) for paragraph in self.paragraphs)
 
     def __repr__(self):
         return "<%s: %s>" % (self.__class__.__name__,
-                             self.paragraphs[0].message.encode('utf-8'))
+                             self.paragraphs[0].message)
 
 
 class EngineError(ConflictError, Error):
@@ -232,12 +225,12 @@ class Mark(Clonable, Printable):
         lines.append(' '*pointer_indent + '^'*max(pointer_length, 1))
         return lines
 
-    def __unicode__(self):
+    def __str__(self):
         return "\n".join(self.excerpt())
 
     def __repr__(self):
         chunk = self.text[self.start:self.end]
-        return "<%s %r>" % (self.__class__.__name__, chunk.encode('utf-8'))
+        return "<%s %r>" % (self.__class__.__name__, chunk)
 
     def __bool__(self):
         return bool(self.text)
@@ -294,7 +287,7 @@ point = MarkRef.point
 #
 
 
-class ErrorGuard(object):
+class ErrorGuard:
 
     __slots__ = ('message', 'quote')
 
@@ -312,7 +305,7 @@ class ErrorGuard(object):
             exc_value.wrap(self.message, self.quote)
 
 
-class MarkErrorGuard(object):
+class MarkErrorGuard:
 
     __slots__ = ('message', 'node')
 

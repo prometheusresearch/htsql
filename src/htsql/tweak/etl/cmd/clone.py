@@ -109,7 +109,7 @@ class BuildExecuteClone(Utility):
         return ExecuteClonePipe(table, output_columns, pipe, mapping)
 
 
-class ExecuteClonePipe(object):
+class ExecuteClonePipe:
 
     def __init__(self, table, columns, pipe, mapping):
         self.table = table

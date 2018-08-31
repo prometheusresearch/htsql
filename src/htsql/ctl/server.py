@@ -20,7 +20,7 @@ import binascii
 
 
 class HTSQLServer(socketserver.ThreadingMixIn,
-                  wsgiref.simple_server.WSGIServer, object):
+                  wsgiref.simple_server.WSGIServer):
     # We override `WSGIServer` to pass a `ServerRoutine` object to the
     # constructor.  The routine is used to get the server address
     # and to access the standard output stream.

@@ -9,7 +9,7 @@ from ...core.introspect import Introspect
 import threading
 
 
-class UnusedPatternCache(object):
+class UnusedPatternCache:
 
     def __init__(self):
         self.patterns = []

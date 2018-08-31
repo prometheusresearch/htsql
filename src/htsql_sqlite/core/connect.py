@@ -131,11 +131,6 @@ class UnscrambleSQLiteText(Unscramble):
     def convert(value):
         if value is None:
             return None
-        if isinstance(value, str):
-            try:
-                value = value.decode('utf-8')
-            except UnicodeDecodeError:
-                pass
         if not isinstance(value, str):
             raise Error("Expected a text value, got", repr(value))
         return value
@@ -154,7 +149,7 @@ class UnscrambleSQLiteDate(Unscramble):
         if not isinstance(value, str):
             raise Error("Expected a date value, got", repr(value))
         converter = sqlite3.converters['DATE']
-        value = converter(value)
+        value = converter(value.encode('utf-8'))
         return value
 
 
@@ -198,7 +193,7 @@ class UnscrambleSQLiteDateTime(Unscramble):
         if not isinstance(value, str):
             raise Error("Expected a timestamp value, got", repr(value))
         converter = sqlite3.converters['TIMESTAMP']
-        value = converter(value)
+        value = converter(value.encode('utf-8'))
         return value
 
 

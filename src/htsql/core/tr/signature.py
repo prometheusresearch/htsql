@@ -14,7 +14,7 @@ This module defines formula nodes and formula signatures.
 from ..util import maybe, listof, Hashable, Clonable, Printable
 
 
-class Slot(object):
+class Slot:
     """
     Represents a formula slot.
 

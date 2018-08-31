@@ -161,7 +161,7 @@ class EmitJSONHeaders(EmitHeaders):
     def __call__(self):
         filename = None
         if self.meta.header:
-            filename = self.meta.header.encode('utf-8')
+            filename = self.meta.header
         if not filename:
             filename = '_'
         filename = filename.replace('\\', '\\\\').replace('"', '\\"')
@@ -325,12 +325,7 @@ class OpaqueToRaw(ToRaw):
         if value is None:
             yield None
             return
-        if not isinstance(value, str):
-            try:
-                value = str(value).decode('utf-8')
-            except UnicodeDecodeError:
-                value = str(repr(value))
-        yield value
+        yield str(value)
 
 
 class MetaToRaw(Protocol):

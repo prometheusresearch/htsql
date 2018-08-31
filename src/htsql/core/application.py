@@ -20,7 +20,7 @@ from .cmd.command import UniversalCmd
 from .cmd.act import produce
 
 
-class EnvironmentGuard(object):
+class EnvironmentGuard:
 
     def __init__(self, env, updates):
         self.env = env
@@ -33,7 +33,7 @@ class EnvironmentGuard(object):
         self.env.pop()
 
 
-class Environment(object):
+class Environment:
     """
     Implements a per-request HTSQL state.
     """
@@ -60,7 +60,7 @@ class Environment(object):
         return EnvironmentGuard(self, updates)
 
 
-class Application(object):
+class Application:
     """
     Implements an HTSQL application.
 
