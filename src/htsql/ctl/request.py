@@ -322,11 +322,11 @@ class Response:
             stream.write("\r\n")
 
         # Write the HTTP body.
-        stream.write(self.body)
+        stream.write(self.body.decode('utf-8', 'replace'))
 
         # Write CR if the body does not end with a new line and the
         # output stream is a console.
-        if self.body and self.body[-1] not in "\r\n":
+        if self.body and self.body[-1] not in b"\r\n":
             if hasattr(stream, 'isatty') and stream.isatty():
                 stream.write("\r\n")
 
