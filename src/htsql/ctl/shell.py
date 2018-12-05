@@ -616,7 +616,7 @@ class GetPostBaseCmd(Cmd):
             # Pipe the response to the pager.
             stream = io.StringIO()
             response.dump(stream, self.state.with_headers)
-            output = stream.getvalue()
+            output = stream.getvalue().encode('utf-8')
             process = subprocess.Popen(self.routine.pager.split(),
                                        stdin=subprocess.PIPE)
             try:
