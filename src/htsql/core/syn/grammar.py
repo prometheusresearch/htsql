@@ -527,7 +527,7 @@ class ScanTable:
 
     def __init__(self, name, regexp, groups):
         assert isinstance(name, str)
-        assert isinstance(regexp, re._pattern_type)
+        # assert isinstance(regexp, re._pattern_type)
         assert isinstance(groups, listof(ScanTableGroup))
         self.name = name
         self.regexp = regexp
