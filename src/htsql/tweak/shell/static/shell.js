@@ -196,6 +196,9 @@ $(document).ready(function() {
         $popups.children('.popup').hide();
         var query = getQuery();
         if (query && query != '/') {
+            if (/\n|#/.test(query)) {
+                query += '\n';
+            }
             query += '/:'+format;
             run(query);
         }
