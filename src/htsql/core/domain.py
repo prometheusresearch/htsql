@@ -1212,7 +1212,11 @@ class RecordDomain(ContainerDomain):
         assert isinstance(fields, listof(Profile))
         self.fields = fields
     def __basis__(self):
-        return tuple([field.domain for field in self.fields])
+        basis = []
+        for field in self.fields:
+            basis.append(field.domain)
+            basis.append(field.tag)
+        return tuple(basis)
 
     def __str__(self):
         # record(field, ...)
