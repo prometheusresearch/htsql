@@ -598,8 +598,8 @@ class WindowsBenchVM(VM):
             time.sleep(120.0)
             self.put(DATA_ROOT+"/vm/%s-update.cmd" % self.name,
                      "/cygdrive/c/INSTALL/UPDATE.CMD")
-            self.run("reg add 'HKLM\Software\Microsoft\Windows\CurrentVersion\RunOnce'"
-                     " /v %s /t REG_SZ /d 'C:\INSTALL\\UPDATE.CMD' /f" % self.name)
+            self.run("reg add 'HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce'"
+                     " /v %s /t REG_SZ /d 'C:\\INSTALL\\UPDATE.CMD' /f" % self.name)
             self.run("shutdown /r /t 0 /f")
             self.wait()
             #self.compress(parent_vm.name)

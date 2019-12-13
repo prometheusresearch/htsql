@@ -68,15 +68,15 @@ class ConfigYAMLLoader(BaseYAMLLoader):
                      addon_node.tag == 'tag:yaml.org,2002:map')):
                 raise yaml.constructor.ConstructorError(None, None,
                         "invalid addon configuration", addon_node.start_mark)
-                if isinstance(addon_node, yaml.MappingNode):
-                    for attribute_node, value_node in addon_node.value:
-                        if not (isinstance(attribute_node, yaml.ScalarNode) and
-                                attribute_node.tag
-                                    == 'tag:yaml.org,2002:str' and
-                                self.name_regexp.match(attribute_node.value)):
-                            raise yaml.constructor.ConstructorError(None, None,
-                                    "invalid parameter name",
-                                    attribute_node.start_mark)
+            if isinstance(addon_node, yaml.MappingNode):
+                for attribute_node, value_node in addon_node.value:
+                    if not (isinstance(attribute_node, yaml.ScalarNode) and
+                            attribute_node.tag
+                                == 'tag:yaml.org,2002:str' and
+                            self.name_regexp.match(attribute_node.value)):
+                        raise yaml.constructor.ConstructorError(None, None,
+                                "invalid parameter name",
+                                attribute_node.start_mark)
         return super(ConfigYAMLLoader, self).construct_document(document_node)
 
     def construct_include(self, node):

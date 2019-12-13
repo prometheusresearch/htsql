@@ -206,7 +206,7 @@ class TextToText(ToText):
 
     threshold = 32
 
-    boundary_pattern = """(?<=\S) (?=\S)"""
+    boundary_pattern = r"""(?<=\S) (?=\S)"""
     boundary_regexp = re.compile(boundary_pattern)
 
     unescaped_pattern = r"""\A(?=[^ "])[^\x00-\x1F]+(?<=[^ "])\Z"""

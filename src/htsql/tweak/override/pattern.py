@@ -893,7 +893,7 @@ class CommandPatternVal(Validator):
 
 class LabelVal(Validator):
 
-    pattern = """
+    pattern = r"""
         ^
         (?P<label> \w+ )
         \s*
@@ -935,7 +935,7 @@ class LabelVal(Validator):
 
 class QLabelVal(Validator):
 
-    pattern = """
+    pattern = r"""
         ^
         (?P<qualifier> \w+ )
         \s*\.\s* (?P<label> \w+ )
@@ -979,7 +979,7 @@ class QLabelVal(Validator):
 
 class CommandVal(Validator):
 
-    pattern = """
+    pattern = r"""
         ^
         (?P<label> \w+ )
         \s*
