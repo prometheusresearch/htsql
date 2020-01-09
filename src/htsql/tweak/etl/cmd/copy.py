@@ -29,7 +29,7 @@ class CollectCopyPipe:
         self.stream = tempfile.TemporaryFile()
 
     def __call__(self, row, str=str):
-        self.stream.write(
+        self.stream.write((
             "\t".join([
                 str(item)
                         .replace('\\', '\\\\')
@@ -37,7 +37,7 @@ class CollectCopyPipe:
                         .replace('\r', '\\r')
                         .replace('\t', '\\t')
                 if item is not None else '\\N'
-                for item in row]) + '\n')
+                for item in row]) + '\n').encode('utf-8'))
 
     def copy(self):
         if not self.stream.tell():
