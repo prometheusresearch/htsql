@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Clark C. Evans <cce@clarkevans.com>
 Build-Depends: python-all, debhelper (>= 7.4.3), python-setuptools (>= 0.6b3)
 Homepage: http://htsql.org/
-Vcs-Browser: https://bitbucket.org/prometheus/htsql/
+Vcs-Browser: https://github.com/prometheusresearch/htsql/
 Standards-Version: 3.9.2
 X-Python-Version: >= 2.6
 

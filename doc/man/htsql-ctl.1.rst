@@ -51,6 +51,6 @@ For more information, please visit http://htsql.org/.
 BUGS
 ====
 
-Submit bug reports at https://bitbucket.org/prometheus/htsql/issues/new.
+Submit bug reports at https://github.com/prometheusresearch/htsql/issues
 
 
