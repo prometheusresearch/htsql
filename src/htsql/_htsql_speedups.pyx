@@ -1,3 +1,4 @@
+# cython: language_level=3
 
 
 from types import FunctionType, CodeType
@@ -5,7 +6,7 @@ from weakref import WeakValueDictionary
 from htsql.core.context import context
 
 
-cdef class Clonable:
+cdef class Clonable(object):
 
     __slots__ = ()
 
@@ -16,7 +17,7 @@ cdef class Clonable:
     def clone(self, **replacements):
         if not replacements:
             return self
-        init_code = self.__init__.im_func.func_code
+        init_code = self.__init__.__func__.__code__
         names = list(init_code.co_varnames[1:init_code.co_argcount])
         assert not (init_code.co_flags & 0x04)  # CO_VARARGS
         if init_code.co_flags & 0x08:           # CO_VARKEYWORDS
@@ -38,7 +39,7 @@ cdef class Clonable:
         return clone
 
     def clone_to(self, clone_type, **replacements):
-        init_code = self.__init__.im_func.func_code
+        init_code = self.__init__.__func__.__code__
         names = list(init_code.co_varnames[1:init_code.co_argcount])
         assert not (init_code.co_flags & 0x04)  # CO_VARARGS
         if init_code.co_flags & 0x08:           # CO_VARKEYWORDS
@@ -171,33 +172,29 @@ cdef bint aresubclasses(subclasses, superclasses):
     return True
 
 
-class Component(object):
+class ComponentMeta(type):
 
-    class __metaclass__(type):
+    def __new__(mcls, name, bases, content):
+        for value in list(content.values()):
+            if not isinstance(value, FunctionType):
+                continue
+            code = value.__code__
+            code_name = code.co_name
+            if '.' in code_name:
+                continue
+            code_name = '%s.%s' % (name, code_name)
+            code = CodeType(code.co_argcount, code.co_kwonlyargcount,
+                            code.co_nlocals, code.co_stacksize,
+                            code.co_flags, code.co_code, code.co_consts,
+                            code.co_names, code.co_varnames,
+                            code.co_filename, code_name,
+                            code.co_firstlineno, code.co_lnotab,
+                            code.co_freevars, code.co_cellvars)
+            value.__code__ = code
+        return type.__new__(mcls, name, bases, content)
 
-        def __new__(mcls, name, bases, content):
-            for value in content.values():
-                if not isinstance(value, FunctionType):
-                    continue
-                code = value.func_code
-                code_name = code.co_name
-                if '.' in code_name:
-                    continue
-                code_name = '%s.%s' % (name, code_name)
-                code = CodeType(code.co_argcount, code.co_nlocals,
-                                code.co_stacksize, code.co_flags,
-                                code.co_code, code.co_consts,
-                                code.co_names, code.co_varnames,
-                                code.co_filename, code_name,
-                                code.co_firstlineno, code.co_lnotab,
-                                code.co_freevars, code.co_cellvars)
-                value.func_code = code
-            if '__dispatch__' in content:
-                if '__prepare__' not in content:
-                    content['__prepare__'] = classmethod(Component.__prepare__.__func__)
-                if '__invoke__' not in content:
-                    content['__invoke__'] = classmethod(Component.__invoke__.__func__)
-            return type.__new__(mcls, name, bases, content)
+
+class Component(metaclass=ComponentMeta):
 
     @staticmethod
     def __components__():
@@ -371,26 +368,6 @@ class Utility(Component):
     def __dispatch__(interface, *args, **kwds):
         return ()
 
-    @classmethod
-    def __prepare__(interface, *args, **kwds):
-        realizations = context.app.component_registry.realizations
-        dispatch_key = ()
-        try:
-            realization = realizations[interface, dispatch_key]
-        except KeyError:
-            realization = interface.__realize__(dispatch_key)
-        return realization(*args, **kwds)
-
-    @classmethod
-    def __invoke__(interface, *args, **kwds):
-        realizations = context.app.component_registry.realizations
-        dispatch_key = ()
-        try:
-            realization = realizations[interface, dispatch_key]
-        except KeyError:
-            realization = interface.__realize__(dispatch_key)
-        return realization(*args, **kwds)()
-
 
 class Adapter(Component):
 
@@ -420,30 +397,6 @@ class Adapter(Component):
         assert arity <= len(args)
         return tuple([type(arg) for arg in args[:arity]])
 
-    @classmethod
-    def __prepare__(interface, *args, **kwds):
-        realizations = context.app.component_registry.realizations
-        arity = interface.__arity__
-        assert arity <= len(args)
-        dispatch_key = tuple([type(arg) for arg in args[:arity]])
-        try:
-            realization = realizations[interface, dispatch_key]
-        except KeyError:
-            realization = interface.__realize__(dispatch_key)
-        return realization(*args, **kwds)
-
-    @classmethod
-    def __invoke__(interface, *args, **kwds):
-        realizations = context.app.component_registry.realizations
-        arity = interface.__arity__
-        assert arity <= len(args)
-        dispatch_key = tuple([type(arg) for arg in args[:arity]])
-        try:
-            realization = realizations[interface, dispatch_key]
-        except KeyError:
-            realization = interface.__realize__(dispatch_key)
-        return realization(*args, **kwds)()
-
 
 class Protocol(Component):
 
@@ -467,27 +420,7 @@ class Protocol(Component):
                 if name not in seen:
                     names.append(name)
                     seen.add(name)
-        names.sort()
+        names.sort(key=(lambda n: str(n)))
         return names
-
-    @classmethod
-    def __prepare__(interface, *args, **kwds):
-        realizations = context.app.component_registry.realizations
-        dispatch_key = args[0]
-        try:
-            realization = realizations[interface, dispatch_key]
-        except KeyError:
-            realization = interface.__realize__(dispatch_key)
-        return realization(*args, **kwds)
-
-    @classmethod
-    def __invoke__(interface, *args, **kwds):
-        realizations = context.app.component_registry.realizations
-        dispatch_key = args[0]
-        try:
-            realization = realizations[interface, dispatch_key]
-        except KeyError:
-            realization = interface.__realize__(dispatch_key)
-        return realization(*args, **kwds)()
 
 
