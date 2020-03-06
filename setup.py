@@ -15,6 +15,7 @@ from setuptools.command.egg_info import egg_info as setuptools_egg_info
 from distutils.cmd import Command
 from distutils.dir_util import remove_tree
 from distutils import log
+from Cython.Build import cythonize
 import os, os.path, re, hashlib, urllib.request, urllib.error, urllib.parse, io, zipfile
 
 
@@ -167,6 +168,7 @@ if __name__ == '__main__':
           version=get_version(),
           packages=find_packages('src'),
           package_dir={'': 'src'},
+          ext_modules=cythonize('src/htsql/_htsql_speedups.pyx'),
           include_package_data=True,
           zip_safe=False,
           entry_points={
