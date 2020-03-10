@@ -11,3 +11,5 @@ vm-build
 external
 vendor
 sandbox
+_htsql_speedups.c
+_htsql_speedups.*.so
