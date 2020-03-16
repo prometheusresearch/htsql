@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2013, Prometheus Research, LLC
+# Copyright (c) 2006-2020, Prometheus Research, LLC
 #
 
 
@@ -47,8 +47,8 @@ To execute a raw HTSQL request, run::
 """
 
 
-__version__ = '2.3.3'
-__copyright__ = """Copyright (c) 2006-2013, Prometheus Research, LLC"""
+__version__ = '2.5.0'
+__copyright__ = """Copyright (c) 2006-2020, Prometheus Research, LLC"""
 __license__ = """
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.  This software
