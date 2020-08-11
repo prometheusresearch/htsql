@@ -1,7 +1,7 @@
 # cython: language_level=3
 
 
-from types import FunctionType, CodeType
+from types import FunctionType
 from weakref import WeakValueDictionary
 from htsql.core.context import context
 
@@ -183,13 +183,7 @@ class ComponentMeta(type):
             if '.' in code_name:
                 continue
             code_name = '%s.%s' % (name, code_name)
-            code = CodeType(code.co_argcount, code.co_kwonlyargcount,
-                            code.co_nlocals, code.co_stacksize,
-                            code.co_flags, code.co_code, code.co_consts,
-                            code.co_names, code.co_varnames,
-                            code.co_filename, code_name,
-                            code.co_firstlineno, code.co_lnotab,
-                            code.co_freevars, code.co_cellvars)
+            code = code.replace(co_name=code_name)
             value.__code__ = code
         return type.__new__(mcls, name, bases, content)
 

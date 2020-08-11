@@ -33,13 +33,7 @@ class ComponentMeta(type):
             if '.' in code_name:
                 continue
             code_name = '%s.%s' % (name, code_name)
-            code = types.CodeType(code.co_argcount, code.co_kwonlyargcount,
-                                  code.co_nlocals, code.co_stacksize,
-                                  code.co_flags, code.co_code, code.co_consts,
-                                  code.co_names, code.co_varnames,
-                                  code.co_filename, code_name,
-                                  code.co_firstlineno, code.co_lnotab,
-                                  code.co_freevars, code.co_cellvars)
+            code = code.replace(co_name = code_name)
             # Patch the function object.
             value.__code__ = code
         # Create the class.

@@ -24,7 +24,7 @@ from ...core.fmt.json import (escape_json, dump_json, JS_SEQ, JS_MAP, JS_END,
 from ...core.fmt.html import Template
 from ..resource.locate import locate
 import re
-import cgi
+import html
 import wsgiref.util
 import itertools
 
@@ -210,22 +210,22 @@ class RenderShell(Act):
         if self.command.is_implicit:
             headers.append(('Vary', 'Accept'))
         template = Template(resource.data.decode('utf-8'))
-        body = template(resource_root=cgi.escape(resource_root, True),
-                        database_name=cgi.escape(database_name, True),
-                        htsql_version=cgi.escape(htsql_version, True),
-                        htsql_legal=cgi.escape(htsql_legal, True),
-                        server_root=cgi.escape(server_root, True),
-                        query_on_start=cgi.escape(query_on_start, True),
-                        evaluate_on_start=cgi.escape(evaluate_on_start, True),
-                        can_read_on_start=cgi.escape(can_read_on_start, True),
-                        can_write_on_start=cgi.escape(can_write_on_start, True),
-                        implicit_shell=cgi.escape(implicit_shell, True))
+        body = template(resource_root=html.escape(resource_root, True),
+                        database_name=html.escape(database_name, True),
+                        htsql_version=html.escape(htsql_version, True),
+                        htsql_legal=html.escape(htsql_legal, True),
+                        server_root=html.escape(server_root, True),
+                        query_on_start=html.escape(query_on_start, True),
+                        evaluate_on_start=html.escape(evaluate_on_start, True),
+                        can_read_on_start=html.escape(can_read_on_start, True),
+                        can_write_on_start=html.escape(can_write_on_start, True),
+                        implicit_shell=html.escape(implicit_shell, True))
         body = (chunk.encode('utf-8') for chunk in body)
         return (status, headers, body)
 
     def patch(self, data, prefix, value):
         pattern = prefix + r'="[^"]*"'
-        replacement = prefix + '="%s"' % cgi.escape(value, True)
+        replacement = prefix + '="%s"' % html.escape(value, True)
         data, count = re.subn(pattern, replacement, data, 1)
         assert count == 1
         return data

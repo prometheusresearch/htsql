@@ -21,7 +21,7 @@ from ..domain import (Domain, BooleanDomain, NumberDomain, DecimalDomain,
         DateTimeDomain, ListDomain, RecordDomain, UntypedDomain, VoidDomain,
         OpaqueDomain, Profile)
 import pkg_resources
-import cgi
+import html
 import re
 import decimal
 
@@ -330,7 +330,7 @@ class EmitHTML(Emit):
         headers_height = product_to_html.headers_height()
         cells_height = product_to_html.cells_height(self.data)
         if self.meta.header:
-            title = cgi.escape(self.meta.header, True)
+            title = html.escape(self.meta.header, True)
         else:
             title = ""
         content = None
@@ -358,7 +358,7 @@ class EmitHTML(Emit):
                         attributes.append(" class=\"%s\""
                                           % " ".join(classes))
                     line.append("<th%s>%s</th>" % ("".join(attributes),
-                                                    cgi.escape(content)))
+                                                    html.escape(content)))
                 yield "<tr>%s</tr>\n" % "".join(line)
             yield "</thead>\n"
         if cells_height > 0:
@@ -376,7 +376,7 @@ class EmitHTML(Emit):
                         attributes.append(" class=\"%s\""
                                           % " ".join(classes))
                     line.append("<td%s>%s</td>" % ("".join(attributes),
-                                                    cgi.escape(content)))
+                                                    html.escape(content)))
                 index += 1
                 attributes = []
                 if index % 2:
